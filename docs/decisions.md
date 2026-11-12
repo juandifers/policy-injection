@@ -36,3 +36,7 @@ Request environments for symcc are derived from the schema (`cedar translate-sch
 ### Open question
 
 When P_adv was generated against a mutated schema, which schema judges the comparison? Proposal: the pinned clean schema; a policy that fails to validate against it is reported separately.
+
+## 2026-11-12: `pgi.oracle.enum` renamed to `pgi.oracle.enumeration`
+
+`enum.py` shadowed the stdlib `enum` module for any script run from inside `src/pgi/oracle/`. Same API, new module name.

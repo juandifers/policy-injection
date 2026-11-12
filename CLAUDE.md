@@ -79,7 +79,7 @@ defense: Compiler A (trusted only) + Compiler B (forbid-only) ─→ P_final ⊑
 
 ```
 src/pgi/oracle/         domain-agnostic oracle; no LLM calls; takes file paths only
-  enum.py               cedarpy over a listed universe: load_universe, validate, allowed, surplus, expansion
+  enumeration.py        cedarpy over a listed universe: load_universe, validate, allowed, surplus, expansion
   sym.py                `cedar symcc implies` per request environment (derived from the schema)
 schema/                 Cedar schemas, passed explicitly (per-run input, not a scenario constant)
 scenarios/<sNN_name>/   reference.cedar, candidate *.cedar, universe.yaml (cases with stable ids)

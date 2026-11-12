@@ -10,7 +10,7 @@ from pathlib import Path
 import pytest
 
 from pgi.oracle import sym
-from pgi.oracle.enum import OracleError, allowed, expansion, load_universe, surplus, validate
+from pgi.oracle.enumeration import OracleError, Universe, allowed, expansion, load_universe, surplus, validate
 
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA = ROOT / "schema" / "toy.cedarschema"
@@ -126,6 +126,21 @@ def test_weak_does_not_imply_reference_on_close(name, symcc):
     (close_env,) = [env for env in results if env.action == CLOSE]
     assert results[close_env] != sym.VERIFIED
     assert "close_work_order" in results[close_env]  # counterexample text names the request
+
+
+@pytest.mark.parametrize("name", WEAK)
+def test_counterexample_replays_in_cedarpy(name, symcc):
+    """Cross-check the backends: each symcc counterexample, rebuilt as a concrete request, must be
+    allowed by P1 and denied by P2 under cedarpy. Guards against engine-version drift (cedarpy 4.12
+    vs CLI 4.14) and against misparsing the counterexample text."""
+    results = sym.implies(weak(name), REF, SCHEMA)
+    cexs = [r for r in results.values() if r != sym.VERIFIED]
+    assert cexs, "expected at least one counterexample"
+    for text in cexs:
+        cex = sym.parse_counterexample(text)
+        one = Universe({"cex": cex.request}, cex.entities, {})
+        assert allowed(weak(name), one, SCHEMA) == {"cex"}, text
+        assert allowed(REF, one, SCHEMA) == set(), text
 
 
 @pytest.mark.parametrize("name", WEAK)

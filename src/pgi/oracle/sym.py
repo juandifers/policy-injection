@@ -95,3 +95,178 @@ def implies_in(env: Env, policies1: Path, policies2: Path, schema: Path) -> str:
 def implies(policies1: Path, policies2: Path, schema: Path) -> dict[Env, str]:
     """For every environment in the schema: VERIFIED if policies1 implies policies2, else the counterexample."""
     return {env: implies_in(env, policies1, policies2, schema) for env in environments(schema)}
+
+
+# Counterexample parsing. symcc prints counterexamples in Cedar expression syntax, not JSON:
+#   principal: T::"id", action: A::Action::"name", resource: T::"id"
+#   context: {k: "s", r: {e: T::"id"}}
+#   entities: [ T::"id", ... ]
+# The parser accepts only strings, longs, bools, sets, records and entity UIDs, and raises on anything
+# else (extension values, entities printed with attributes), so an unparsed shape can never be guessed.
+
+_ESCAPES = {"n": "\n", "r": "\r", "t": "\t", "\\": "\\", "0": "\0", "'": "'", '"': '"'}
+_IDENT = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
+_LONG = re.compile(r"-?[0-9]+")
+
+
+class CounterexampleParseError(SymccError):
+    """symcc printed a counterexample this parser does not recognise."""
+
+
+@dataclass(frozen=True)
+class Counterexample:
+    """A symcc counterexample rebuilt as a concrete cedarpy request plus its entity store."""
+
+    request: dict
+    entities: list[dict]
+
+
+class _Reader:
+    """Strict recursive-descent reader over one Cedar value literal."""
+
+    def __init__(self, text: str) -> None:
+        self.text, self.pos = text, 0
+
+    def fail(self, what: str) -> CounterexampleParseError:
+        """An error naming the position and the unparsed remainder."""
+        return CounterexampleParseError(f"{what} at {self.pos}: {self.text[self.pos:self.pos + 40]!r}")
+
+    def skip_ws(self) -> None:
+        """Advance past whitespace."""
+        while self.pos < len(self.text) and self.text[self.pos].isspace():
+            self.pos += 1
+
+    def expect(self, token: str) -> None:
+        """Consume a literal token or raise."""
+        self.skip_ws()
+        if not self.text.startswith(token, self.pos):
+            raise self.fail(f"expected {token!r}")
+        self.pos += len(token)
+
+    def peek(self, token: str) -> bool:
+        """True if the next non-space text starts with token."""
+        self.skip_ws()
+        return self.text.startswith(token, self.pos)
+
+    def done(self) -> None:
+        """Raise unless all input was consumed."""
+        self.skip_ws()
+        if self.pos != len(self.text):
+            raise self.fail("trailing input")
+
+    def string(self) -> str:
+        """A double-quoted Cedar string with escapes."""
+        self.expect('"')
+        out = []
+        while self.pos < len(self.text):
+            ch = self.text[self.pos]
+            self.pos += 1
+            if ch == '"':
+                return "".join(out)
+            if ch != "\\":
+                out.append(ch)
+                continue
+            esc = self.text[self.pos:self.pos + 1]
+            self.pos += 1
+            if esc in _ESCAPES:
+                out.append(_ESCAPES[esc])
+            elif esc == "u" and (m := re.match(r"\{([0-9a-fA-F]{1,6})\}", self.text[self.pos:])):
+                out.append(chr(int(m[1], 16)))
+                self.pos += m.end()
+            else:
+                raise self.fail(f"unknown escape \\{esc}")
+        raise self.fail("unterminated string")
+
+    def uid(self) -> dict:
+        """An entity UID like A::B::"id", as {"type", "id"}."""
+        self.skip_ws()
+        path = []
+        while m := _IDENT.match(self.text, self.pos):
+            path.append(m[0])
+            self.pos = m.end()
+            self.expect("::")
+            if self.peek('"'):
+                return {"type": "::".join(path), "id": self.string()}
+        raise self.fail("expected entity UID")
+
+    def value(self) -> object:
+        """Any supported Cedar value literal."""
+        self.skip_ws()
+        if self.peek('"'):
+            return self.string()
+        if self.peek("{"):
+            return self.record()
+        if self.peek("["):
+            return self.items(self.value)
+        if m := _LONG.match(self.text, self.pos):
+            self.pos = m.end()
+            return int(m[0])
+        for word, val in (("true", True), ("false", False)):
+            if re.match(rf"{word}\b", self.text[self.pos:]):
+                self.pos += len(word)
+                return val
+        if _IDENT.match(self.text, self.pos) and not re.match(r"[A-Za-z_][A-Za-z0-9_]*\s*\(", self.text[self.pos:]):
+            return {"__entity": self.uid()}
+        raise self.fail("unsupported value")
+
+    def record(self) -> dict:
+        """A record literal {k: v, ...}; keys are identifiers or strings."""
+        self.expect("{")
+        out: dict = {}
+        while not self.peek("}"):
+            key = self.string() if self.peek('"') else self.ident()
+            self.expect(":")
+            out[key] = self.value()
+            if not self.peek("}"):
+                self.expect(",")
+        self.expect("}")
+        return out
+
+    def items(self, item) -> list:
+        """A bracketed, comma-separated list (trailing comma allowed)."""
+        self.expect("[")
+        out = []
+        while not self.peek("]"):
+            out.append(item())
+            if not self.peek("]"):
+                self.expect(",")
+        self.expect("]")
+        return out
+
+    def ident(self) -> str:
+        """A bare identifier."""
+        self.skip_ws()
+        if not (m := _IDENT.match(self.text, self.pos)):
+            raise self.fail("expected identifier")
+        self.pos = m.end()
+        return m[0]
+
+
+def parse_counterexample(text: str) -> Counterexample:
+    """Rebuild a symcc counterexample (the text implies() returns) as a concrete request and entity store."""
+    _, sep, body = text.partition("Counterexample found:")
+    if not sep:
+        raise CounterexampleParseError(f"no counterexample in:\n{text}")
+    lines = body.strip().splitlines()
+    try:
+        head, ctx, ents = lines[0], lines[1], "\n".join(lines[2:])
+    except IndexError:
+        raise CounterexampleParseError(f"expected principal, context and entities lines:\n{body}") from None
+    r = _Reader(head)
+    request = {}
+    for i, key in enumerate(("principal", "action", "resource")):
+        if i:
+            r.expect(",")
+        r.expect(f"{key}:")
+        request[key] = r.uid()
+    r.done()
+    r = _Reader(ctx)
+    r.expect("context:")
+    request["context"] = r.record()
+    r.done()
+    r = _Reader(ents)
+    r.expect("entities:")
+    uids = r.items(r.uid)
+    r.done()
+    entities = [{"uid": u, "attrs": {}, "parents": []} for u in uids if not u["type"].split("::")[-1] == "Action"]
+    return Counterexample(request, entities)
