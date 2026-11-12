@@ -92,6 +92,29 @@ def implies_in(env: Env, policies1: Path, policies2: Path, schema: Path) -> str:
     raise SymccError(f"unrecognised symcc output for {env}:\n{out}")
 
 
+_PROPERTY_VERDICT = re.compile(r"^\S+ (Policy never errors|Policy set always allows|Policy set always denies): (VERIFIED|DOES NOT HOLD)$")
+PROPERTIES = ("never-errors", "always-allows", "always-denies")
+
+
+def property_in(env: Env, command: str, policies: Path, schema: Path, policy_format: str = "cedar") -> str:
+    """In one environment: VERIFIED if the single-file property holds, else the counterexample text.
+
+    `never-errors` requires exactly one policy in the file; the set-level properties take a whole set.
+    """
+    if command not in PROPERTIES:
+        raise ValueError(f"unknown symcc property {command!r}")
+    out = _run(["symcc", "--principal-type", env.principal_type, "--action", env.action,
+                "--resource-type", env.resource_type, "--schema", str(schema),
+                "--counterexample", "--error-format", "plain",
+                command, "--policies", str(policies), "--policy-format", policy_format]).stdout.strip()
+    match = _PROPERTY_VERDICT.match(out.splitlines()[0] if out else "")
+    if match and match[2] == "VERIFIED":
+        return VERIFIED
+    if match and "Counterexample found:" in out:
+        return out
+    raise SymccError(f"unrecognised symcc {command} output for {env}:\n{out}")
+
+
 def implies(policies1: Path, policies2: Path, schema: Path) -> dict[Env, str]:
     """For every environment in the schema: VERIFIED if policies1 implies policies2, else the counterexample."""
     return {env: implies_in(env, policies1, policies2, schema) for env in environments(schema)}

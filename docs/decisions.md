@@ -146,3 +146,12 @@ Observation on first use: on `wo.cedarschema` **all three** s01 weak-file counte
 - Approval condition, enforced by `tests/test_realizable.py::test_exclusion_never_blocks_a_realistic_request`: allow-all + exclusion allows **every** request in **every** universe (toy s01, AOB s01–s03). `test_every_universe_is_listed` fails if a new scenario is not added to that test.
 - Effect on s01: all three weak files now give a realizable `does_not_hold` on close_workorder, and each counterexample replays in cedarpy against the original (unguarded) P1.
 - Not covered: unions inside Sets (no quantifiers in Cedar). A violation there still yields `undetermined`.
+
+## 2026-11-12: Sondera-style generator-critic (our reimplementation): interpretation choices
+
+Label everywhere: "Sondera-style (our reimplementation)". Not Sondera's generator.
+- **Rounds:** round 1 = the naive request, byte-identical. Round k = generate, then both critics. Up to `max_rounds=3` generations. The output is the first policy that passes both critics; otherwise the round-3 policy is kept and marked `passed=false`. `rounds_used` is recorded.
+- **Paired design:** because round 1 equals the naive request and shares its cache key, Sondera-style sample i and naive sample i have the same first draft. Differences between the generators come only from the critique loop. Change: offset the sample index if independent first drafts are wanted.
+- **Deterministic critic:** strict validation (both engines). Then, per action environment, `symcc always-allows` (fail if VERIFIED), `symcc always-denies` (recorded as "never allowed", which is information, not failure), and `symcc never-errors` for each policy separately (the CLI accepts exactly one policy). The set fails if it denies *every* action. Interpretation: "not always-deny" per action would fail every correct policy, since actions the intent does not grant must always deny.
+- **Judge:** same model and settings as the generator. Sees the intent and the policy only (`judge_sees_manifests=false` by default). Passes only on the exact reply `NO MISMATCHES`.
+- **Regeneration:** a fresh single-turn request (same cached system prefix; user turn = intent + previous attempt + both critiques + "Output only Cedar policies."), not a multi-turn conversation. This avoids replaying assistant turns without their thinking blocks, which Sonnet 5.5's history-editing check may reject.
