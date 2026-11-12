@@ -140,3 +140,71 @@ def classify(result: str, schema: Path) -> Classification:
     report = check(cex, schema)
     status = "does_not_hold" if report.realizable else "undetermined"
     return Classification(status, report.violations, {"request": cex.request, "entities": cex.entities})
+
+
+# ---- R1/R2 exclusion -----------------------------------------------------------------------------------
+# symcc's solver tends to pick the cheapest model of an optional union (no branch set), which the request
+# builder never emits. So before asking "does P1 imply P2?", P1 is extended with a generated `forbid` that
+# denies every request violating R1 or R2. This only removes requests that cannot be realizable, so
+# "holds" stays sound; R3-R5 (entity ids, not expressible in Cedar) are still checked on the counterexample.
+# Unions inside Sets are not covered (Cedar has no quantifiers); a violation there yields "undetermined".
+
+
+def _union_branches(decl: dict) -> list[str]:
+    """Branch names if this record type is a generator union (R1 shape), else []."""
+    attrs = decl.get("attributes", {}) if decl.get("type") == "Record" else {}
+    if attrs and all(_TYPECHOICE.fullmatch(k) and not a.get("required", True) for k, a in attrs.items()):
+        return sorted(attrs, key=lambda k: int(k.removeprefix("typeChoice")))
+    return []
+
+
+def _violations(expr: str, decl: dict, present: list[str], common: dict, root: str) -> list[str]:
+    """Cedar conditions, one per R1/R2 violation reachable at `expr` (whose presence needs `present`)."""
+    decl = _resolve(decl, common)
+    if decl.get("type") != "Record":
+        return []
+    out = []
+    attrs = decl["attributes"]
+    branches = _union_branches(decl)
+    if branches:
+        has = {b: f"{expr} has {json.dumps(b)}" for b in branches}
+        exactly_one = " || ".join("(" + " && ".join([has[b]] + [f"!({has[o]})" for o in branches if o != b]) + ")"
+                                  for b in branches)
+        out.append(" && ".join(present + [f"!({exactly_one})"]))
+    for name, a in sorted(attrs.items()):
+        sub, cond = f"{expr}[{json.dumps(name)}]", present
+        if not a.get("required", True):
+            cond = present + [f"{expr} has {json.dumps(name)}"]
+        resolved = _resolve(a, common)
+        if branches and resolved.get("type") == "Entity" and resolved.get("name") == f"{root}::Null":
+            out.append(" && ".join(cond + [f'{sub} != {root}::Null::"null"']))
+        out += _violations(sub, a, cond, common, root)
+    return out
+
+
+def exclusion_policy(schema: Path) -> str:
+    """Cedar text: one `forbid` per action whose input admits R1/R2 violations; "" if none do."""
+    actions, common, _, _ = _schema(str(schema))
+    policies = []
+    for uid, body in sorted(actions.items()):
+        ctx = _resolve(body["appliesTo"]["context"], common)
+        if ctx.get("type") != "Record" or "input" not in ctx.get("attributes", {}):
+            continue
+        root = uid.rpartition("::Action::")[0]
+        conds = _violations("context.input", ctx["attributes"]["input"], [], common, root)
+        if conds:
+            body_ = "\n  || ".join(f"({c})" for c in conds)
+            policies.append(f'@id("pgi-realizability-exclusion:{json.loads(uid.rpartition("::")[2])}")\n'
+                            f"forbid (principal, action == {uid}, resource)\nwhen {{\n  {body_}\n}};\n")
+    return "\n".join(policies)
+
+
+def implies(policies1: Path, policies2: Path, schema: Path) -> dict:
+    """Per environment: does every *realizable* request P1 allows also get allowed by P2? (Classification)"""
+    import tempfile
+    guarded_text = Path(policies1).read_text().rstrip("\n") + "\n\n" + exclusion_policy(schema)
+    with tempfile.TemporaryDirectory() as tmp:
+        guarded = Path(tmp) / "p1_with_realizability_exclusion.cedar"
+        guarded.write_text(guarded_text)
+        return {env: classify(sym.implies_in(env, guarded, policies2, schema), schema)
+                for env in sym.environments(schema)}

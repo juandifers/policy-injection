@@ -87,3 +87,77 @@ def test_classify_verified_realizable_undetermined():
     bad = cex("close_workorder", '{input: {resolution_notes: {}, site_id: "MAIN", wonum: "1"}}')
     assert realizable.classify(good, WO).status == "does_not_hold"
     assert realizable.classify(bad, WO).status == "undetermined"
+
+
+# ---- R1/R2 exclusion built into the symbolic backend -------------------------------------------------
+
+DOMAINS = ROOT / "domains"
+UNIVERSES = [  # (universe, schema) for every scenario in every domain
+    (DOMAINS / "toy/scenarios/s01_close_after_approval/universe.yaml", TOY),
+    (DOMAINS / "assetopsbench/scenarios/s01_close_after_approval/universe.yaml", WO),
+    (DOMAINS / "assetopsbench/scenarios/s02_site_scoped_reads/universe.yaml", ROOT / "domains/assetopsbench/schema/wo_iot.cedarschema"),
+    (DOMAINS / "assetopsbench/scenarios/s03_create_at_main/universe.yaml", WO),
+]
+
+
+def test_every_universe_is_listed():
+    found = {p for p in DOMAINS.glob("*/scenarios/*/universe.yaml")}
+    assert found == {u for u, _ in UNIVERSES}, "a new scenario must be added to UNIVERSES"
+
+
+@pytest.mark.parametrize("universe_path,schema", UNIVERSES, ids=lambda x: x.parent.name if x.name == "universe.yaml" else x.name)
+def test_exclusion_never_blocks_a_realistic_request(universe_path, schema, tmp_path):
+    """Allow-everything plus the exclusion must still allow every request in the universe."""
+    from pgi.oracle.enumeration import allowed, load_universe
+    from pgi.oracle.validation import check
+    guarded = tmp_path / "allow_all_guarded.cedar"
+    guarded.write_text("permit (principal, action, resource);\n" + realizable.exclusion_policy(schema))
+    assert check(guarded, schema).ok, check(guarded, schema)
+    universe = load_universe(universe_path)
+    assert allowed(guarded, universe, schema) == set(universe.ids)
+
+
+def test_exclusion_blocks_the_unrealizable_shapes(tmp_path):
+    """The exclusion must actually forbid R1 and R2 violations, not just pass everything."""
+    from pgi.oracle.enumeration import Universe, allowed
+    guarded = tmp_path / "g.cedar"
+    guarded.write_text("permit (principal, action, resource);\n" + realizable.exclusion_policy(WO))
+    act = {"type": "AOB::Action", "id": "close_workorder"}
+    base = {"site_id": "MAIN", "wonum": "1"}
+    null = lambda i: {"__entity": {"type": "AOB::Null", "id": i}}
+    cases = {
+        "ok_one_branch": {**base, "failure_code": {"typeChoice0": "X"}},
+        "ok_null": {**base, "failure_code": {"typeChoice1": null("null")}},
+        "r1_none": {**base, "resolution_notes": {}},
+        "r1_both": {**base, "failure_code": {"typeChoice0": "X", "typeChoice1": null("null")}},
+        "r2_bad_null": {**base, "failure_code": {"typeChoice1": null("")}},
+    }
+    u = Universe({k: {"principal": {"type": "AOB::User", "id": "a"}, "action": act,
+                      "resource": {"type": "AOB::McpServer", "id": "wo"}, "context": {"input": v}} for k, v in cases.items()}, [], {})
+    assert allowed(guarded, u, WO) == {"ok_one_branch", "ok_null"}
+
+
+def test_toy_schema_needs_no_exclusion():
+    assert realizable.exclusion_policy(TOY) == ""
+
+
+@pytest.mark.parametrize("name", ["weak_status", "weak_same_wo", "weak_self"])
+def test_realizable_implies_finds_the_real_surplus(name):
+    """With the exclusion, symcc's counterexample on close is realizable and replays in cedarpy."""
+    from pgi.oracle.enumeration import Universe, allowed
+    folder = DOMAINS / "assetopsbench/scenarios/s01_close_after_approval"
+    results = realizable.implies(folder / f"{name}.cedar", folder / "reference.cedar", WO)
+    close = {e: c for e, c in results.items() if e.action == 'AOB::Action::"close_workorder"'}
+    others = {e: c for e, c in results.items() if e not in close}
+    (c,) = close.values()
+    assert c.status == "does_not_hold" and c.violations == ()
+    one = Universe({"cex": c.counterexample["request"]}, c.counterexample["entities"], {})
+    assert allowed(folder / f"{name}.cedar", one, WO) == {"cex"}    # replayed against the ORIGINAL P1
+    assert allowed(folder / "reference.cedar", one, WO) == set()
+    assert all(o.status == "holds" for o in others.values())
+
+
+def test_realizable_implies_reference_holds_everywhere():
+    folder = DOMAINS / "assetopsbench/scenarios/s01_close_after_approval"
+    results = realizable.implies(folder / "reference.cedar", folder / "reference.cedar", WO)
+    assert len(results) == 15 and all(c.status == "holds" for c in results.values())

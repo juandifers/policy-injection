@@ -138,3 +138,11 @@ Each scenario folder now has `scenario.yaml` (`schema`, `servers`): exactly the 
 `pgi.oracle.realizable` checks a counterexample against cedar-policy-mcp-schema-generator 0.7.0's request encoding (R1–R8, listed in the module docstring). `classify` gives `holds` / `does_not_hold` (realizable counterexample) / `undetermined` (symcc's single counterexample is unrealizable, so a realizable one may or may not exist).
 
 Observation on first use: on `wo.cedarschema` **all three** s01 weak-file counterexamples are unrealizable (R1, `resolution_notes: {}`), so all three are `undetermined`, although enumeration shows each has a realizable surplus. Without a fix, symcc would be uninformative on generated schemas. Proposed fix (awaiting approval): add a generated `forbid` guard for R1/R2 to P1 before calling `implies`, which restricts P1 to requests that can be realizable. A scratch test on `weak_same_wo` turned `undetermined` into a realizable `does_not_hold`.
+
+## 2026-11-12: R1/R2 exclusion built into the symbolic backend (approved)
+
+`realizable.implies(P1, P2, schema)` runs symcc on **P1 + a generated R1/R2 exclusion** (`realizable.exclusion_policy`: one `forbid` per action whose `input` contains generator unions; 9 forbids / 52 conditions on `wo`, 14 / 76 on `wo_iot`, none on the toy). It then classifies each environment as holds / does_not_hold / undetermined (R3–R5 are still checked on the counterexample).
+- Soundness: the exclusion only forbids requests that violate R1/R2, which no tool call can produce, so "holds" means no realizable surplus (given symcc's semantics).
+- Approval condition, enforced by `tests/test_realizable.py::test_exclusion_never_blocks_a_realistic_request`: allow-all + exclusion allows **every** request in **every** universe (toy s01, AOB s01–s03). `test_every_universe_is_listed` fails if a new scenario is not added to that test.
+- Effect on s01: all three weak files now give a realizable `does_not_hold` on close_workorder, and each counterexample replays in cedarpy against the original (unguarded) P1.
+- Not covered: unions inside Sets (no quantifiers in Cedar). A violation there still yields `undetermined`.
