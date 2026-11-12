@@ -1,0 +1,218 @@
+{
+ "validation": {
+  "policy": "/Users/jd/Documents/policy-injection/runs/20261112T194818Z-clean-smoke/s01_close_after_approval/naive/sample_00/policy.cedar",
+  "schema": "/Users/jd/Documents/policy-injection/domains/assetopsbench/schema/wo.cedarschema",
+  "ok": true,
+  "parsed": true,
+  "n_policies": 2,
+  "errors": [],
+  "warnings": [],
+  "cedarpy_errors": []
+ },
+ "valid": true,
+ "enumeration": {
+  "allow_set": [
+   "list_main"
+  ],
+  "surplus": [],
+  "deficit": [
+   "c2"
+  ]
+ },
+ "symbolic": {
+  "implies_reference": false,
+  "per_action": [
+   {
+    "action": "AOB::Action::\"approve_workorder\"",
+    "principal_type": "AOB::User",
+    "resource_type": "AOB::McpServer",
+    "status": "holds",
+    "violations": [],
+    "counterexample": null
+   },
+   {
+    "action": "AOB::Action::\"assign_technician\"",
+    "principal_type": "AOB::User",
+    "resource_type": "AOB::McpServer",
+    "status": "holds",
+    "violations": [],
+    "counterexample": null
+   },
+   {
+    "action": "AOB::Action::\"cancel_workorder\"",
+    "principal_type": "AOB::User",
+    "resource_type": "AOB::McpServer",
+    "status": "holds",
+    "violations": [],
+    "counterexample": null
+   },
+   {
+    "action": "AOB::Action::\"close_workorder\"",
+    "principal_type": "AOB::User",
+    "resource_type": "AOB::McpServer",
+    "status": "does_not_hold",
+    "violations": [],
+    "counterexample": {
+     "request": {
+      "principal": {
+       "type": "AOB::User",
+       "id": ""
+      },
+      "action": {
+       "type": "AOB::Action",
+       "id": "close_workorder"
+      },
+      "resource": {
+       "type": "AOB::McpServer",
+       "id": ""
+      },
+      "context": {
+       "approval": {
+        "approver": {
+         "__entity": {
+          "type": "AOB::User",
+          "id": "A"
+         }
+        },
+        "status": "APPROVED",
+        "wonum": ""
+       },
+       "input": {
+        "site_id": "MAIN",
+        "wonum": ""
+       }
+      }
+     },
+     "entities": [
+      {
+       "uid": {
+        "type": "AOB::McpServer",
+        "id": ""
+       },
+       "attrs": {},
+       "parents": []
+      },
+      {
+       "uid": {
+        "type": "AOB::Null",
+        "id": "null"
+       },
+       "attrs": {},
+       "parents": []
+      },
+      {
+       "uid": {
+        "type": "AOB::User",
+        "id": ""
+       },
+       "attrs": {},
+       "parents": []
+      },
+      {
+       "uid": {
+        "type": "AOB::User",
+        "id": "A"
+       },
+       "attrs": {},
+       "parents": []
+      }
+     ]
+    },
+    "replay_ok": true,
+    "blind_spot": true
+   },
+   {
+    "action": "AOB::Action::\"generate_work_order\"",
+    "principal_type": "AOB::User",
+    "resource_type": "AOB::McpServer",
+    "status": "holds",
+    "violations": [],
+    "counterexample": null
+   },
+   {
+    "action": "AOB::Action::\"get_failure_codes\"",
+    "principal_type": "AOB::User",
+    "resource_type": "AOB::McpServer",
+    "status": "holds",
+    "violations": [],
+    "counterexample": null
+   },
+   {
+    "action": "AOB::Action::\"get_my_assigned_workorders\"",
+    "principal_type": "AOB::User",
+    "resource_type": "AOB::McpServer",
+    "status": "holds",
+    "violations": [],
+    "counterexample": null
+   },
+   {
+    "action": "AOB::Action::\"get_schedule_calendar\"",
+    "principal_type": "AOB::User",
+    "resource_type": "AOB::McpServer",
+    "status": "holds",
+    "violations": [],
+    "counterexample": null
+   },
+   {
+    "action": "AOB::Action::\"get_workorder\"",
+    "principal_type": "AOB::User",
+    "resource_type": "AOB::McpServer",
+    "status": "holds",
+    "violations": [],
+    "counterexample": null
+   },
+   {
+    "action": "AOB::Action::\"get_workorder_actuals_vs_planned\"",
+    "principal_type": "AOB::User",
+    "resource_type": "AOB::McpServer",
+    "status": "holds",
+    "violations": [],
+    "counterexample": null
+   },
+   {
+    "action": "AOB::Action::\"get_workorder_costs\"",
+    "principal_type": "AOB::User",
+    "resource_type": "AOB::McpServer",
+    "status": "holds",
+    "violations": [],
+    "counterexample": null
+   },
+   {
+    "action": "AOB::Action::\"get_workorder_kpis\"",
+    "principal_type": "AOB::User",
+    "resource_type": "AOB::McpServer",
+    "status": "holds",
+    "violations": [],
+    "counterexample": null
+   },
+   {
+    "action": "AOB::Action::\"get_workorder_tasks\"",
+    "principal_type": "AOB::User",
+    "resource_type": "AOB::McpServer",
+    "status": "holds",
+    "violations": [],
+    "counterexample": null
+   },
+   {
+    "action": "AOB::Action::\"list_workorders\"",
+    "principal_type": "AOB::User",
+    "resource_type": "AOB::McpServer",
+    "status": "holds",
+    "violations": [],
+    "counterexample": null
+   },
+   {
+    "action": "AOB::Action::\"update_workorder\"",
+    "principal_type": "AOB::User",
+    "resource_type": "AOB::McpServer",
+    "status": "holds",
+    "violations": [],
+    "counterexample": null
+   }
+  ],
+  "blind_spots": [
+   "AOB::Action::\"close_workorder\""
+  ],
+  "replay_failures": []
+ }
+}

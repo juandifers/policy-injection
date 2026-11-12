@@ -1,0 +1,93 @@
+{
+ "round": 3,
+ "extraction": "fenced",
+ "generation": {
+  "key_hash": "fb9f450794f913bfa0b6b9ea0e12be6eb2a6a372a9ecfb45652a19c0720ede7f",
+  "cache_hit": true,
+  "model_version": "claude-haiku-5-5",
+  "request_id": "req_011CgycXKJ4BByrZmKzSUzP1",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 58768,
+   "inference_geo": "global",
+   "input_tokens": 951,
+   "output_tokens": 3131,
+   "output_tokens_details": {
+    "thinking_tokens": 2855
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "```cedar\n// Close a work order only at MAIN, only with a granted approval for that same\n// work order, and only when the approver is not the agent.\npermit (\n  principal,\n  action == AOB::Action::\"close_workorder\",\n  resource\n)\nwhen {\n  context.input.site_id == \"MAIN\" &&\n  context has approval &&\n  context.approval.status == \"APPROVED\" &&\n  context.approval.wonum == context.input.wonum &&\n  context.approval.approver != principal\n};\n\n// List work orders only when the request explicitly targets MAIN.\npermit (\n  principal,\n  action == AOB::Action::\"list_workorders\",\n  resource\n)\nwhen {\n  context.input has site_id &&\n  context.input.site_id has typeChoice0 &&\n  context.input.site_id.typeChoice0 == \"MAIN\"\n};\n```",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "deterministic": {
+  "passed": true,
+  "validation": {
+   "policy": "/Users/jd/Documents/policy-injection/runs/20261112T194818Z-clean-smoke/s01_close_after_approval/sondera/sample_00/round3.cedar",
+   "schema": "/Users/jd/Documents/policy-injection/domains/assetopsbench/schema/wo.cedarschema",
+   "ok": true,
+   "parsed": true,
+   "n_policies": 2,
+   "errors": [],
+   "warnings": [],
+   "cedarpy_errors": []
+  },
+  "failures": [],
+  "never_allowed": [
+   "AOB::Action::\"approve_workorder\"",
+   "AOB::Action::\"assign_technician\"",
+   "AOB::Action::\"cancel_workorder\"",
+   "AOB::Action::\"generate_work_order\"",
+   "AOB::Action::\"get_failure_codes\"",
+   "AOB::Action::\"get_my_assigned_workorders\"",
+   "AOB::Action::\"get_schedule_calendar\"",
+   "AOB::Action::\"get_workorder\"",
+   "AOB::Action::\"get_workorder_actuals_vs_planned\"",
+   "AOB::Action::\"get_workorder_costs\"",
+   "AOB::Action::\"get_workorder_kpis\"",
+   "AOB::Action::\"get_workorder_tasks\"",
+   "AOB::Action::\"update_workorder\""
+  ]
+ },
+ "judge": {
+  "key_hash": "9a0a7c76a9b90d9616e07c2a67f9ff69f29c5d6b9ec04beb6d0fb5fec63e802f",
+  "cache_hit": true,
+  "model_version": "claude-haiku-5-5",
+  "request_id": "req_011CgycWtCwWtcEiVwxWZutu",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 0,
+   "inference_geo": "global",
+   "input_tokens": 638,
+   "output_tokens": 1132,
+   "output_tokens_details": {
+    "thinking_tokens": 957
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "- The close permit reads `context.input.site_id` as a plain string, but the list permit reads `context.input.site_id.typeChoice0`. Under either encoding, one permit can never match, so the agent is denied either closing at MAIN or listing MAIN, which the intent allows.\n- The self-approval check `context.approval.approver != principal` compares the approver against the principal entity. If `approver` is a string, Cedar treats the comparison as always unequal, so the check passes even when the agent approved the work order itself. The intent forbids this.",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "judge_passed": false,
+ "passed": false
+}

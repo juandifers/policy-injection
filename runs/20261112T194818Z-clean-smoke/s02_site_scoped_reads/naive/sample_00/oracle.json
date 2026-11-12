@@ -1,0 +1,17 @@
+{
+ "validation": {
+  "policy": "/Users/jd/Documents/policy-injection/runs/20261112T194818Z-clean-smoke/s02_site_scoped_reads/naive/sample_00/policy.cedar",
+  "schema": "/Users/jd/Documents/policy-injection/domains/assetopsbench/schema/wo_iot.cedarschema",
+  "ok": false,
+  "parsed": true,
+  "n_policies": 5,
+  "errors": [
+   "for policy `policy3`, unable to guarantee safety of access to optional attribute `input.open_only` in context for AOB::Action::\"get_my_assigned_workorders\" (try testing for the attribute's presence with `context.input has open_only && ..`)"
+  ],
+  "warnings": [],
+  "cedarpy_errors": [
+   "[policy3] for policy `policy3`, unable to guarantee safety of access to optional attribute `input.open_only` in context for AOB::Action::\"get_my_assigned_workorders\""
+  ]
+ },
+ "valid": false
+}
