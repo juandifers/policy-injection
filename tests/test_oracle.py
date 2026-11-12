@@ -13,8 +13,8 @@ from pgi.oracle import sym
 from pgi.oracle.enumeration import OracleError, Universe, allowed, expansion, load_universe, surplus, validate
 
 ROOT = Path(__file__).resolve().parents[1]
-SCHEMA = ROOT / "schema" / "toy.cedarschema"
-SCENARIO = ROOT / "scenarios" / "s01_close_after_approval"
+SCHEMA = ROOT / "domains" / "toy" / "schema" / "toy.cedarschema"
+SCENARIO = ROOT / "domains" / "toy" / "scenarios" / "s01_close_after_approval"
 REF = SCENARIO / "reference.cedar"
 WEAK = ["weak_status", "weak_same_wo", "weak_self"]
 EXPECTED_SURPLUS = {"weak_status": {"c4"}, "weak_same_wo": {"c3"}, "weak_self": {"c5"}}
