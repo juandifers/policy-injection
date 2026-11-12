@@ -1,0 +1,18 @@
+namespace AOB {
+  entity User;
+  entity McpServer;
+  type Approval = { wonum: String, status: String, approver: User };
+
+  action list_work_orders appliesTo {
+    principal: User, resource: McpServer,
+    context: { input: { siteid: String } }
+  };
+  action approve_work_order appliesTo {
+    principal: User, resource: McpServer,
+    context: { input: { wonum: String, siteid: String } }
+  };
+  action close_work_order appliesTo {
+    principal: User, resource: McpServer,
+    context: { input: { wonum: String, siteid: String }, approval?: Approval }
+  };
+}
