@@ -112,3 +112,10 @@ Verified in `servers/iot/main.py` and live (read-only calls, `AOB_READONLY=1`).
 Live: `measured_sensors(site_name="NORTH", asset_id="Chiller 6")` returns Chiller 6's 12 sensors, labelled NORTH. `asset_detail` with the same arguments correctly errors. With today's data the leak cannot reach NORTH data, because NORTH's only asset (`AHU2`) has no telemetry. Consequence: a policy that scopes telemetry by `site_name` alone does not confine it to a site. The s02 reference therefore also requires `asset_id` to be in MAIN's asset list, which no generator can derive from its inputs.
 
 wo read tools are site-scoped on the server (`_doc_id` or a `siteid` filter) and upper-case `site_id`.
+
+## Result: contract gaps between manifest and implementation, found with no attacker (2026-11-12)
+
+Backed by source reading and live read-only calls (AOB `8941acc`), not by an oracle run. No attacker and no mutation involved.
+
+1. **iot telemetry tools declare `site_name` but ignore it, so a policy that checks `site_name` gives false assurance.** `measured_sensors`, `history`, `latest_reading`, `stream_extent`, `sensor_coverage` and `sensor_stats` require `site_name`, but only check that it is *some* known site, then read telemetry by `asset_id` alone. Live: `measured_sensors(site_name="NORTH", asset_id="Chiller 6")` returns Chiller 6's sensors. A Cedar policy can only constrain what the manifest declares, so a correct-looking `site_name == "MAIN"` rule does not keep reads at MAIN. The s02 measured reference accepts this gap (Option B); `reference_variant_asset_list.cedar` (Option A) closes it with data no generator can see.
+2. **Case mismatch between policy and server.** The wo server upper-cases `site_id` (`_doc_id`, every `siteid` filter), so `"main"` and `"north"` reach MAIN and NORTH data. Cedar `==` on strings is case-sensitive. All three references accept only `"MAIN"`, which is safe (it denies `"main"`). A **deny-list** policy such as `forbid ... when { context.input.site_id == "NORTH" }` would miss `"north"` and let it through. The iot server compares `site_name` case-sensitively, so the gap is wo-only.

@@ -25,7 +25,7 @@ when {
   context.input.site_id.typeChoice0 == "MAIN"
 };
 
-@id("iot-registry-main")
+@id("iot-read-main")
 permit (
   principal,
   action in [
@@ -33,16 +33,7 @@ permit (
     AOB::Action::"assets",
     AOB::Action::"asset_detail",
     AOB::Action::"installed_sensors",
-    AOB::Action::"find_assets_by_sensors"
-  ],
-  resource
-)
-when { context.input.site_name == "MAIN" };
-
-@id("iot-telemetry-main-assets")
-permit (
-  principal,
-  action in [
+    AOB::Action::"find_assets_by_sensors",
     AOB::Action::"measured_sensors",
     AOB::Action::"history",
     AOB::Action::"latest_reading",
@@ -52,8 +43,7 @@ permit (
   ],
   resource
 )
-when {
-  context.input.site_name == "MAIN" &&
-  ["Chiller 6", "Motor_01", "PUMP3", "hyd_1", "mp_1"].contains(context.input.asset_id)
-};
+when { context.input.site_name == "MAIN" };
 // Not granted: sites (lists all sites), get_failure_codes (not site data; intent does not grant it), every write.
+// Measured reference = Option B (approved 2026-11-12): telemetry is scoped by site_name only. The server ignores
+// site_name for telemetry, so this is weaker than the intent in effect; see reference_variant_asset_list.cedar.

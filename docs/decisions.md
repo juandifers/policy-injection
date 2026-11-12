@@ -122,3 +122,19 @@ Basis so far: the Step 2 mutation experiment (findings.md) showed descriptions a
 Two generated `namespace AOB` schemas cannot be concatenated (duplicate namespace). `gen_schema.py` target `wo_iot` passes the pinned wo tools followed by the pinned iot tools to the generator in one call. It refuses tool-name collisions (none exist). Output `schema/wo_iot.generated.cedarschema` `c3057c9ed6920ca5131ecb0bdb39241988833a3f1dcfa7fe4a1f6f21591b563d`. Verified to be the exact union: 27 = 15 + 12 actions, each action and common type identical to its single-server form. Regenerating `wo` and `iot` after the refactor reproduced their pinned hashes. Final `wo_iot.cedarschema` = link(generated, trusted), checked by test. GUESS: how AWS AgentCore combines multiple MCP targets is unknown (it may prefix tool names); this is the simplest deterministic combination.
 
 Each scenario folder now has `scenario.yaml` (`schema`, `servers`): exactly the inputs a generator may see.
+
+## 2026-11-12: LLM provider and exact request parameters
+
+- Provider: Anthropic API directly, official SDK `anthropic==2.8.0` (uv). No LiteLLM. Key loaded from `.env` (gitignored as `.env*`) by `pgi.llm.env.load_env`, which never prints values.
+- Models (chosen by Juan; verified live via `models.retrieve` on 2026-11-12): `claude-haiku-5-5` ("Claude Haiku 5.5", 1M in / 128K out) for smoke tests, `claude-sonnet-5-5` ("Claude Sonnet 5.5", 1M / 128K) for full runs. The bundled skill's model table (cached 2026-09-25) did not list Haiku 5.5; the live API does.
+- **Sampling: no `temperature`, `top_p` or `top_k` is sent.** SDK 2.8.0's `messages.create` has no such parameters, and the docs say Sonnet 5.5 rejects non-default values. "Provider's normal temperature" therefore means the API default. The cache key records `temperature: null` ("not sent").
+- Sent on every generator call, identically for both models: `thinking={"type": "adaptive"}`, `output_config={"effort": "high"}`, `max_tokens=16000`, non-streaming. Haiku 5.5 could disable thinking but Sonnet 5.5 cannot, so adaptive on both keeps smoke and full runs comparable. Thinking text is not returned (display default `omitted`); thinking tokens are billed as output.
+- **No refusal fallbacks**, against the SDK guidance for Sonnet 5.5. A fallback re-runs the request on another model inside the same call, which would mix models in one measurement. `stop_reason == "refusal"` is recorded as a failed sample with its `stop_details`.
+- Prompt caching: one explicit `cache_control: {"type": "ephemeral"}` breakpoint on the last static system block (instructions, schema, manifests). The intent comes after it, in the user turn. Requests that share a prefix run sequentially (parallel requests cannot read a cache still being written).
+- Recorded per call: the request, the API's `model` field, `usage` as returned, `stop_reason`, `stop_details`, and the request id.
+
+## 2026-11-12: Realizability of symcc counterexamples (rules R1–R8 approved)
+
+`pgi.oracle.realizable` checks a counterexample against cedar-policy-mcp-schema-generator 0.7.0's request encoding (R1–R8, listed in the module docstring). `classify` gives `holds` / `does_not_hold` (realizable counterexample) / `undetermined` (symcc's single counterexample is unrealizable, so a realizable one may or may not exist).
+
+Observation on first use: on `wo.cedarschema` **all three** s01 weak-file counterexamples are unrealizable (R1, `resolution_notes: {}`), so all three are `undetermined`, although enumeration shows each has a realizable surplus. Without a fix, symcc would be uninformative on generated schemas. Proposed fix (awaiting approval): add a generated `forbid` guard for R1/R2 to P1 before calling `implies`, which restricts P1 to requests that can be realizable. A scratch test on `weak_same_wo` turned `undetermined` into a realizable `does_not_hold`.

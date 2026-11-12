@@ -1,6 +1,7 @@
 """On-disk LLM cache: the only path from a generator to an LLM API.
 
-Key = model id + full messages + temperature + sample index + every other request parameter,
+Key = model id + full messages + temperature (None = not sent, API default) + sample index + every
+other request parameter (system, thinking, output_config, max_tokens, ...),
 serialised as canonical JSON and hashed with SHA-256. Each response is stored as one JSON file
 holding the key, the raw provider response and the model version string the API returned.
 A hit never calls the API; an unreadable entry raises instead of silently re-calling.
@@ -27,7 +28,7 @@ class Provider(Protocol):
 
     name: str
 
-    def call(self, model: str, messages: list[dict], temperature: float, params: dict) -> dict: ...
+    def call(self, model: str, messages: list[dict], temperature: float | None, params: dict) -> dict: ...
     def text(self, raw: dict) -> str: ...
     def model_version(self, raw: dict) -> str: ...
     def usage(self, raw: dict) -> dict: ...
@@ -45,7 +46,7 @@ class Completion:
     raw: dict
 
 
-def cache_key(model: str, messages: list[dict], temperature: float, sample_index: int, params: dict) -> dict:
+def cache_key(model: str, messages: list[dict], temperature: float | None, sample_index: int, params: dict) -> dict:
     """The full cache key as a JSON-ready dict."""
     return {"model": model, "messages": messages, "temperature": temperature,
             "sample_index": sample_index, "params": params}
@@ -68,7 +69,7 @@ class CachedLLM:
         """Where the entry for one key hash lives."""
         return self.cache_dir / h[:2] / f"{h}.json"
 
-    def complete(self, model: str, messages: list[dict], *, temperature: float, sample_index: int,
+    def complete(self, model: str, messages: list[dict], *, temperature: float | None, sample_index: int,
                  **params: Any) -> Completion:
         """Return the cached response for this exact request, calling the API only on a miss."""
         key = cache_key(model, messages, temperature, sample_index, params)

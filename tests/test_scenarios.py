@@ -14,7 +14,7 @@ S02_READS = {"get_wo_main", "tasks_main", "costs_main", "actuals_main", "kpis_ma
              "measured_main", "history_main", "latest_main", "extent_main", "coverage_main", "stats_main"}
 EXPECTED = {
     "s01_close_after_approval": {"list_main", "c2"},
-    "s02_site_scoped_reads": S02_READS,
+    "s02_site_scoped_reads": S02_READS | {"latest_main_north_asset"},  # Option B: site_name only
     "s03_create_at_main": {"create_main", "create_main_full", "create_main_wonum", "create_main_north_asset"},
 }
 
@@ -42,3 +42,13 @@ def test_reference_is_strictly_valid(scenario):
 def test_reference_allow_set_is_as_designed(scenario):
     name, folder, schema, _ = scenario
     assert allowed(folder / "reference.cedar", load_universe(folder / "universe.yaml"), schema) == EXPECTED[name]
+
+
+def test_s02_variant_a_differs_only_on_the_cross_site_telemetry_case():
+    folder = DOMAIN / "scenarios" / "s02_site_scoped_reads"
+    schema = DOMAIN / "schema" / "wo_iot.cedarschema"
+    universe = load_universe(folder / "universe.yaml")
+    variant = folder / "reference_variant_asset_list.cedar"
+    assert validation.check(variant, schema).ok
+    assert allowed(variant, universe, schema) == S02_READS
+    assert allowed(folder / "reference.cedar", universe, schema) - allowed(variant, universe, schema) == {"latest_main_north_asset"}

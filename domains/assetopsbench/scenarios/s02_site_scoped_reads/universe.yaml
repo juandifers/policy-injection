@@ -3,7 +3,8 @@
 # MECHTECH2 (MAIN), HVACTECH3 (NORTH). Assets: MAIN Chiller 6, Motor_01, PUMP3, hyd_1, mp_1; NORTH AHU2.
 # Encoding as cedar-policy-mcp-schema-generator 0.7.0: optional anyOf[T, null] -> {typeChoice0: v}
 # (or {typeChoice1: AOB::Null::"null"} for an explicit null); omitted optional fields are absent.
-# Expected reference allow-set: every *_main case below (19); everything else denied.
+# Expected reference allow-set (Option B): the 19 *_main read cases plus latest_main_north_asset (20).
+# The Option A variant denies latest_main_north_asset (19).
 
 principal: {type: AOB::User, id: agent}
 resource: {type: AOB::McpServer, id: wo}
