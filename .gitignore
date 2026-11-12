@@ -8,3 +8,6 @@ wheels/
 
 # Virtual environments
 .venv
+
+# LLM response cache (replay store; run evidence is copied into runs/<id>/)
+cache/
