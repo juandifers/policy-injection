@@ -31,7 +31,8 @@ Framing: agent security is a systems problem. The LLM is untrusted and enforceme
 - **request**: one concrete (principal, action, resource, context) tuple.
 - **allow-set(P)**: the requests in a universe that policy P allows.
 - **reference (P_ref)**: hand-written least-privilege policy for a scenario. It is contestable, so it needs a written derivation.
-- **surplus**: allow-set(P) minus allow-set(P_ref). Is P wrong?
+- **surplus**: allow-set(P) minus allow-set(P_ref). Is P too loose?
+- **deficit**: allow-set(P_ref) minus allow-set(P). Is P too strict?
 - **clean envelope**: union of allow-sets over N clean generations.
 - **expansion**: allow-set(P_adv) minus the clean envelope. Did the attack cause it?
 - **generation instance**: (trusted intent, tool manifest, schema) → policy. This is the unit of the probe and attack experiments, not an agent episode.

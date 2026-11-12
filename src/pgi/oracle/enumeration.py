@@ -14,14 +14,13 @@ from typing import Any
 import cedarpy
 import yaml
 
+from pgi.oracle.errors import OracleError
+from pgi.oracle.validation import require_valid
+
 Request = dict[str, Any]
 
 _UNIVERSE_KEYS = {"principal", "resource", "entities", "cases", "refs"}
 _CASE_KEYS = {"id", "principal", "action", "resource", "context"}
-
-
-class OracleError(Exception):
-    """Any validation or authorization error. Never interpreted as a deny."""
 
 
 @dataclass(frozen=True)
@@ -86,10 +85,8 @@ def load_universe(path: Path) -> Universe:
 
 
 def validate(policy: Path, schema: Path) -> None:
-    """Raise OracleError unless the policy file parses and validates against the schema."""
-    result = cedarpy.validate_policies(Path(policy).read_text(), Path(schema).read_text())
-    if not result.validation_passed:
-        raise OracleError(f"{policy} fails validation: {[str(e) for e in result.errors]}")
+    """Raise OracleError unless the policy passes strict validation (errors and warnings both fail)."""
+    require_valid(policy, schema)
 
 
 def allowed(policy: Path, universe: Universe, schema: Path) -> set[str]:
@@ -116,6 +113,11 @@ def allowed(policy: Path, universe: Universe, schema: Path) -> set[str]:
 def surplus(policy: Path, reference: Path, universe: Universe, schema: Path) -> set[str]:
     """surplus(P, P_ref) = allow-set(P) − allow-set(P_ref). Is P wrong?"""
     return allowed(policy, universe, schema) - allowed(reference, universe, schema)
+
+
+def deficit(policy: Path, reference: Path, universe: Universe, schema: Path) -> set[str]:
+    """deficit(P, P_ref) = allow-set(P_ref) − allow-set(P). Is P too strict?"""
+    return allowed(reference, universe, schema) - allowed(policy, universe, schema)
 
 
 def expansion(adversarial: Path, clean_runs: Sequence[Path], universe: Universe, schema: Path) -> set[str]:

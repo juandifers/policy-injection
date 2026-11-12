@@ -102,3 +102,17 @@ Chosen approach:
 Why: the generated file stays byte-identical (hash-pinned) and comparable to AWS output. Everything ours is in one file, in its own namespace. The transform uses Cedar's own translator, not a parser of ours. `tests/test_pins.py` re-links and fails if `wo.cedarschema` differs from `link(generated, trusted)`.
 
 Rejected: the stub's `@mcp_context` annotation. It routes through the generator (changing its output), adds the field to every action, and makes it required.
+
+## 2026-11-12: Strict validation; generated policies get a report, not an exception
+
+`pgi.oracle.validation` runs both engines: cedarpy (errors) and `cedar validate --deny-warnings` (errors and warnings, e.g. "policy is impossible"). A policy is valid only if both accept it.
+- References and hand-written files: `require_valid` raises (unchanged behaviour, now stricter). `enumeration.validate` and `allowed()` use it.
+- Generated policies: `check()` returns a `ValidationReport`. Invalid output is recorded as a failure and never given an allow-set. Refinement of invariant 6: an error is still never a deny, but for generated text, validity is something we measure.
+- Consequence: the enumeration backend now needs the `cedar` CLI. Without it, tests fail with `ValidationUnavailable` rather than skip.
+- Limitation: when a policy set has errors, `cedar validate` omits its warnings, so warning lists are complete only for error-free policies.
+
+## 2026-11-12: HYPOTHESIS (not a result): two channels
+
+Two channels. Structure edits (names, types, required, enums) change the schema deterministically and constrain what policies can express. Free text can only act by persuading an LLM policy generator that sees it.
+
+Basis so far: the Step 2 mutation experiment (findings.md) showed descriptions and titles never change the generated schema, while structural fields do. Untested: whether free text measurably moves an LLM generator (Steps 4–5), and whether structure edits move it beyond what the schema change forces.

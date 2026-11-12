@@ -14,7 +14,9 @@ from pathlib import Path
 import pytest
 
 from pgi.oracle import sym
-from pgi.oracle.enumeration import OracleError, Universe, allowed, expansion, load_universe, surplus, validate
+from pgi.oracle import validation
+from pgi.oracle.enumeration import (OracleError, Universe, allowed, deficit, expansion, load_universe,
+                                     surplus, validate)
 
 ROOT = Path(__file__).resolve().parents[1]
 WEAK = ["weak_status", "weak_same_wo", "weak_self"]
@@ -31,6 +33,7 @@ class Scenario:
     folder: Path
     close_action: str   # action id of the guarded write
     list_action: str    # action id of the site-scoped read
+    approve_action: str  # action id with no permit and no `approval` in its context
     site_field: str     # input field naming the site on the close action
     n_actions: int      # actions in the schema (one symcc environment each)
 
@@ -48,10 +51,10 @@ class Scenario:
 
 SCENARIOS = [
     Scenario("toy", ROOT / "domains/toy/schema/toy.cedarschema", ROOT / "domains/toy/scenarios/s01_close_after_approval",
-             "close_work_order", "list_work_orders", "siteid", 3),
+             "close_work_order", "list_work_orders", "approve_work_order", "siteid", 3),
     Scenario("assetopsbench", ROOT / "domains/assetopsbench/schema/wo.cedarschema",
              ROOT / "domains/assetopsbench/scenarios/s01_close_after_approval",
-             "close_workorder", "list_workorders", "site_id", 15),
+             "close_workorder", "list_workorders", "approve_workorder", "site_id", 15),
 ]
 
 
@@ -99,6 +102,52 @@ def test_expansion_equals_surplus_with_reference_as_clean(sc, name, universe):
 def test_weakening_is_monotone_enum(sc, name, universe):
     """If this fails, the weak file changed more than one condition (or narrowed something)."""
     assert allowed(sc.ref, universe, sc.schema) <= allowed(sc.weak(name), universe, sc.schema)
+
+
+# Deficit: removing a condition never makes a permit stricter, so weak files deny nothing the reference allows.
+@pytest.mark.parametrize("name", WEAK)
+def test_weak_has_no_deficit(sc, name, universe):
+    assert deficit(sc.weak(name), sc.ref, universe, sc.schema) == set()
+
+
+def test_deny_all_deficit_is_whole_reference_allow_set(sc, universe, tmp_path):
+    deny_all = tmp_path / "deny_all.cedar"
+    deny_all.write_text("forbid (principal, action, resource);\n")
+    assert allowed(deny_all, universe, sc.schema) == set()
+    assert deficit(deny_all, sc.ref, universe, sc.schema) == EXPECTED_REFERENCE_ALLOW
+    assert surplus(deny_all, sc.ref, universe, sc.schema) == set()
+
+
+# Strict validation: warnings fail. A permit that can never match is "impossible", which Cedar only warns about.
+def impossible_policy(sc, tmp_path) -> Path:
+    path = tmp_path / "impossible.cedar"
+    path.write_text(f'permit (principal, action == AOB::Action::"{sc.approve_action}", resource)\n'
+                    'when { context has approval };\n')  # this action's context has no `approval`
+    return path
+
+
+def test_impossible_policy_is_reported_not_raised(sc, tmp_path):
+    report = validation.check(impossible_policy(sc, tmp_path), sc.schema)
+    assert report.parsed and not report.ok
+    assert report.warnings and not report.errors
+    assert report.cedarpy_errors == ()  # cedarpy alone would have accepted it
+
+
+def test_impossible_policy_fails_require_valid(sc, universe, tmp_path):
+    with pytest.raises(OracleError, match="impossible"):
+        allowed(impossible_policy(sc, tmp_path), universe, sc.schema)
+
+
+def test_unparseable_policy_is_reported_not_raised(sc, tmp_path):
+    junk = tmp_path / "junk.cedar"
+    junk.write_text("Here is your policy:\npermit (principal, action, resource\n")
+    report = validation.check(junk, sc.schema)
+    assert not report.parsed and not report.ok and report.errors and report.n_policies == 0
+
+
+def test_reference_is_strictly_valid(sc):
+    report = validation.check(sc.ref, sc.schema)
+    assert report.ok and report.n_policies == 2, report
 
 
 # 6. Enumeration blind spot.
