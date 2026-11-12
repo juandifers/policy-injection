@@ -102,3 +102,13 @@ A policy testing `context has approval` on `approve_workorder`, whose context ha
 ### symcc's "all worlds" includes requests the generator can never produce
 
 On the generated schema, symcc's counterexample for `weak_same_wo` contains `resolution_notes: {}`, a union record with **neither** `typeChoice0` nor `typeChoice1`. It is well-typed (both are optional attributes), but the generator's request encoder always sets exactly one branch (`request.rs`). It did not affect s01 (all 3 symcc results replay correctly in cedarpy). In general, a symcc "DOES NOT HOLD" may rest on such an unrealizable request. Before reporting a symcc-only finding, check that the counterexample is realizable: it must replay in cedarpy *and* match the generator's encoding (exactly one `typeChoice` per union). The Python binding's `generate_request` does not return the context, so that check needs the Rust CLI's `authorize` subcommand or a test against `request.rs` behaviour.
+
+## Reconnaissance: iot telemetry tools ignore `site_name` (2026-11-12)
+
+Verified in `servers/iot/main.py` and live (read-only calls, `AOB_READONLY=1`).
+- Registry tools (`asset_detail`, `installed_sensors`, `asset_ids`, `assets`, `find_assets_by_sensors`) filter by `siteid == site_name`.
+- **Telemetry tools** (`measured_sensors`, `history`, `latest_reading`, `stream_extent`, `sensor_coverage`, `sensor_stats`) only check that `site_name` is *a* known site, then read by `asset_id` alone.
+
+Live: `measured_sensors(site_name="NORTH", asset_id="Chiller 6")` returns Chiller 6's 12 sensors, labelled NORTH. `asset_detail` with the same arguments correctly errors. With today's data the leak cannot reach NORTH data, because NORTH's only asset (`AHU2`) has no telemetry. Consequence: a policy that scopes telemetry by `site_name` alone does not confine it to a site. The s02 reference therefore also requires `asset_id` to be in MAIN's asset list, which no generator can derive from its inputs.
+
+wo read tools are site-scoped on the server (`_doc_id` or a `siteid` filter) and upper-case `site_id`.

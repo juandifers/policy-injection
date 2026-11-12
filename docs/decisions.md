@@ -116,3 +116,9 @@ Rejected: the stub's `@mcp_context` annotation. It routes through the generator 
 Two channels. Structure edits (names, types, required, enums) change the schema deterministically and constrain what policies can express. Free text can only act by persuading an LLM policy generator that sees it.
 
 Basis so far: the Step 2 mutation experiment (findings.md) showed descriptions and titles never change the generated schema, while structural fields do. Untested: whether free text measurably moves an LLM generator (Steps 4–5), and whether structure edits move it beyond what the schema change forces.
+
+## 2026-11-12: Combined wo+iot schema for multi-server scenarios
+
+Two generated `namespace AOB` schemas cannot be concatenated (duplicate namespace). `gen_schema.py` target `wo_iot` passes the pinned wo tools followed by the pinned iot tools to the generator in one call. It refuses tool-name collisions (none exist). Output `schema/wo_iot.generated.cedarschema` `c3057c9ed6920ca5131ecb0bdb39241988833a3f1dcfa7fe4a1f6f21591b563d`. Verified to be the exact union: 27 = 15 + 12 actions, each action and common type identical to its single-server form. Regenerating `wo` and `iot` after the refactor reproduced their pinned hashes. Final `wo_iot.cedarschema` = link(generated, trusted), checked by test. GUESS: how AWS AgentCore combines multiple MCP targets is unknown (it may prefix tool names); this is the simplest deterministic combination.
+
+Each scenario folder now has `scenario.yaml` (`schema`, `servers`): exactly the inputs a generator may see.

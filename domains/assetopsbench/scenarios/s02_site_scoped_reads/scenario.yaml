@@ -1,0 +1,3 @@
+# Inputs a generator may see for this scenario. Paths are relative to domains/assetopsbench/.
+schema: schema/wo_iot.cedarschema
+servers: [wo, iot]

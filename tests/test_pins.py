@@ -15,6 +15,7 @@ PINNED = {
     # Generator output, byte-for-byte as cedar-policy-mcp-schema-generator 0.7.0 wrote it.
     "schema/wo.generated.cedarschema": "ca4e73eb1c36f6e04dc10c8607af35a546d3cb9c348b0095db05810dcbf7aae5",
     "schema/iot.generated.cedarschema": "b5defb2c55127b4cfa7352b5b336f0f2e5fda7576db467809581da6eaf85897b",
+    "schema/wo_iot.generated.cedarschema": "c3057c9ed6920ca5131ecb0bdb39241988833a3f1dcfa7fe4a1f6f21591b563d",
 }
 
 
@@ -24,10 +25,11 @@ def test_file_is_pinned(name):
 
 
 @pytest.mark.skipif(shutil.which("cedar") is None, reason="cedar CLI not on PATH")
-def test_final_schema_is_exactly_generated_plus_trusted():
-    """wo.cedarschema must equal link(wo.generated, trusted); nobody edits it by hand."""
+@pytest.mark.parametrize("target", ["wo", "wo_iot"])
+def test_final_schema_is_exactly_generated_plus_trusted(target):
+    """<target>.cedarschema must equal link(<target>.generated, trusted); nobody edits it by hand."""
     s = DOMAIN / "schema"
-    proc = subprocess.run([sys.executable, str(DOMAIN / "scripts" / "link_schema.py"), str(s / "wo.generated.cedarschema"),
-                           str(s / "trusted.cedarschema"), str(s / "wo.cedarschema"), "--check"],
+    proc = subprocess.run([sys.executable, str(DOMAIN / "scripts" / "link_schema.py"), str(s / f"{target}.generated.cedarschema"),
+                           str(s / "trusted.cedarschema"), str(s / f"{target}.cedarschema"), "--check"],
                           capture_output=True, text=True)
     assert proc.returncode == 0, proc.stdout + proc.stderr
