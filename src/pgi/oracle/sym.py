@@ -291,5 +291,7 @@ def parse_counterexample(text: str) -> Counterexample:
     r.expect("entities:")
     uids = r.items(r.uid)
     r.done()
+    # symcc prints entities in arbitrary (hash) order; sort so identical counterexamples compare equal.
+    uids = sorted(uids, key=lambda u: (u["type"], u["id"]))
     entities = [{"uid": u, "attrs": {}, "parents": []} for u in uids if not u["type"].split("::")[-1] == "Action"]
     return Counterexample(request, entities)

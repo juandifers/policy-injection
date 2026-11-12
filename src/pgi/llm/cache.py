@@ -13,6 +13,7 @@ import hashlib
 import json
 import os
 import tempfile
+import threading
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -64,6 +65,7 @@ class CachedLLM:
     def __init__(self, provider: Provider, cache_dir: Path, allow_api: bool = True) -> None:
         self.provider, self.cache_dir, self.allow_api = provider, Path(cache_dir), allow_api
         self.api_calls = 0
+        self._lock = threading.Lock()
 
     def _path(self, h: str) -> Path:
         """Where the entry for one key hash lives."""
@@ -83,7 +85,8 @@ class CachedLLM:
         if not self.allow_api:
             raise CacheMiss(f"no cache entry for {model} sample {sample_index} ({h[:12]}) and API calls are disabled")
         raw = self.provider.call(model, messages, temperature, params)
-        self.api_calls += 1
+        with self._lock:
+            self.api_calls += 1
         entry = {"key": key, "key_hash": h, "provider": self.provider.name,
                  "model_version": self.provider.model_version(raw), "usage": self.provider.usage(raw),
                  "text": self.provider.text(raw), "raw": raw,
