@@ -3,6 +3,36 @@ revision = 5
 requires-python = ">=3.12"
 
 [[package]]
+name = "cedar-policy-mcp-schema-generator"
+version = "0.7.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/15/3f/a247ef3d9c9fae3e1a415cb71fe9735522a2ec83a3ddba4f66a800ce7b2a/cedar_policy_mcp_schema_generator-0.7.0.tar.gz", hash = "sha256:c8764d23fcec8087dc7e6893fce9d6ea8a552f53252628a8153bb7ea747562b4", size = 140610, upload-time = "2026-10-22T15:59:40.771Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b6/90/bdf23dcaa15378cdb7c45a869576adf2571293f38883370d0d6e975cd9fc/cedar_policy_mcp_schema_generator-0.7.0-cp312-cp312-macosx_10_12_x86_64.whl", hash = "sha256:23b0c95c63695e7d08b29f0b0078d4f32ccdf69aa88a2cafb90d2e3c61fec68e", size = 2695296, upload-time = "2026-10-22T15:58:46.72Z" },
+    { url = "https://files.pythonhosted.org/packages/e2/94/a7d1ed33df846ea921a9dc26df640d440a0c60e9ca843414bcb20b20fada/cedar_policy_mcp_schema_generator-0.7.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:e7e5c12f5655fd6bbba97594f4a89bfe477c0deb68b62dddc84f73edbf915f87", size = 2615037, upload-time = "2026-10-22T15:58:48.349Z" },
+    { url = "https://files.pythonhosted.org/packages/a9/77/ff4ea174d86cea1a11c6977bc77c7bcdb5c1d91d3e229463c2e1dea5f125/cedar_policy_mcp_schema_generator-0.7.0-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:bfb5de95412c204fce2b4de7a21394bb0dbf47a389bceebe1a7c33e28ff5b079", size = 2956808, upload-time = "2026-10-22T15:58:50.349Z" },
+    { url = "https://files.pythonhosted.org/packages/8c/43/0e77a2f1e71e89cc17250ffd7dfe81b7e21438b1ab086ec54365cb635fba/cedar_policy_mcp_schema_generator-0.7.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:ebf909028fc25fd028ae714c492e6100b6737f2194784e6b944157891c0195a6", size = 3089071, upload-time = "2026-10-22T15:58:52.243Z" },
+    { url = "https://files.pythonhosted.org/packages/b2/8d/2f20dd9535504dd4c60ceb93ac520c70626eaff1e50423f9ef4377fa38cc/cedar_policy_mcp_schema_generator-0.7.0-cp312-cp312-win_amd64.whl", hash = "sha256:352e3b392aded7029c2cb5242fe117a4393c2db0e515ebe3215d922ada2ff14d", size = 2514228, upload-time = "2026-10-22T15:58:54.008Z" },
+    { url = "https://files.pythonhosted.org/packages/9a/dc/7506cdcd8b6004e9229becbfea8f5762823896565685a2919404e55ed14e/cedar_policy_mcp_schema_generator-0.7.0-cp313-cp313-macosx_10_12_x86_64.whl", hash = "sha256:c4d13e3dc26ddd7701c610268d3c043c42ea32b3befef635269f865807390c26", size = 2695376, upload-time = "2026-10-22T15:58:55.752Z" },
+    { url = "https://files.pythonhosted.org/packages/bf/69/f904b1246e45b5e69d081ddace942c30d2cf4f730adaeffb98bbe8998a90/cedar_policy_mcp_schema_generator-0.7.0-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:eb9e6a4222f7d01453c21ab63ce7f55d9482a59b70a4e4f82c82130660b08fce", size = 2614968, upload-time = "2026-10-22T15:58:57.495Z" },
+    { url = "https://files.pythonhosted.org/packages/72/0f/ad452f9a8417d0d3205f6748c8875764305beb74112458d9e98969ab6443/cedar_policy_mcp_schema_generator-0.7.0-cp313-cp313-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:36f0a65048d2022da77cb25e54e1fd4284854eacc601fb247edded7fd332de36", size = 2957146, upload-time = "2026-10-22T15:58:59.31Z" },
+    { url = "https://files.pythonhosted.org/packages/5c/cf/dd4dd3d8d1effa64ed79bc0891b0db88222b29ca446671223ca5071643f1/cedar_policy_mcp_schema_generator-0.7.0-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:67e1b11a448ee72a250b555c2aa9b8a5eb5822907e7b13cbbc529a214a907025", size = 3088930, upload-time = "2026-10-22T15:59:01.117Z" },
+    { url = "https://files.pythonhosted.org/packages/a4/aa/26b3611a0dc046d177980229a8d42032d491b6c955a97307f28e8c178f1b/cedar_policy_mcp_schema_generator-0.7.0-cp313-cp313-win_amd64.whl", hash = "sha256:ca5983e86dc6ee94c967c0e6b8c243d4f6ae67f170ffed6e70d62f94748917f0", size = 2514357, upload-time = "2026-10-22T15:59:03.07Z" },
+    { url = "https://files.pythonhosted.org/packages/ba/59/3edbc6e0b0be876638acc2b217cb03bd2c0e89520f40b7862fa342749009/cedar_policy_mcp_schema_generator-0.7.0-cp314-cp314-macosx_10_12_x86_64.whl", hash = "sha256:708981287f2283745807e67898c0e335eba50de830793e7642861c6023d02b60", size = 2696852, upload-time = "2026-10-22T15:59:04.824Z" },
+    { url = "https://files.pythonhosted.org/packages/06/c9/5fab6fe32543c8c7207b5f1bcf63c7dd8a359d5b8588e43ae586d73c9f6e/cedar_policy_mcp_schema_generator-0.7.0-cp314-cp314-macosx_11_0_arm64.whl", hash = "sha256:b8fcd303e529934458366add7d8d5f8429717b4f44ad7a3e94112bcbf6420e99", size = 2616468, upload-time = "2026-10-22T15:59:07.17Z" },
+    { url = "https://files.pythonhosted.org/packages/e7/1e/97bc2e2cb4b0813092dd1da43096c337b8fe5e83fffc0d8bf3e2e890bbe7/cedar_policy_mcp_schema_generator-0.7.0-cp314-cp314-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:a474ba2b4a786d0fea6bc79da283292cb876543d00662883a35e24a221354077", size = 2958426, upload-time = "2026-10-22T15:59:08.829Z" },
+    { url = "https://files.pythonhosted.org/packages/d2/2f/dae525739af6ec6022d4a8959905bbe895718aef767bf676ce182c47f53b/cedar_policy_mcp_schema_generator-0.7.0-cp314-cp314-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:cfa26af57c0b9b84838296f300bfc2ccf3651c88b0301376aa728a13ac148f22", size = 3089748, upload-time = "2026-10-22T15:59:10.525Z" },
+    { url = "https://files.pythonhosted.org/packages/d9/7b/6b99a9a7a2a2e64bec25e8a452ecca5fb198ec26fc4b414688a1926123d6/cedar_policy_mcp_schema_generator-0.7.0-cp314-cp314-win_amd64.whl", hash = "sha256:d2d1916dc7fa5c526f096087ad49a22bb18dfc92b7c06db14c3c7af4fbc5a9ac", size = 2515188, upload-time = "2026-10-22T15:59:12.614Z" },
+    { url = "https://files.pythonhosted.org/packages/7c/f6/05e04f1c9277bf0da6d8de27d007dc6c9519316a113e4387bf4ec8da6d91/cedar_policy_mcp_schema_generator-0.7.0-cp314-cp314t-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:aa0ee16699bc061419570c8807b911940551d9f663572c722e429bd018b5307c", size = 2954236, upload-time = "2026-10-22T15:59:14.276Z" },
+    { url = "https://files.pythonhosted.org/packages/19/6b/72464c7a2eec55fc3a765cd6ccae36136800250e21a0bf16e999fc39a8c0/cedar_policy_mcp_schema_generator-0.7.0-cp314-cp314t-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:145f10d0a7b1fe4101e7988f8919268e90523c680290c660a7a28f4bc39bd48a", size = 3086682, upload-time = "2026-10-22T15:59:16.034Z" },
+    { url = "https://files.pythonhosted.org/packages/b9/73/882a0fcdf48d1f637f3897597226b9f677a59c16e38822bf1403b805303f/cedar_policy_mcp_schema_generator-0.7.0-cp315-cp315-macosx_10_12_x86_64.whl", hash = "sha256:fc75c7db12d085de4dd84fcd93236acf061f78aa4e75279a2df62154fe24580d", size = 2696964, upload-time = "2026-10-22T15:59:17.943Z" },
+    { url = "https://files.pythonhosted.org/packages/20/f2/ef6763eadb438ef69205c9e5e5895534fad9afc980dd8bdc958d1eab7bd8/cedar_policy_mcp_schema_generator-0.7.0-cp315-cp315-macosx_11_0_arm64.whl", hash = "sha256:c8376d2361dfd5055afae7b8f8dc0d245c2b5a78aefff34a539e009363d5e7d0", size = 2616908, upload-time = "2026-10-22T15:59:19.952Z" },
+    { url = "https://files.pythonhosted.org/packages/a3/08/2016802c0dc905c7c60594bb9b81844e699218d9051bba184a4c7aff0169/cedar_policy_mcp_schema_generator-0.7.0-cp315-cp315-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:3e0cd6db3d90c3957e50a4601713edd5af532133ed42b9a561bc82e3e898e565", size = 3090155, upload-time = "2026-10-22T15:59:21.964Z" },
+    { url = "https://files.pythonhosted.org/packages/ee/81/6c17d2164a8a45b95e220553e1bcc00b3acef051822e7074dc271b69b1bf/cedar_policy_mcp_schema_generator-0.7.0-cp315-cp315-win_amd64.whl", hash = "sha256:27aab92e8d52807fb3959aa7a53e076453a19f41ecd700168700f2b4728f6625", size = 2515743, upload-time = "2026-10-22T15:59:23.634Z" },
+    { url = "https://files.pythonhosted.org/packages/18/38/2621105c1a353fb3c5f8f6081532dbf3493151a5c0877ed96f2bcef0e819/cedar_policy_mcp_schema_generator-0.7.0-cp315-cp315t-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:aa07c6adb77f42eab2b31aeef4ef8e1b7d6de4fdf316006e77776e396c589220", size = 3087525, upload-time = "2026-10-22T15:59:25.348Z" },
+]
+
+[[package]]
 name = "cedarpy"
 version = "4.12.2"
 source = { registry = "https://pypi.org/simple" }
@@ -69,6 +99,9 @@ dependencies = [
 dev = [
     { name = "pytest" },
 ]
+schemagen = [
+    { name = "cedar-policy-mcp-schema-generator" },
+]
 
 [package.metadata]
 requires-dist = [
@@ -78,6 +111,7 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [{ name = "pytest", specifier = ">=9.2.0" }]
+schemagen = [{ name = "cedar-policy-mcp-schema-generator", specifier = "==0.7.0" }]
 
 [[package]]
 name = "pluggy"

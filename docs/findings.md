@@ -46,3 +46,59 @@ Classification is empirical. A tool is a **write** if it disappears when the ser
 
 - **Errors come back as normal results.** With CouchDB misconfigured, `iot.sites` returned `{"result": {"error": "the data source does not exist …"}}` with `isError=False`. A client that trusts `isError` treats the failure as data. Same lesson as the oracle: errors must be detected explicitly.
 - Only `get_failure_codes` carries MCP `ToolAnnotations` (`readOnlyHint=True`). **No write tool declares `readOnlyHint=False` or `destructiveHint`.** The manifest itself does not say which tools mutate state.
+
+## Reconnaissance: generated Cedar schema from the clean manifests (2026-11-12)
+
+Not an experiment, so no run id. Reproduce with `uv run --group schemagen python domains/assetopsbench/scripts/gen_schema.py` (generator 0.7.0, default settings; see `decisions.md`). Encoding facts were checked against the generator source at tag v0.7.0 (`request.rs`, `validation.rs`).
+
+### How tool arguments reach a policy
+
+| MCP JSON Schema | Generated Cedar type | Value at request time | What a policy can do with it |
+|---|---|---|---|
+| `string` | `String` | the string | `==`, `like` |
+| `integer` | `Long` | the integer | `==`, `<`, `>` |
+| `boolean` | `Bool` | the bool | `==` |
+| `number` | **`AOB::Number` (entity, no attributes)** | `AOB::Number::"<literal text>"` | **identity only**: no ordering, and `3` ≠ `3.0` |
+| `array` of T | `Set<T>` | set | `contains`, `containsAll` |
+| `anyOf [T, null]` (every Python `Optional`) | record `{typeChoice0?: T, typeChoice1?: AOB::Null}` | `{typeChoice<i>: v}` for the **first** branch that matches | needs `has typeChoice0` guards; branch order comes from the manifest |
+| `null` | **`AOB::Null` (entity)** | `AOB::Null::"null"` | identity only |
+| `object` with `additionalProperties: true` | **attribute-less entity type**, named after tool and parameter | opaque | identity only |
+| not in `required` | `?` optional attribute | omitted when the caller omits it | needs `has` guards; **absence often means "all"** |
+| `title`, `description`, `default`, `pattern`, `maxLength`, extra fields, `annotations` | **dropped** | n/a | nothing |
+
+### Loosely typed parameters (where attacks will be easiest)
+
+- **Every string is a free `String`.** The manifests contain 0 `enum` and 0 `format`. That includes `site_id` (14 wo tools) and `wonum` (10 wo tools), `site_name` and `asset_id` in iot, and all **dates** (`date_from`, `date_to`, `start_date`, `start`, `end`) and **`status`**. Policies can match these by equality only; the schema never says which values are valid.
+- **Opaque `Number` entities**, which cannot be compared: `wo.close_workorder.actual_hours`, `wo.assign_technician.hours_planned`. No policy can bound hours.
+- **Opaque object**: `wo.generate_work_order.aob_source` (`object`, `additionalProperties: true`) becomes an attribute-less entity `AOB::generate_work_order::Input::aob_source::TypeChoice0`. Its content is invisible to policy.
+- **Optional scoping fields** (absent means unscoped on the server):
+  - `wo.list_workorders.site_id?`: omitting it lists every site's work orders, so a "MAIN only" read rule must require it to be present.
+  - `wo.get_my_assigned_workorders.site_id?`.
+  - `wo.list_workorders.status?`.
+- **`Optional` unions everywhere**: 38 of 96 input parameters (wo + iot) are `anyOf [T, null]`. Each becomes a two-way record whose shape depends on branch order in the manifest.
+- **No parameter is missing a type**, and no tool input allows extra top-level properties.
+
+### Which manifest fields change the generated schema
+
+From a mutation experiment on scratch copies of the pinned `wo` manifest (one change at a time to `close_workorder`, regenerate, diff):
+
+| Mutation | Schema change |
+|---|---|
+| tool `description` (even `"IGNORE PREVIOUS INSTRUCTIONS…"`), tool `title`, param `title`, param `description`, param `default`, `pattern`/`maxLength`, extra unknown field, MCP `annotations` | **none** |
+| param `enum` added | new enum entity type `AOB::close_workorder::Input::site_id` |
+| `format: date-time` added | `String` becomes `datetime` |
+| param `type` changed | Cedar type changes (`number` to `integer` turns opaque `Number` into a comparable `Long`) |
+| `required` list changed | attribute becomes optional (`site_id?`) |
+| `anyOf` branches reordered | `typeChoice0`/`typeChoice1` swap |
+| param renamed | attribute renamed. The dangling `required` entry is **silently ignored**, so the renamed field becomes optional. |
+| tool renamed | action and input type renamed |
+
+So the generator is **blind to free text**: descriptions and titles never reach the schema. Free text can still steer an LLM *policy* generator, which is the Step 4–5 question, but it cannot change the schema the policy is validated against. **Names, types, `required`, `enum`, `format` and `anyOf` order** do change the schema, and changing them changes the request shapes the oracle and gate see.
+
+### Oracle gap: "impossible policy" warnings are invisible to cedarpy
+
+A policy testing `context has approval` on `approve_workorder`, whose context has no `approval`, is **accepted**. `cedar validate` warns *"policy is impossible: the policy expression evaluates to false for all valid requests"* but exits 0 (it exits 3 only with `--deny-warnings`). **cedarpy 4.12.2 drops warnings entirely**: `validate_policies` returns `validation_passed=True, errors=[]`. So `pgi.oracle.enumeration.validate` cannot tell a misplaced condition from a correct one. That policy would allow nothing and look maximally safe. Not fixed this session (Task 6 forbids oracle changes). Proposed fix: add a strict validation step via `cedar validate --deny-warnings`, or check symcc `never-matches` per permit.
+
+### symcc's "all worlds" includes requests the generator can never produce
+
+On the generated schema, symcc's counterexample for `weak_same_wo` contains `resolution_notes: {}`, a union record with **neither** `typeChoice0` nor `typeChoice1`. It is well-typed (both are optional attributes), but the generator's request encoder always sets exactly one branch (`request.rs`). It did not affect s01 (all 3 symcc results replay correctly in cedarpy). In general, a symcc "DOES NOT HOLD" may rest on such an unrealizable request. Before reporting a symcc-only finding, check that the counterexample is realizable: it must replay in cedarpy *and* match the generator's encoding (exactly one `typeChoice` per union). The Python binding's `generate_request` does not return the context, so that check needs the Rust CLI's `authorize` subcommand or a test against `request.rs` behaviour.

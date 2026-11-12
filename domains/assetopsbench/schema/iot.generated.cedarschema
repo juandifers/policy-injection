@@ -1,0 +1,210 @@
+namespace AOB {
+  type asset_detailInput = {
+    asset_id: String,
+    site_name: String
+  };
+
+  type asset_idsInput = {
+    site_name: String
+  };
+
+  type assetsInput = {
+    assettype?: {
+      typeChoice0?: String,
+      typeChoice1?: AOB::Null
+    },
+    site_name: String
+  };
+
+  type find_assets_by_sensorsInput = {
+    match?: String,
+    sensors: Set<String>,
+    site_name: String,
+    source?: String,
+    substring?: Bool
+  };
+
+  type historyInput = {
+    asset_id: String,
+    cursor?: {
+      typeChoice0?: String,
+      typeChoice1?: AOB::Null
+    },
+    end?: {
+      typeChoice0?: String,
+      typeChoice1?: AOB::Null
+    },
+    limit?: Long,
+    sensors?: {
+      typeChoice0?: Set<String>,
+      typeChoice1?: AOB::Null
+    },
+    site_name: String,
+    start?: {
+      typeChoice0?: String,
+      typeChoice1?: AOB::Null
+    }
+  };
+
+  type installed_sensorsInput = {
+    asset_id: String,
+    site_name: String
+  };
+
+  type latest_readingInput = {
+    asset_id: String,
+    sensor?: {
+      typeChoice0?: String,
+      typeChoice1?: AOB::Null
+    },
+    site_name: String
+  };
+
+  type measured_sensorsInput = {
+    asset_id: String,
+    site_name: String
+  };
+
+  type sensor_coverageInput = {
+    asset_id: String,
+    site_name: String
+  };
+
+  type sensor_statsInput = {
+    asset_id: String,
+    end?: {
+      typeChoice0?: String,
+      typeChoice1?: AOB::Null
+    },
+    sensor?: {
+      typeChoice0?: String,
+      typeChoice1?: AOB::Null
+    },
+    site_name: String,
+    start?: {
+      typeChoice0?: String,
+      typeChoice1?: AOB::Null
+    }
+  };
+
+  type sitesInput = {  };
+
+  type stream_extentInput = {
+    asset_id: String,
+    end?: {
+      typeChoice0?: String,
+      typeChoice1?: AOB::Null
+    },
+    sensor?: {
+      typeChoice0?: String,
+      typeChoice1?: AOB::Null
+    },
+    site_name: String,
+    start?: {
+      typeChoice0?: String,
+      typeChoice1?: AOB::Null
+    }
+  };
+
+  entity McpServer;
+
+  entity Null;
+
+  entity User;
+
+  action "asset_detail" appliesTo {
+    principal: [User],
+    resource: [McpServer],
+    context: {
+      input: asset_detailInput
+    }
+  };
+
+  action "asset_ids" appliesTo {
+    principal: [User],
+    resource: [McpServer],
+    context: {
+      input: asset_idsInput
+    }
+  };
+
+  action "assets" appliesTo {
+    principal: [User],
+    resource: [McpServer],
+    context: {
+      input: assetsInput
+    }
+  };
+
+  action "find_assets_by_sensors" appliesTo {
+    principal: [User],
+    resource: [McpServer],
+    context: {
+      input: find_assets_by_sensorsInput
+    }
+  };
+
+  action "history" appliesTo {
+    principal: [User],
+    resource: [McpServer],
+    context: {
+      input: historyInput
+    }
+  };
+
+  action "installed_sensors" appliesTo {
+    principal: [User],
+    resource: [McpServer],
+    context: {
+      input: installed_sensorsInput
+    }
+  };
+
+  action "latest_reading" appliesTo {
+    principal: [User],
+    resource: [McpServer],
+    context: {
+      input: latest_readingInput
+    }
+  };
+
+  action "measured_sensors" appliesTo {
+    principal: [User],
+    resource: [McpServer],
+    context: {
+      input: measured_sensorsInput
+    }
+  };
+
+  action "sensor_coverage" appliesTo {
+    principal: [User],
+    resource: [McpServer],
+    context: {
+      input: sensor_coverageInput
+    }
+  };
+
+  action "sensor_stats" appliesTo {
+    principal: [User],
+    resource: [McpServer],
+    context: {
+      input: sensor_statsInput
+    }
+  };
+
+  action "sites" appliesTo {
+    principal: [User],
+    resource: [McpServer],
+    context: {
+      input: sitesInput
+    }
+  };
+
+  action "stream_extent" appliesTo {
+    principal: [User],
+    resource: [McpServer],
+    context: {
+      input: stream_extentInput
+    }
+  };
+}

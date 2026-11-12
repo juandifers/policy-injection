@@ -1,0 +1,10 @@
+// Trusted additions, written by us. Nothing here is derived from an MCP manifest.
+// The approval record is supplied by our gate, never by an MCP server.
+//
+// link_schema.py adds each annotated type to the named action's context as an OPTIONAL attribute:
+//   @pgi_action("<namespace>::<action>")  @pgi_context_attribute("<attribute name>")
+namespace PGI {
+  @pgi_action("AOB::close_workorder")
+  @pgi_context_attribute("approval")
+  type Approval = { wonum: String, status: String, approver: AOB::User };
+}

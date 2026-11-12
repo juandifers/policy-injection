@@ -78,16 +78,24 @@ defense: Compiler A (trusted only) + Compiler B (forbid-only) ─→ P_final ⊑
 ## Repo layout
 
 ```
-src/pgi/oracle/         domain-agnostic oracle; no LLM calls; takes file paths only
-  enumeration.py        cedarpy over a listed universe: load_universe, validate, allowed, surplus, expansion
-  sym.py                `cedar symcc implies` per request environment (derived from the schema)
-schema/                 Cedar schemas, passed explicitly (per-run input, not a scenario constant)
-scenarios/<sNN_name>/   reference.cedar, candidate *.cedar, universe.yaml (cases with stable ids)
-tests/test_oracle.py    oracle contract on the toy scenario s01
-docs/                   decisions.md (dated), findings.md (run ids)
+src/pgi/oracle/              domain-agnostic oracle; no LLM calls; takes file paths only
+  enumeration.py             cedarpy over a listed universe: load_universe, validate, allowed, surplus, expansion
+  sym.py                     `cedar symcc implies` per schema-derived environment; parse_counterexample
+domains/<domain>/schema/     pinned clean schema(s), passed explicitly (per-run schemas go in runs/<id>/)
+domains/<domain>/scenarios/<sNN_name>/   reference.cedar, candidate *.cedar, universe.yaml (stable case ids)
+domains/toy/                 hand-written toy schema + s01
+domains/assetopsbench/
+  manifests/                 pinned clean MCP list_tools dumps (hash-pinned; never edit)
+  schema/                    stub.cedarschema (ours) -> *.generated.cedarschema (generator, hash-pinned)
+                             + trusted.cedarschema (ours) -> wo.cedarschema (linked final)
+  scripts/                   aob_mcp.py (runs in $AOB_DIR's venv), gen_schema.py, link_schema.py
+tests/test_oracle.py         oracle contract, parametrized over toy and assetopsbench s01
+tests/test_pins.py           pinned manifests and generated schemas; final == link(generated, trusted)
+docs/                        decisions.md (dated), findings.md (run ids)
 ```
 
 Run tests with `uv run pytest`. Symbolic tests skip unless `cedar` (with `symcc`) is on PATH and `$CVC5` is set.
+AssetOpsBench lives outside the repo at `$AOB_DIR` (default `../AssetOpsBench`, never modified). Generator scripts need `uv run --group schemagen`.
 
 ## Substrates (current choice, may change)
 

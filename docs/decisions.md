@@ -68,3 +68,37 @@ Produced by `aob_mcp.py dump` (MCP SDK `mcp` 1.26.0, `session.list_tools()` agai
 | `domains/assetopsbench/manifests/iot.tools.json` (12 tools) | `50a3c21bbda8663f979ac45d9df69619e37f7d990ca9ed46e596d029656668d4` |
 
 `tests/test_pins.py` fails if either file changes. Mutations in Steps 4–5 are measured against these.
+
+## 2026-11-12: Schema generator: version, source, settings
+
+- Package: PyPI `cedar-policy-mcp-schema-generator==0.7.0`, prebuilt wheel `cp312-cp312-macosx_11_0_arm64`, installed in uv group `schemagen` (not a `pgi` dependency). No Rust installed.
+- Upstream: `cedar-policy/cedar-for-agents`, tag `cedar-policy-mcp-schema-generator-v0.7.0` = commit `31ce92f71599d44e19126141dc14f2bd62f82518` (Python crate 0.7.0, `mcp-tools-sdk` 0.5.0). The installed `cedar_mcp_schema_generator/__init__.py` is byte-identical to the tagged source.
+- Why the wheel and not the Rust CLI: it wraps the same crate version, needs no system install, and exposes the same generator options except `inline_empty_records` (off by default in the CLI).
+- Settings used (all passed explicitly in `scripts/gen_schema.py`), equal to the generator defaults:
+
+  | Setting | Value |
+  |---|---|
+  | includeOutputs | false |
+  | objectsAsRecords | false |
+  | eraseAnnotations | true (CLI equivalent: `keep_annotations=false`) |
+  | flattenNamespaces | false |
+  | numbersAsDecimal | false |
+  | deduplicateEntityTypes | false |
+
+- **GUESS: AWS AgentCore's generator settings are unknown; defaults used.** `numbersAsDecimal` and `objectsAsRecords` change how loosely parameters are typed, so findings about `Number` and object parameters depend on this guess.
+- Input: the generator rejects the pinned `{"tools": [...]}` shape (it parses an object without `result` as a single tool). `gen_schema.py` passes `{"result": <pinned file>}` in memory; the pinned file is untouched.
+- Output: `schema/wo.generated.cedarschema` `ca4e73eb1c36f6e04dc10c8607af35a546d3cb9c348b0095db05810dcbf7aae5`, `schema/iot.generated.cedarschema` `b5defb2c55127b4cfa7352b5b336f0f2e5fda7576db467809581da6eaf85897b`. A second run reproduced both. Never edited by hand.
+- Stub: `schema/stub.cedarschema`, namespace `AOB`, `@mcp_principal("User") entity User`, `@mcp_resource("McpServer") entity McpServer`. Both servers use the same stub and namespace. Merging wo and iot into one schema is deferred.
+
+## 2026-11-12: Trusted approval field added by linking, not by editing
+
+What Cedar 4.14.1 offers, tested: `cedar validate` takes exactly one `--schema`; there is no merge or link subcommand. A namespace may appear only once per file (`duplicate namespace id: AOB`), so a second `namespace AOB {}` block cannot extend the generated one, and an action cannot be re-declared. Types in a **separate namespace** concatenate fine and can reference `AOB::User`. But no Cedar mechanism lets one file add a context attribute to an action declared in another file.
+
+Chosen approach:
+- `schema/trusted.cedarschema` (ours, about 10 lines) declares `PGI::Approval = {wonum, status, approver: AOB::User}`, annotated `@pgi_action("AOB::close_workorder") @pgi_context_attribute("approval")`.
+- `scripts/link_schema.py` translates both files to JSON with `cedar translate-schema`, adds `approval?: PGI::Approval` to that one action's inline context, merges namespaces, and translates back. It fails on any namespace collision, missing action, non-inline context, or pre-existing attribute.
+- Output `schema/wo.cedarschema` differs from the generated file by exactly one context line plus the `PGI` namespace. `cedar validate` accepts it.
+
+Why: the generated file stays byte-identical (hash-pinned) and comparable to AWS output. Everything ours is in one file, in its own namespace. The transform uses Cedar's own translator, not a parser of ours. `tests/test_pins.py` re-links and fails if `wo.cedarschema` differs from `link(generated, trusted)`.
+
+Rejected: the stub's `@mcp_context` annotation. It routes through the generator (changing its output), adds the field to every action, and makes it required.

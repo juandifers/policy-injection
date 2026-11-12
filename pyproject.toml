@@ -19,3 +19,6 @@ build-backend = "uv_build"
 dev = [
     "pytest>=9.2.0",
 ]
+schemagen = [
+    "cedar-policy-mcp-schema-generator==0.7.0",
+]
