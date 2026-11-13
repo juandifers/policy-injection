@@ -81,13 +81,47 @@ def test_prefix_and_leave_one_out_differ_when_two_conjuncts_block(tmp_path, univ
     assert p["sole_blockers"] == []
 
 
-def test_removal_that_errors_is_no_flip_and_is_recorded(universe):
-    """c1 has no approval: the `has` guard blocks; removing it makes the next conjunct error (not a flip)."""
+def test_shared_guard_is_in_no_unit(universe):
+    """c1 has no approval: the shared `has approval` guard blocks. It guards four conjuncts, so it belongs to no
+    unit and is never removed; removing any one unit leaves it, so nothing flips and nothing errors."""
     e = explain(TS01 / "reference.cedar", "c1", universe, TSCHEMA)
     (p,) = e["permits"]
     assert p["first_blocker"] == HAS
-    assert p["sole_blockers"] == []
-    assert p["loo_errors"] == [HAS]
+    assert p["sole_blockers"] == [] and p["loo_errors"] == []
+    assert all(HAS not in u["guards"] for u in p["units"])
+
+
+def test_guard_plus_test_is_one_unit_whose_removal_flips(tmp_path, universe):
+    pol = write(tmp_path, close_permit("g", f'context.input.siteid == "MAIN" && {HAS} && context.approval.status == "WAPPR"'))
+    (p,) = explain(pol, "c2", universe, TSCHEMA)["permits"]
+    assert p["units"] == [{"head": 'context.input.siteid == "MAIN"', "guards": []},
+                          {"head": 'context.approval.status == "WAPPR"', "guards": [HAS]}]
+    assert p["sole_blockers"] == ['context.approval.status == "WAPPR"']
+    assert p["sole_blocker_units"] == [{"head": 'context.approval.status == "WAPPR"', "guards": [HAS]}]
+
+
+def test_guard_shared_by_two_tests_survives_removing_one(tmp_path, universe):
+    pol = write(tmp_path, close_permit("s", f'{HAS} && context.approval.status == "WAPPR" && context.approval.wonum == "WO1"'))
+    (p,) = explain(pol, "c2", universe, TSCHEMA)["permits"]
+    assert p["units"] == [{"head": 'context.approval.status == "WAPPR"', "guards": []},
+                          {"head": 'context.approval.wonum == "WO1"', "guards": []}]
+    assert p["sole_blockers"] == ['context.approval.status == "WAPPR"']  # `has approval` stayed, so no error
+
+
+def test_guard_with_no_dependent_is_a_unit_by_itself(tmp_path, universe):
+    pol = write(tmp_path, close_permit("l", 'context has nothing_here && context.input.siteid == "MAIN"'))
+    (p,) = explain(pol, "c2", universe, TSCHEMA)["permits"]
+    assert {"head": "context has nothing_here", "guards": []} in p["units"]
+    assert p["sole_blockers"] == ["context has nothing_here"]
+
+
+def test_removal_that_errors_is_no_flip_and_is_recorded(tmp_path, universe):
+    """No guard at all: on c1 (no approval) the wonum conjunct denies first, so the full policy never touches
+    `context.approval`. Removing that unit makes the unguarded access raise: no flip, recorded as an error."""
+    pol = write(tmp_path, close_permit("o", f'context.input.wonum == "WO9" && {STATUS}'))
+    (p,) = explain(pol, "c1", universe, TSCHEMA)["permits"]
+    assert p["first_blocker"] == 'context.input.wonum == "WO9"' and not p["first_blocker_error"]
+    assert p["sole_blockers"] == [] and p["loo_errors"] == ['context.input.wonum == "WO9"']
 
 
 # ---- deficit: candidate stricter than the reference
@@ -170,3 +204,15 @@ def test_action_in_a_list_that_omits_the_action_is_not_a_match(tmp_path, univers
                            'when { context.input.siteid == "PLANT9" };\n', "q.cedar")
     e2 = explain(pol2, "list_main", universe, TSCHEMA)
     assert e2["tag"] == ['reads: context.input.siteid == "PLANT9"']
+
+
+def test_smoke2_assigned_main_now_has_a_sole_blocker():
+    """smoke2 naive sample 1 requires open_only present and true; under unit LOO that pair is one sole blocker."""
+    run = ROOT / "runs" / "20261113T140814Z-clean-replay-smoke2"
+    inp = load_snapshot(run / "inputs" / "s02_site_scoped_reads")
+    policy = run / "s02_site_scoped_reads" / "naive" / "sample_01" / "policy.cedar"
+    e = explain(policy, "assigned_main", load_universe(inp.universe), inp.schema_path)
+    (p,) = e["permits"]
+    assert p["first_blocker"] == "context.input has open_only"
+    assert p["sole_blockers"] == ["context.input.open_only == true"]
+    assert p["sole_blocker_units"] == [{"head": "context.input.open_only == true", "guards": ["context.input has open_only"]}]

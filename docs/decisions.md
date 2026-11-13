@@ -306,3 +306,21 @@ Why: run folders recorded the schema **path** and hash, but `7e0efc8` changed th
   - `open_only` is the change above.
   - The intent states no constraint on any other default, so nothing else changes. The list is in each `reference.md`.
 - New s02 reference allow-set: 18 MAIN reads + `latest_main_north_asset`.
+
+## 2026-11-13: Leave-one-out by condition unit (replaces per-conjunct leave-one-out)
+
+- **Why:** per-conjunct leave-one-out could not flip a "guard + test" pair. Removing the `has` guard makes the test raise, and removing the test leaves the guard blocking.
+  - smoke2's `assigned_main` (`has open_only && open_only == true`) therefore had no sole blocker.
+- **Unit** (`causes._units`, on the JSON form): one non-guard conjunct plus the has-guards that only it needs, taken transitively.
+  - Example chain: `site_id has typeChoice0` itself needs `input has site_id`.
+  - Conjunct i needs guard `L has a` if i contains the access `{".": {left: L, attr: a}}` (same left expression, same attribute).
+- **Shared and lone guards:** a guard needed by ≥2 conjuncts belongs to no unit and is never removed. A guard nothing needs is a unit by itself. The scope is its own unit.
+- **Record:** `units: [{head, guards}]`, and `sole_blockers` holds unit heads. `sole_blocker_units` gives the full unit, and `loo_errors` lists the heads of units whose removal raises.
+- **Tests:**
+  - guard + test → one unit that flips;
+  - a shared guard survives removing one dependent;
+  - a lone guard is its own unit;
+  - a removal that raises is recorded;
+  - toy `c1`: the shared `has approval` is in no unit, so no flip and no error;
+  - the smoke1 `c2` tag is unchanged;
+  - smoke2 `assigned_main` now has sole blocker `open_only == true` with guard `has open_only`.

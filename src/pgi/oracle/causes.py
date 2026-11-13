@@ -21,8 +21,9 @@ Method, per denied request:
      variants whose evaluation raised (Cedar skips an erroring policy; we never treat that as a deny).
   6. first_blocker: the first conjunct whose prefix is not satisfied (prefixes keep `has` guards
      short-circuiting). If that prefix raised, the tag is "unexplained: error".
-     sole_blockers: conjuncts whose removal alone flips the request to allowed. A removal that raises
-     counts as no flip and is listed in loo_errors.
+     sole_blockers: condition units whose removal alone flips the request to allowed (see `_units`: a
+     non-guard conjunct plus the has-guards only it needs). A removal that raises counts as no flip and is
+     listed in loo_errors. Unlike the prefix scan, this does not depend on the order the conditions were written.
 """
 
 from __future__ import annotations
@@ -93,6 +94,56 @@ def _conjuncts(pol: dict) -> list[dict]:
         if c["kind"] == "unless":
             out.append(("cond", {"!": {"arg": c["body"]}}))
     return out
+
+
+def _key(e: dict) -> str:
+    return json.dumps(e, sort_keys=True)
+
+
+def _accesses(node) -> set[tuple[str, str]]:
+    """Every attribute access (left expression, attr) in an expression: `{".": {left, attr}}` nodes."""
+    out = set()
+    if isinstance(node, dict):
+        if "." in node and isinstance(node["."], dict):
+            out.add((_key(node["."]["left"]), node["."]["attr"]))
+        for v in node.values():
+            out |= _accesses(v)
+    elif isinstance(node, list):
+        for v in node:
+            out |= _accesses(v)
+    return out
+
+
+def _units(parts: list[tuple[str, dict]]) -> list[list[int]]:
+    """Condition units: each non-guard conjunct with the has-guards only it needs (transitively).
+
+    A guard is a conjunct `L has a`; conjunct i needs it if i accesses `L.a` anywhere (matched on the JSON
+    form: same left expression, same attribute). A guard needed by several non-guard conjuncts is in no unit
+    (it stays when any one is removed). A guard nothing needs is a unit by itself. The scope is its own unit.
+    """
+    guard = {i: (_key(e["has"]["left"]), e["has"]["attr"]) for i, (k, e) in enumerate(parts)
+             if k == "cond" and "has" in e}
+    needs = {i: {g for g, gk in guard.items() if g != i and gk in _accesses(e)}
+             for i, (k, e) in enumerate(parts) if k == "cond"}
+    heads = [i for i in range(len(parts)) if i not in guard]
+    req = {}
+    for i in heads:
+        seen, todo = set(), list(needs.get(i, ()))
+        while todo:
+            g = todo.pop()
+            if g not in seen:
+                seen.add(g)
+                todo += needs.get(g, ())
+        req[i] = seen
+    dependents = {g: {i for i in heads if g in req[i]} for g in guard}
+    units = []
+    for i in range(len(parts)):
+        if i in guard:
+            if not dependents[i]:
+                units.append([i])
+        else:
+            units.append(sorted({i} | {g for g in req[i] if dependents[g] == {i}}))
+    return units
 
 
 def _variant(action_scope: dict, parts: list[tuple[str, dict]], vid: str) -> dict:
@@ -174,17 +225,18 @@ def explain(policy: Path, case_id: str, universe: Universe, schema: Path) -> dic
         parts = _conjuncts(p)
         if p["effect"] == "forbid":
             static[f"f{k}"] = _variant(act_scope, parts, f"f{k}")
-            plan.append(("forbid", pid, parts))
+            plan.append(("forbid", pid, parts, None))
             continue
         for j in range(len(parts) + 1):
             static[f"p{k}:{j}"] = _variant(act_scope, parts[:j], f"p{k}:{j}")
-        for i in range(len(parts)):
-            static[f"l{k}:{i}"] = _variant(act_scope, parts[:i] + parts[i + 1:], f"l{k}:{i}")
-        plan.append(("permit", pid, parts))
+        units = _units(parts)
+        for u, members in enumerate(units):
+            static[f"l{k}:{u}"] = _variant(act_scope, [x for i, x in enumerate(parts) if i not in members], f"l{k}:{u}")
+        plan.append(("permit", pid, parts, units))
     sat, err = _evaluate(static, request, universe.entities, schema) if static else (set(), set())
 
     out = {"case": case_id, "action": f'{action["type"]}::{json.dumps(action["id"])}', "forbids": [], "permits": []}
-    for k, (effect, pid, parts) in enumerate(plan):
+    for k, (effect, pid, parts, units) in enumerate(plan):
         if effect == "forbid":
             fired = f"f{k}" in sat
             out["forbids"].append({"id": pid, "fired": fired,
@@ -192,18 +244,25 @@ def explain(policy: Path, case_id: str, universe: Universe, schema: Path) -> dic
             continue
         texts = _texts(parts) if parts else []
         n = len(parts)
-        row = {"id": pid, "conjuncts": texts, "allows": f"p{k}:{n}" in sat, "first_blocker": None,
-               "first_blocker_index": None, "first_blocker_error": False, "sole_blockers": [], "loo_errors": []}
+        is_guard = lambda i: parts[i][0] == "cond" and "has" in parts[i][1]
+        unit_rows = []
+        for m in units:  # a unit is one head plus its private guards, or one lone guard
+            head = next((i for i in m if not is_guard(i)), m[0])
+            unit_rows.append({"head": texts[head], "guards": [texts[i] for i in m if i != head]})
+        row = {"id": pid, "conjuncts": texts, "units": unit_rows, "allows": f"p{k}:{n}" in sat, "first_blocker": None,
+               "first_blocker_index": None, "first_blocker_error": False, "sole_blockers": [], "sole_blocker_units": [],
+               "loo_errors": []}
         if not row["allows"]:
             j = next(j for j in range(n + 1) if f"p{k}:{j}" not in sat)
             row["first_blocker_index"] = j
             row["first_blocker"] = texts[j - 1] if j > 0 else None
             row["first_blocker_error"] = f"p{k}:{j}" in err
-            for i in range(n):
-                if f"l{k}:{i}" in sat:
-                    row["sole_blockers"].append(texts[i])
-                elif f"l{k}:{i}" in err:
-                    row["loo_errors"].append(texts[i])
+            for u, ur in enumerate(unit_rows):
+                if f"l{k}:{u}" in sat:
+                    row["sole_blockers"].append(ur["head"])
+                    row["sole_blocker_units"].append(ur)
+                elif f"l{k}:{u}" in err:
+                    row["loo_errors"].append(ur["head"])
         out["permits"].append(row)
 
     fired = [f["id"] for f in out["forbids"] if f["fired"]]
