@@ -306,3 +306,50 @@ def test_markdown_lists_cause_tags_per_scenario():
     rows = [_valid_row([]) | {"cause_tags": {"surplus": {}, "deficit": {"d1": {"tag": ["p: x == 1"]}}}}]
     md = markdown({"run_id": "r", "model": "m", "n": 1}, {"s01/naive": summarize("m", rows)})
     assert "### s01: cause tags" in md and "| deficit | d1 | naive | `p: x == 1` | 1 |" in md
+
+
+# ---- atomic run folders
+from pgi.runs.clean import atomic_run_dir  # noqa: E402
+
+
+def test_successful_run_is_renamed_into_place(tmp_path):
+    with atomic_run_dir(tmp_path, "r1") as d:
+        assert d == tmp_path / ".tmp-r1"
+        (d / "x.json").write_text("{}")
+    assert (tmp_path / "r1" / "x.json").is_file() and not (tmp_path / ".tmp-r1").exists()
+    assert not (tmp_path / "r1" / "FAILED").exists()
+
+
+def test_injected_failure_leaves_tmp_folder_with_traceback_and_no_final_folder(tmp_path):
+    inp = load_scenario_inputs(S01)
+
+    class Boom(Fake):
+        def call(self, *a, **k):
+            raise RuntimeError("injected failure")
+
+    with pytest.raises(RuntimeError, match="injected failure"):
+        with atomic_run_dir(tmp_path, "r2") as d:
+            run_naive(CachedLLM(Fake(), tmp_path / "cache"), inp, naive.NaiveConfig("claude-haiku-5-5"), 0, d / "s" / "n0")
+            run_naive(CachedLLM(Boom(), tmp_path / "cache2"), inp, naive.NaiveConfig("claude-haiku-5-5"), 1, d / "s" / "n1")
+    assert not (tmp_path / "r2").exists()
+    failed = (tmp_path / ".tmp-r2" / "FAILED").read_text()
+    assert "RuntimeError: injected failure" in failed and "Traceback" in failed
+    assert (tmp_path / ".tmp-r2" / "s" / "n0" / "oracle.json").is_file()  # partial work kept for inspection
+
+
+def test_atomic_run_dir_refuses_an_existing_run(tmp_path):
+    (tmp_path / "r3").mkdir()
+    with pytest.raises(FileExistsError):
+        with atomic_run_dir(tmp_path, "r3"):
+            pass
+
+
+def test_paths_inside_the_run_folder_are_recorded_relative_to_it(tmp_path):
+    from pgi.runs import clean
+    inp = load_scenario_inputs(S01)
+    with atomic_run_dir(tmp_path, "r4") as d:
+        run_naive(CachedLLM(Fake(), tmp_path / "cache"), inp, naive.NaiveConfig("claude-haiku-5-5"), 0, d / "s" / "n0")
+    text = (tmp_path / "r4" / "s" / "n0" / "oracle.json").read_text()
+    assert ".tmp-r4" not in text and str(tmp_path) not in text
+    assert json.loads(text)["validation"]["policy"] == "s/n0/policy.cedar"
+    assert clean._RUN_DIR is None  # reset after the run

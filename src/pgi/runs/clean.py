@@ -14,12 +14,15 @@ Samples within a scenario run sequentially (the prompt cache must be readable); 
 from __future__ import annotations
 
 import argparse
+import contextlib
 import importlib.metadata as md
 import json
 import math
+import os
 import shutil
 import subprocess
 import threading
+import traceback
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from pathlib import Path
@@ -40,12 +43,43 @@ DEFAULT_SCENARIOS = [ROOT / "domains/assetopsbench/scenarios" / s
 GENERATORS = ("naive", "sondera")
 
 
+_RUN_DIR: Path | None = None  # set by atomic_run_dir: paths under it are recorded relative to it
+
+
+@contextlib.contextmanager
+def atomic_run_dir(runs_root: Path, run_id: str):
+    """Yield runs_root/.tmp-<run_id>/; rename it to runs_root/<run_id>/ only if the block succeeds.
+
+    On an exception the tmp folder stays, with a FAILED file holding the traceback, and the exception
+    propagates. Paths inside the folder are written relative to it (see _dump), so the rename keeps them valid.
+    """
+    global _RUN_DIR
+    final, tmp = Path(runs_root) / run_id, Path(runs_root) / f".tmp-{run_id}"
+    if final.exists():
+        raise FileExistsError(f"{final} exists; runs are never overwritten")
+    if _RUN_DIR is not None:
+        raise RuntimeError(f"another run is open in this process: {_RUN_DIR}")
+    tmp.mkdir(parents=True, exist_ok=False)
+    _RUN_DIR = tmp
+    try:
+        yield tmp
+    except BaseException:
+        (tmp / "FAILED").write_text(traceback.format_exc())
+        raise
+    finally:
+        _RUN_DIR = None
+    os.rename(tmp, final)
+
+
 def _dump(path: Path, obj) -> None:
-    """Write JSON, creating parents; refuse to overwrite."""
+    """Write JSON, creating parents; refuse to overwrite. Paths under the open run folder become relative."""
     path.parent.mkdir(parents=True, exist_ok=True)
     if path.exists():
         raise FileExistsError(f"{path} exists; runs are never overwritten")
-    path.write_text(json.dumps(obj, indent=1, ensure_ascii=False, default=str) + "\n")
+    text = json.dumps(obj, indent=1, ensure_ascii=False, default=str)
+    if _RUN_DIR is not None:
+        text = text.replace(str(_RUN_DIR) + "/", "")
+    path.write_text(text + "\n")
 
 
 def _call_record(c: Completion) -> dict:
@@ -344,57 +378,56 @@ def main() -> None:
     from pgi.llm.anthropic_provider import AnthropicProvider
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     run_id = "-".join(x for x in (stamp, "clean", args.label) if x)
-    out = ROOT / "runs" / run_id
-    out.mkdir(parents=True, exist_ok=False)
-    llm = CachedLLM(AnthropicProvider() if not args.replay else _NoProvider(), args.cache, allow_api=not args.replay)
-    ncfg = naive.NaiveConfig(args.model, include_descriptions=not args.no_descriptions)
-    scfg = critic.SonderaConfig(args.model, include_descriptions=not args.no_descriptions,
-                                judge_sees_manifests=args.judge_sees_manifests)
-    inputs = _inputs(args, src, out / "inputs")
-    config = {"run_id": run_id, "created": stamp, "model": args.model, "n": args.n,
-              "replay": bool(args.replay), "replay_of": args.replay.name if args.replay else None,
-              "inputs": "inputs/<scenario>/ (snapshot; generation and scoring read only from it)"
-                        + (f"; rebuilt from git {args.inputs_from_git}" if args.inputs_from_git else ""),
-              "generators": {"naive": ncfg.as_dict(), "sondera": scfg.as_dict()},
-              "generators_run": args.generators,
-              "request": {"sampling": "not sent (API default)", "thinking": {"type": "adaptive"},
-                          "output_config": {"effort": ncfg.effort}, "max_tokens": ncfg.max_tokens,
-                          "fallbacks": "none", "prompt_cache": "ephemeral breakpoint on last static system block"},
-              "scenarios": {i.name: {"schema": str(i.schema_path.relative_to(out)), "servers": list(i.servers),
-                                     "hashes": i.hashes} for i in inputs},
-              "versions": _tool_versions()}
-    _dump(out / "config.json", config)
-    for inp in inputs:  # the static prefix, stored once per scenario
-        _dump(out / inp.name / "prompt_static.json", naive.build_request(inp, ncfg)[1]["system"])
+    with atomic_run_dir(ROOT / "runs", run_id) as out:
+        llm = CachedLLM(AnthropicProvider() if not args.replay else _NoProvider(), args.cache, allow_api=not args.replay)
+        ncfg = naive.NaiveConfig(args.model, include_descriptions=not args.no_descriptions)
+        scfg = critic.SonderaConfig(args.model, include_descriptions=not args.no_descriptions,
+                                    judge_sees_manifests=args.judge_sees_manifests)
+        inputs = _inputs(args, src, out / "inputs")
+        config = {"run_id": run_id, "created": stamp, "model": args.model, "n": args.n,
+                  "replay": bool(args.replay), "replay_of": args.replay.name if args.replay else None,
+                  "inputs": "inputs/<scenario>/ (snapshot; generation and scoring read only from it)"
+                            + (f"; rebuilt from git {args.inputs_from_git}" if args.inputs_from_git else ""),
+                  "generators": {"naive": ncfg.as_dict(), "sondera": scfg.as_dict()},
+                  "generators_run": args.generators,
+                  "request": {"sampling": "not sent (API default)", "thinking": {"type": "adaptive"},
+                              "output_config": {"effort": ncfg.effort}, "max_tokens": ncfg.max_tokens,
+                              "fallbacks": "none", "prompt_cache": "ephemeral breakpoint on last static system block"},
+                  "scenarios": {i.name: {"schema": str(i.schema_path.relative_to(out)), "servers": list(i.servers),
+                                         "hashes": i.hashes} for i in inputs},
+                  "versions": _tool_versions()}
+        _dump(out / "config.json", config)
+        for inp in inputs:  # the static prefix, stored once per scenario
+            _dump(out / inp.name / "prompt_static.json", naive.build_request(inp, ncfg)[1]["system"])
 
-    lock = threading.Lock()
-    results: dict[str, list[dict]] = {}
+        lock = threading.Lock()
+        results: dict[str, list[dict]] = {}
 
-    def scenario_job(inp: ScenarioInputs) -> None:
-        for gen in args.generators:
-            rows = []
-            for i in range(args.n):
-                d = out / inp.name / gen / f"sample_{i:02d}"
-                row = run_naive(llm, inp, ncfg, i, d) if gen == "naive" else run_sondera(llm, inp, scfg, i, d)
-                rows.append(row)
+        def scenario_job(inp: ScenarioInputs) -> None:
+            for gen in args.generators:
+                rows = []
+                for i in range(args.n):
+                    d = out / inp.name / gen / f"sample_{i:02d}"
+                    row = run_naive(llm, inp, ncfg, i, d) if gen == "naive" else run_sondera(llm, inp, scfg, i, d)
+                    rows.append(row)
+                    with lock:
+                        print(f"{inp.name} {gen} sample {i}: valid={row['oracle']['valid']} "
+                              f"surplus={row['oracle'].get('enumeration', {}).get('surplus')} "
+                              f"deficit={row['oracle'].get('enumeration', {}).get('deficit')}", flush=True)
                 with lock:
-                    print(f"{inp.name} {gen} sample {i}: valid={row['oracle']['valid']} "
-                          f"surplus={row['oracle'].get('enumeration', {}).get('surplus')} "
-                          f"deficit={row['oracle'].get('enumeration', {}).get('deficit')}", flush=True)
-            with lock:
-                results[f"{inp.name}/{gen}"] = rows
+                    results[f"{inp.name}/{gen}"] = rows
 
-    with ThreadPoolExecutor(max_workers=len(inputs)) as pool:
-        for f in [pool.submit(scenario_job, inp) for inp in inputs]:
-            f.result()
-    cases = {}
-    for inp in inputs:
-        universe = load_universe(inp.universe)
-        cases[inp.name] = (list(universe.requests), sorted(allowed(inp.reference, universe, inp.schema_path)))
-    summary = {k: summarize(args.model, results[k], *cases[k.split("/")[0]]) for k in sorted(results)}
-    _dump(out / "summary.json", summary)
-    (out / "summary.md").write_text(markdown(config, summary))
-    print(f"\nwrote {out}\napi calls this run: {llm.api_calls}")
+        with ThreadPoolExecutor(max_workers=len(inputs)) as pool:
+            for f in [pool.submit(scenario_job, inp) for inp in inputs]:
+                f.result()
+        cases = {}
+        for inp in inputs:
+            universe = load_universe(inp.universe)
+            cases[inp.name] = (list(universe.requests), sorted(allowed(inp.reference, universe, inp.schema_path)))
+        summary = {k: summarize(args.model, results[k], *cases[k.split("/")[0]]) for k in sorted(results)}
+        _dump(out / "summary.json", summary)
+        (out / "summary.md").write_text(markdown(config, summary))
+    print(f"\nwrote {ROOT / 'runs' / run_id}\napi calls this run: {llm.api_calls}")
 
 
 def _inputs(args, src: dict | None, dest: Path) -> list[ScenarioInputs]:

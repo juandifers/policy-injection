@@ -14,3 +14,6 @@ cache/
 
 .env
 .env*
+
+# Run folders in progress or failed (renamed to runs/<id>/ only on success)
+runs/.tmp-*/

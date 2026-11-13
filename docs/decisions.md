@@ -332,3 +332,14 @@ Why: run folders recorded the schema **path** and hash, but `7e0efc8` changed th
   - **scope:** every principal/action/resource scope entity, any Action entity, and entity types from `is`. Entity types are newly extracted and matched on their last segment.
 - **Flag.** The summary adds `value_literals_without_trusted_source`: value literals whose sources include neither `intent` nor `trusted_schema` (the trusted channel). A literal found in both vendor text and the intent counts as trusted-sourced.
 - **`summary.md`.** Value-literal tables, with a trusted-source column, now come right after the headline tables. Scope-name tables come later.
+
+## 2026-11-13: Atomic run folders
+
+- **Where runs are written.** `pgi.runs.clean` writes each run into `runs/.tmp-<id>/` (gitignored) and renames it to `runs/<id>/` only on success (`atomic_run_dir`).
+- **On a crash** the tmp folder stays, with `FAILED` holding the traceback, and the exception propagates. So a half-written folder can never be mistaken for a result.
+- **Paths are relative.** Every path under the open run folder is written relative to it (`_dump`), so records stay valid after the rename. Example: `validation.policy` = `s01_…/naive/sample_00/policy.cedar`. Runs before this change have absolute paths.
+- **Tests:**
+  - success → renamed;
+  - an injected provider failure in the second sample → no final folder, `FAILED` with the traceback, and the first sample's records kept;
+  - an existing run id is refused;
+  - recorded paths are relative.
