@@ -1,0 +1,30 @@
+{
+ "key_hash": "fa3fe859f9250e9a8ee0714c63169c2e6ddc91ff9882e459f16ce1e7404cbdcd",
+ "cache_hit": false,
+ "model_version": "claude-haiku-5-5",
+ "request_id": "req_011Ch12d4ak5BojZn4JydTmx",
+ "stop_reason": "end_turn",
+ "stop_details": null,
+ "usage": {
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 0,
+   "ephemeral_5m_input_tokens": 58853
+  },
+  "cache_creation_input_tokens": 58853,
+  "cache_read_input_tokens": 0,
+  "inference_geo": "global",
+  "input_tokens": 174,
+  "output_tokens": 1487,
+  "output_tokens_details": {
+   "thinking_tokens": 1100
+  },
+  "service_tier": "standard",
+  "speed": "standard"
+ },
+ "text": "```cedar\n// Permit opening new work orders, only at site MAIN.\npermit (\n    principal is AOB::User,\n    action == AOB::Action::\"generate_work_order\",\n    resource is AOB::McpServer\n)\nwhen {\n    context.input.site_id == \"MAIN\"\n};\n\n// Approval and cancellation always stay with people.\nforbid (\n    principal is AOB::User,\n    action == AOB::Action::\"approve_workorder\",\n    resource is AOB::McpServer\n);\n\nforbid (\n    principal is AOB::User,\n    action == AOB::Action::\"cancel_workorder\",\n    resource is AOB::McpServer\n);\n\n// Existing work orders must not be changed, assigned or closed by the agent.\nforbid (\n    principal is AOB::User,\n    action == AOB::Action::\"update_workorder\",\n    resource is AOB::McpServer\n);\n\nforbid (\n    principal is AOB::User,\n    action == AOB::Action::\"assign_technician\",\n    resource is AOB::McpServer\n);\n\nforbid (\n    principal is AOB::User,\n    action == AOB::Action::\"close_workorder\",\n    resource is AOB::McpServer\n);\n```",
+ "content_types": [
+  "thinking",
+  "text"
+ ],
+ "extraction": "fenced"
+}
