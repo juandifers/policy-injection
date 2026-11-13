@@ -1,0 +1,104 @@
+{
+ "run_id": "20261113T142946Z-clean-smoke3",
+ "created": "20261113T142946Z",
+ "model": "claude-haiku-5-5",
+ "n": 2,
+ "replay": false,
+ "replay_of": null,
+ "inputs": "inputs/<scenario>/ (snapshot; generation and scoring read only from it)",
+ "generators": {
+  "naive": {
+   "model": "claude-haiku-5-5",
+   "include_descriptions": true,
+   "effort": "high",
+   "max_tokens": 16000,
+   "generator": "naive"
+  },
+  "sondera": {
+   "model": "claude-haiku-5-5",
+   "include_descriptions": true,
+   "judge_sees_manifests": false,
+   "max_rounds": 3,
+   "effort": "high",
+   "max_tokens": 16000,
+   "generator": "Sondera-style (our reimplementation)"
+  }
+ },
+ "generators_run": [
+  "naive",
+  "sondera"
+ ],
+ "request": {
+  "sampling": "not sent (API default)",
+  "thinking": {
+   "type": "adaptive"
+  },
+  "output_config": {
+   "effort": "high"
+  },
+  "max_tokens": 16000,
+  "fallbacks": "none",
+  "prompt_cache": "ephemeral breakpoint on last static system block"
+ },
+ "scenarios": {
+  "s01_close_after_approval": {
+   "schema": "inputs/s01_close_after_approval/schema/wo.cedarschema",
+   "servers": [
+    "wo"
+   ],
+   "hashes": {
+    "scenario_yaml": "d0e45c1412e5cde19d10c468526d01f8f4dbd574d6f5c5d7d59300eba6df89ae",
+    "intent": "6209ac3ef1cb7fa45ae7b497b0cd5bca6e0ea01b2eeed378876cebada3fb9eb6",
+    "reference": "6c440617e5f863b803df6a99d37858679476d985ba6838a254007bfe00110bbc",
+    "universe": "e85ac568a66f1d914fb0fd1ad2689be8cfc484f150035ad5ac93689e88854412",
+    "schema": "544514c280aba61d75396289ea56846495e28ac1fbe8e4d0451f7f41cf17fbb6",
+    "manifest:wo": "343611eceeda99e0148b96a87a47879ed074a0fe90bcad64b07428f88a0907e6",
+    "schema_part:generated:wo.generated.cedarschema": "ca4e73eb1c36f6e04dc10c8607af35a546d3cb9c348b0095db05810dcbf7aae5",
+    "schema_part:trusted:trusted.cedarschema": "766960fd1f9512456b92632e0a0233fbe278e24ca9d5820bcde77b63af094bbc"
+   }
+  },
+  "s02_site_scoped_reads": {
+   "schema": "inputs/s02_site_scoped_reads/schema/wo_iot.cedarschema",
+   "servers": [
+    "wo",
+    "iot"
+   ],
+   "hashes": {
+    "scenario_yaml": "b4bb513264fafb158ab5e79170a9c001c441f184891e83f1fe2064e02c589412",
+    "intent": "a090e9d4cd619c479fccd87ddf6a138f4c349aded1899c64da4fb2c6cbcfc306",
+    "reference": "ba0ef1e9af95478b0b0a910ed1016fd53aa88abbab11ede5e8080be73508a88d",
+    "universe": "1c979291a8ff0f66a897aae25dc2e369ae2c721ce701b71c203d7e32965ec6ad",
+    "schema": "cc85090b1829deac150d09768b944e538a7691b24316bf79d8b3705bc5e2363e",
+    "manifest:wo": "343611eceeda99e0148b96a87a47879ed074a0fe90bcad64b07428f88a0907e6",
+    "manifest:iot": "50a3c21bbda8663f979ac45d9df69619e37f7d990ca9ed46e596d029656668d4",
+    "schema_part:generated:wo_iot.generated.cedarschema": "c3057c9ed6920ca5131ecb0bdb39241988833a3f1dcfa7fe4a1f6f21591b563d",
+    "schema_part:trusted:trusted.cedarschema": "766960fd1f9512456b92632e0a0233fbe278e24ca9d5820bcde77b63af094bbc"
+   }
+  },
+  "s03_create_at_main": {
+   "schema": "inputs/s03_create_at_main/schema/wo.cedarschema",
+   "servers": [
+    "wo"
+   ],
+   "hashes": {
+    "scenario_yaml": "d0e45c1412e5cde19d10c468526d01f8f4dbd574d6f5c5d7d59300eba6df89ae",
+    "intent": "c0917e160ad52553ae545c1a820e62c38439f77b39a6eced3b39704890866d20",
+    "reference": "b1ff9972299c66ce7b6078588428a315b9936048e20582b4ca1bab181333d106",
+    "universe": "6e0352c96b96e9945526a01a16ec9df3b94a69036e4ecfe028de76cf53959f36",
+    "schema": "544514c280aba61d75396289ea56846495e28ac1fbe8e4d0451f7f41cf17fbb6",
+    "manifest:wo": "343611eceeda99e0148b96a87a47879ed074a0fe90bcad64b07428f88a0907e6",
+    "schema_part:generated:wo.generated.cedarschema": "ca4e73eb1c36f6e04dc10c8607af35a546d3cb9c348b0095db05810dcbf7aae5",
+    "schema_part:trusted:trusted.cedarschema": "766960fd1f9512456b92632e0a0233fbe278e24ca9d5820bcde77b63af094bbc"
+   }
+  }
+ },
+ "versions": {
+  "cedarpy": "4.12.2",
+  "anthropic": "2.8.0",
+  "cedar-policy-mcp-schema-generator": "0.7.0",
+  "cedar_cli": "cedar-policy-cli 4.14.1",
+  "cvc5": "This is cvc5 version 1.3.1 [git ea1b484 on branch HEAD]",
+  "git_commit": "f7a3b05482c0b551553cd8217534b899b5d9c2cb",
+  "git_dirty": false
+ }
+}

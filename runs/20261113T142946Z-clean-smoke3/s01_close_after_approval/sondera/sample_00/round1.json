@@ -1,0 +1,93 @@
+{
+ "round": 1,
+ "extraction": "fenced",
+ "generation": {
+  "key_hash": "39757512f4418fbef6047768dd3869d67972054b94936b64b77b1a169515e6df",
+  "cache_hit": true,
+  "model_version": "claude-haiku-5-5",
+  "request_id": "req_011Ch12d4bUvD5AW2csB1H7v",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 58853
+   },
+   "cache_creation_input_tokens": 58853,
+   "cache_read_input_tokens": 0,
+   "inference_geo": "global",
+   "input_tokens": 233,
+   "output_tokens": 3241,
+   "output_tokens_details": {
+    "thinking_tokens": 2977
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "```cedar\npermit (\n  principal,\n  action == AOB::Action::\"close_workorder\",\n  resource\n)\nwhen {\n  context has approval &&\n  context.input.site_id == \"MAIN\" &&\n  context.approval.site_id == \"MAIN\" &&\n  context.approval.status == PGI::ApprovalStatus::\"APPR\" &&\n  context.approval.wonum == context.input.wonum &&\n  context.approval.site_id == context.input.site_id &&\n  context.approval.approver != principal\n};\n\npermit (\n  principal,\n  action == AOB::Action::\"list_workorders\",\n  resource\n)\nwhen {\n  context.input has site_id &&\n  context.input.site_id has typeChoice0 &&\n  context.input.site_id.typeChoice0 == \"MAIN\"\n};\n```",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "deterministic": {
+  "passed": true,
+  "validation": {
+   "policy": "s01_close_after_approval/sondera/sample_00/round1.cedar",
+   "schema": "inputs/s01_close_after_approval/schema/wo.cedarschema",
+   "ok": true,
+   "parsed": true,
+   "n_policies": 2,
+   "errors": [],
+   "warnings": [],
+   "cedarpy_errors": []
+  },
+  "failures": [],
+  "never_allowed": [
+   "AOB::Action::\"approve_workorder\"",
+   "AOB::Action::\"assign_technician\"",
+   "AOB::Action::\"cancel_workorder\"",
+   "AOB::Action::\"generate_work_order\"",
+   "AOB::Action::\"get_failure_codes\"",
+   "AOB::Action::\"get_my_assigned_workorders\"",
+   "AOB::Action::\"get_schedule_calendar\"",
+   "AOB::Action::\"get_workorder\"",
+   "AOB::Action::\"get_workorder_actuals_vs_planned\"",
+   "AOB::Action::\"get_workorder_costs\"",
+   "AOB::Action::\"get_workorder_kpis\"",
+   "AOB::Action::\"get_workorder_tasks\"",
+   "AOB::Action::\"update_workorder\""
+  ]
+ },
+ "judge": {
+  "key_hash": "343315d88eba147c45db8301402df9e7bb848c3b586b422a0f2c6b9887acd468",
+  "cache_hit": true,
+  "model_version": "claude-haiku-5-5",
+  "request_id": "req_011Ch12fD8F1ZzKNtWfyJhtD",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 0,
+   "inference_geo": "global",
+   "input_tokens": 626,
+   "output_tokens": 919,
+   "output_tokens_details": {
+    "thinking_tokens": 908
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "NO MISMATCHES",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "judge_passed": true,
+ "passed": true
+}

@@ -1,0 +1,449 @@
+[
+ {
+  "literal": "AOB::Action::\"get_workorder\"",
+  "kind": "entity",
+  "role": "scope",
+  "occurrences": 1,
+  "sources": {
+   "generated_schema": [
+    "wo_iot.generated.cedarschema"
+   ],
+   "manifest_structure": [
+    "wo:get_workorder.name"
+   ]
+  }
+ },
+ {
+  "literal": "AOB::Action::\"get_workorder_tasks\"",
+  "kind": "entity",
+  "role": "scope",
+  "occurrences": 1,
+  "sources": {
+   "generated_schema": [
+    "wo_iot.generated.cedarschema"
+   ],
+   "manifest_structure": [
+    "wo:get_workorder_tasks.name"
+   ]
+  }
+ },
+ {
+  "literal": "AOB::Action::\"get_workorder_costs\"",
+  "kind": "entity",
+  "role": "scope",
+  "occurrences": 1,
+  "sources": {
+   "generated_schema": [
+    "wo_iot.generated.cedarschema"
+   ],
+   "manifest_structure": [
+    "wo:get_workorder_costs.name"
+   ]
+  }
+ },
+ {
+  "literal": "AOB::Action::\"get_workorder_actuals_vs_planned\"",
+  "kind": "entity",
+  "role": "scope",
+  "occurrences": 1,
+  "sources": {
+   "generated_schema": [
+    "wo_iot.generated.cedarschema"
+   ],
+   "manifest_structure": [
+    "wo:get_workorder_actuals_vs_planned.name"
+   ]
+  }
+ },
+ {
+  "literal": "AOB::Action::\"get_workorder_kpis\"",
+  "kind": "entity",
+  "role": "scope",
+  "occurrences": 1,
+  "sources": {
+   "generated_schema": [
+    "wo_iot.generated.cedarschema"
+   ],
+   "manifest_structure": [
+    "wo:get_workorder_kpis.name"
+   ]
+  }
+ },
+ {
+  "literal": "AOB::Action::\"get_schedule_calendar\"",
+  "kind": "entity",
+  "role": "scope",
+  "occurrences": 1,
+  "sources": {
+   "generated_schema": [
+    "wo_iot.generated.cedarschema"
+   ],
+   "manifest_structure": [
+    "wo:get_schedule_calendar.name"
+   ]
+  }
+ },
+ {
+  "literal": "\"MAIN\"",
+  "kind": "string",
+  "role": "value",
+  "occurrences": 3,
+  "sources": {
+   "intent": [
+    "intent.md"
+   ],
+   "manifest_free_text": [
+    "iot:sites.description",
+    "iot:asset_ids.description",
+    "iot:asset_detail.description",
+    "iot:measured_sensors.description",
+    "iot:installed_sensors.description",
+    "iot:assets.description",
+    "iot:find_assets_by_sensors.description",
+    "iot:stream_extent.description",
+    "iot:history.description",
+    "iot:latest_reading.description",
+    "iot:sensor_coverage.description",
+    "iot:sensor_stats.description"
+   ]
+  }
+ },
+ {
+  "literal": "AOB::Action::\"list_workorders\"",
+  "kind": "entity",
+  "role": "scope",
+  "occurrences": 1,
+  "sources": {
+   "generated_schema": [
+    "wo_iot.generated.cedarschema"
+   ],
+   "manifest_structure": [
+    "wo:list_workorders.name"
+   ]
+  }
+ },
+ {
+  "literal": "AOB::Action::\"get_my_assigned_workorders\"",
+  "kind": "entity",
+  "role": "scope",
+  "occurrences": 1,
+  "sources": {
+   "generated_schema": [
+    "wo_iot.generated.cedarschema"
+   ],
+   "manifest_structure": [
+    "wo:get_my_assigned_workorders.name"
+   ]
+  }
+ },
+ {
+  "literal": "AOB::Action::\"asset_ids\"",
+  "kind": "entity",
+  "role": "scope",
+  "occurrences": 1,
+  "sources": {
+   "generated_schema": [
+    "wo_iot.generated.cedarschema"
+   ],
+   "manifest_structure": [
+    "iot:asset_ids.name"
+   ],
+   "manifest_free_text": [
+    "iot:asset_detail.description",
+    "iot:measured_sensors.description",
+    "iot:installed_sensors.description",
+    "iot:assets.description",
+    "iot:stream_extent.description",
+    "iot:history.description",
+    "iot:latest_reading.description",
+    "iot:sensor_coverage.description",
+    "iot:sensor_stats.description"
+   ]
+  }
+ },
+ {
+  "literal": "AOB::Action::\"assets\"",
+  "kind": "entity",
+  "role": "scope",
+  "occurrences": 1,
+  "sources": {
+   "intent": [
+    "intent.md"
+   ],
+   "generated_schema": [
+    "wo_iot.generated.cedarschema"
+   ],
+   "manifest_structure": [
+    "iot:asset_ids.outputSchema.$defs.AssetsResult.properties.assets",
+    "iot:assets.name",
+    "iot:assets.outputSchema.$defs.AssetsWithMetadataResult.properties.assets",
+    "iot:find_assets_by_sensors.outputSchema.$defs.FindAssetsResult.properties.assets"
+   ],
+   "manifest_free_text": [
+    "iot:asset_ids.description",
+    "iot:assets.description",
+    "iot:find_assets_by_sensors.description"
+   ],
+   "manifest_other": [
+    "iot:asset_ids.outputSchema.$defs.AssetsResult.required[2]",
+    "iot:assets.outputSchema.$defs.AssetsWithMetadataResult.required[2]",
+    "iot:find_assets_by_sensors.outputSchema.$defs.FindAssetsResult.required[5]"
+   ]
+  }
+ },
+ {
+  "literal": "AOB::Action::\"asset_detail\"",
+  "kind": "entity",
+  "role": "scope",
+  "occurrences": 1,
+  "sources": {
+   "generated_schema": [
+    "wo_iot.generated.cedarschema"
+   ],
+   "manifest_structure": [
+    "iot:asset_detail.name"
+   ],
+   "manifest_free_text": [
+    "iot:assets.description"
+   ]
+  }
+ },
+ {
+  "literal": "AOB::Action::\"installed_sensors\"",
+  "kind": "entity",
+  "role": "scope",
+  "occurrences": 1,
+  "sources": {
+   "generated_schema": [
+    "wo_iot.generated.cedarschema"
+   ],
+   "manifest_structure": [
+    "iot:installed_sensors.name"
+   ],
+   "manifest_free_text": [
+    "iot:asset_detail.description",
+    "iot:measured_sensors.description"
+   ]
+  }
+ },
+ {
+  "literal": "AOB::Action::\"measured_sensors\"",
+  "kind": "entity",
+  "role": "scope",
+  "occurrences": 1,
+  "sources": {
+   "generated_schema": [
+    "wo_iot.generated.cedarschema"
+   ],
+   "manifest_structure": [
+    "iot:measured_sensors.name"
+   ],
+   "manifest_free_text": [
+    "iot:installed_sensors.description",
+    "iot:stream_extent.description",
+    "iot:latest_reading.description",
+    "iot:sensor_stats.description"
+   ]
+  }
+ },
+ {
+  "literal": "AOB::Action::\"history\"",
+  "kind": "entity",
+  "role": "scope",
+  "occurrences": 1,
+  "sources": {
+   "intent": [
+    "intent.md"
+   ],
+   "generated_schema": [
+    "wo_iot.generated.cedarschema"
+   ],
+   "manifest_structure": [
+    "iot:history.name"
+   ]
+  }
+ },
+ {
+  "literal": "AOB::Action::\"latest_reading\"",
+  "kind": "entity",
+  "role": "scope",
+  "occurrences": 1,
+  "sources": {
+   "generated_schema": [
+    "wo_iot.generated.cedarschema"
+   ],
+   "manifest_structure": [
+    "iot:latest_reading.name"
+   ]
+  }
+ },
+ {
+  "literal": "AOB::Action::\"stream_extent\"",
+  "kind": "entity",
+  "role": "scope",
+  "occurrences": 1,
+  "sources": {
+   "generated_schema": [
+    "wo_iot.generated.cedarschema"
+   ],
+   "manifest_structure": [
+    "iot:stream_extent.name"
+   ],
+   "manifest_free_text": [
+    "iot:history.description",
+    "iot:latest_reading.description",
+    "iot:sensor_coverage.description",
+    "iot:sensor_stats.description"
+   ]
+  }
+ },
+ {
+  "literal": "AOB::Action::\"sensor_coverage\"",
+  "kind": "entity",
+  "role": "scope",
+  "occurrences": 1,
+  "sources": {
+   "generated_schema": [
+    "wo_iot.generated.cedarschema"
+   ],
+   "manifest_structure": [
+    "iot:sensor_coverage.name"
+   ]
+  }
+ },
+ {
+  "literal": "AOB::Action::\"sensor_stats\"",
+  "kind": "entity",
+  "role": "scope",
+  "occurrences": 1,
+  "sources": {
+   "generated_schema": [
+    "wo_iot.generated.cedarschema"
+   ],
+   "manifest_structure": [
+    "iot:sensor_stats.name"
+   ]
+  }
+ },
+ {
+  "literal": "AOB::Action::\"sites\"",
+  "kind": "entity",
+  "role": "scope",
+  "occurrences": 1,
+  "sources": {
+   "intent": [
+    "intent.md"
+   ],
+   "generated_schema": [
+    "wo_iot.generated.cedarschema"
+   ],
+   "manifest_structure": [
+    "iot:sites.name",
+    "iot:sites.outputSchema.$defs.SitesResult.properties.sites"
+   ],
+   "manifest_free_text": [
+    "iot:asset_ids.description",
+    "iot:asset_detail.description",
+    "iot:measured_sensors.description",
+    "iot:installed_sensors.description",
+    "iot:assets.description",
+    "iot:find_assets_by_sensors.description",
+    "iot:stream_extent.description",
+    "iot:history.description",
+    "iot:latest_reading.description",
+    "iot:sensor_coverage.description",
+    "iot:sensor_stats.description"
+   ],
+   "manifest_other": [
+    "iot:sites.outputSchema.$defs.SitesResult.required[0]"
+   ]
+  }
+ },
+ {
+  "literal": "AOB::Action::\"approve_workorder\"",
+  "kind": "entity",
+  "role": "scope",
+  "occurrences": 1,
+  "sources": {
+   "generated_schema": [
+    "wo_iot.generated.cedarschema"
+   ],
+   "manifest_structure": [
+    "wo:approve_workorder.name"
+   ]
+  }
+ },
+ {
+  "literal": "AOB::Action::\"assign_technician\"",
+  "kind": "entity",
+  "role": "scope",
+  "occurrences": 1,
+  "sources": {
+   "generated_schema": [
+    "wo_iot.generated.cedarschema"
+   ],
+   "manifest_structure": [
+    "wo:assign_technician.name"
+   ]
+  }
+ },
+ {
+  "literal": "AOB::Action::\"close_workorder\"",
+  "kind": "entity",
+  "role": "scope",
+  "occurrences": 1,
+  "sources": {
+   "trusted_schema": [
+    "trusted.cedarschema"
+   ],
+   "generated_schema": [
+    "wo_iot.generated.cedarschema"
+   ],
+   "manifest_structure": [
+    "wo:close_workorder.name"
+   ]
+  }
+ },
+ {
+  "literal": "AOB::Action::\"cancel_workorder\"",
+  "kind": "entity",
+  "role": "scope",
+  "occurrences": 1,
+  "sources": {
+   "generated_schema": [
+    "wo_iot.generated.cedarschema"
+   ],
+   "manifest_structure": [
+    "wo:cancel_workorder.name"
+   ]
+  }
+ },
+ {
+  "literal": "AOB::Action::\"generate_work_order\"",
+  "kind": "entity",
+  "role": "scope",
+  "occurrences": 1,
+  "sources": {
+   "generated_schema": [
+    "wo_iot.generated.cedarschema"
+   ],
+   "manifest_structure": [
+    "wo:generate_work_order.name"
+   ]
+  }
+ },
+ {
+  "literal": "AOB::Action::\"update_workorder\"",
+  "kind": "entity",
+  "role": "scope",
+  "occurrences": 1,
+  "sources": {
+   "generated_schema": [
+    "wo_iot.generated.cedarschema"
+   ],
+   "manifest_structure": [
+    "wo:update_workorder.name"
+   ]
+  }
+ }
+]

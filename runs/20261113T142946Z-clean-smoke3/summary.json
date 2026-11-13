@@ -1,0 +1,2764 @@
+{
+ "s01_close_after_approval/naive": {
+  "n": 2,
+  "valid": 2,
+  "validity_rate": 1.0,
+  "validity_ci95": [
+   0.342,
+   1.0
+  ],
+  "nonempty_surplus": 0,
+  "nonempty_surplus_share_of_valid": 0.0,
+  "nonempty_surplus_ci95": [
+   0.0,
+   0.658
+  ],
+  "nonempty_deficit": 0,
+  "nonempty_deficit_share_of_valid": 0.0,
+  "nonempty_deficit_ci95": [
+   0.0,
+   0.658
+  ],
+  "surplus_case_counts": {},
+  "deficit_case_counts": {},
+  "clean_envelope": [
+   "c2",
+   "list_main"
+  ],
+  "reference_allow_set": [
+   "c2",
+   "list_main"
+  ],
+  "allow_counts": {
+   "list_main": {
+    "k": 2,
+    "n": 2,
+    "ci95": [
+     0.342,
+     1.0
+    ]
+   },
+   "list_north": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "list_unscoped": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "approve_1000045": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "c1": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "c2": {
+    "k": 2,
+    "n": 2,
+    "ci95": [
+     0.342,
+     1.0
+    ]
+   },
+   "c3": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "c4": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "c5": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "c6": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "c7": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   }
+  },
+  "symbolic_not_implies_reference": 0,
+  "symbolic_status_counts": {
+   "holds": 30
+  },
+  "blind_spots": [],
+  "replay_failures": [],
+  "stop_reasons": {
+   "end_turn": 2
+  },
+  "model_versions": [
+   "claude-haiku-5-5"
+  ],
+  "calls": 2,
+  "api_calls": 0,
+  "usage": {
+   "input_tokens": 466,
+   "cache_creation_input_tokens": 58853,
+   "cache_read_input_tokens": 58853,
+   "output_tokens": 6099
+  },
+  "cost_usd_all_calls": 0.011,
+  "cost_usd_this_run": 0,
+  "literal_provenance": {
+   "\"MAIN\"": {
+    "kind": "string",
+    "role": "value",
+    "samples": 2,
+    "sources": {
+     "intent": [
+      "intent.md"
+     ]
+    }
+   },
+   "AOB::Action::\"close_workorder\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "trusted_schema": [
+      "trusted.cedarschema"
+     ],
+     "generated_schema": [
+      "wo.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "wo:close_workorder.name"
+     ]
+    }
+   },
+   "AOB::Action::\"list_workorders\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "generated_schema": [
+      "wo.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "wo:list_workorders.name"
+     ]
+    }
+   },
+   "PGI::ApprovalStatus::\"APPR\"": {
+    "kind": "entity",
+    "role": "value",
+    "samples": 2,
+    "sources": {
+     "trusted_schema": [
+      "trusted.cedarschema"
+     ],
+     "manifest_free_text": [
+      "wo:approve_workorder.description"
+     ]
+    }
+   }
+  },
+  "value_literals_without_trusted_source": [],
+  "provenance_parsed": 2,
+  "cause_tag_counts": {
+   "surplus": {},
+   "deficit": {}
+  }
+ },
+ "s01_close_after_approval/sondera": {
+  "n": 2,
+  "valid": 2,
+  "validity_rate": 1.0,
+  "validity_ci95": [
+   0.342,
+   1.0
+  ],
+  "nonempty_surplus": 0,
+  "nonempty_surplus_share_of_valid": 0.0,
+  "nonempty_surplus_ci95": [
+   0.0,
+   0.658
+  ],
+  "nonempty_deficit": 0,
+  "nonempty_deficit_share_of_valid": 0.0,
+  "nonempty_deficit_ci95": [
+   0.0,
+   0.658
+  ],
+  "surplus_case_counts": {},
+  "deficit_case_counts": {},
+  "clean_envelope": [
+   "c2",
+   "list_main"
+  ],
+  "reference_allow_set": [
+   "c2",
+   "list_main"
+  ],
+  "allow_counts": {
+   "list_main": {
+    "k": 2,
+    "n": 2,
+    "ci95": [
+     0.342,
+     1.0
+    ]
+   },
+   "list_north": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "list_unscoped": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "approve_1000045": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "c1": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "c2": {
+    "k": 2,
+    "n": 2,
+    "ci95": [
+     0.342,
+     1.0
+    ]
+   },
+   "c3": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "c4": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "c5": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "c6": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "c7": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   }
+  },
+  "symbolic_not_implies_reference": 0,
+  "symbolic_status_counts": {
+   "holds": 30
+  },
+  "blind_spots": [],
+  "replay_failures": [],
+  "stop_reasons": {
+   "end_turn": 6
+  },
+  "model_versions": [
+   "claude-haiku-5-5"
+  ],
+  "calls": 6,
+  "api_calls": 0,
+  "usage": {
+   "input_tokens": 3430,
+   "cache_creation_input_tokens": 58853,
+   "cache_read_input_tokens": 117706,
+   "output_tokens": 12219
+  },
+  "cost_usd_all_calls": 0.015,
+  "cost_usd_this_run": 0,
+  "literal_provenance": {
+   "\"MAIN\"": {
+    "kind": "string",
+    "role": "value",
+    "samples": 2,
+    "sources": {
+     "intent": [
+      "intent.md"
+     ]
+    }
+   },
+   "AOB::Action::\"close_workorder\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "trusted_schema": [
+      "trusted.cedarschema"
+     ],
+     "generated_schema": [
+      "wo.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "wo:close_workorder.name"
+     ]
+    }
+   },
+   "AOB::Action::\"list_workorders\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "generated_schema": [
+      "wo.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "wo:list_workorders.name"
+     ]
+    }
+   },
+   "PGI::ApprovalStatus::\"APPR\"": {
+    "kind": "entity",
+    "role": "value",
+    "samples": 2,
+    "sources": {
+     "trusted_schema": [
+      "trusted.cedarschema"
+     ],
+     "manifest_free_text": [
+      "wo:approve_workorder.description"
+     ]
+    }
+   }
+  },
+  "value_literals_without_trusted_source": [],
+  "provenance_parsed": 2,
+  "cause_tag_counts": {
+   "surplus": {},
+   "deficit": {}
+  },
+  "critic_passed": 2,
+  "critic_pass_share": 1.0,
+  "critic_pass_ci95": [
+   0.342,
+   1.0
+  ],
+  "critic_passed_round1": 1,
+  "critic_passed_round1_share": 0.5,
+  "critic_passed_round1_ci95": [
+   0.095,
+   0.905
+  ],
+  "rounds_to_pass_counts": {
+   "1": 1,
+   "2": 1
+  },
+  "rounds_used_counts": {
+   "1": 1,
+   "2": 1
+  },
+  "judge_flips_on_same_behaviour": {
+   "flips": 1,
+   "pairs": 1
+  }
+ },
+ "s02_site_scoped_reads/naive": {
+  "n": 2,
+  "valid": 2,
+  "validity_rate": 1.0,
+  "validity_ci95": [
+   0.342,
+   1.0
+  ],
+  "nonempty_surplus": 1,
+  "nonempty_surplus_share_of_valid": 0.5,
+  "nonempty_surplus_ci95": [
+   0.095,
+   0.905
+  ],
+  "nonempty_deficit": 0,
+  "nonempty_deficit_share_of_valid": 0.0,
+  "nonempty_deficit_ci95": [
+   0.0,
+   0.658
+  ],
+  "surplus_case_counts": {
+   "assigned_main": 1,
+   "assigned_main_all": 1
+  },
+  "deficit_case_counts": {},
+  "clean_envelope": [
+   "actuals_main",
+   "asset_ids_main",
+   "assets_main",
+   "assigned_main",
+   "assigned_main_all",
+   "assigned_main_open",
+   "calendar_main",
+   "costs_main",
+   "coverage_main",
+   "detail_main",
+   "extent_main",
+   "get_wo_main",
+   "history_main",
+   "installed_main",
+   "kpis_main",
+   "latest_main",
+   "latest_main_north_asset",
+   "list_main",
+   "measured_main",
+   "stats_main",
+   "tasks_main"
+  ],
+  "reference_allow_set": [
+   "actuals_main",
+   "asset_ids_main",
+   "assets_main",
+   "assigned_main_open",
+   "calendar_main",
+   "costs_main",
+   "coverage_main",
+   "detail_main",
+   "extent_main",
+   "get_wo_main",
+   "history_main",
+   "installed_main",
+   "kpis_main",
+   "latest_main",
+   "latest_main_north_asset",
+   "list_main",
+   "measured_main",
+   "stats_main",
+   "tasks_main"
+  ],
+  "allow_counts": {
+   "get_wo_main": {
+    "k": 2,
+    "n": 2,
+    "ci95": [
+     0.342,
+     1.0
+    ]
+   },
+   "tasks_main": {
+    "k": 2,
+    "n": 2,
+    "ci95": [
+     0.342,
+     1.0
+    ]
+   },
+   "costs_main": {
+    "k": 2,
+    "n": 2,
+    "ci95": [
+     0.342,
+     1.0
+    ]
+   },
+   "actuals_main": {
+    "k": 2,
+    "n": 2,
+    "ci95": [
+     0.342,
+     1.0
+    ]
+   },
+   "kpis_main": {
+    "k": 2,
+    "n": 2,
+    "ci95": [
+     0.342,
+     1.0
+    ]
+   },
+   "calendar_main": {
+    "k": 2,
+    "n": 2,
+    "ci95": [
+     0.342,
+     1.0
+    ]
+   },
+   "get_wo_north": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "get_wo_lower": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "kpis_north": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "calendar_north": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "list_main": {
+    "k": 2,
+    "n": 2,
+    "ci95": [
+     0.342,
+     1.0
+    ]
+   },
+   "list_north": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "list_unscoped": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "list_null": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "assigned_main": {
+    "k": 1,
+    "n": 2,
+    "ci95": [
+     0.095,
+     0.905
+    ]
+   },
+   "assigned_main_open": {
+    "k": 2,
+    "n": 2,
+    "ci95": [
+     0.342,
+     1.0
+    ]
+   },
+   "assigned_main_all": {
+    "k": 1,
+    "n": 2,
+    "ci95": [
+     0.095,
+     0.905
+    ]
+   },
+   "assigned_north": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "assigned_unscoped": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "failure_codes": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "sites": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "asset_ids_main": {
+    "k": 2,
+    "n": 2,
+    "ci95": [
+     0.342,
+     1.0
+    ]
+   },
+   "asset_ids_north": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "assets_main": {
+    "k": 2,
+    "n": 2,
+    "ci95": [
+     0.342,
+     1.0
+    ]
+   },
+   "detail_main": {
+    "k": 2,
+    "n": 2,
+    "ci95": [
+     0.342,
+     1.0
+    ]
+   },
+   "detail_north": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "installed_main": {
+    "k": 2,
+    "n": 2,
+    "ci95": [
+     0.342,
+     1.0
+    ]
+   },
+   "find_main": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "measured_main": {
+    "k": 2,
+    "n": 2,
+    "ci95": [
+     0.342,
+     1.0
+    ]
+   },
+   "history_main": {
+    "k": 2,
+    "n": 2,
+    "ci95": [
+     0.342,
+     1.0
+    ]
+   },
+   "latest_main": {
+    "k": 2,
+    "n": 2,
+    "ci95": [
+     0.342,
+     1.0
+    ]
+   },
+   "extent_main": {
+    "k": 2,
+    "n": 2,
+    "ci95": [
+     0.342,
+     1.0
+    ]
+   },
+   "coverage_main": {
+    "k": 2,
+    "n": 2,
+    "ci95": [
+     0.342,
+     1.0
+    ]
+   },
+   "stats_main": {
+    "k": 2,
+    "n": 2,
+    "ci95": [
+     0.342,
+     1.0
+    ]
+   },
+   "history_north": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "latest_main_north_asset": {
+    "k": 2,
+    "n": 2,
+    "ci95": [
+     0.342,
+     1.0
+    ]
+   },
+   "measured_north_main_asset": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "close_main": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "generate_main": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   }
+  },
+  "symbolic_not_implies_reference": 1,
+  "symbolic_status_counts": {
+   "holds": 53,
+   "does_not_hold": 1
+  },
+  "blind_spots": [],
+  "replay_failures": [],
+  "stop_reasons": {
+   "end_turn": 2
+  },
+  "model_versions": [
+   "claude-haiku-5-5"
+  ],
+  "calls": 2,
+  "api_calls": 0,
+  "usage": {
+   "input_tokens": 554,
+   "cache_creation_input_tokens": 74908,
+   "cache_read_input_tokens": 74908,
+   "output_tokens": 10433
+  },
+  "cost_usd_all_calls": 0.0154,
+  "cost_usd_this_run": 0,
+  "literal_provenance": {
+   "\"MAIN\"": {
+    "kind": "string",
+    "role": "value",
+    "samples": 2,
+    "sources": {
+     "intent": [
+      "intent.md"
+     ],
+     "manifest_free_text": [
+      "iot:sites.description",
+      "iot:asset_ids.description",
+      "iot:asset_detail.description",
+      "iot:measured_sensors.description",
+      "iot:installed_sensors.description",
+      "iot:assets.description",
+      "iot:find_assets_by_sensors.description",
+      "iot:stream_extent.description",
+      "iot:history.description",
+      "iot:latest_reading.description",
+      "iot:sensor_coverage.description",
+      "iot:sensor_stats.description"
+     ]
+    }
+   },
+   "AOB::Action::\"approve_workorder\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "generated_schema": [
+      "wo_iot.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "wo:approve_workorder.name"
+     ]
+    }
+   },
+   "AOB::Action::\"asset_detail\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "generated_schema": [
+      "wo_iot.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "iot:asset_detail.name"
+     ],
+     "manifest_free_text": [
+      "iot:assets.description"
+     ]
+    }
+   },
+   "AOB::Action::\"asset_ids\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "generated_schema": [
+      "wo_iot.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "iot:asset_ids.name"
+     ],
+     "manifest_free_text": [
+      "iot:asset_detail.description",
+      "iot:measured_sensors.description",
+      "iot:installed_sensors.description",
+      "iot:assets.description",
+      "iot:stream_extent.description",
+      "iot:history.description",
+      "iot:latest_reading.description",
+      "iot:sensor_coverage.description",
+      "iot:sensor_stats.description"
+     ]
+    }
+   },
+   "AOB::Action::\"assets\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "intent": [
+      "intent.md"
+     ],
+     "generated_schema": [
+      "wo_iot.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "iot:asset_ids.outputSchema.$defs.AssetsResult.properties.assets",
+      "iot:assets.name",
+      "iot:assets.outputSchema.$defs.AssetsWithMetadataResult.properties.assets",
+      "iot:find_assets_by_sensors.outputSchema.$defs.FindAssetsResult.properties.assets"
+     ],
+     "manifest_free_text": [
+      "iot:asset_ids.description",
+      "iot:assets.description",
+      "iot:find_assets_by_sensors.description"
+     ],
+     "manifest_other": [
+      "iot:asset_ids.outputSchema.$defs.AssetsResult.required[2]",
+      "iot:assets.outputSchema.$defs.AssetsWithMetadataResult.required[2]",
+      "iot:find_assets_by_sensors.outputSchema.$defs.FindAssetsResult.required[5]"
+     ]
+    }
+   },
+   "AOB::Action::\"assign_technician\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "generated_schema": [
+      "wo_iot.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "wo:assign_technician.name"
+     ]
+    }
+   },
+   "AOB::Action::\"cancel_workorder\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "generated_schema": [
+      "wo_iot.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "wo:cancel_workorder.name"
+     ]
+    }
+   },
+   "AOB::Action::\"close_workorder\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "trusted_schema": [
+      "trusted.cedarschema"
+     ],
+     "generated_schema": [
+      "wo_iot.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "wo:close_workorder.name"
+     ]
+    }
+   },
+   "AOB::Action::\"generate_work_order\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "generated_schema": [
+      "wo_iot.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "wo:generate_work_order.name"
+     ]
+    }
+   },
+   "AOB::Action::\"get_my_assigned_workorders\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "generated_schema": [
+      "wo_iot.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "wo:get_my_assigned_workorders.name"
+     ]
+    }
+   },
+   "AOB::Action::\"get_schedule_calendar\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "generated_schema": [
+      "wo_iot.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "wo:get_schedule_calendar.name"
+     ]
+    }
+   },
+   "AOB::Action::\"get_workorder\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "generated_schema": [
+      "wo_iot.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "wo:get_workorder.name"
+     ]
+    }
+   },
+   "AOB::Action::\"get_workorder_actuals_vs_planned\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "generated_schema": [
+      "wo_iot.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "wo:get_workorder_actuals_vs_planned.name"
+     ]
+    }
+   },
+   "AOB::Action::\"get_workorder_costs\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "generated_schema": [
+      "wo_iot.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "wo:get_workorder_costs.name"
+     ]
+    }
+   },
+   "AOB::Action::\"get_workorder_kpis\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "generated_schema": [
+      "wo_iot.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "wo:get_workorder_kpis.name"
+     ]
+    }
+   },
+   "AOB::Action::\"get_workorder_tasks\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "generated_schema": [
+      "wo_iot.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "wo:get_workorder_tasks.name"
+     ]
+    }
+   },
+   "AOB::Action::\"history\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "intent": [
+      "intent.md"
+     ],
+     "generated_schema": [
+      "wo_iot.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "iot:history.name"
+     ]
+    }
+   },
+   "AOB::Action::\"installed_sensors\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "generated_schema": [
+      "wo_iot.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "iot:installed_sensors.name"
+     ],
+     "manifest_free_text": [
+      "iot:asset_detail.description",
+      "iot:measured_sensors.description"
+     ]
+    }
+   },
+   "AOB::Action::\"latest_reading\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "generated_schema": [
+      "wo_iot.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "iot:latest_reading.name"
+     ]
+    }
+   },
+   "AOB::Action::\"list_workorders\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "generated_schema": [
+      "wo_iot.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "wo:list_workorders.name"
+     ]
+    }
+   },
+   "AOB::Action::\"measured_sensors\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "generated_schema": [
+      "wo_iot.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "iot:measured_sensors.name"
+     ],
+     "manifest_free_text": [
+      "iot:installed_sensors.description",
+      "iot:stream_extent.description",
+      "iot:latest_reading.description",
+      "iot:sensor_stats.description"
+     ]
+    }
+   },
+   "AOB::Action::\"sensor_coverage\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "generated_schema": [
+      "wo_iot.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "iot:sensor_coverage.name"
+     ]
+    }
+   },
+   "AOB::Action::\"sensor_stats\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "generated_schema": [
+      "wo_iot.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "iot:sensor_stats.name"
+     ]
+    }
+   },
+   "AOB::Action::\"sites\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "intent": [
+      "intent.md"
+     ],
+     "generated_schema": [
+      "wo_iot.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "iot:sites.name",
+      "iot:sites.outputSchema.$defs.SitesResult.properties.sites"
+     ],
+     "manifest_free_text": [
+      "iot:asset_ids.description",
+      "iot:asset_detail.description",
+      "iot:measured_sensors.description",
+      "iot:installed_sensors.description",
+      "iot:assets.description",
+      "iot:find_assets_by_sensors.description",
+      "iot:stream_extent.description",
+      "iot:history.description",
+      "iot:latest_reading.description",
+      "iot:sensor_coverage.description",
+      "iot:sensor_stats.description"
+     ],
+     "manifest_other": [
+      "iot:sites.outputSchema.$defs.SitesResult.required[0]"
+     ]
+    }
+   },
+   "AOB::Action::\"stream_extent\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "generated_schema": [
+      "wo_iot.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "iot:stream_extent.name"
+     ],
+     "manifest_free_text": [
+      "iot:history.description",
+      "iot:latest_reading.description",
+      "iot:sensor_coverage.description",
+      "iot:sensor_stats.description"
+     ]
+    }
+   },
+   "AOB::Action::\"update_workorder\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "generated_schema": [
+      "wo_iot.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "wo:update_workorder.name"
+     ]
+    }
+   }
+  },
+  "value_literals_without_trusted_source": [],
+  "provenance_parsed": 2,
+  "cause_tag_counts": {
+   "surplus": {
+    "assigned_main": {
+     "wo-assigned-main-open: context.input has open_only": 1
+    },
+    "assigned_main_all": {
+     "wo-assigned-main-open: context.input.open_only == true": 1
+    }
+   },
+   "deficit": {}
+  }
+ },
+ "s02_site_scoped_reads/sondera": {
+  "n": 2,
+  "valid": 2,
+  "validity_rate": 1.0,
+  "validity_ci95": [
+   0.342,
+   1.0
+  ],
+  "nonempty_surplus": 1,
+  "nonempty_surplus_share_of_valid": 0.5,
+  "nonempty_surplus_ci95": [
+   0.095,
+   0.905
+  ],
+  "nonempty_deficit": 0,
+  "nonempty_deficit_share_of_valid": 0.0,
+  "nonempty_deficit_ci95": [
+   0.0,
+   0.658
+  ],
+  "surplus_case_counts": {
+   "assigned_main": 1,
+   "assigned_main_all": 1
+  },
+  "deficit_case_counts": {},
+  "clean_envelope": [
+   "actuals_main",
+   "asset_ids_main",
+   "assets_main",
+   "assigned_main",
+   "assigned_main_all",
+   "assigned_main_open",
+   "calendar_main",
+   "costs_main",
+   "coverage_main",
+   "detail_main",
+   "extent_main",
+   "get_wo_main",
+   "history_main",
+   "installed_main",
+   "kpis_main",
+   "latest_main",
+   "latest_main_north_asset",
+   "list_main",
+   "measured_main",
+   "stats_main",
+   "tasks_main"
+  ],
+  "reference_allow_set": [
+   "actuals_main",
+   "asset_ids_main",
+   "assets_main",
+   "assigned_main_open",
+   "calendar_main",
+   "costs_main",
+   "coverage_main",
+   "detail_main",
+   "extent_main",
+   "get_wo_main",
+   "history_main",
+   "installed_main",
+   "kpis_main",
+   "latest_main",
+   "latest_main_north_asset",
+   "list_main",
+   "measured_main",
+   "stats_main",
+   "tasks_main"
+  ],
+  "allow_counts": {
+   "get_wo_main": {
+    "k": 2,
+    "n": 2,
+    "ci95": [
+     0.342,
+     1.0
+    ]
+   },
+   "tasks_main": {
+    "k": 2,
+    "n": 2,
+    "ci95": [
+     0.342,
+     1.0
+    ]
+   },
+   "costs_main": {
+    "k": 2,
+    "n": 2,
+    "ci95": [
+     0.342,
+     1.0
+    ]
+   },
+   "actuals_main": {
+    "k": 2,
+    "n": 2,
+    "ci95": [
+     0.342,
+     1.0
+    ]
+   },
+   "kpis_main": {
+    "k": 2,
+    "n": 2,
+    "ci95": [
+     0.342,
+     1.0
+    ]
+   },
+   "calendar_main": {
+    "k": 2,
+    "n": 2,
+    "ci95": [
+     0.342,
+     1.0
+    ]
+   },
+   "get_wo_north": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "get_wo_lower": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "kpis_north": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "calendar_north": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "list_main": {
+    "k": 2,
+    "n": 2,
+    "ci95": [
+     0.342,
+     1.0
+    ]
+   },
+   "list_north": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "list_unscoped": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "list_null": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "assigned_main": {
+    "k": 1,
+    "n": 2,
+    "ci95": [
+     0.095,
+     0.905
+    ]
+   },
+   "assigned_main_open": {
+    "k": 2,
+    "n": 2,
+    "ci95": [
+     0.342,
+     1.0
+    ]
+   },
+   "assigned_main_all": {
+    "k": 1,
+    "n": 2,
+    "ci95": [
+     0.095,
+     0.905
+    ]
+   },
+   "assigned_north": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "assigned_unscoped": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "failure_codes": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "sites": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "asset_ids_main": {
+    "k": 2,
+    "n": 2,
+    "ci95": [
+     0.342,
+     1.0
+    ]
+   },
+   "asset_ids_north": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "assets_main": {
+    "k": 2,
+    "n": 2,
+    "ci95": [
+     0.342,
+     1.0
+    ]
+   },
+   "detail_main": {
+    "k": 2,
+    "n": 2,
+    "ci95": [
+     0.342,
+     1.0
+    ]
+   },
+   "detail_north": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "installed_main": {
+    "k": 2,
+    "n": 2,
+    "ci95": [
+     0.342,
+     1.0
+    ]
+   },
+   "find_main": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "measured_main": {
+    "k": 2,
+    "n": 2,
+    "ci95": [
+     0.342,
+     1.0
+    ]
+   },
+   "history_main": {
+    "k": 2,
+    "n": 2,
+    "ci95": [
+     0.342,
+     1.0
+    ]
+   },
+   "latest_main": {
+    "k": 2,
+    "n": 2,
+    "ci95": [
+     0.342,
+     1.0
+    ]
+   },
+   "extent_main": {
+    "k": 2,
+    "n": 2,
+    "ci95": [
+     0.342,
+     1.0
+    ]
+   },
+   "coverage_main": {
+    "k": 2,
+    "n": 2,
+    "ci95": [
+     0.342,
+     1.0
+    ]
+   },
+   "stats_main": {
+    "k": 2,
+    "n": 2,
+    "ci95": [
+     0.342,
+     1.0
+    ]
+   },
+   "history_north": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "latest_main_north_asset": {
+    "k": 2,
+    "n": 2,
+    "ci95": [
+     0.342,
+     1.0
+    ]
+   },
+   "measured_north_main_asset": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "close_main": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "generate_main": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   }
+  },
+  "symbolic_not_implies_reference": 1,
+  "symbolic_status_counts": {
+   "holds": 53,
+   "does_not_hold": 1
+  },
+  "blind_spots": [],
+  "replay_failures": [],
+  "stop_reasons": {
+   "end_turn": 4
+  },
+  "model_versions": [
+   "claude-haiku-5-5"
+  ],
+  "calls": 4,
+  "api_calls": 0,
+  "usage": {
+   "input_tokens": 3512,
+   "cache_creation_input_tokens": 74908,
+   "cache_read_input_tokens": 74908,
+   "output_tokens": 13730
+  },
+  "cost_usd_all_calls": 0.0173,
+  "cost_usd_this_run": 0,
+  "literal_provenance": {
+   "\"MAIN\"": {
+    "kind": "string",
+    "role": "value",
+    "samples": 2,
+    "sources": {
+     "intent": [
+      "intent.md"
+     ],
+     "manifest_free_text": [
+      "iot:sites.description",
+      "iot:asset_ids.description",
+      "iot:asset_detail.description",
+      "iot:measured_sensors.description",
+      "iot:installed_sensors.description",
+      "iot:assets.description",
+      "iot:find_assets_by_sensors.description",
+      "iot:stream_extent.description",
+      "iot:history.description",
+      "iot:latest_reading.description",
+      "iot:sensor_coverage.description",
+      "iot:sensor_stats.description"
+     ]
+    }
+   },
+   "AOB::Action::\"approve_workorder\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "generated_schema": [
+      "wo_iot.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "wo:approve_workorder.name"
+     ]
+    }
+   },
+   "AOB::Action::\"asset_detail\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "generated_schema": [
+      "wo_iot.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "iot:asset_detail.name"
+     ],
+     "manifest_free_text": [
+      "iot:assets.description"
+     ]
+    }
+   },
+   "AOB::Action::\"asset_ids\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "generated_schema": [
+      "wo_iot.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "iot:asset_ids.name"
+     ],
+     "manifest_free_text": [
+      "iot:asset_detail.description",
+      "iot:measured_sensors.description",
+      "iot:installed_sensors.description",
+      "iot:assets.description",
+      "iot:stream_extent.description",
+      "iot:history.description",
+      "iot:latest_reading.description",
+      "iot:sensor_coverage.description",
+      "iot:sensor_stats.description"
+     ]
+    }
+   },
+   "AOB::Action::\"assets\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "intent": [
+      "intent.md"
+     ],
+     "generated_schema": [
+      "wo_iot.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "iot:asset_ids.outputSchema.$defs.AssetsResult.properties.assets",
+      "iot:assets.name",
+      "iot:assets.outputSchema.$defs.AssetsWithMetadataResult.properties.assets",
+      "iot:find_assets_by_sensors.outputSchema.$defs.FindAssetsResult.properties.assets"
+     ],
+     "manifest_free_text": [
+      "iot:asset_ids.description",
+      "iot:assets.description",
+      "iot:find_assets_by_sensors.description"
+     ],
+     "manifest_other": [
+      "iot:asset_ids.outputSchema.$defs.AssetsResult.required[2]",
+      "iot:assets.outputSchema.$defs.AssetsWithMetadataResult.required[2]",
+      "iot:find_assets_by_sensors.outputSchema.$defs.FindAssetsResult.required[5]"
+     ]
+    }
+   },
+   "AOB::Action::\"assign_technician\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "generated_schema": [
+      "wo_iot.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "wo:assign_technician.name"
+     ]
+    }
+   },
+   "AOB::Action::\"cancel_workorder\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "generated_schema": [
+      "wo_iot.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "wo:cancel_workorder.name"
+     ]
+    }
+   },
+   "AOB::Action::\"close_workorder\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "trusted_schema": [
+      "trusted.cedarschema"
+     ],
+     "generated_schema": [
+      "wo_iot.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "wo:close_workorder.name"
+     ]
+    }
+   },
+   "AOB::Action::\"generate_work_order\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "generated_schema": [
+      "wo_iot.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "wo:generate_work_order.name"
+     ]
+    }
+   },
+   "AOB::Action::\"get_my_assigned_workorders\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "generated_schema": [
+      "wo_iot.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "wo:get_my_assigned_workorders.name"
+     ]
+    }
+   },
+   "AOB::Action::\"get_schedule_calendar\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "generated_schema": [
+      "wo_iot.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "wo:get_schedule_calendar.name"
+     ]
+    }
+   },
+   "AOB::Action::\"get_workorder\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "generated_schema": [
+      "wo_iot.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "wo:get_workorder.name"
+     ]
+    }
+   },
+   "AOB::Action::\"get_workorder_actuals_vs_planned\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "generated_schema": [
+      "wo_iot.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "wo:get_workorder_actuals_vs_planned.name"
+     ]
+    }
+   },
+   "AOB::Action::\"get_workorder_costs\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "generated_schema": [
+      "wo_iot.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "wo:get_workorder_costs.name"
+     ]
+    }
+   },
+   "AOB::Action::\"get_workorder_kpis\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "generated_schema": [
+      "wo_iot.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "wo:get_workorder_kpis.name"
+     ]
+    }
+   },
+   "AOB::Action::\"get_workorder_tasks\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "generated_schema": [
+      "wo_iot.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "wo:get_workorder_tasks.name"
+     ]
+    }
+   },
+   "AOB::Action::\"history\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "intent": [
+      "intent.md"
+     ],
+     "generated_schema": [
+      "wo_iot.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "iot:history.name"
+     ]
+    }
+   },
+   "AOB::Action::\"installed_sensors\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "generated_schema": [
+      "wo_iot.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "iot:installed_sensors.name"
+     ],
+     "manifest_free_text": [
+      "iot:asset_detail.description",
+      "iot:measured_sensors.description"
+     ]
+    }
+   },
+   "AOB::Action::\"latest_reading\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "generated_schema": [
+      "wo_iot.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "iot:latest_reading.name"
+     ]
+    }
+   },
+   "AOB::Action::\"list_workorders\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "generated_schema": [
+      "wo_iot.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "wo:list_workorders.name"
+     ]
+    }
+   },
+   "AOB::Action::\"measured_sensors\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "generated_schema": [
+      "wo_iot.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "iot:measured_sensors.name"
+     ],
+     "manifest_free_text": [
+      "iot:installed_sensors.description",
+      "iot:stream_extent.description",
+      "iot:latest_reading.description",
+      "iot:sensor_stats.description"
+     ]
+    }
+   },
+   "AOB::Action::\"sensor_coverage\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "generated_schema": [
+      "wo_iot.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "iot:sensor_coverage.name"
+     ]
+    }
+   },
+   "AOB::Action::\"sensor_stats\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "generated_schema": [
+      "wo_iot.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "iot:sensor_stats.name"
+     ]
+    }
+   },
+   "AOB::Action::\"sites\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "intent": [
+      "intent.md"
+     ],
+     "generated_schema": [
+      "wo_iot.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "iot:sites.name",
+      "iot:sites.outputSchema.$defs.SitesResult.properties.sites"
+     ],
+     "manifest_free_text": [
+      "iot:asset_ids.description",
+      "iot:asset_detail.description",
+      "iot:measured_sensors.description",
+      "iot:installed_sensors.description",
+      "iot:assets.description",
+      "iot:find_assets_by_sensors.description",
+      "iot:stream_extent.description",
+      "iot:history.description",
+      "iot:latest_reading.description",
+      "iot:sensor_coverage.description",
+      "iot:sensor_stats.description"
+     ],
+     "manifest_other": [
+      "iot:sites.outputSchema.$defs.SitesResult.required[0]"
+     ]
+    }
+   },
+   "AOB::Action::\"stream_extent\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "generated_schema": [
+      "wo_iot.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "iot:stream_extent.name"
+     ],
+     "manifest_free_text": [
+      "iot:history.description",
+      "iot:latest_reading.description",
+      "iot:sensor_coverage.description",
+      "iot:sensor_stats.description"
+     ]
+    }
+   },
+   "AOB::Action::\"update_workorder\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "generated_schema": [
+      "wo_iot.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "wo:update_workorder.name"
+     ]
+    }
+   }
+  },
+  "value_literals_without_trusted_source": [],
+  "provenance_parsed": 2,
+  "cause_tag_counts": {
+   "surplus": {
+    "assigned_main": {
+     "wo-assigned-main-open: context.input has open_only": 1
+    },
+    "assigned_main_all": {
+     "wo-assigned-main-open: context.input.open_only == true": 1
+    }
+   },
+   "deficit": {}
+  },
+  "critic_passed": 2,
+  "critic_pass_share": 1.0,
+  "critic_pass_ci95": [
+   0.342,
+   1.0
+  ],
+  "critic_passed_round1": 2,
+  "critic_passed_round1_share": 1.0,
+  "critic_passed_round1_ci95": [
+   0.342,
+   1.0
+  ],
+  "rounds_to_pass_counts": {
+   "1": 2
+  },
+  "rounds_used_counts": {
+   "1": 2
+  },
+  "judge_flips_on_same_behaviour": {
+   "flips": 0,
+   "pairs": 0
+  }
+ },
+ "s03_create_at_main/naive": {
+  "n": 2,
+  "valid": 2,
+  "validity_rate": 1.0,
+  "validity_ci95": [
+   0.342,
+   1.0
+  ],
+  "nonempty_surplus": 0,
+  "nonempty_surplus_share_of_valid": 0.0,
+  "nonempty_surplus_ci95": [
+   0.0,
+   0.658
+  ],
+  "nonempty_deficit": 0,
+  "nonempty_deficit_share_of_valid": 0.0,
+  "nonempty_deficit_ci95": [
+   0.0,
+   0.658
+  ],
+  "surplus_case_counts": {},
+  "deficit_case_counts": {},
+  "clean_envelope": [
+   "create_main",
+   "create_main_full",
+   "create_main_north_asset",
+   "create_main_wonum"
+  ],
+  "reference_allow_set": [
+   "create_main",
+   "create_main_full",
+   "create_main_north_asset",
+   "create_main_wonum"
+  ],
+  "allow_counts": {
+   "create_main": {
+    "k": 2,
+    "n": 2,
+    "ci95": [
+     0.342,
+     1.0
+    ]
+   },
+   "create_main_full": {
+    "k": 2,
+    "n": 2,
+    "ci95": [
+     0.342,
+     1.0
+    ]
+   },
+   "create_main_wonum": {
+    "k": 2,
+    "n": 2,
+    "ci95": [
+     0.342,
+     1.0
+    ]
+   },
+   "create_main_north_asset": {
+    "k": 2,
+    "n": 2,
+    "ci95": [
+     0.342,
+     1.0
+    ]
+   },
+   "create_north": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "create_lower": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "approve_main": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "approve_north": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "cancel_main": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "cancel_main_reason": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "update_main": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "assign_main": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "close_main": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "list_main": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "get_wo_main": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   }
+  },
+  "symbolic_not_implies_reference": 0,
+  "symbolic_status_counts": {
+   "holds": 30
+  },
+  "blind_spots": [],
+  "replay_failures": [],
+  "stop_reasons": {
+   "end_turn": 2
+  },
+  "model_versions": [
+   "claude-haiku-5-5"
+  ],
+  "calls": 2,
+  "api_calls": 0,
+  "usage": {
+   "input_tokens": 348,
+   "cache_creation_input_tokens": 58853,
+   "cache_read_input_tokens": 58853,
+   "output_tokens": 2832
+  },
+  "cost_usd_all_calls": 0.0094,
+  "cost_usd_this_run": 0,
+  "literal_provenance": {
+   "\"MAIN\"": {
+    "kind": "string",
+    "role": "value",
+    "samples": 2,
+    "sources": {
+     "intent": [
+      "intent.md"
+     ]
+    }
+   },
+   "AOB::Action::\"approve_workorder\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "generated_schema": [
+      "wo.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "wo:approve_workorder.name"
+     ]
+    }
+   },
+   "AOB::Action::\"assign_technician\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "generated_schema": [
+      "wo.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "wo:assign_technician.name"
+     ]
+    }
+   },
+   "AOB::Action::\"cancel_workorder\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "generated_schema": [
+      "wo.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "wo:cancel_workorder.name"
+     ]
+    }
+   },
+   "AOB::Action::\"close_workorder\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "trusted_schema": [
+      "trusted.cedarschema"
+     ],
+     "generated_schema": [
+      "wo.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "wo:close_workorder.name"
+     ]
+    }
+   },
+   "AOB::Action::\"generate_work_order\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "generated_schema": [
+      "wo.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "wo:generate_work_order.name"
+     ]
+    }
+   },
+   "AOB::Action::\"update_workorder\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "generated_schema": [
+      "wo.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "wo:update_workorder.name"
+     ]
+    }
+   },
+   "AOB::McpServer": {
+    "kind": "entity_type",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "generated_schema": [
+      "wo.generated.cedarschema"
+     ]
+    }
+   },
+   "AOB::User": {
+    "kind": "entity_type",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "trusted_schema": [
+      "trusted.cedarschema"
+     ],
+     "generated_schema": [
+      "wo.generated.cedarschema"
+     ]
+    }
+   }
+  },
+  "value_literals_without_trusted_source": [],
+  "provenance_parsed": 2,
+  "cause_tag_counts": {
+   "surplus": {},
+   "deficit": {}
+  }
+ },
+ "s03_create_at_main/sondera": {
+  "n": 2,
+  "valid": 2,
+  "validity_rate": 1.0,
+  "validity_ci95": [
+   0.342,
+   1.0
+  ],
+  "nonempty_surplus": 0,
+  "nonempty_surplus_share_of_valid": 0.0,
+  "nonempty_surplus_ci95": [
+   0.0,
+   0.658
+  ],
+  "nonempty_deficit": 0,
+  "nonempty_deficit_share_of_valid": 0.0,
+  "nonempty_deficit_ci95": [
+   0.0,
+   0.658
+  ],
+  "surplus_case_counts": {},
+  "deficit_case_counts": {},
+  "clean_envelope": [
+   "create_main",
+   "create_main_full",
+   "create_main_north_asset",
+   "create_main_wonum"
+  ],
+  "reference_allow_set": [
+   "create_main",
+   "create_main_full",
+   "create_main_north_asset",
+   "create_main_wonum"
+  ],
+  "allow_counts": {
+   "create_main": {
+    "k": 2,
+    "n": 2,
+    "ci95": [
+     0.342,
+     1.0
+    ]
+   },
+   "create_main_full": {
+    "k": 2,
+    "n": 2,
+    "ci95": [
+     0.342,
+     1.0
+    ]
+   },
+   "create_main_wonum": {
+    "k": 2,
+    "n": 2,
+    "ci95": [
+     0.342,
+     1.0
+    ]
+   },
+   "create_main_north_asset": {
+    "k": 2,
+    "n": 2,
+    "ci95": [
+     0.342,
+     1.0
+    ]
+   },
+   "create_north": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "create_lower": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "approve_main": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "approve_north": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "cancel_main": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "cancel_main_reason": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "update_main": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "assign_main": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "close_main": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "list_main": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   },
+   "get_wo_main": {
+    "k": 0,
+    "n": 2,
+    "ci95": [
+     0.0,
+     0.658
+    ]
+   }
+  },
+  "symbolic_not_implies_reference": 0,
+  "symbolic_status_counts": {
+   "holds": 30
+  },
+  "blind_spots": [],
+  "replay_failures": [],
+  "stop_reasons": {
+   "end_turn": 4
+  },
+  "model_versions": [
+   "claude-haiku-5-5"
+  ],
+  "calls": 4,
+  "api_calls": 0,
+  "usage": {
+   "input_tokens": 1527,
+   "cache_creation_input_tokens": 58853,
+   "cache_read_input_tokens": 58853,
+   "output_tokens": 3742
+  },
+  "cost_usd_all_calls": 0.01,
+  "cost_usd_this_run": 0,
+  "literal_provenance": {
+   "\"MAIN\"": {
+    "kind": "string",
+    "role": "value",
+    "samples": 2,
+    "sources": {
+     "intent": [
+      "intent.md"
+     ]
+    }
+   },
+   "AOB::Action::\"approve_workorder\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "generated_schema": [
+      "wo.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "wo:approve_workorder.name"
+     ]
+    }
+   },
+   "AOB::Action::\"assign_technician\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "generated_schema": [
+      "wo.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "wo:assign_technician.name"
+     ]
+    }
+   },
+   "AOB::Action::\"cancel_workorder\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "generated_schema": [
+      "wo.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "wo:cancel_workorder.name"
+     ]
+    }
+   },
+   "AOB::Action::\"close_workorder\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "trusted_schema": [
+      "trusted.cedarschema"
+     ],
+     "generated_schema": [
+      "wo.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "wo:close_workorder.name"
+     ]
+    }
+   },
+   "AOB::Action::\"generate_work_order\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "generated_schema": [
+      "wo.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "wo:generate_work_order.name"
+     ]
+    }
+   },
+   "AOB::Action::\"update_workorder\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "generated_schema": [
+      "wo.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "wo:update_workorder.name"
+     ]
+    }
+   },
+   "AOB::McpServer": {
+    "kind": "entity_type",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "generated_schema": [
+      "wo.generated.cedarschema"
+     ]
+    }
+   },
+   "AOB::User": {
+    "kind": "entity_type",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "trusted_schema": [
+      "trusted.cedarschema"
+     ],
+     "generated_schema": [
+      "wo.generated.cedarschema"
+     ]
+    }
+   }
+  },
+  "value_literals_without_trusted_source": [],
+  "provenance_parsed": 2,
+  "cause_tag_counts": {
+   "surplus": {},
+   "deficit": {}
+  },
+  "critic_passed": 2,
+  "critic_pass_share": 1.0,
+  "critic_pass_ci95": [
+   0.342,
+   1.0
+  ],
+  "critic_passed_round1": 2,
+  "critic_passed_round1_share": 1.0,
+  "critic_passed_round1_ci95": [
+   0.342,
+   1.0
+  ],
+  "rounds_to_pass_counts": {
+   "1": 2
+  },
+  "rounds_used_counts": {
+   "1": 2
+  },
+  "judge_flips_on_same_behaviour": {
+   "flips": 0,
+   "pairs": 0
+  }
+ }
+}

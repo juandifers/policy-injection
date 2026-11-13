@@ -1,0 +1,25 @@
+{
+  "name": "s01_close_after_approval",
+  "schema": "schema/wo.cedarschema",
+  "schema_parts": {
+    "generated": [
+      "wo.generated.cedarschema"
+    ],
+    "trusted": [
+      "trusted.cedarschema"
+    ]
+  },
+  "servers": [
+    "wo"
+  ],
+  "sha256": {
+    "intent": "6209ac3ef1cb7fa45ae7b497b0cd5bca6e0ea01b2eeed378876cebada3fb9eb6",
+    "manifest:wo": "343611eceeda99e0148b96a87a47879ed074a0fe90bcad64b07428f88a0907e6",
+    "reference": "6c440617e5f863b803df6a99d37858679476d985ba6838a254007bfe00110bbc",
+    "scenario_yaml": "d0e45c1412e5cde19d10c468526d01f8f4dbd574d6f5c5d7d59300eba6df89ae",
+    "schema": "544514c280aba61d75396289ea56846495e28ac1fbe8e4d0451f7f41cf17fbb6",
+    "schema_part:generated:wo.generated.cedarschema": "ca4e73eb1c36f6e04dc10c8607af35a546d3cb9c348b0095db05810dcbf7aae5",
+    "schema_part:trusted:trusted.cedarschema": "766960fd1f9512456b92632e0a0233fbe278e24ca9d5820bcde77b63af094bbc",
+    "universe": "e85ac568a66f1d914fb0fd1ad2689be8cfc484f150035ad5ac93689e88854412"
+  }
+}

@@ -1,0 +1,89 @@
+{
+ "round": 1,
+ "extraction": "fenced",
+ "generation": {
+  "key_hash": "4c79a1ed40407ae287f2a703367b7e6f8b28751480c84b602e893da2b989ac67",
+  "cache_hit": true,
+  "model_version": "claude-haiku-5-5",
+  "request_id": "req_011Ch12eJ5sfXrzGapGQpv9u",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 74908,
+   "inference_geo": "global",
+   "input_tokens": 277,
+   "output_tokens": 6843,
+   "output_tokens_details": {
+    "thinking_tokens": 5473
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "```cedar\n// Read-only MAIN access for the maintenance agent.\n\n// 1. Work orders at MAIN, addressed by a required site_id.\npermit (\n    principal,\n    action in [\n        AOB::Action::\"get_workorder\",\n        AOB::Action::\"get_workorder_tasks\",\n        AOB::Action::\"get_workorder_costs\",\n        AOB::Action::\"get_workorder_actuals_vs_planned\",\n        AOB::Action::\"get_workorder_kpis\",\n        AOB::Action::\"get_schedule_calendar\"\n    ],\n    resource\n)\nwhen {\n    context.input.site_id == \"MAIN\"\n};\n\n// 2. Work order listing, where site_id is optional and must be explicitly MAIN.\n//    An omitted or null site_id would list across all sites, so it is not permitted.\npermit (\n    principal,\n    action == AOB::Action::\"list_workorders\",\n    resource\n)\nwhen {\n    context.input has site_id &&\n    context.input.site_id has typeChoice0 &&\n    context.input.site_id.typeChoice0 == \"MAIN\"\n};\n\n// 3. Work orders assigned to a technician, limited to MAIN and to open work orders.\n//    The site must be explicit, and open_only must be explicitly true.\npermit (\n    principal,\n    action == AOB::Action::\"get_my_assigned_workorders\",\n    resource\n)\nwhen {\n    context.input has site_id &&\n    context.input.site_id has typeChoice0 &&\n    context.input.site_id.typeChoice0 == \"MAIN\" &&\n    context.input has open_only &&\n    context.input.open_only == true\n};\n\n// 4. MAIN equipment registry and sensor data, addressed by site_name.\npermit (\n    principal,\n    action in [\n        AOB::Action::\"asset_ids\",\n        AOB::Action::\"assets\",\n        AOB::Action::\"asset_detail\",\n        AOB::Action::\"installed_sensors\",\n        AOB::Action::\"measured_sensors\",\n        AOB::Action::\"history\",\n        AOB::Action::\"latest_reading\",\n        AOB::Action::\"sensor_coverage\",\n        AOB::Action::\"sensor_stats\",\n        AOB::Action::\"stream_extent\"\n    ],\n    resource\n)\nwhen {\n    context.input.site_name == \"MAIN\"\n};\n\n// 5. Defense in depth: no site-addressed read may name another site.\nforbid (\n    principal,\n    action in [\n        AOB::Action::\"get_workorder\",\n        AOB::Action::\"get_workorder_tasks\",\n        AOB::Action::\"get_workorder_costs\",\n        AOB::Action::\"get_workorder_actuals_vs_planned\",\n        AOB::Action::\"get_workorder_kpis\",\n        AOB::Action::\"get_schedule_calendar\"\n    ],\n    resource\n)\nwhen {\n    context.input.site_id != \"MAIN\"\n};\n\nforbid (\n    principal,\n    action in [\n        AOB::Action::\"asset_ids\",\n        AOB::Action::\"assets\",\n        AOB::Action::\"asset_detail\",\n        AOB::Action::\"installed_sensors\",\n        AOB::Action::\"measured_sensors\",\n        AOB::Action::\"history\",\n        AOB::Action::\"latest_reading\",\n        AOB::Action::\"sensor_coverage\",\n        AOB::Action::\"sensor_stats\",\n        AOB::Action::\"stream_extent\"\n    ],\n    resource\n)\nwhen {\n    context.input.site_name != \"MAIN\"\n};\n\n// 6. Never allow cross-site enumeration, even if a permit is added later.\nforbid (\n    principal,\n    action == AOB::Action::\"sites\",\n    resource\n);\n\n// 7. Never allow any write or workflow action.\nforbid (\n    principal,\n    action in [\n        AOB::Action::\"generate_work_order\",\n        AOB::Action::\"update_workorder\",\n        AOB::Action::\"approve_workorder\",\n        AOB::Action::\"assign_technician\",\n        AOB::Action::\"close_workorder\",\n        AOB::Action::\"cancel_workorder\"\n    ],\n    resource\n);\n```",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "deterministic": {
+  "passed": true,
+  "validation": {
+   "policy": "s02_site_scoped_reads/sondera/sample_01/round1.cedar",
+   "schema": "inputs/s02_site_scoped_reads/schema/wo_iot.cedarschema",
+   "ok": true,
+   "parsed": true,
+   "n_policies": 8,
+   "errors": [],
+   "warnings": [],
+   "cedarpy_errors": []
+  },
+  "failures": [],
+  "never_allowed": [
+   "AOB::Action::\"approve_workorder\"",
+   "AOB::Action::\"assign_technician\"",
+   "AOB::Action::\"cancel_workorder\"",
+   "AOB::Action::\"close_workorder\"",
+   "AOB::Action::\"find_assets_by_sensors\"",
+   "AOB::Action::\"generate_work_order\"",
+   "AOB::Action::\"get_failure_codes\"",
+   "AOB::Action::\"sites\"",
+   "AOB::Action::\"update_workorder\""
+  ]
+ },
+ "judge": {
+  "key_hash": "f551e5c01246c239282c6b5c316be5f86d4f53db4216f9794fc1f0d99f6e8a6a",
+  "cache_hit": true,
+  "model_version": "claude-haiku-5-5",
+  "request_id": "req_011Ch12hZcr6vCKB2R1dAfN2",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 0,
+   "inference_geo": "global",
+   "input_tokens": 1776,
+   "output_tokens": 2228,
+   "output_tokens_details": {
+    "thinking_tokens": 2217
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "NO MISMATCHES",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "judge_passed": true,
+ "passed": true
+}
