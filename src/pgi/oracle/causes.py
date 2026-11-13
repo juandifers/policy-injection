@@ -5,7 +5,8 @@ explain with the candidate (which conjunct of P denies it).
 
 Method, per denied request:
   1. Translate the policy to Cedar's JSON form (`cedar translate-policy`). Each policy whose action scope
-     matches the request is a probe target.
+     covers the request's action is a probe target; coverage is decided by evaluating a scope-only permit
+     (so `action in [...]` lists and action groups are handled by Cedar, not by us).
   2. Forbids first: each matching forbid is evaluated on its own, as a permit with the same scope and
      conditions. If one is satisfied, the tag is "forbid: <id>".
   3. No matching permit: "action not granted".
@@ -146,17 +147,16 @@ def _evaluate(static: dict[str, dict], request: dict, entities: list, schema: Pa
     return satisfied, errored
 
 
-def _action_matches(scope: dict, action: dict) -> bool:
-    if scope["op"] == "All":
-        return True
-    if scope["op"] == "==":
-        return scope["entity"] == action
-    if scope["op"] == "in":
-        targets = scope.get("entities") or [scope["entity"]]
-        if action in targets:
-            return True
-        raise OracleError(f"action scope `in` a group is not supported by cause tags: {scope}")
-    raise OracleError(f"unknown action scope {scope}")
+def _matching(pols: list[tuple[str, dict]], request: dict, entities: list, schema: Path) -> list[tuple[str, dict]]:
+    """The policies whose action scope covers the request's action, decided by evaluation (handles groups)."""
+    probes = {f"a{k}": {"effect": "permit", "principal": _ALL, "action": p["action"], "resource": _ALL,
+                        "conditions": [], "annotations": {"id": f"a{k}"}} for k, (_, p) in enumerate(pols)}
+    if not probes:
+        return []
+    sat, err = _evaluate(probes, request, entities, schema)
+    if err:
+        raise OracleError(f"action-scope probe raised: {sorted(err)}")
+    return [pp for k, pp in enumerate(pols) if f"a{k}" in sat]
 
 
 def explain(policy: Path, case_id: str, universe: Universe, schema: Path) -> dict:
@@ -166,8 +166,8 @@ def explain(policy: Path, case_id: str, universe: Universe, schema: Path) -> dic
     doc = _to_json(policy)
     if doc.get("templates") or doc.get("templateLinks"):
         raise OracleError(f"{policy}: templates are not supported by cause tags")
-    pols = [(p.get("annotations", {}).get("id", pid), p) for pid, p in doc["staticPolicies"].items()
-            if _action_matches(p["action"], action)]
+    pols = _matching([(p.get("annotations", {}).get("id", pid), p) for pid, p in doc["staticPolicies"].items()],
+                     request, universe.entities, schema)
     act_scope = {"op": "==", "entity": action}
     static, plan = {}, []
     for k, (pid, p) in enumerate(pols):

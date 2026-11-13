@@ -158,3 +158,15 @@ def test_smoke1_deficit_c2_is_the_approved_status_conjunct():
     (p,) = c["deficit"]["c2"]["permits"]
     assert p["first_blocker"] == 'context.approval.status == "APPROVED"'
     assert p["sole_blockers"] == ['context.approval.status == "APPROVED"']
+
+
+def test_action_in_a_list_that_omits_the_action_is_not_a_match(tmp_path, universe):
+    """`action in [a, b]` without the request's action must be ignored, not raise (found replaying smoke2)."""
+    pol = write(tmp_path, close_permit("c", f"{HAS} && {STATUS}")
+                + '@id("reads")\npermit (principal, action in [AOB::Action::"list_work_orders", AOB::Action::"approve_work_order"], resource);\n')
+    e = explain(pol, "c4", universe, TSCHEMA)
+    assert [p["id"] for p in e["permits"]] == ["c"]
+    pol2 = write(tmp_path, '@id("reads")\npermit (principal, action in [AOB::Action::"list_work_orders"], resource)\n'
+                           'when { context.input.siteid == "PLANT9" };\n', "q.cedar")
+    e2 = explain(pol2, "list_main", universe, TSCHEMA)
+    assert e2["tag"] == ['reads: context.input.siteid == "PLANT9"']

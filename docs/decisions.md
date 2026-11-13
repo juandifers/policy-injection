@@ -269,7 +269,7 @@ Why: run folders recorded the schema **path** and hash, but `7e0efc8` changed th
 
 **Errors:** a prefix that errors gives "<permit>: unexplained: error", never a deny. A forbid that errors is recorded with an `error` note (Cedar skips it).
 
-**Not supported (raises):** templates, and action scopes `in` an action group the request's action is not directly listed in.
+**Not supported (raises):** templates. Action coverage is decided by evaluating a scope-only permit per policy, so `action in [...]` lists and action groups are Cedar's call. (First version raised on `in [list]` without the request's action; found replaying smoke2, fixed with a test.)
 
 **Storage:** `oracle.json` → `cause_tags` (`{"surplus": {case: explanation}, "deficit": {…}}`). The summary has `cause_tag_counts` (side → case → tag → samples), and `summary.md` has one table per scenario.
 
