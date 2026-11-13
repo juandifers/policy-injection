@@ -244,3 +244,45 @@ Why: run folders recorded the schema **path** and hash, but `7e0efc8` changed th
 - **Trusted vs generated schema:** the linked schema mixes both. `scenario.yaml` gains an optional `schema_parts` (provenance only, never shown to a generator), and the snapshot copies and hashes those files.
   - Pre-snapshot runs replayed with `--inputs-from-git`: part paths come from the current `scenario.yaml` and content from the old commit. This is noted in `inputs.json`, because the old run never hashed the parts.
 - **Storage:** per sample in `provenance.json` and in the row; `{"error": …}` if the policy does not parse. Per scenario × generator, `literal_provenance` maps literal → {samples using it, sources}. `summary.md` gets one literal table per scenario.
+
+## 2026-11-13: Cause tags for surplus and deficit (2d, design approved with changes a–f)
+
+`pgi.oracle.causes`: deterministic (cedarpy + Cedar CLI), no LLM. A surplus case is explained with the reference; a deficit case with the candidate. The full method is in the module docstring:
+- Forbids are checked first; each matching forbid is evaluated on its own, as a permit. A fired forbid gives "forbid: <id>".
+- No matching permit gives "action not granted".
+- Several permits give one tag each.
+- Conjuncts:
+  - the principal/resource scope;
+  - the `when` bodies, with top-level `&&` flattened recursively on both sides, across all `when` clauses;
+  - each `unless` as one `!(…)`. A `||` stays inside its conjunct.
+- `first_blocker` comes from the prefix scan. `sole_blockers` comes from leave-one-out; a removal that errors is "no flip" and is listed in `loo_errors`.
+
+**What I verified in cedarpy 4.12.2 before relying on it** (scratch script):
+- An erroring policy is **skipped**, not denied. `diagnostics.errors` holds strings `error while evaluating policy \`policyN\`: …`. An erroring *forbid* is also skipped, so the decision can still be Allow.
+- `diagnostics.reasons` lists **every** satisfied permit when the decision is Allow (two satisfied permits → both listed). With a satisfied forbid, the reasons would be the forbids only. So **all variants are evaluated as permits**: forbids are rewritten as permits, as specified.
+- Reasons are internal ids `policyN`, numbered by position in the policy text. `diagnostics.id_annotations_by_reason` maps them to `@id`, but only for reasons, not for errors. So errors are mapped by position.
+  - Guard: every reason's annotation must equal the variant at that position, or `OracleError` is raised.
+  - The guard caught a real bug at once: the CLI's JSON→Cedar printer orders policies by JSON key, not insertion order. Keys are now zero-padded positions.
+- One cedarpy call evaluates every prefix and leave-one-out variant for a request (change e). No fallback was needed.
+
+**Tag text** is the Cedar CLI's canonical printing of each conjunct (JSON→Cedar): `a != b` prints as `!(a == b)`, and `||` operands are parenthesised. The same condition written two ways therefore gets one tag.
+
+**Errors:** a prefix that errors gives "<permit>: unexplained: error", never a deny. A forbid that errors is recorded with an `error` note (Cedar skips it).
+
+**Not supported (raises):** templates, and action scopes `in` an action group the request's action is not directly listed in.
+
+**Storage:** `oracle.json` → `cause_tags` (`{"surplus": {case: explanation}, "deficit": {…}}`). The summary has `cause_tag_counts` (side → case → tag → samples), and `summary.md` has one table per scenario.
+
+**Tests** (`tests/test_causes.py`, 15):
+- toy weak-file surpluses c4/c3/c5 → status/wonum/approver;
+- two blockers: prefix vs leave-one-out disagree;
+- a removal that errors;
+- a stricter candidate (deficit);
+- nested `a && (b && c)`;
+- `||` kept whole;
+- `unless` and several `when` clauses;
+- several permits;
+- a forbid that fires;
+- action not granted;
+- a probe that errors;
+- **smoke1's `c2` → `context.approval.status == "APPROVED"` on the inputs restored from `faf37e6`**.

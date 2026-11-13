@@ -32,6 +32,7 @@ def rescore(run_dir: Path, inputs_root: Path | None = None) -> dict[str, dict]:
 def _paths_removed(rec: dict) -> dict:
     rec = json.loads(json.dumps(rec))
     rec.pop("critic", None)
+    rec.pop("cause_tags", None)
     for k in ("policy", "schema"):
         rec["validation"].pop(k, None)
     return rec

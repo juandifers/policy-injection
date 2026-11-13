@@ -29,6 +29,7 @@ from pgi.generators import critic, naive
 from pgi.generators.inputs import ScenarioInputs, load_scenario_inputs
 from pgi.llm.cache import CachedLLM, Completion
 from pgi.llm.pricing import cost
+from pgi.oracle.causes import causes
 from pgi.oracle.enumeration import allowed, load_universe
 from pgi.runs.judge import same_behaviour, score
 from pgi.runs.snapshot import load_snapshot, snapshot, snapshot_from_git
@@ -83,6 +84,14 @@ def literal_provenance(policy: Path, inp: ScenarioInputs) -> list[dict] | dict:
         return {"error": str(e)}
 
 
+def cause_tags(policy: Path, inp: ScenarioInputs, oracle: dict) -> dict | None:
+    """Cause tags for a valid sample's surplus (explained by P_ref) and deficit (by the candidate)."""
+    if not oracle["valid"]:
+        return None
+    e = oracle["enumeration"]
+    return causes(policy, inp.reference, e["surplus"], e["deficit"], load_universe(inp.universe), inp.schema_path)
+
+
 def run_naive(llm: CachedLLM, inp: ScenarioInputs, cfg: naive.NaiveConfig, i: int, d: Path) -> dict:
     """One naive sample: generate, write, score."""
     s = naive.generate(llm, inp, cfg, i)
@@ -90,10 +99,11 @@ def run_naive(llm: CachedLLM, inp: ScenarioInputs, cfg: naive.NaiveConfig, i: in
     (d / "policy.cedar").write_text(s.policy_text + "\n" if s.policy_text else "")
     _dump(d / "response.json", _call_record(s.completion) | {"extraction": s.extraction})
     oracle = score(d / "policy.cedar", inp)
-    _dump(d / "oracle.json", oracle)
+    tags = cause_tags(d / "policy.cedar", inp, oracle)
+    _dump(d / "oracle.json", oracle | {"cause_tags": tags})
     prov = literal_provenance(d / "policy.cedar", inp)
     _dump(d / "provenance.json", prov)
-    return {"sample": i, "calls": [_call_record(s.completion)], "oracle": oracle, "provenance": prov}
+    return {"sample": i, "calls": [_call_record(s.completion)], "oracle": oracle, "cause_tags": tags, "provenance": prov}
 
 
 def run_sondera(llm: CachedLLM, inp: ScenarioInputs, cfg: critic.SonderaConfig, i: int, d: Path) -> dict:
@@ -115,10 +125,11 @@ def run_sondera(llm: CachedLLM, inp: ScenarioInputs, cfg: critic.SonderaConfig, 
                       "same_text": a.policy_text == b.policy_text, "same_behaviour": same,
                       "judge": [a.judge_passed, b.judge_passed], "judge_changed": a.judge_passed != b.judge_passed})
     crit = {"passed": res.passed, "rounds_used": res.rounds_used, "round_pairs": pairs}
-    _dump(d / "oracle.json", oracle | {"critic": crit})
+    tags = cause_tags(d / "policy.cedar", inp, oracle)
+    _dump(d / "oracle.json", oracle | {"critic": crit, "cause_tags": tags})
     prov = literal_provenance(d / "policy.cedar", inp)
     _dump(d / "provenance.json", prov)
-    return {"sample": i, "calls": calls, "oracle": oracle, "critic": crit, "provenance": prov}
+    return {"sample": i, "calls": calls, "oracle": oracle, "critic": crit, "cause_tags": tags, "provenance": prov}
 
 
 def wilson(k: int, n: int, z: float = 1.96) -> list[float] | None:
@@ -181,6 +192,14 @@ def summarize(model: str, results: list[dict], case_ids: list[str] | None = None
             e["samples"] += 1
     out["literal_provenance"] = dict(sorted(lits.items(), key=lambda kv: (-kv[1]["samples"], kv[0])))
     out["provenance_parsed"] = len(parsed)
+    tag_counts: dict[str, dict] = {"surplus": {}, "deficit": {}}
+    for r in results:
+        for side in ("surplus", "deficit"):
+            for case, ex in ((r.get("cause_tags") or {}).get(side) or {}).items():
+                for tag in (ex["tag"] if isinstance(ex["tag"], list) else [ex["tag"]]):
+                    per = tag_counts[side].setdefault(case, {})
+                    per[tag] = per.get(tag, 0) + 1
+    out["cause_tag_counts"] = {s: dict(sorted(v.items())) for s, v in tag_counts.items()}
     if any("critic" in r for r in results):
         rounds = [r["critic"]["rounds_used"] for r in results]
         passed = [r for r in results if r["critic"]["passed"]]
@@ -258,6 +277,18 @@ def markdown(config: dict, summary: dict) -> str:
             lines.append(f"| `{lit}` | " + " | ".join(cells) + f" | {', '.join(e['sources']) or '**none**'} |")
         lines += ["", "k/n = samples using the literal / samples whose policy parses. Locations in summary.json and "
                   "each sample's provenance.json. Whole-token, case-sensitive match."]
+    for sc in scenarios:
+        rows = [(side, case, k.split("/")[1], tag, n)
+                for k, s in summary.items() if k.split("/")[0] == sc
+                for side in ("surplus", "deficit")
+                for case, tags in s.get("cause_tag_counts", {}).get(side, {}).items()
+                for tag, n in tags.items()]
+        if not rows:
+            continue
+        lines += ["", f"### {sc}: cause tags", "", "| side | case | generator | tag | samples |", "|---|---|---|---|---|"]
+        lines += [f"| {side} | {case} | {g} | `{tag}` | {n} |" for side, case, g, tag, n in sorted(rows)]
+        lines += ["", "Surplus: the reference conjunct that denies the case. Deficit: the candidate conjunct that denies it "
+                  "(first blocker of the prefix scan; sole blockers in each sample's oracle.json)."]
     return "\n".join(lines) + "\n"
 
 

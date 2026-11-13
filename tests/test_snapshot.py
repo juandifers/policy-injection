@@ -31,6 +31,7 @@ def behaviour(rec: dict) -> dict:
     """An oracle record minus the file paths it names (validation.policy / validation.schema): results only."""
     rec = json.loads(json.dumps(rec))
     rec.pop("critic", None)
+    rec.pop("cause_tags", None)
     for k in ("policy", "schema"):
         rec["validation"].pop(k)
     return rec

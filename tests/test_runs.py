@@ -263,3 +263,31 @@ def test_markdown_has_one_literal_table_per_scenario():
     md = markdown({"run_id": "r", "model": "m", "n": 1}, summ)
     assert "### s01: literal provenance" in md
     assert '| `"MAIN"` | 1/1 | 2/2 | intent, manifest_other |' in md
+
+
+# ---- 2d: cause tags per sample and per scenario x generator
+def test_each_sample_records_cause_tags(tmp_path):
+    """Fake returns weak_same_wo: surplus c3, explained by the reference's wonum conjunct."""
+    row = run_naive(CachedLLM(Fake(), tmp_path / "cache"), load_scenario_inputs(S01),
+                    naive.NaiveConfig("claude-haiku-5-5"), 0, tmp_path / "n0")
+    tags = row["cause_tags"]
+    assert list(tags["surplus"]) == ["c3"] and tags["deficit"] == {}
+    assert tags["surplus"]["c3"]["tag"] == ["close-after-approval: context.approval.wonum == context.input.wonum"]
+    assert json.loads((tmp_path / "n0" / "oracle.json").read_text())["cause_tags"] == tags
+
+
+def test_summary_counts_cause_tags_per_case():
+    ex = lambda tag: {"tag": tag}
+    rows = [_valid_row([]) | {"cause_tags": {"surplus": {}, "deficit": {"d1": ex(["p: x == 1"]), "d2": ex("action not granted")}}},
+            _valid_row([]) | {"cause_tags": {"surplus": {}, "deficit": {"d1": ex(["p: x == 1"])}}},
+            _valid_row([]) | {"cause_tags": {"surplus": {"s1": ex(["r: y"])}, "deficit": {}}}]
+    s = summarize("m", rows)
+    assert s["cause_tag_counts"] == {"surplus": {"s1": {"r: y": 1}},
+                                     "deficit": {"d1": {"p: x == 1": 2}, "d2": {"action not granted": 1}}}
+
+
+def test_markdown_lists_cause_tags_per_scenario():
+    from pgi.runs.clean import markdown
+    rows = [_valid_row([]) | {"cause_tags": {"surplus": {}, "deficit": {"d1": {"tag": ["p: x == 1"]}}}}]
+    md = markdown({"run_id": "r", "model": "m", "n": 1}, {"s01/naive": summarize("m", rows)})
+    assert "### s01: cause tags" in md and "| deficit | d1 | naive | `p: x == 1` | 1 |" in md
