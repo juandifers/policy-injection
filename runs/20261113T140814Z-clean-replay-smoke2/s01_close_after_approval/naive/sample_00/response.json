@@ -1,0 +1,30 @@
+{
+ "key_hash": "39757512f4418fbef6047768dd3869d67972054b94936b64b77b1a169515e6df",
+ "cache_hit": true,
+ "model_version": "claude-haiku-5-5",
+ "request_id": "req_011Ch12d4bUvD5AW2csB1H7v",
+ "stop_reason": "end_turn",
+ "stop_details": null,
+ "usage": {
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 0,
+   "ephemeral_5m_input_tokens": 58853
+  },
+  "cache_creation_input_tokens": 58853,
+  "cache_read_input_tokens": 0,
+  "inference_geo": "global",
+  "input_tokens": 233,
+  "output_tokens": 3241,
+  "output_tokens_details": {
+   "thinking_tokens": 2977
+  },
+  "service_tier": "standard",
+  "speed": "standard"
+ },
+ "text": "```cedar\npermit (\n  principal,\n  action == AOB::Action::\"close_workorder\",\n  resource\n)\nwhen {\n  context has approval &&\n  context.input.site_id == \"MAIN\" &&\n  context.approval.site_id == \"MAIN\" &&\n  context.approval.status == PGI::ApprovalStatus::\"APPR\" &&\n  context.approval.wonum == context.input.wonum &&\n  context.approval.site_id == context.input.site_id &&\n  context.approval.approver != principal\n};\n\npermit (\n  principal,\n  action == AOB::Action::\"list_workorders\",\n  resource\n)\nwhen {\n  context.input has site_id &&\n  context.input.site_id has typeChoice0 &&\n  context.input.site_id.typeChoice0 == \"MAIN\"\n};\n```",
+ "content_types": [
+  "thinking",
+  "text"
+ ],
+ "extraction": "fenced"
+}

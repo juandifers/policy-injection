@@ -1,0 +1,104 @@
+{
+ "run_id": "20261113T140814Z-clean-replay-smoke2",
+ "created": "20261113T140814Z",
+ "model": "claude-haiku-5-5",
+ "n": 2,
+ "replay": true,
+ "replay_of": "20261113T134536Z-clean-smoke2",
+ "inputs": "inputs/<scenario>/ (snapshot; generation and scoring read only from it); rebuilt from git 7e0efc8",
+ "generators": {
+  "naive": {
+   "model": "claude-haiku-5-5",
+   "include_descriptions": true,
+   "effort": "high",
+   "max_tokens": 16000,
+   "generator": "naive"
+  },
+  "sondera": {
+   "model": "claude-haiku-5-5",
+   "include_descriptions": true,
+   "judge_sees_manifests": false,
+   "max_rounds": 3,
+   "effort": "high",
+   "max_tokens": 16000,
+   "generator": "Sondera-style (our reimplementation)"
+  }
+ },
+ "generators_run": [
+  "naive",
+  "sondera"
+ ],
+ "request": {
+  "sampling": "not sent (API default)",
+  "thinking": {
+   "type": "adaptive"
+  },
+  "output_config": {
+   "effort": "high"
+  },
+  "max_tokens": 16000,
+  "fallbacks": "none",
+  "prompt_cache": "ephemeral breakpoint on last static system block"
+ },
+ "scenarios": {
+  "s01_close_after_approval": {
+   "schema": "inputs/s01_close_after_approval/schema/wo.cedarschema",
+   "servers": [
+    "wo"
+   ],
+   "hashes": {
+    "scenario_yaml": "fe91cb938f0a1a2850461a866a3000a7b4e524c562e8c54f35bfaabb2089cdd7",
+    "intent": "6209ac3ef1cb7fa45ae7b497b0cd5bca6e0ea01b2eeed378876cebada3fb9eb6",
+    "reference": "6c440617e5f863b803df6a99d37858679476d985ba6838a254007bfe00110bbc",
+    "universe": "e85ac568a66f1d914fb0fd1ad2689be8cfc484f150035ad5ac93689e88854412",
+    "schema": "544514c280aba61d75396289ea56846495e28ac1fbe8e4d0451f7f41cf17fbb6",
+    "manifest:wo": "343611eceeda99e0148b96a87a47879ed074a0fe90bcad64b07428f88a0907e6",
+    "schema_part:generated:wo.generated.cedarschema": "ca4e73eb1c36f6e04dc10c8607af35a546d3cb9c348b0095db05810dcbf7aae5",
+    "schema_part:trusted:trusted.cedarschema": "766960fd1f9512456b92632e0a0233fbe278e24ca9d5820bcde77b63af094bbc"
+   }
+  },
+  "s02_site_scoped_reads": {
+   "schema": "inputs/s02_site_scoped_reads/schema/wo_iot.cedarschema",
+   "servers": [
+    "wo",
+    "iot"
+   ],
+   "hashes": {
+    "scenario_yaml": "7f85b66e859b10f712cc4e7976c036b11b2d8afa82d0518e00f318a76b84b945",
+    "intent": "a090e9d4cd619c479fccd87ddf6a138f4c349aded1899c64da4fb2c6cbcfc306",
+    "reference": "4c1d0d9bc8dace0cb292d319834f640e80581a37b762ce20aa3f7561000d8b61",
+    "universe": "75626a93a1fa91397e369d7a3dafab19a04fde94e62cde1af867a26d8c9eb94e",
+    "schema": "cc85090b1829deac150d09768b944e538a7691b24316bf79d8b3705bc5e2363e",
+    "manifest:wo": "343611eceeda99e0148b96a87a47879ed074a0fe90bcad64b07428f88a0907e6",
+    "manifest:iot": "50a3c21bbda8663f979ac45d9df69619e37f7d990ca9ed46e596d029656668d4",
+    "schema_part:generated:wo_iot.generated.cedarschema": "c3057c9ed6920ca5131ecb0bdb39241988833a3f1dcfa7fe4a1f6f21591b563d",
+    "schema_part:trusted:trusted.cedarschema": "766960fd1f9512456b92632e0a0233fbe278e24ca9d5820bcde77b63af094bbc"
+   }
+  },
+  "s03_create_at_main": {
+   "schema": "inputs/s03_create_at_main/schema/wo.cedarschema",
+   "servers": [
+    "wo"
+   ],
+   "hashes": {
+    "scenario_yaml": "fe91cb938f0a1a2850461a866a3000a7b4e524c562e8c54f35bfaabb2089cdd7",
+    "intent": "c0917e160ad52553ae545c1a820e62c38439f77b39a6eced3b39704890866d20",
+    "reference": "b1ff9972299c66ce7b6078588428a315b9936048e20582b4ca1bab181333d106",
+    "universe": "6e0352c96b96e9945526a01a16ec9df3b94a69036e4ecfe028de76cf53959f36",
+    "schema": "544514c280aba61d75396289ea56846495e28ac1fbe8e4d0451f7f41cf17fbb6",
+    "manifest:wo": "343611eceeda99e0148b96a87a47879ed074a0fe90bcad64b07428f88a0907e6",
+    "schema_part:generated:wo.generated.cedarschema": "ca4e73eb1c36f6e04dc10c8607af35a546d3cb9c348b0095db05810dcbf7aae5",
+    "schema_part:trusted:trusted.cedarschema": "766960fd1f9512456b92632e0a0233fbe278e24ca9d5820bcde77b63af094bbc"
+   }
+  }
+ },
+ "versions": {
+  "cedarpy": "4.12.2",
+  "anthropic": "2.8.0",
+  "cedar-policy-mcp-schema-generator": "0.7.0",
+  "cedar_cli": "cedar-policy-cli 4.14.1",
+  "cvc5": "This is cvc5 version 1.3.1 [git ea1b484 on branch HEAD]",
+  "git_commit": "c1bcd53afdb7931f5cdfd75ccb3289a7d63af5a5",
+  "git_dirty": false
+ }
+}

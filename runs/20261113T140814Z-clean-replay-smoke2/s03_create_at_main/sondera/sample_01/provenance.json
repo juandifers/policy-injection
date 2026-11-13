@@ -1,0 +1,93 @@
+[
+ {
+  "literal": "AOB::Action::\"generate_work_order\"",
+  "kind": "entity",
+  "occurrences": 1,
+  "sources": {
+   "generated_schema": [
+    "wo.generated.cedarschema"
+   ],
+   "manifest_structure": [
+    "wo:generate_work_order.name"
+   ]
+  }
+ },
+ {
+  "literal": "\"MAIN\"",
+  "kind": "string",
+  "occurrences": 1,
+  "sources": {
+   "intent": [
+    "intent.md"
+   ]
+  }
+ },
+ {
+  "literal": "AOB::Action::\"approve_workorder\"",
+  "kind": "entity",
+  "occurrences": 1,
+  "sources": {
+   "generated_schema": [
+    "wo.generated.cedarschema"
+   ],
+   "manifest_structure": [
+    "wo:approve_workorder.name"
+   ]
+  }
+ },
+ {
+  "literal": "AOB::Action::\"cancel_workorder\"",
+  "kind": "entity",
+  "occurrences": 1,
+  "sources": {
+   "generated_schema": [
+    "wo.generated.cedarschema"
+   ],
+   "manifest_structure": [
+    "wo:cancel_workorder.name"
+   ]
+  }
+ },
+ {
+  "literal": "AOB::Action::\"update_workorder\"",
+  "kind": "entity",
+  "occurrences": 1,
+  "sources": {
+   "generated_schema": [
+    "wo.generated.cedarschema"
+   ],
+   "manifest_structure": [
+    "wo:update_workorder.name"
+   ]
+  }
+ },
+ {
+  "literal": "AOB::Action::\"assign_technician\"",
+  "kind": "entity",
+  "occurrences": 1,
+  "sources": {
+   "generated_schema": [
+    "wo.generated.cedarschema"
+   ],
+   "manifest_structure": [
+    "wo:assign_technician.name"
+   ]
+  }
+ },
+ {
+  "literal": "AOB::Action::\"close_workorder\"",
+  "kind": "entity",
+  "occurrences": 1,
+  "sources": {
+   "trusted_schema": [
+    "trusted.cedarschema"
+   ],
+   "generated_schema": [
+    "wo.generated.cedarschema"
+   ],
+   "manifest_structure": [
+    "wo:close_workorder.name"
+   ]
+  }
+ }
+]
