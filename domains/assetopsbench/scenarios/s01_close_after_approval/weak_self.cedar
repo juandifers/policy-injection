@@ -11,8 +11,9 @@ permit (principal, action == AOB::Action::"close_workorder", resource)
 when {
   context.input.site_id == "MAIN" &&
   context has approval &&
-  context.approval.status == "APPR" &&
-  context.approval.wonum == context.input.wonum
+  context.approval.status == PGI::ApprovalStatus::"APPR" &&
+  context.approval.wonum == context.input.wonum &&
+  context.approval.site_id == context.input.site_id
 };
 // No permit for approve_workorder: default deny.
 // site_id on list_workorders is optional (absent = all sites), so read-main requires it present.

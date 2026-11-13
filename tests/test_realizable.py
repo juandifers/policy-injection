@@ -141,7 +141,7 @@ def test_toy_schema_needs_no_exclusion():
     assert realizable.exclusion_policy(TOY) == ""
 
 
-@pytest.mark.parametrize("name", ["weak_status", "weak_same_wo", "weak_self"])
+@pytest.mark.parametrize("name", ["weak_status", "weak_same_wo", "weak_self", "weak_same_site"])
 def test_realizable_implies_finds_the_real_surplus(name):
     """With the exclusion, symcc's counterexample on close is realizable and replays in cedarpy."""
     from pgi.oracle.enumeration import Universe, allowed
@@ -155,6 +155,16 @@ def test_realizable_implies_finds_the_real_surplus(name):
     assert allowed(folder / f"{name}.cedar", one, WO) == {"cex"}    # replayed against the ORIGINAL P1
     assert allowed(folder / "reference.cedar", one, WO) == set()
     assert all(o.status == "holds" for o in others.values())
+
+
+def test_weak_same_site_counterexample_is_a_cross_site_approval():
+    """symcc's witness for weak_same_site must be what c7 encodes: an approval whose site differs from the input's."""
+    folder = DOMAINS / "assetopsbench/scenarios/s01_close_after_approval"
+    results = realizable.implies(folder / "weak_same_site.cedar", folder / "reference.cedar", WO)
+    (c,) = [c for e, c in results.items() if e.action == 'AOB::Action::"close_workorder"']
+    ctx = c.counterexample["request"]["context"]
+    assert ctx["approval"]["site_id"] != ctx["input"]["site_id"]
+    assert ctx["approval"]["wonum"] == ctx["input"]["wonum"]
 
 
 def test_realizable_implies_reference_holds_everywhere():

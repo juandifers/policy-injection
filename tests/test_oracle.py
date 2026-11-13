@@ -19,8 +19,11 @@ from pgi.oracle.enumeration import (OracleError, Universe, allowed, deficit, exp
                                      surplus, validate)
 
 ROOT = Path(__file__).resolve().parents[1]
-WEAK = ["weak_status", "weak_same_wo", "weak_self"]
-EXPECTED_SURPLUS = {"weak_status": {"c4"}, "weak_same_wo": {"c3"}, "weak_self": {"c5"}}
+# Union of weak-file names over all domains; a scenario without a given file skips that case.
+WEAK = ["weak_status", "weak_same_wo", "weak_self", "weak_same_site"]
+TOY_SURPLUS = {"weak_status": {"c4"}, "weak_same_wo": {"c3"}, "weak_self": {"c5"}}
+# AOB binds the approval to the full work-order key (site_id, wonum), so it has one more condition.
+AOB_SURPLUS = {**TOY_SURPLUS, "weak_same_site": {"c7"}}
 EXPECTED_REFERENCE_ALLOW = {"list_main", "c2"}
 
 
@@ -36,6 +39,7 @@ class Scenario:
     approve_action: str  # action id with no permit and no `approval` in its context
     site_field: str     # input field naming the site on the close action
     n_actions: int      # actions in the schema (one symcc environment each)
+    expected_surplus: dict  # weak file name -> the one universe case it wrongly admits
 
     @property
     def ref(self) -> Path:
@@ -46,15 +50,17 @@ class Scenario:
         return f'AOB::Action::"{self.close_action}"'
 
     def weak(self, name: str) -> Path:
+        if name not in self.expected_surplus:
+            pytest.skip(f"{self.name} has no {name}")
         return self.folder / f"{name}.cedar"
 
 
 SCENARIOS = [
     Scenario("toy", ROOT / "domains/toy/schema/toy.cedarschema", ROOT / "domains/toy/scenarios/s01_close_after_approval",
-             "close_work_order", "list_work_orders", "approve_work_order", "siteid", 3),
+             "close_work_order", "list_work_orders", "approve_work_order", "siteid", 3, TOY_SURPLUS),
     Scenario("assetopsbench", ROOT / "domains/assetopsbench/schema/wo.cedarschema",
              ROOT / "domains/assetopsbench/scenarios/s01_close_after_approval",
-             "close_workorder", "list_workorders", "approve_workorder", "site_id", 15),
+             "close_workorder", "list_workorders", "approve_workorder", "site_id", 15, AOB_SURPLUS),
 ]
 
 
@@ -71,7 +77,7 @@ def universe(sc):
 # 1. Every policy file validates against the schema.
 @pytest.mark.parametrize("name", ["reference", *WEAK])
 def test_policy_validates(sc, name):
-    validate(sc.folder / f"{name}.cedar", sc.schema)  # raises OracleError on any validation error
+    validate(sc.ref if name == "reference" else sc.weak(name), sc.schema)  # raises OracleError on any validation error
 
 
 # 2. Positive control: the reference allows exactly the two intended requests.
@@ -87,7 +93,12 @@ def test_reference_has_no_surplus(sc, universe):
 # 4. Each single-condition weakening admits exactly the one case that condition guarded.
 @pytest.mark.parametrize("name", WEAK)
 def test_exact_surplus(sc, name, universe):
-    assert surplus(sc.weak(name), sc.ref, universe, sc.schema) == EXPECTED_SURPLUS[name]
+    assert surplus(sc.weak(name), sc.ref, universe, sc.schema) == sc.expected_surplus[name]
+
+
+def test_every_weak_file_has_an_expectation(sc):
+    """A weak file on disk without an expected surplus would silently go untested."""
+    assert {p.stem for p in sc.folder.glob("weak_*.cedar")} == set(sc.expected_surplus)
 
 
 # 5. With the reference as the only clean run, expansion reduces to surplus.

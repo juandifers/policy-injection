@@ -3,8 +3,15 @@
 //
 // link_schema.py adds each annotated type to the named action's context as an OPTIONAL attribute:
 //   @pgi_action("<namespace>::<action>")  @pgi_context_attribute("<attribute name>")
+// Entity types declared here (e.g. the status enum) are carried into the linked schema unchanged.
 namespace PGI {
+  // Every work-order status the AssetOpsBench wo server writes or recognises
+  // (AOB 8941acc, src/servers/wo/workorders.py:28-31; written at 452, 530, 542, 591).
+  entity ApprovalStatus enum ["WAPPR", "APPR", "WMATL", "WSCH", "INPRG", "WPCOND", "COMP", "CLOSE", "CAN"];
+
+  // A work order is identified by (site_id, wonum): the server's key is wo:{SITE}:{wonum}
+  // (workorders.py:37-38). The gate fills both from its own approval record.
   @pgi_action("AOB::close_workorder")
   @pgi_context_attribute("approval")
-  type Approval = { wonum: String, status: String, approver: AOB::User };
+  type Approval = { wonum: String, site_id: String, status: ApprovalStatus, approver: AOB::User };
 }

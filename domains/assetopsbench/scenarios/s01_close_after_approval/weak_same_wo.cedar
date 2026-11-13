@@ -11,7 +11,8 @@ permit (principal, action == AOB::Action::"close_workorder", resource)
 when {
   context.input.site_id == "MAIN" &&
   context has approval &&
-  context.approval.status == "APPR" &&
+  context.approval.status == PGI::ApprovalStatus::"APPR" &&
+  context.approval.site_id == context.input.site_id &&
   context.approval.approver != principal
 };
 // No permit for approve_workorder: default deny.

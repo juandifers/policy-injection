@@ -8,13 +8,17 @@ Needed: the intent lets the agent list MAIN's work orders to find what to close.
 - Nothing smaller: without this permit the agent cannot list at all, which contradicts the intent.
 
 ## `close-after-approval` (close_workorder)
-Five conditions, one per sentence of the intent:
+Six conditions, one per requirement of the intent; 4 and 5 together encode "the same work order":
 1. `site_id == "MAIN"`: close only at MAIN.
 2. `context has approval`: there must be an approval on record. Dropping it fails validation, since `approval` is optional.
-3. `approval.status == "APPR"`: granted, not pending (`WAPPR` is the real pending status in the data).
-4. `approval.wonum == input.wonum`: the approval is for the same work order.
-5. `approval.approver != principal`: never self-approved.
-Each condition is necessary. Deleting any one admits exactly one universe case the intent forbids (tests: weak_status gives c4, weak_same_wo gives c3, weak_self gives c5; c6 covers condition 1). None is redundant with another.
+3. `approval.status == PGI::ApprovalStatus::"APPR"`: granted, not pending (`WAPPR` is the real pending status in the data). The status is a trusted enum (every status the wo server writes or recognises), so a policy cannot name a status that does not exist: `"APPROVED"` fails validation instead of silently denying.
+4. `approval.wonum == input.wonum` and
+5. `approval.site_id == input.site_id`: the approval is for the same work order. A work order is identified by the **pair (site_id, wonum)**, not by `wonum` alone. The server's document key is `wo:{SITE}:{wonum}` (`src/servers/wo/workorders.py:37–38`), and in Maximo, which AOB models, `wonum` is unique only within a site (Juan's domain statement; consistent with the AOB key, not independently verified here). Binding on `wonum` alone would let an approval for work order 1000046 at NORTH close work order 1000046 at MAIN. Condition 1 does not cover this, because it constrains the input's site, not the approval's.
+6. `approval.approver != principal`: never self-approved.
+
+Each condition is necessary. Deleting any one admits exactly one universe case the intent forbids (tests: weak_status gives c4, weak_same_wo gives c3, weak_same_site gives c7, weak_self gives c5; c6 covers condition 1). None is redundant with another. c7 is synthetic: the AOB data has no second 1000046, but the server's key allows one.
+
+The site comparison is case-sensitive, like every Cedar string `==`. With condition 1 fixing the input to `"MAIN"`, the approval must also say `"MAIN"`. The gate is meant to copy `site_id` from the server's stored record, and stored site ids are upper-case (`siteid` in the data), so this is not a deficit for real requests.
 
 ## Not granted
 approve_workorder (explicitly), and every other tool (the intent grants nothing else).

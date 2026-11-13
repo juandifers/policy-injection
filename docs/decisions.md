@@ -162,3 +162,40 @@ Label everywhere: "Sondera-style (our reimplementation)". Not Sondera's generato
 - `pgi.runs.clean` writes `runs/<UTC stamp>-clean[-label]/`, never overwrites, records tool versions, git commit and dirty flag, every input hash, and per sample the response record (model id returned, request id, stop reason, usage), the policy, and the oracle record. `--replay` serves everything from the cache and fails on a miss (tested: zero API calls, identical records).
 - symcc prints counterexample entities in arbitrary order; `parse_counterexample` now sorts them so identical counterexamples compare equal.
 - Blind spot = an action where symcc finds a realizable surplus (and its counterexample replays in cedarpy) but enumeration has no surplus case of that action.
+
+## 2026-11-13: Spike: Cedar enumerated entity types work end to end with our pinned versions
+
+Scratch test outside the repo: `namespace PGI { entity ApprovalStatus enum ["WAPPR","APPR","COMP","CAN"]; ... }`, used as the type of a record attribute in an action's context, on a toy schema and on `link(wo.generated, trusted+enum)`.
+
+| Step | Tool | Result |
+|---|---|---|
+| 1 | `cedar validate --deny-warnings` (CLI 4.14.1) | pass. `== PGI::ApprovalStatus::"APPR"` validates. `::"APPROVED"` fails ("not declared as a valid eid", exit 3). `== "APPR"` (a String) fails ("types String and PGI::ApprovalStatus are not compatible"). |
+| 2 | cedarpy 4.12.2 (engine 4.12.0) | pass. `validate_policies` gives the same verdicts as the CLI. `is_authorized_batch` with `{"__entity": {"type": "PGI::ApprovalStatus", "id": "APPR"}}` in context: correct decisions **without** the enum entities in the entities list, and identical with them listed. An undeclared id (`"APPROVED"`) fails request construction (`NoDecision` + error), which `allowed()` already raises on. |
+| 3 | `link_schema.py` (`cedar translate-schema` cedar→json→cedar) | pass, with no code change: `link` merges whole namespaces, so the `PGI` entity type is carried over. A second round trip is byte-identical. `cedar-to-json-with-resolved-types` gives `status: {"type": "Entity", "name": "PGI::ApprovalStatus"}` and `entityTypes.ApprovalStatus.enum`. |
+| 4 | `cedar symcc implies`, `parse_counterexample`, `realizable.implies` | pass. Weak (no status check) ⇒ ref: DOES NOT HOLD, with status `PGI::ApprovalStatus::"CAN"` (symcc picks declared ids only, and lists all four enum entities in the counterexample entities). The counterexample parses, has no realizability violations, and replays in cedarpy (P1 allows, P2 denies). ref ⇒ weak: holds. |
+
+Consequence: an enum makes an out-of-vocabulary status a **validation error**, not a silent deficit. symcc can no longer invent a status the gate never supplies.
+
+## 2026-11-13: Approval status is a trusted enum (approved by Juan)
+
+- `trusted.cedarschema` declares `entity PGI::ApprovalStatus enum [...]`, and `PGI::Approval.status` has that type (it was `String`).
+- The set is **every status the wo server writes or recognises** (AOB `8941acc`, `src/servers/wo/workorders.py`). That is nine values, more than the four expected:
+  - written: `WAPPR` (create, :452), `APPR` (approve, :530), `CAN` (cancel, :542), `COMP` (close, :591);
+  - recognised only, in `OPEN_STATUSES` / `APPROVED_PENDING` / `TERMINAL` / `ALL_STATUSES` (:28–31): `WMATL`, `WSCH`, `INPRG`, `WPCOND`, `CLOSE`;
+  - `update_workorder` (:473) cannot change status;
+  - `OPEN` and `APPROVED_PENDING` (:126–129) are list filters, not statuses, so they are excluded.
+- `link_schema.py` needed no code change (it merges whole namespaces, see the spike); only its docstring was updated. Finals regenerated; all three `*.generated.cedarschema` hashes unchanged.
+- Why: "APPROVED" vs "APPR" in the smoke run (findings 2026-11-13). The vocabulary is now stated by a trusted input. An out-of-vocabulary status becomes a validation failure, and symcc can only pick declared statuses.
+- Effect on the generator's inputs: the s01 prompt's schema block changed (`docs/prompts/naive_s01.md` regenerated; only the `PGI` block differs). Smoke-run cache entries for s01 no longer match, since the prompt is part of the key.
+
+## 2026-11-13: s01 approval is bound to the full work-order key (site_id, wonum) (approved by Juan)
+
+- `PGI::Approval` gains `site_id: String`, filled by the gate from its own record, like the rest of the approval.
+- Reference `close-after-approval` gains `context.approval.site_id == context.input.site_id`. The three existing weak files gain the same conjunct, so each still differs from the reference by exactly one conjunct.
+- New candidate `weak_same_site.cedar` (reference minus that conjunct). New case `c7`: input 1000046 at MAIN, approval for 1000046 at NORTH (synthetic; no such row in the AOB data).
+- Every approval in `universe.yaml` now carries `site_id`: MAIN everywhere, NORTH in c6.
+- Why: the server keys work orders as `wo:{SITE}:{wonum}` (`workorders.py:37–38`). The smoke run's round-3 judge noticed that the old reference bound only `wonum`.
+- Tests: `test_oracle.py` expectations are per scenario now (toy keeps three weak files, AOB has four), and `test_every_weak_file_has_an_expectation` guards against an untested weak file. Results:
+  - `weak_same_site` surplus = `{c7}`; the other weak files keep `{c4}`, `{c3}`, `{c5}`.
+  - symcc: realizable `does_not_hold` for each weak file, with a cross-site counterexample for `weak_same_site`; `holds` for the reference.
+  - The exclusion test passes with c7.

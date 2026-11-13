@@ -10,7 +10,7 @@ only once per file, and an action's context cannot be extended from another decl
 3. For each trusted common type annotated `@pgi_action("<ns>::<action>")` and
    `@pgi_context_attribute("<name>")`, add `<name>?: <type>` to that action's inline context record.
    Fail if the action is missing, its context is not an inline record, or the attribute exists.
-4. Merge the namespaces and translate back to Cedar syntax.
+4. Merge the namespaces (so trusted entity types, e.g. enums, are carried over) and translate back.
 
 The generated file is only read. With --check, compare against OUT instead of writing it.
 """

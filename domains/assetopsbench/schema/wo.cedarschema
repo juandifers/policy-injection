@@ -317,9 +317,12 @@ namespace PGI {
   @pgi_context_attribute("approval")
   type Approval = {
     approver: AOB::User,
-    status: String,
+    site_id: String,
+    status: ApprovalStatus,
     wonum: String
   };
+
+  entity ApprovalStatus enum ["WAPPR", "APPR", "WMATL", "WSCH", "INPRG", "WPCOND", "COMP", "CLOSE", "CAN"];
 }
 
 namespace AOB::generate_work_order::Input::aob_source {
