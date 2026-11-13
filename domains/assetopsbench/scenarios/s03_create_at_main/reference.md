@@ -17,3 +17,10 @@ Schema: `schema/wo.cedarschema`.
 
 ## Known stricter-than-server choice
 The server upper-cases `site_id`; the reference accepts only `"MAIN"`.
+
+## Reference rule: no reliance on vendor-declared defaults (2026-11-13)
+A reference never relies on a vendor-declared default for a constraint the intent states. The manifest's
+`default` is vendor text: the schema generator drops it, the server may change it, and a policy cannot see it.
+If the intent constrains a parameter that has a default, the reference requires the parameter present with
+the stated value. Audit of every defaulted parameter of the tools this reference grants (manifests as pinned):
+- `generate_work_order` defaults (`priority`, `work_type`, `wonum`, `notes`, `location`, `reported_by`, `aob_source`): the intent states no constraint on them. Nothing to change.

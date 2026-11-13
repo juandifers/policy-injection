@@ -9,8 +9,11 @@ from pgi.oracle import validation
 from pgi.oracle.enumeration import allowed, load_universe
 
 DOMAIN = Path(__file__).resolve().parents[1] / "domains" / "assetopsbench"
+# find_main is denied since 2026-11-13 (no listed task needs search-by-sensor). get_my_assigned_workorders
+# needs open_only present and true (never rely on a vendor default for a stated constraint): only
+# assigned_main_open is allowed; assigned_main (omitted) and assigned_main_all (false) are denied.
 S02_READS = {"get_wo_main", "tasks_main", "costs_main", "actuals_main", "kpis_main", "calendar_main", "list_main",
-             "assigned_main", "asset_ids_main", "assets_main", "detail_main", "installed_main", "find_main",
+             "assigned_main_open", "asset_ids_main", "assets_main", "detail_main", "installed_main",
              "measured_main", "history_main", "latest_main", "extent_main", "coverage_main", "stats_main"}
 EXPECTED = {
     "s01_close_after_approval": {"list_main", "c2"},
@@ -52,3 +55,10 @@ def test_s02_variant_a_differs_only_on_the_cross_site_telemetry_case():
     assert validation.check(variant, schema).ok
     assert allowed(variant, universe, schema) == S02_READS
     assert allowed(folder / "reference.cedar", universe, schema) - allowed(variant, universe, schema) == {"latest_main_north_asset"}
+
+
+def test_s02_open_only_cases_exist():
+    u = load_universe(DOMAIN / "scenarios" / "s02_site_scoped_reads" / "universe.yaml")
+    inp = {c: u.requests[c]["context"]["input"] for c in ("assigned_main", "assigned_main_open", "assigned_main_all")}
+    assert "open_only" not in inp["assigned_main"]
+    assert inp["assigned_main_open"]["open_only"] is True and inp["assigned_main_all"]["open_only"] is False

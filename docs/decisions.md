@@ -286,3 +286,23 @@ Why: run folders recorded the schema **path** and hash, but `7e0efc8` changed th
 - action not granted;
 - a probe that errors;
 - **smoke1's `c2` → `context.approval.status == "APPROVED"` on the inputs restored from `faf37e6`**.
+
+## 2026-11-13: Reference rule: no reliance on vendor-declared defaults; two s02 reference changes (approved by Juan)
+
+- **Rule** (now in every AOB scenario's `reference.md`): a reference never relies on a vendor-declared default for a constraint the intent states.
+  - Why: a manifest `default` is vendor text. The schema generator drops it, the server can change it, and no policy can see it.
+  - The same reasoning already made `list_workorders` require `site_id`.
+- **s02 `get_my_assigned_workorders`** (new permit `wo-assigned-main-open`) now requires `open_only` present and `true`.
+  - The intent says "open work orders"; the server's default is `true`.
+  - Universe: `assigned_main` (omitted) is now **denied**. New cases `assigned_main_open` (true, allowed) and `assigned_main_all` (false, denied).
+  - Evidence: in smoke2 (`runs/20261113T140814Z-clean-replay-smoke2`), 2/4 samples wrote exactly this condition, and their `assigned_main` deficit was cause-tagged `context.input has open_only`.
+- **s02 `find_assets_by_sensors`** is dropped from the reference.
+  - The intent lists which assets exist, their details, installed sensors and sensor data; no listed task needs search-by-sensor.
+  - Evidence: smoke2 cause tag `action not granted` on `find_main` in 4/4 samples.
+  - `find_main` stays in the universe as a denied case.
+- **Option A variant** (`reference_variant_asset_list.cedar`) gets the same two changes, so it still differs from the reference only on `latest_main_north_asset` (existing test).
+- **Audit (1c)** of every defaulted parameter of the tools granted by the s01–s03 references (38 in all):
+  - `list_workorders.site_id` and `get_my_assigned_workorders.site_id` were already required.
+  - `open_only` is the change above.
+  - The intent states no constraint on any other default, so nothing else changes. The list is in each `reference.md`.
+- New s02 reference allow-set: 18 MAIN reads + `latest_main_north_asset`.

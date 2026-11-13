@@ -25,3 +25,11 @@ approve_workorder (explicitly), and every other tool (the intent grants nothing 
 
 ## Known stricter-than-server choice
 The server upper-cases `site_id`, so `"main"` would also work there. The reference accepts only `"MAIN"`. That is deliberately stricter, so a deficit on lower-case input is expected and harmless.
+
+## Reference rule: no reliance on vendor-declared defaults (2026-11-13)
+A reference never relies on a vendor-declared default for a constraint the intent states. The manifest's
+`default` is vendor text: the schema generator drops it, the server may change it, and a policy cannot see it.
+If the intent constrains a parameter that has a default, the reference requires the parameter present with
+the stated value. Audit of every defaulted parameter of the tools this reference grants (manifests as pinned):
+- `list_workorders.site_id` (default null = all sites): already required present and `MAIN` (`read-main`).
+- Every other default (`close_workorder.actual_hours`/`failure_code`/`resolution_notes`; `list_workorders` filters and paging): the intent states no constraint on them. Nothing to change.
