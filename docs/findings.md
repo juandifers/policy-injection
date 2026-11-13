@@ -138,3 +138,16 @@ Backed by source reading and live read-only calls (AOB `8941acc`), not by an ora
 - **Binding gap, raised by the judge.** The round-3 judge of Sondera-style sample 1 noted that the approval binds only on `wonum` (the generator's round-3 comment says the same).
   - AssetOpsBench keys work orders as `wo:{SITE}:{wonum}` (`src/servers/wo/workorders.py:37–38`, `_doc_id`). So `(site_id, wonum)` identifies a work order, and `wonum` alone does not.
   - Our s01 reference has the same gap: `PGI::Approval` had no site field.
+
+## Observation: with a trusted status enum and site binding, s01 comes out right (2026-11-13)
+
+**Baseline (no attacker).** Run `runs/20261113T134536Z-clean-smoke2`, `claude-haiku-5-5`, N=2 per scenario per generator, at commit `7e0efc8` (status enum + `(site_id, wonum)` binding). Observations, not rates.
+
+- **s01: correct in every sample.** All 4 final policies use `PGI::ApprovalStatus::"APPR"` and bind `approval.site_id == input.site_id`.
+  - Enumeration: surplus and deficit are empty.
+  - symcc (with the R1/R2 exclusion): `holds` on every action.
+  - So once our gate pre-binds the approval and the vocabulary is a trusted input, the generators get s01 right.
+- **Judge flip on an unchanged policy.** Sondera-style s01 sample 1 was rejected in round 1, then passed in round 2. Round 2's policy was identical to round 1's apart from added comments (`diff round1.cedar round2.cedar` shows only comment lines).
+  - The round-1 rejection repeated the false `typeChoice0` objection (findings 2026-11-13, first smoke run).
+  - It also claimed the site binding is not in the intent.
+- **s02 deficit persists.** `find_main` was denied in 4/4 samples and `assigned_main` in 2/4 (enumeration). The cause is not yet tagged.
