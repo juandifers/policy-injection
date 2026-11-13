@@ -4,8 +4,14 @@ Literals come from Cedar's JSON policy form (`cedar translate-policy --direction
 from regexes over Cedar text:
   - strings and longs: every `{"Value": ...}` (booleans are not literals);
   - entity ids: `{"Value": {"__entity": ...}}` in conditions, and `entity` / `entities` in scopes;
-  - `like` patterns: kind "like"; each wildcard-separated segment must occur for a source to count.
-Entity *types* (`is`), attribute names and record keys are accessors, not literals.
+  - `like` patterns: kind "like"; each wildcard-separated segment must occur for a source to count;
+  - entity types in `is` (scope or condition): kind "entity_type", matched on the type's last segment.
+Attribute names and record keys are accessors, not literals.
+
+Each literal has a role:
+  value  strings, longs, `like` patterns, and entity ids compared in conditions whose type is not an
+         Action type (e.g. an enum id). These are the constants a policy's security depends on.
+  scope  everything in a principal/action/resource scope, any Action entity, and entity types.
 
 A literal occurs in an input if its token (a string's value, an entity's id, a long's decimal text) appears
 as a whole token, case-sensitively: not preceded or followed by [A-Za-z0-9_]. Source classes:
@@ -33,9 +39,10 @@ _FREE_TEXT_KEYS = ("description", "title")
 class Literal:
     """One literal as written in the policy. `text` is its Cedar spelling; `tokens` are what must occur."""
 
-    kind: str          # string | long | entity | like
+    kind: str          # string | long | entity | like | entity_type
     text: str
     tokens: tuple[str, ...]
+    role: str = "value"  # value | scope
 
 
 def _policy_json(policy: Path) -> dict:
@@ -46,8 +53,17 @@ def _policy_json(policy: Path) -> dict:
     return json.loads(proc.stdout)
 
 
-def _entity(e: dict) -> Literal:
-    return Literal("entity", f'{e["type"]}::{json.dumps(e["id"])}', (e["id"],))
+def _is_action_type(t: str) -> bool:
+    return t == "Action" or t.endswith("::Action")
+
+
+def _entity(e: dict, in_scope: bool = False) -> Literal:
+    role = "scope" if in_scope or _is_action_type(e["type"]) else "value"
+    return Literal("entity", f'{e["type"]}::{json.dumps(e["id"])}', (e["id"],), role)
+
+
+def _entity_type(t: str) -> Literal:
+    return Literal("entity_type", t, (t.rsplit("::", 1)[-1],), "scope")
 
 
 def _walk(node, out: list[Literal]) -> None:
@@ -67,6 +83,10 @@ def _walk(node, out: list[Literal]) -> None:
                     out.append(Literal("string", json.dumps(val), (val,)))
                 else:
                     _walk(val, out)
+            elif key == "is" and isinstance(val, dict) and "entity_type" in val:
+                _walk(val.get("left"), out)
+                out.append(_entity_type(val["entity_type"]))
+                _walk(val.get("in"), out)
             elif key == "like" and isinstance(val, dict):
                 _walk(val.get("left"), out)
                 segs, cur = [], ""
@@ -92,7 +112,9 @@ def extract_literals(policy: Path) -> list[Literal]:
             scope = pol.get(slot, {})
             for e in [scope.get("entity"), *(scope.get("entities") or []), (scope.get("in") or {}).get("entity")]:
                 if e:
-                    out.append(_entity(e))
+                    out.append(_entity(e, in_scope=True))
+            if scope.get("entity_type"):
+                out.append(_entity_type(scope["entity_type"]))
         for cond in pol.get("conditions", []):
             _walk(cond["body"], out)
     return out
@@ -172,6 +194,6 @@ def provenance(policy: Path, sources: Sources) -> list[dict]:
                     found.setdefault(cls_, [])
                     if where not in found[cls_]:
                         found[cls_].append(where)
-        rows[lit.text] = {"literal": lit.text, "kind": lit.kind, "occurrences": 1,
+        rows[lit.text] = {"literal": lit.text, "kind": lit.kind, "role": lit.role, "occurrences": 1,
                           "sources": {c: found[c] for c in CLASSES if c in found}}
     return list(rows.values())

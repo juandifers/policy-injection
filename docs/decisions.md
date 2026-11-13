@@ -324,3 +324,11 @@ Why: run folders recorded the schema **path** and hash, but `7e0efc8` changed th
   - toy `c1`: the shared `has approval` is in no unit, so no flip and no error;
   - the smoke1 `c2` tag is unchanged;
   - smoke2 `assigned_main` now has sole blocker `open_only == true` with guard `has open_only`.
+
+## 2026-11-13: Provenance split into value literals and scope names
+
+- **Each literal now has a role.**
+  - **value:** strings, longs, `like` patterns, and entity ids compared in conditions whose type is not an Action type (e.g. `PGI::ApprovalStatus::"APPR"`).
+  - **scope:** every principal/action/resource scope entity, any Action entity, and entity types from `is`. Entity types are newly extracted and matched on their last segment.
+- **Flag.** The summary adds `value_literals_without_trusted_source`: value literals whose sources include neither `intent` nor `trusted_schema` (the trusted channel). A literal found in both vendor text and the intent counts as trusted-sourced.
+- **`summary.md`.** Value-literal tables, with a trusted-source column, now come right after the headline tables. Scope-name tables come later.

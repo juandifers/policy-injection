@@ -142,6 +142,9 @@ def wilson(k: int, n: int, z: float = 1.96) -> list[float] | None:
     return [round(max(0.0, centre - half), 3), round(min(1.0, centre + half), 3)]
 
 
+TRUSTED_SOURCES = ("intent", "trusted_schema")  # provenance classes that come from the trusted channel
+
+
 def summarize(model: str, results: list[dict], case_ids: list[str] | None = None,
               reference_allow: list[str] | None = None) -> dict:
     """Per scenario x generator: validity, surplus/deficit shares, clean envelope, per-request allow counts,
@@ -188,9 +191,13 @@ def summarize(model: str, results: list[dict], case_ids: list[str] | None = None
     lits: dict[str, dict] = {}
     for rows in parsed:
         for row in rows:
-            e = lits.setdefault(row["literal"], {"kind": row["kind"], "samples": 0, "sources": row["sources"]})
+            e = lits.setdefault(row["literal"], {"kind": row["kind"], "role": row.get("role", "value"),
+                                                 "samples": 0, "sources": row["sources"]})
             e["samples"] += 1
     out["literal_provenance"] = dict(sorted(lits.items(), key=lambda kv: (-kv[1]["samples"], kv[0])))
+    out["value_literals_without_trusted_source"] = [
+        lit for lit, e in out["literal_provenance"].items()
+        if e["role"] == "value" and not any(c in e["sources"] for c in TRUSTED_SOURCES)]
     out["provenance_parsed"] = len(parsed)
     tag_counts: dict[str, dict] = {"surplus": {}, "deficit": {}}
     for r in results:
@@ -246,6 +253,7 @@ def markdown(config: dict, summary: dict) -> str:
         lines += ["", "Judge flips: consecutive rounds whose policies behave identically (equal allow-sets, symcc "
                   "implication both ways on every action) but whose judge verdicts differ / all such pairs."]
     scenarios = sorted({k.split("/")[0] for k in summary})
+    lines += _literal_tables(summary, scenarios, "value")
     for sc in scenarios:
         gens = [k.split("/")[1] for k in summary if k.split("/")[0] == sc]
         first = summary[f"{sc}/{gens[0]}"]
@@ -259,24 +267,7 @@ def markdown(config: dict, summary: dict) -> str:
                      for g in gens]
             lines.append(f"| {case} | {'✓' if case in ref else ''} | " + " | ".join(cells) + " |")
         lines += ["", "k/n = valid samples allowing the case / valid samples (enumeration). Wilson intervals in summary.json."]
-    for sc in scenarios:
-        gens = [k.split("/")[1] for k in summary if k.split("/")[0] == sc]
-        lits: dict[str, dict] = {}
-        for g in gens:
-            for lit, e in summary[f"{sc}/{g}"].get("literal_provenance", {}).items():
-                lits.setdefault(lit, e)
-        if not lits:
-            continue
-        lines += ["", f"### {sc}: literal provenance", "",
-                  "| literal | " + " | ".join(gens) + " | sources |", "|---|" + "---|" * len(gens) + "---|"]
-        for lit, e in lits.items():
-            cells = []
-            for g in gens:
-                s = summary[f"{sc}/{g}"]
-                cells.append(f"{s['literal_provenance'].get(lit, {}).get('samples', 0)}/{s['provenance_parsed']}")
-            lines.append(f"| `{lit}` | " + " | ".join(cells) + f" | {', '.join(e['sources']) or '**none**'} |")
-        lines += ["", "k/n = samples using the literal / samples whose policy parses. Locations in summary.json and "
-                  "each sample's provenance.json. Whole-token, case-sensitive match."]
+    lines += _literal_tables(summary, scenarios, "scope")
     for sc in scenarios:
         rows = [(side, case, k.split("/")[1], tag, n)
                 for k, s in summary.items() if k.split("/")[0] == sc
@@ -290,6 +281,35 @@ def markdown(config: dict, summary: dict) -> str:
         lines += ["", "Surplus: the reference conjunct that denies the case. Deficit: the candidate conjunct that denies it "
                   "(first blocker of the prefix scan; sole blockers in each sample's oracle.json)."]
     return "\n".join(lines) + "\n"
+
+
+def _literal_tables(summary: dict, scenarios: list[str], role: str) -> list[str]:
+    """One table per scenario of literals with this role (value literals carry a trusted-source flag)."""
+    lines = []
+    for sc in scenarios:
+        gens = [k.split("/")[1] for k in summary if k.split("/")[0] == sc]
+        lits: dict[str, dict] = {}
+        for g in gens:
+            for lit, e in summary[f"{sc}/{g}"].get("literal_provenance", {}).items():
+                if e.get("role", "value") == role:
+                    lits.setdefault(lit, e)
+        if not lits:
+            continue
+        title = "value literals" if role == "value" else "scope names"
+        flag = " trusted source |" if role == "value" else ""
+        lines += ["", f"### {sc}: {title}", "",
+                  "| literal | " + " | ".join(gens) + " |" + flag + " sources |",
+                  "|---|" + "---|" * len(gens) + ("---|" if role == "value" else "") + "---|"]
+        for lit, e in lits.items():
+            cells = [f"{summary[f'{sc}/{g}']['literal_provenance'].get(lit, {}).get('samples', 0)}"
+                     f"/{summary[f'{sc}/{g}']['provenance_parsed']}" for g in gens]
+            trusted = (" yes |" if any(c in e["sources"] for c in TRUSTED_SOURCES) else " **no** |") if role == "value" else ""
+            lines.append(f"| `{lit}` | " + " | ".join(cells) + " |" + trusted + f" {', '.join(e['sources']) or '**none**'} |")
+        note = ("Value literals: constants compared in conditions (strings, longs, non-action entity ids). "
+                "Trusted source = intent or trusted schema. " if role == "value" else
+                "Scope names: actions, scope entities and entity types. ")
+        lines += ["", note + "k/n = samples using it / samples whose policy parses. Whole-token, case-sensitive."]
+    return lines
 
 
 def main() -> None:

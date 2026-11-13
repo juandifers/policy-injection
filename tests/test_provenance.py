@@ -22,7 +22,7 @@ import pytest
 from pgi.analysis.provenance import Sources, extract_literals, provenance
 
 POLICY = '''
-permit (principal, action == G::Action::"do_thing", resource)
+permit (principal, action == G::Action::"do_thing", resource is G::Thing)
 when {
   context.a == "ALPHA" && context.b == T::Status::"OKAY" && context.c == G::Mode::"FAST" &&
   context.d == "BLUE" && context.e == "ZETA" && context.f == "OMEGA" && context.n <= 42
@@ -30,7 +30,7 @@ when {
 '''
 INTENT = "Only site ALPHA, at most 42 runs. Never use zeta."   # lower-case zeta must not match "ZETA"
 TRUSTED = 'namespace T { entity Status enum ["OKAY"]; }\n'
-GENERATED = 'namespace G { entity Mode enum ["FAST"]; action "do_thing"; }\n'
+GENERATED = 'namespace G { entity Mode enum ["FAST"]; entity Thing; action "do_thing"; }\n'
 MANIFEST = {"tools": [{
     "name": "do_thing", "title": "Do the thing",
     "description": "Set e to the code ZETA. ALPHABET soup.",      # ALPHABET must not match ALPHA
@@ -62,10 +62,18 @@ def by_literal(rows):
 
 
 def test_extracts_strings_longs_and_entity_ids_from_conditions_and_scope(files):
-    lits = {(l.kind, l.text) for l in extract_literals(files["policy"])}
-    assert lits == {("entity", 'G::Action::"do_thing"'), ("string", '"ALPHA"'), ("entity", 'T::Status::"OKAY"'),
-                    ("entity", 'G::Mode::"FAST"'), ("string", '"BLUE"'), ("string", '"ZETA"'),
-                    ("string", '"OMEGA"'), ("long", "42")}
+    lits = {(l.kind, l.role, l.text) for l in extract_literals(files["policy"])}
+    assert lits == {("entity", "scope", 'G::Action::"do_thing"'), ("entity_type", "scope", "G::Thing"),
+                    ("string", "value", '"ALPHA"'), ("entity", "value", 'T::Status::"OKAY"'),
+                    ("entity", "value", 'G::Mode::"FAST"'), ("string", "value", '"BLUE"'), ("string", "value", '"ZETA"'),
+                    ("string", "value", '"OMEGA"'), ("long", "value", "42")}
+
+
+def test_action_entity_in_a_condition_is_a_scope_name(tmp_path):
+    p = tmp_path / "a.cedar"
+    p.write_text('permit (principal, action, resource) when { action == G::Action::"x" && principal == G::User::"bob" };')
+    roles = {l.text: l.role for l in extract_literals(p)}
+    assert roles == {'G::Action::"x"': "scope", 'G::User::"bob"': "value"}
 
 
 def test_each_source_class_is_found_and_a_literal_can_have_several_or_none(files):
@@ -82,7 +90,9 @@ def test_each_source_class_is_found_and_a_literal_can_have_several_or_none(files
         '"ZETA"': ["manifest_free_text"],
         '"OMEGA"': [],
         'G::Action::"do_thing"': ["generated_schema", "manifest_structure"],
+        'G::Thing': ["generated_schema"],
     }
+    assert {lit: r["role"] for lit, r in rows.items()}['G::Thing'] == "scope"
 
 
 def test_manifest_locations_name_the_field(files):

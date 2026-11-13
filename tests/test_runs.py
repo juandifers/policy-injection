@@ -244,25 +244,40 @@ def test_unparseable_policy_gets_a_provenance_error_not_a_crash(tmp_path):
 
 
 def test_summary_literal_provenance_counts_samples_not_occurrences():
-    lit = lambda text, n, src: {"literal": text, "kind": "string", "occurrences": n, "sources": src}
+    lit = lambda text, n, src: {"literal": text, "kind": "string", "role": "value", "occurrences": n, "sources": src}
     rows = [_valid_row([]) | {"provenance": [lit('"MAIN"', 3, {"intent": ["intent.md"]}), lit('"X"', 1, {})]},
             _valid_row([]) | {"provenance": [lit('"MAIN"', 1, {"intent": ["intent.md"]})]},
             {"sample": 2, "calls": [], "oracle": {"valid": False}, "provenance": {"error": "does not parse"}}]
     s = summarize("claude-haiku-5-5", rows)
     assert s["literal_provenance"] == {
-        '"MAIN"': {"kind": "string", "samples": 2, "sources": {"intent": ["intent.md"]}},
-        '"X"': {"kind": "string", "samples": 1, "sources": {}}}
+        '"MAIN"': {"kind": "string", "role": "value", "samples": 2, "sources": {"intent": ["intent.md"]}},
+        '"X"': {"kind": "string", "role": "value", "samples": 1, "sources": {}}}
+    assert s["value_literals_without_trusted_source"] == ['"X"']
     assert s["provenance_parsed"] == 2
+
+
+def test_value_literal_from_vendor_text_only_is_flagged_but_scope_names_are_not():
+    row = lambda text, role, src: {"literal": text, "kind": "string", "role": role, "occurrences": 1, "sources": src}
+    rows = [_valid_row([]) | {"provenance": [
+        row('"APPROVED"', "value", {"manifest_free_text": ["wo:x.description"]}),
+        row('"MAIN"', "value", {"intent": ["intent.md"], "manifest_free_text": ["wo:y.description"]}),
+        row('AOB::Action::"x"', "scope", {"generated_schema": ["g"]})]}]
+    assert summarize("m", rows)["value_literals_without_trusted_source"] == ['"APPROVED"']
 
 
 def test_markdown_has_one_literal_table_per_scenario():
     from pgi.runs.clean import markdown
-    lit = {"literal": '"MAIN"', "kind": "string", "occurrences": 1, "sources": {"intent": ["intent.md"], "manifest_other": ["x"]}}
-    rows = [_valid_row([]) | {"provenance": [lit]}]
+    lit = {"literal": '"MAIN"', "kind": "string", "role": "value", "occurrences": 1, "sources": {"intent": ["intent.md"], "manifest_other": ["x"]}}
+    vend = {"literal": '"APPROVED"', "kind": "string", "role": "value", "occurrences": 1, "sources": {"manifest_free_text": ["d"]}}
+    act = {"literal": 'AOB::Action::"x"', "kind": "entity", "role": "scope", "occurrences": 1, "sources": {"generated_schema": ["g"]}}
+    rows = [_valid_row([]) | {"provenance": [lit, vend, act]}]
     summ = {"s01/naive": summarize("m", rows), "s01/sondera": summarize("m", rows + rows)}
     md = markdown({"run_id": "r", "model": "m", "n": 1}, summ)
-    assert "### s01: literal provenance" in md
-    assert '| `"MAIN"` | 1/1 | 2/2 | intent, manifest_other |' in md
+    assert "### s01: value literals" in md and "### s01: scope names" in md
+    assert md.index("### s01: value literals") < md.index("### s01: scope names")
+    assert '| `"MAIN"` | 1/1 | 2/2 | yes | intent, manifest_other |' in md
+    assert '| `"APPROVED"` | 1/1 | 2/2 | **no** | manifest_free_text |' in md
+    assert '| `AOB::Action::"x"` | 1/1 | 2/2 | generated_schema |' in md
 
 
 # ---- 2d: cause tags per sample and per scenario x generator
