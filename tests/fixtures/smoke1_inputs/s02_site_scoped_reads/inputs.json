@@ -1,0 +1,17 @@
+{
+  "name": "s02_site_scoped_reads",
+  "schema": "schema/wo_iot.cedarschema",
+  "servers": [
+    "wo",
+    "iot"
+  ],
+  "sha256": {
+    "intent": "a090e9d4cd619c479fccd87ddf6a138f4c349aded1899c64da4fb2c6cbcfc306",
+    "manifest:iot": "50a3c21bbda8663f979ac45d9df69619e37f7d990ca9ed46e596d029656668d4",
+    "manifest:wo": "343611eceeda99e0148b96a87a47879ed074a0fe90bcad64b07428f88a0907e6",
+    "reference": "4c1d0d9bc8dace0cb292d319834f640e80581a37b762ce20aa3f7561000d8b61",
+    "scenario_yaml": "7f85b66e859b10f712cc4e7976c036b11b2d8afa82d0518e00f318a76b84b945",
+    "schema": "6cb810ab423ca62ec893188d575bfb86c872adf6f055d0861eece9026511e500",
+    "universe": "75626a93a1fa91397e369d7a3dafab19a04fde94e62cde1af867a26d8c9eb94e"
+  }
+}

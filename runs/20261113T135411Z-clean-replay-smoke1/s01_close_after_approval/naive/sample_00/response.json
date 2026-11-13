@@ -1,0 +1,30 @@
+{
+ "key_hash": "3206a6ac73a541e7fa0be619bdf8ff27840d1758f8a30a5c4f3446208e4d0ad4",
+ "cache_hit": true,
+ "model_version": "claude-haiku-5-5",
+ "request_id": "req_011CgycUMk4pnXzvFzb5gHHN",
+ "stop_reason": "end_turn",
+ "stop_details": null,
+ "usage": {
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 0,
+   "ephemeral_5m_input_tokens": 58768
+  },
+  "cache_creation_input_tokens": 58768,
+  "cache_read_input_tokens": 0,
+  "inference_geo": "global",
+  "input_tokens": 233,
+  "output_tokens": 3647,
+  "output_tokens_details": {
+   "thinking_tokens": 3371
+  },
+  "service_tier": "standard",
+  "speed": "standard"
+ },
+ "text": "```cedar\n// Close a work order only at MAIN, only with a granted approval for that same\n// work order, and only when the approver is not the agent.\npermit (\n  principal,\n  action == AOB::Action::\"close_workorder\",\n  resource\n)\nwhen {\n  context.input.site_id == \"MAIN\" &&\n  context has approval &&\n  context.approval.status == \"APPROVED\" &&\n  context.approval.wonum == context.input.wonum &&\n  context.approval.approver != principal\n};\n\n// List work orders only when the request explicitly targets MAIN.\npermit (\n  principal,\n  action == AOB::Action::\"list_workorders\",\n  resource\n)\nwhen {\n  context.input has site_id &&\n  context.input.site_id has typeChoice0 &&\n  context.input.site_id.typeChoice0 == \"MAIN\"\n};\n```",
+ "content_types": [
+  "thinking",
+  "text"
+ ],
+ "extraction": "fenced"
+}

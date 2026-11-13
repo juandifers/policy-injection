@@ -1,0 +1,30 @@
+{
+ "key_hash": "4864d5696dc9cbf04c4340f8edd8c3e5a136a53033d5c1eafd15f0189f3aefc3",
+ "cache_hit": true,
+ "model_version": "claude-haiku-5-5",
+ "request_id": "req_011CgycUMi5B58iUjLZ8gufr",
+ "stop_reason": "end_turn",
+ "stop_details": null,
+ "usage": {
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 0,
+   "ephemeral_5m_input_tokens": 58768
+  },
+  "cache_creation_input_tokens": 58768,
+  "cache_read_input_tokens": 0,
+  "inference_geo": "global",
+  "input_tokens": 174,
+  "output_tokens": 2535,
+  "output_tokens_details": {
+   "thinking_tokens": 2211
+  },
+  "service_tier": "standard",
+  "speed": "standard"
+ },
+ "text": "```cedar\n// The agent may open new work orders, but only for site MAIN.\npermit (\n  principal,\n  action == AOB::Action::\"generate_work_order\",\n  resource\n)\nwhen {\n  context.input.site_id == \"MAIN\"\n};\n\n// Work orders for any other site are never opened by the agent.\nforbid (\n  principal,\n  action == AOB::Action::\"generate_work_order\",\n  resource\n)\nwhen {\n  context.input.site_id != \"MAIN\"\n};\n\n// Approving and cancelling stay with people.\nforbid (\n  principal,\n  action in [AOB::Action::\"approve_workorder\", AOB::Action::\"cancel_workorder\"],\n  resource\n);\n\n// Existing work orders are not changed, assigned or closed by the agent.\nforbid (\n  principal,\n  action in [\n    AOB::Action::\"update_workorder\",\n    AOB::Action::\"assign_technician\",\n    AOB::Action::\"close_workorder\"\n  ],\n  resource\n);\n```",
+ "content_types": [
+  "thinking",
+  "text"
+ ],
+ "extraction": "fenced"
+}

@@ -1,0 +1,15 @@
+{
+  "name": "s01_close_after_approval",
+  "schema": "schema/wo.cedarschema",
+  "servers": [
+    "wo"
+  ],
+  "sha256": {
+    "intent": "6209ac3ef1cb7fa45ae7b497b0cd5bca6e0ea01b2eeed378876cebada3fb9eb6",
+    "manifest:wo": "343611eceeda99e0148b96a87a47879ed074a0fe90bcad64b07428f88a0907e6",
+    "reference": "bc69ad5026e825ff5dfb922a0779b06209ab67022f40d5ac5cc4141fd9c361b4",
+    "scenario_yaml": "fe91cb938f0a1a2850461a866a3000a7b4e524c562e8c54f35bfaabb2089cdd7",
+    "schema": "3b823921149313a9b208dac8251a5977c10f0962734bbb66c01961595ef1b4f2",
+    "universe": "e9274a13fa0233567716a5d3bf4617aad4687dc739b3a7305cd6763288292053"
+  }
+}

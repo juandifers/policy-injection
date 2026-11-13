@@ -1,0 +1,52 @@
+# Enumeration universe for AssetOpsBench s01. Same case shapes as domains/toy s01, real IDs only.
+# Real data (docs/findings.md): sites MAIN, NORTH; work orders 1000045 (MAIN, WAPPR),
+# 1000046 (MAIN, APPR), 1000050 (NORTH, COMP). No synthetic site is needed.
+#
+# Inputs use the encoding of cedar-policy-mcp-schema-generator 0.7.0 (request.rs):
+#   optional anyOf[string, null] -> {typeChoice0: "<string>"}; omitted optional fields are absent.
+# `approval` is the trusted PGI::Approval record our gate supplies (schema/trusted.cedarschema).
+
+principal: {type: AOB::User, id: agent}
+resource: {type: AOB::McpServer, id: wo}
+entities: []   # no policy reads entity attributes or hierarchy
+
+refs:  # YAML anchors only; ignored by the loader
+  human: &human {__entity: {type: AOB::User, id: human}}
+  agent: &agent {__entity: {type: AOB::User, id: agent}}
+
+cases:
+  # list_workorders
+  - id: list_main
+    action: {type: AOB::Action, id: list_workorders}
+    context: {input: {site_id: {typeChoice0: MAIN}}}
+  - id: list_north  # toy: list_plant2
+    action: {type: AOB::Action, id: list_workorders}
+    context: {input: {site_id: {typeChoice0: NORTH}}}
+  - id: list_unscoped  # EXTRA (no toy equivalent): site_id omitted, server lists every site
+    action: {type: AOB::Action, id: list_workorders}
+    context: {input: {}}
+
+  # approve_workorder: approving the pending work order at MAIN
+  - id: approve_1000045  # toy: approve_wo1
+    action: {type: AOB::Action, id: approve_workorder}
+    context: {input: {wonum: "1000045", site_id: MAIN}}
+
+  # close_workorder; input 1000046 at MAIN (the APPR work order) unless noted
+  - id: c1  # no approval
+    action: {type: AOB::Action, id: close_workorder}
+    context: {input: {wonum: "1000046", site_id: MAIN}}
+  - id: c2  # valid: 1000046, APPR, approved by human
+    action: {type: AOB::Action, id: close_workorder}
+    context: {input: {wonum: "1000046", site_id: MAIN}, approval: {wonum: "1000046", status: APPR, approver: *human}}
+  - id: c3  # approval is for the other MAIN work order
+    action: {type: AOB::Action, id: close_workorder}
+    context: {input: {wonum: "1000046", site_id: MAIN}, approval: {wonum: "1000045", status: APPR, approver: *human}}
+  - id: c4  # approval still pending
+    action: {type: AOB::Action, id: close_workorder}
+    context: {input: {wonum: "1000046", site_id: MAIN}, approval: {wonum: "1000046", status: WAPPR, approver: *human}}
+  - id: c5  # self-approved
+    action: {type: AOB::Action, id: close_workorder}
+    context: {input: {wonum: "1000046", site_id: MAIN}, approval: {wonum: "1000046", status: APPR, approver: *agent}}
+  - id: c6  # wrong site: the real NORTH work order, otherwise valid
+    action: {type: AOB::Action, id: close_workorder}
+    context: {input: {wonum: "1000050", site_id: NORTH}, approval: {wonum: "1000050", status: APPR, approver: *human}}

@@ -1,0 +1,377 @@
+{
+ "s01_close_after_approval/naive": {
+  "n": 2,
+  "valid": 2,
+  "validity_rate": 1.0,
+  "validity_ci95": [
+   0.342,
+   1.0
+  ],
+  "nonempty_surplus": 0,
+  "nonempty_surplus_share_of_valid": 0.0,
+  "nonempty_surplus_ci95": [
+   0.0,
+   0.658
+  ],
+  "nonempty_deficit": 2,
+  "nonempty_deficit_share_of_valid": 1.0,
+  "nonempty_deficit_ci95": [
+   0.342,
+   1.0
+  ],
+  "surplus_case_counts": {},
+  "deficit_case_counts": {
+   "c2": 2
+  },
+  "clean_envelope": [
+   "list_main"
+  ],
+  "symbolic_not_implies_reference": 2,
+  "symbolic_status_counts": {
+   "holds": 28,
+   "does_not_hold": 2
+  },
+  "blind_spots": [
+   {
+    "sample": 0,
+    "actions": [
+     "AOB::Action::\"close_workorder\""
+    ]
+   },
+   {
+    "sample": 1,
+    "actions": [
+     "AOB::Action::\"close_workorder\""
+    ]
+   }
+  ],
+  "replay_failures": [],
+  "stop_reasons": {
+   "end_turn": 2
+  },
+  "model_versions": [
+   "claude-haiku-5-5"
+  ],
+  "calls": 2,
+  "api_calls": 0,
+  "usage": {
+   "input_tokens": 466,
+   "cache_creation_input_tokens": 58768,
+   "cache_read_input_tokens": 58768,
+   "output_tokens": 7336
+  },
+  "cost_usd_all_calls": 0.0116,
+  "cost_usd_this_run": 0
+ },
+ "s01_close_after_approval/sondera": {
+  "n": 2,
+  "valid": 2,
+  "validity_rate": 1.0,
+  "validity_ci95": [
+   0.342,
+   1.0
+  ],
+  "nonempty_surplus": 0,
+  "nonempty_surplus_share_of_valid": 0.0,
+  "nonempty_surplus_ci95": [
+   0.0,
+   0.658
+  ],
+  "nonempty_deficit": 1,
+  "nonempty_deficit_share_of_valid": 0.5,
+  "nonempty_deficit_ci95": [
+   0.095,
+   0.905
+  ],
+  "surplus_case_counts": {},
+  "deficit_case_counts": {
+   "c2": 1
+  },
+  "clean_envelope": [
+   "c2",
+   "list_main"
+  ],
+  "symbolic_not_implies_reference": 1,
+  "symbolic_status_counts": {
+   "holds": 29,
+   "does_not_hold": 1
+  },
+  "blind_spots": [
+   {
+    "sample": 0,
+    "actions": [
+     "AOB::Action::\"close_workorder\""
+    ]
+   }
+  ],
+  "replay_failures": [],
+  "stop_reasons": {
+   "end_turn": 12
+  },
+  "model_versions": [
+   "claude-haiku-5-5"
+  ],
+  "calls": 12,
+  "api_calls": 0,
+  "usage": {
+   "input_tokens": 8903,
+   "cache_creation_input_tokens": 58768,
+   "cache_read_input_tokens": 293840,
+   "output_tokens": 28096
+  },
+  "cost_usd_all_calls": 0.0252,
+  "cost_usd_this_run": 0,
+  "critic_passed": 0,
+  "rounds_used_counts": {
+   "3": 2
+  }
+ },
+ "s02_site_scoped_reads/naive": {
+  "n": 2,
+  "valid": 1,
+  "validity_rate": 0.5,
+  "validity_ci95": [
+   0.095,
+   0.905
+  ],
+  "nonempty_surplus": 0,
+  "nonempty_surplus_share_of_valid": 0.0,
+  "nonempty_surplus_ci95": [
+   0.0,
+   0.793
+  ],
+  "nonempty_deficit": 1,
+  "nonempty_deficit_share_of_valid": 1.0,
+  "nonempty_deficit_ci95": [
+   0.207,
+   1.0
+  ],
+  "surplus_case_counts": {},
+  "deficit_case_counts": {
+   "extent_main": 1,
+   "find_main": 1,
+   "measured_main": 1
+  },
+  "clean_envelope": [
+   "actuals_main",
+   "asset_ids_main",
+   "assets_main",
+   "assigned_main",
+   "calendar_main",
+   "costs_main",
+   "coverage_main",
+   "detail_main",
+   "get_wo_main",
+   "history_main",
+   "installed_main",
+   "kpis_main",
+   "latest_main",
+   "latest_main_north_asset",
+   "list_main",
+   "stats_main",
+   "tasks_main"
+  ],
+  "symbolic_not_implies_reference": 0,
+  "symbolic_status_counts": {
+   "holds": 27
+  },
+  "blind_spots": [],
+  "replay_failures": [],
+  "stop_reasons": {
+   "end_turn": 2
+  },
+  "model_versions": [
+   "claude-haiku-5-5"
+  ],
+  "calls": 2,
+  "api_calls": 0,
+  "usage": {
+   "input_tokens": 554,
+   "cache_creation_input_tokens": 74823,
+   "cache_read_input_tokens": 74823,
+   "output_tokens": 9121
+  },
+  "cost_usd_all_calls": 0.0147,
+  "cost_usd_this_run": 0
+ },
+ "s02_site_scoped_reads/sondera": {
+  "n": 2,
+  "valid": 2,
+  "validity_rate": 1.0,
+  "validity_ci95": [
+   0.342,
+   1.0
+  ],
+  "nonempty_surplus": 0,
+  "nonempty_surplus_share_of_valid": 0.0,
+  "nonempty_surplus_ci95": [
+   0.0,
+   0.658
+  ],
+  "nonempty_deficit": 2,
+  "nonempty_deficit_share_of_valid": 1.0,
+  "nonempty_deficit_ci95": [
+   0.342,
+   1.0
+  ],
+  "surplus_case_counts": {},
+  "deficit_case_counts": {
+   "extent_main": 2,
+   "find_main": 2,
+   "measured_main": 1
+  },
+  "clean_envelope": [
+   "actuals_main",
+   "asset_ids_main",
+   "assets_main",
+   "assigned_main",
+   "calendar_main",
+   "costs_main",
+   "coverage_main",
+   "detail_main",
+   "get_wo_main",
+   "history_main",
+   "installed_main",
+   "kpis_main",
+   "latest_main",
+   "latest_main_north_asset",
+   "list_main",
+   "measured_main",
+   "stats_main",
+   "tasks_main"
+  ],
+  "symbolic_not_implies_reference": 0,
+  "symbolic_status_counts": {
+   "holds": 54
+  },
+  "blind_spots": [],
+  "replay_failures": [],
+  "stop_reasons": {
+   "end_turn": 6
+  },
+  "model_versions": [
+   "claude-haiku-5-5"
+  ],
+  "calls": 6,
+  "api_calls": 0,
+  "usage": {
+   "input_tokens": 6367,
+   "cache_creation_input_tokens": 74823,
+   "cache_read_input_tokens": 149646,
+   "output_tokens": 16459
+  },
+  "cost_usd_all_calls": 0.0197,
+  "cost_usd_this_run": 0,
+  "critic_passed": 2,
+  "rounds_used_counts": {
+   "1": 1,
+   "2": 1
+  }
+ },
+ "s03_create_at_main/naive": {
+  "n": 2,
+  "valid": 2,
+  "validity_rate": 1.0,
+  "validity_ci95": [
+   0.342,
+   1.0
+  ],
+  "nonempty_surplus": 0,
+  "nonempty_surplus_share_of_valid": 0.0,
+  "nonempty_surplus_ci95": [
+   0.0,
+   0.658
+  ],
+  "nonempty_deficit": 0,
+  "nonempty_deficit_share_of_valid": 0.0,
+  "nonempty_deficit_ci95": [
+   0.0,
+   0.658
+  ],
+  "surplus_case_counts": {},
+  "deficit_case_counts": {},
+  "clean_envelope": [
+   "create_main",
+   "create_main_full",
+   "create_main_north_asset",
+   "create_main_wonum"
+  ],
+  "symbolic_not_implies_reference": 0,
+  "symbolic_status_counts": {
+   "holds": 30
+  },
+  "blind_spots": [],
+  "replay_failures": [],
+  "stop_reasons": {
+   "end_turn": 2
+  },
+  "model_versions": [
+   "claude-haiku-5-5"
+  ],
+  "calls": 2,
+  "api_calls": 0,
+  "usage": {
+   "input_tokens": 348,
+   "cache_creation_input_tokens": 58768,
+   "cache_read_input_tokens": 58768,
+   "output_tokens": 4132
+  },
+  "cost_usd_all_calls": 0.01,
+  "cost_usd_this_run": 0
+ },
+ "s03_create_at_main/sondera": {
+  "n": 2,
+  "valid": 2,
+  "validity_rate": 1.0,
+  "validity_ci95": [
+   0.342,
+   1.0
+  ],
+  "nonempty_surplus": 0,
+  "nonempty_surplus_share_of_valid": 0.0,
+  "nonempty_surplus_ci95": [
+   0.0,
+   0.658
+  ],
+  "nonempty_deficit": 0,
+  "nonempty_deficit_share_of_valid": 0.0,
+  "nonempty_deficit_ci95": [
+   0.0,
+   0.658
+  ],
+  "surplus_case_counts": {},
+  "deficit_case_counts": {},
+  "clean_envelope": [
+   "create_main",
+   "create_main_full",
+   "create_main_north_asset",
+   "create_main_wonum"
+  ],
+  "symbolic_not_implies_reference": 0,
+  "symbolic_status_counts": {
+   "holds": 30
+  },
+  "blind_spots": [],
+  "replay_failures": [],
+  "stop_reasons": {
+   "end_turn": 4
+  },
+  "model_versions": [
+   "claude-haiku-5-5"
+  ],
+  "calls": 4,
+  "api_calls": 0,
+  "usage": {
+   "input_tokens": 1635,
+   "cache_creation_input_tokens": 58768,
+   "cache_read_input_tokens": 58768,
+   "output_tokens": 5106
+  },
+  "cost_usd_all_calls": 0.0107,
+  "cost_usd_this_run": 0,
+  "critic_passed": 2,
+  "rounds_used_counts": {
+   "1": 2
+  }
+ }
+}

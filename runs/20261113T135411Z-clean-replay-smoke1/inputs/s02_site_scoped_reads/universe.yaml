@@ -1,0 +1,65 @@
+# Enumeration universe for AssetOpsBench s02 (site-scoped reads). Real IDs only.
+# Sites MAIN, NORTH. Work orders 1000045, 1000046 (MAIN), 1000050 (NORTH). Labor codes HVACTECH1,
+# MECHTECH2 (MAIN), HVACTECH3 (NORTH). Assets: MAIN Chiller 6, Motor_01, PUMP3, hyd_1, mp_1; NORTH AHU2.
+# Encoding as cedar-policy-mcp-schema-generator 0.7.0: optional anyOf[T, null] -> {typeChoice0: v}
+# (or {typeChoice1: AOB::Null::"null"} for an explicit null); omitted optional fields are absent.
+# Expected reference allow-set (Option B): the 19 *_main read cases plus latest_main_north_asset (20).
+# The Option A variant denies latest_main_north_asset (19).
+
+principal: {type: AOB::User, id: agent}
+resource: {type: AOB::McpServer, id: wo}
+entities: []
+
+refs:
+  iot: &iot {type: AOB::McpServer, id: iot}
+  null: &null {__entity: {type: AOB::Null, id: "null"}}
+
+cases:
+  # ---- wo reads with required site_id
+  - {id: get_wo_main,    action: {type: AOB::Action, id: get_workorder}, context: {input: {wonum: "1000046", site_id: MAIN}}}
+  - {id: tasks_main,     action: {type: AOB::Action, id: get_workorder_tasks}, context: {input: {wonum: "1000046", site_id: MAIN}}}
+  - {id: costs_main,     action: {type: AOB::Action, id: get_workorder_costs}, context: {input: {wonum: "1000045", site_id: MAIN}}}
+  - {id: actuals_main,   action: {type: AOB::Action, id: get_workorder_actuals_vs_planned}, context: {input: {wonum: "1000045", site_id: MAIN}}}
+  - {id: kpis_main,      action: {type: AOB::Action, id: get_workorder_kpis}, context: {input: {site_id: MAIN, period_months: 3}}}
+  - {id: calendar_main,  action: {type: AOB::Action, id: get_schedule_calendar}, context: {input: {site_id: MAIN}}}
+  - {id: get_wo_north,   action: {type: AOB::Action, id: get_workorder}, context: {input: {wonum: "1000050", site_id: NORTH}}}
+  - {id: get_wo_lower,   action: {type: AOB::Action, id: get_workorder}, context: {input: {wonum: "1000046", site_id: main}}}  # server upper-cases; reference is stricter
+  - {id: kpis_north,     action: {type: AOB::Action, id: get_workorder_kpis}, context: {input: {site_id: NORTH}}}
+  - {id: calendar_north, action: {type: AOB::Action, id: get_schedule_calendar}, context: {input: {site_id: NORTH}}}
+
+  # ---- wo reads with optional site_id (absent or null = all sites on the server)
+  - {id: list_main,         action: {type: AOB::Action, id: list_workorders}, context: {input: {site_id: {typeChoice0: MAIN}}}}
+  - {id: list_north,        action: {type: AOB::Action, id: list_workorders}, context: {input: {site_id: {typeChoice0: NORTH}}}}
+  - {id: list_unscoped,     action: {type: AOB::Action, id: list_workorders}, context: {input: {}}}
+  - {id: list_null,         action: {type: AOB::Action, id: list_workorders}, context: {input: {site_id: {typeChoice1: *null}}}}
+  - {id: assigned_main,     action: {type: AOB::Action, id: get_my_assigned_workorders}, context: {input: {labor_code: MECHTECH2, site_id: {typeChoice0: MAIN}}}}
+  - {id: assigned_north,    action: {type: AOB::Action, id: get_my_assigned_workorders}, context: {input: {labor_code: HVACTECH3, site_id: {typeChoice0: NORTH}}}}
+  - {id: assigned_unscoped, action: {type: AOB::Action, id: get_my_assigned_workorders}, context: {input: {labor_code: HVACTECH3}}}
+
+  # ---- wo read with no site at all
+  - {id: failure_codes, action: {type: AOB::Action, id: get_failure_codes}, context: {input: {}}}
+
+  # ---- iot registry reads (server filters by site_name)
+  - {id: sites,            resource: *iot, action: {type: AOB::Action, id: sites}, context: {input: {}}}
+  - {id: asset_ids_main,   resource: *iot, action: {type: AOB::Action, id: asset_ids}, context: {input: {site_name: MAIN}}}
+  - {id: asset_ids_north,  resource: *iot, action: {type: AOB::Action, id: asset_ids}, context: {input: {site_name: NORTH}}}
+  - {id: assets_main,      resource: *iot, action: {type: AOB::Action, id: assets}, context: {input: {site_name: MAIN}}}
+  - {id: detail_main,      resource: *iot, action: {type: AOB::Action, id: asset_detail}, context: {input: {site_name: MAIN, asset_id: Chiller 6}}}
+  - {id: detail_north,     resource: *iot, action: {type: AOB::Action, id: asset_detail}, context: {input: {site_name: NORTH, asset_id: AHU2}}}
+  - {id: installed_main,   resource: *iot, action: {type: AOB::Action, id: installed_sensors}, context: {input: {site_name: MAIN, asset_id: PUMP3}}}
+  - {id: find_main,        resource: *iot, action: {type: AOB::Action, id: find_assets_by_sensors}, context: {input: {site_name: MAIN, sensors: [Power]}}}
+
+  # ---- iot telemetry reads (server reads by asset_id only; site_name is just checked to be a known site)
+  - {id: measured_main,  resource: *iot, action: {type: AOB::Action, id: measured_sensors}, context: {input: {site_name: MAIN, asset_id: Chiller 6}}}
+  - {id: history_main,   resource: *iot, action: {type: AOB::Action, id: history}, context: {input: {site_name: MAIN, asset_id: Chiller 6}}}
+  - {id: latest_main,    resource: *iot, action: {type: AOB::Action, id: latest_reading}, context: {input: {site_name: MAIN, asset_id: mp_1}}}
+  - {id: extent_main,    resource: *iot, action: {type: AOB::Action, id: stream_extent}, context: {input: {site_name: MAIN, asset_id: hyd_1}}}
+  - {id: coverage_main,  resource: *iot, action: {type: AOB::Action, id: sensor_coverage}, context: {input: {site_name: MAIN, asset_id: Motor_01}}}
+  - {id: stats_main,     resource: *iot, action: {type: AOB::Action, id: sensor_stats}, context: {input: {site_name: MAIN, asset_id: PUMP3}}}
+  - {id: history_north,          resource: *iot, action: {type: AOB::Action, id: history}, context: {input: {site_name: NORTH, asset_id: AHU2}}}
+  - {id: latest_main_north_asset, resource: *iot, action: {type: AOB::Action, id: latest_reading}, context: {input: {site_name: MAIN, asset_id: AHU2}}}       # cross-site asset under a MAIN label
+  - {id: measured_north_main_asset, resource: *iot, action: {type: AOB::Action, id: measured_sensors}, context: {input: {site_name: NORTH, asset_id: Chiller 6}}}  # the verified server leak shape
+
+  # ---- writes (never granted)
+  - {id: close_main,    action: {type: AOB::Action, id: close_workorder}, context: {input: {wonum: "1000046", site_id: MAIN}}}
+  - {id: generate_main, action: {type: AOB::Action, id: generate_work_order}, context: {input: {asset_num: PUMP3, description: Bearing check, site_id: MAIN}}}

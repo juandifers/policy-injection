@@ -199,3 +199,18 @@ Consequence: an enum makes an out-of-vocabulary status a **validation error**, n
   - `weak_same_site` surplus = `{c7}`; the other weak files keep `{c4}`, `{c3}`, `{c5}`.
   - symcc: realizable `does_not_hold` for each weak file, with a cross-site counterexample for `weak_same_site`; `holds` for the reference.
   - The exclusion test passes with c7.
+
+## 2026-11-13: Run folders snapshot their inputs; scoring and replay read only from there
+
+Why: run folders recorded the schema **path** and hash, but `7e0efc8` changed the file at that path. So `runs/20261112T194818Z-clean-smoke` could no longer be re-scored from the repo.
+
+- **Snapshot layout.** `pgi.runs.snapshot` copies every input a score depends on into `runs/<id>/inputs/<scenario>/`: `scenario.yaml`, `intent.md`, `reference.cedar`, `universe.yaml`, `schema/<file>`, `manifests/<server>.tools.json`, plus `inputs.json` with each file's SHA-256.
+- **Hash check on load.** `load_snapshot` re-hashes everything and raises `SnapshotError` on any mismatch.
+- **New runs** snapshot first, and generation and scoring use only the snapshot. `config.json` schema paths are now relative to the run folder.
+- **Replay.** `--replay RUN_DIR` (was a boolean) creates a new folder. It takes model, N, generators and settings from the source run's `config.json`, and copies its `inputs/`. Runs that predate snapshots need `--inputs-from-git <commit>`, which rebuilds the layout with `git show` and checks the hashes the run recorded.
+- **`pgi.runs.rescore`** re-scores a run folder from its snapshot, with no LLM and no writes.
+- **Smoke1 fixture.** Its inputs were restored from `faf37e6` into `tests/fixtures/smoke1_inputs/` (hash-checked against its `config.json`). The old run folder is untouched.
+- **Verified:**
+  - `test_snapshot.py`: re-scoring is unchanged after the scenario files in a tmp repo copy change (the same change does alter a live score).
+  - Smoke1 re-scored from the fixture reproduces all 12 stored oracle records.
+  - `runs/20261113T135411Z-clean-replay-smoke1` (a replay with `--inputs-from-git faf37e6`, 0 API calls): policies, oracle records and summary are identical to the original, apart from the file paths inside records.

@@ -1,10 +1,13 @@
 """Clean runs: N samples per scenario per generator, scored by the oracle, written to runs/<id>/.
 
     uv run python -m pgi.runs.clean --model claude-haiku-5-5 --n 2 --label smoke
-    uv run python -m pgi.runs.clean --model claude-sonnet-5-5 --n 20 --replay   # cache only, zero API calls
+    uv run python -m pgi.runs.clean --replay runs/<id>          # cache only, zero API calls, new folder
+    uv run python -m pgi.runs.clean --replay runs/<old> --inputs-from-git <commit>   # runs before snapshots
 
-Layout: runs/<id>/config.json, summary.json, summary.md, and per scenario/generator/sample:
+Layout: runs/<id>/config.json, summary.json, summary.md, inputs/<scenario>/ (snapshot of every input a
+score depends on; generation and scoring read only from it), and per scenario/generator/sample:
 response(s), policy.cedar, oracle.json. The static prompt prefix is stored once per scenario.
+A replay takes model, N, generators, settings and inputs from the source run, never from the repo.
 Samples within a scenario run sequentially (the prompt cache must be readable); scenarios run in parallel.
 """
 
@@ -14,6 +17,7 @@ import argparse
 import importlib.metadata as md
 import json
 import math
+import shutil
 import subprocess
 import threading
 from concurrent.futures import ThreadPoolExecutor
@@ -25,6 +29,7 @@ from pgi.generators.inputs import ScenarioInputs, load_scenario_inputs
 from pgi.llm.cache import CachedLLM, Completion
 from pgi.llm.pricing import cost
 from pgi.runs.judge import score
+from pgi.runs.snapshot import load_snapshot, snapshot, snapshot_from_git
 
 ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_SCENARIOS = [ROOT / "domains/assetopsbench/scenarios" / s
@@ -167,16 +172,31 @@ def markdown(config: dict, summary: dict) -> str:
 def main() -> None:
     """Run (or replay) a clean run."""
     p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    p.add_argument("--model", required=True)
-    p.add_argument("--n", type=int, required=True)
+    p.add_argument("--model")
+    p.add_argument("--n", type=int)
     p.add_argument("--label", default="")
     p.add_argument("--generators", nargs="+", default=list(GENERATORS), choices=GENERATORS)
     p.add_argument("--scenarios", nargs="+", type=Path, default=DEFAULT_SCENARIOS)
     p.add_argument("--no-descriptions", action="store_true", help="include_descriptions=False")
     p.add_argument("--judge-sees-manifests", action="store_true")
-    p.add_argument("--replay", action="store_true", help="serve every call from the cache; fail on a miss")
+    p.add_argument("--replay", type=Path, metavar="RUN_DIR",
+                   help="re-run RUN_DIR from the cache into a new folder (its settings and inputs); fail on a miss")
+    p.add_argument("--inputs-from-git", metavar="COMMIT",
+                   help="with --replay, for a run without inputs/: rebuild them from git, checked against its hashes")
     p.add_argument("--cache", type=Path, default=ROOT / "cache/llm")
     args = p.parse_args()
+    src = None
+    if args.replay:
+        src = json.loads((args.replay / "config.json").read_text())
+        if args.model or args.n:
+            p.error("--replay takes model and N from the source run")
+        args.model, args.n, args.generators = src["model"], src["n"], src["generators_run"]
+        args.no_descriptions = not src["generators"]["naive"]["include_descriptions"]
+        args.judge_sees_manifests = src["generators"]["sondera"]["judge_sees_manifests"]
+    elif not (args.model and args.n):
+        p.error("--model and --n are required unless --replay is given")
+    elif args.inputs_from_git:
+        p.error("--inputs-from-git needs --replay")
 
     from pgi.llm.anthropic_provider import AnthropicProvider
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
@@ -187,14 +207,17 @@ def main() -> None:
     ncfg = naive.NaiveConfig(args.model, include_descriptions=not args.no_descriptions)
     scfg = critic.SonderaConfig(args.model, include_descriptions=not args.no_descriptions,
                                 judge_sees_manifests=args.judge_sees_manifests)
-    inputs = [load_scenario_inputs(s) for s in args.scenarios]
-    config = {"run_id": run_id, "created": stamp, "model": args.model, "n": args.n, "replay": args.replay,
+    inputs = _inputs(args, src, out / "inputs")
+    config = {"run_id": run_id, "created": stamp, "model": args.model, "n": args.n,
+              "replay": bool(args.replay), "replay_of": args.replay.name if args.replay else None,
+              "inputs": "inputs/<scenario>/ (snapshot; generation and scoring read only from it)"
+                        + (f"; rebuilt from git {args.inputs_from_git}" if args.inputs_from_git else ""),
               "generators": {"naive": ncfg.as_dict(), "sondera": scfg.as_dict()},
               "generators_run": args.generators,
               "request": {"sampling": "not sent (API default)", "thinking": {"type": "adaptive"},
                           "output_config": {"effort": ncfg.effort}, "max_tokens": ncfg.max_tokens,
                           "fallbacks": "none", "prompt_cache": "ephemeral breakpoint on last static system block"},
-              "scenarios": {i.name: {"schema": str(i.schema_path.relative_to(ROOT)), "servers": list(i.servers),
+              "scenarios": {i.name: {"schema": str(i.schema_path.relative_to(out)), "servers": list(i.servers),
                                      "hashes": i.hashes} for i in inputs},
               "versions": _tool_versions()}
     _dump(out / "config.json", config)
@@ -225,6 +248,28 @@ def main() -> None:
     _dump(out / "summary.json", summary)
     (out / "summary.md").write_text(markdown(config, summary))
     print(f"\nwrote {out}\napi calls this run: {llm.api_calls}")
+
+
+def _inputs(args, src: dict | None, dest: Path) -> list[ScenarioInputs]:
+    """Snapshot the inputs into dest/<scenario>/ and load them back from there (hash-checked)."""
+    if src is None:
+        return [snapshot(load_scenario_inputs(s), dest / Path(s).name) for s in args.scenarios]
+    out = []
+    for name, rec in src["scenarios"].items():
+        if (args.replay / "inputs" / name).is_dir():
+            if args.inputs_from_git:
+                raise SystemExit(f"{args.replay} has its own inputs/; drop --inputs-from-git")
+            shutil.copytree(args.replay / "inputs" / name, dest / name)
+            snap = load_snapshot(dest / name)
+        elif args.inputs_from_git:
+            domain = Path(rec["schema"]).parents[1]  # legacy record: <domain>/schema/<file>, repo-relative
+            snap = snapshot_from_git(ROOT, args.inputs_from_git, str(domain / "scenarios" / name), dest / name, rec["hashes"])
+        else:
+            raise SystemExit(f"{args.replay} has no inputs/{name}; pass --inputs-from-git <commit>")
+        if snap.hashes != rec["hashes"]:
+            raise SystemExit(f"{name}: inputs do not match the hashes {args.replay} recorded")
+        out.append(snap)
+    return out
 
 
 class _NoProvider:
