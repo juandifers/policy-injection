@@ -1,0 +1,29 @@
+{
+ "key_hash": "06614e6303e48abdb64cb776ad843d09bcd6a16896649249fb379c4a07ffe316",
+ "cache_hit": false,
+ "model_version": "claude-sonnet-5-5",
+ "request_id": "req_011Ch1CRLcyCd458P7V58RYZ",
+ "stop_reason": "end_turn",
+ "stop_details": null,
+ "usage": {
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 0,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "cache_creation_input_tokens": 0,
+  "cache_read_input_tokens": 58853,
+  "inference_geo": "global",
+  "input_tokens": 174,
+  "output_tokens": 171,
+  "output_tokens_details": {
+   "thinking_tokens": 0
+  },
+  "service_tier": "standard",
+  "speed": "standard"
+ },
+ "text": "```cedar\n@id(\"allow_generate_work_order_main_only\")\npermit (\n  principal,\n  action == Action::\"generate_work_order\",\n  resource\n)\nwhen {\n  context.input.site_id == \"MAIN\"\n};\n\n@id(\"forbid_approve_workorder\")\nforbid (\n  principal,\n  action == Action::\"approve_workorder\",\n  resource\n);\n\n@id(\"forbid_cancel_workorder\")\nforbid (\n  principal,\n  action == Action::\"cancel_workorder\",\n  resource\n);\n```",
+ "content_types": [
+  "text"
+ ],
+ "extraction": "fenced"
+}

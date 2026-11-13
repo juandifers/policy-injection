@@ -1,0 +1,93 @@
+{
+ "round": 2,
+ "extraction": "fenced",
+ "generation": {
+  "key_hash": "d163f9ceec105de2ec6a704c96848c0eba66cb0bab318097df9f3394e05a4fb4",
+  "cache_hit": false,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011Ch1CWY5gCi3Ss5hdxR4tG",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 58853,
+   "inference_geo": "global",
+   "input_tokens": 1083,
+   "output_tokens": 183,
+   "output_tokens_details": {
+    "thinking_tokens": 0
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "```cedar\n@id(\"allow_generate_work_order_main_only\")\npermit (\n  principal,\n  action == AOB::Action::\"generate_work_order\",\n  resource\n)\nwhen {\n  context.input.site_id == \"MAIN\"\n};\n\n@id(\"forbid_approve_workorder\")\nforbid (\n  principal,\n  action == AOB::Action::\"approve_workorder\",\n  resource\n);\n\n@id(\"forbid_cancel_workorder\")\nforbid (\n  principal,\n  action == AOB::Action::\"cancel_workorder\",\n  resource\n);\n```",
+  "content_types": [
+   "text"
+  ]
+ },
+ "deterministic": {
+  "passed": true,
+  "validation": {
+   "policy": "s03_create_at_main/sondera/sample_03/round2.cedar",
+   "schema": "inputs/s03_create_at_main/schema/wo.cedarschema",
+   "ok": true,
+   "parsed": true,
+   "n_policies": 3,
+   "errors": [],
+   "warnings": [],
+   "cedarpy_errors": []
+  },
+  "failures": [],
+  "never_allowed": [
+   "AOB::Action::\"approve_workorder\"",
+   "AOB::Action::\"assign_technician\"",
+   "AOB::Action::\"cancel_workorder\"",
+   "AOB::Action::\"close_workorder\"",
+   "AOB::Action::\"get_failure_codes\"",
+   "AOB::Action::\"get_my_assigned_workorders\"",
+   "AOB::Action::\"get_schedule_calendar\"",
+   "AOB::Action::\"get_workorder\"",
+   "AOB::Action::\"get_workorder_actuals_vs_planned\"",
+   "AOB::Action::\"get_workorder_costs\"",
+   "AOB::Action::\"get_workorder_kpis\"",
+   "AOB::Action::\"get_workorder_tasks\"",
+   "AOB::Action::\"list_workorders\"",
+   "AOB::Action::\"update_workorder\""
+  ]
+ },
+ "judge": {
+  "key_hash": "238a1aade93aa4bb69780ef9c64c43ebc09164d5e1fc16bacd10977058fee7dd",
+  "cache_hit": false,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011Ch1CWkPrfPv2wQJgTNc9P",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 0,
+   "inference_geo": "global",
+   "input_tokens": 486,
+   "output_tokens": 266,
+   "output_tokens_details": {
+    "thinking_tokens": 255
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "NO MISMATCHES",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "judge_passed": true,
+ "passed": true
+}

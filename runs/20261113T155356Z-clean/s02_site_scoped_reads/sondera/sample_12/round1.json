@@ -1,0 +1,86 @@
+{
+ "round": 1,
+ "extraction": "fenced",
+ "generation": {
+  "key_hash": "f08cccc514bd738ea37da2d7ca10d7d2a2497ad4683206e7230af0364252d44b",
+  "cache_hit": true,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011Ch1CapivESyzicUb7oGii",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 74908,
+   "inference_geo": "global",
+   "input_tokens": 277,
+   "output_tokens": 1650,
+   "output_tokens_details": {
+    "thinking_tokens": 968
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "```cedar\n// Work order lookups where site_id is a required String: must be MAIN.\npermit (\n  principal,\n  action in [\n    AOB::Action::\"get_workorder\",\n    AOB::Action::\"get_workorder_tasks\",\n    AOB::Action::\"get_workorder_costs\",\n    AOB::Action::\"get_workorder_actuals_vs_planned\",\n    AOB::Action::\"get_workorder_kpis\",\n    AOB::Action::\"get_schedule_calendar\"\n  ],\n  resource\n)\nwhen {\n  context.input.site_id == \"MAIN\"\n};\n\n// Listing work orders: site_id is optional, so it must be present and set to MAIN.\npermit (\n  principal,\n  action == AOB::Action::\"list_workorders\",\n  resource\n)\nwhen {\n  context.input has site_id &&\n  context.input.site_id has typeChoice0 &&\n  context.input.site_id.typeChoice0 == \"MAIN\"\n};\n\n// Work orders assigned to a technician: MAIN only, open work orders only\n// (open_only defaults to true on the server when omitted).\npermit (\n  principal,\n  action == AOB::Action::\"get_my_assigned_workorders\",\n  resource\n)\nwhen {\n  context.input has site_id &&\n  context.input.site_id has typeChoice0 &&\n  context.input.site_id.typeChoice0 == \"MAIN\" &&\n  (!(context.input has open_only) || context.input.open_only == true)\n};\n\n// Equipment registry lookups and sensor data reads: MAIN only.\npermit (\n  principal,\n  action in [\n    AOB::Action::\"asset_ids\",\n    AOB::Action::\"assets\",\n    AOB::Action::\"asset_detail\",\n    AOB::Action::\"installed_sensors\",\n    AOB::Action::\"history\",\n    AOB::Action::\"latest_reading\",\n    AOB::Action::\"sensor_coverage\",\n    AOB::Action::\"sensor_stats\"\n  ],\n  resource\n)\nwhen {\n  context.input.site_name == \"MAIN\"\n};\n```",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "deterministic": {
+  "passed": false,
+  "validation": {
+   "policy": "s02_site_scoped_reads/sondera/sample_12/round1.cedar",
+   "schema": "inputs/s02_site_scoped_reads/schema/wo_iot.cedarschema",
+   "ok": false,
+   "parsed": true,
+   "n_policies": 4,
+   "errors": [
+    "for policy `policy2`, unable to guarantee safety of access to optional attribute `input.open_only` in context for AOB::Action::\"get_my_assigned_workorders\" (try testing for the attribute's presence with `context.input has open_only && ..`)"
+   ],
+   "warnings": [],
+   "cedarpy_errors": [
+    "[policy2] for policy `policy2`, unable to guarantee safety of access to optional attribute `input.open_only` in context for AOB::Action::\"get_my_assigned_workorders\""
+   ]
+  },
+  "failures": [
+   "invalid: for policy `policy2`, unable to guarantee safety of access to optional attribute `input.open_only` in context for AOB::Action::\"get_my_assigned_workorders\" (try testing for the attribute's presence with `context.input has open_only && ..`)",
+   "invalid: [policy2] for policy `policy2`, unable to guarantee safety of access to optional attribute `input.open_only` in context for AOB::Action::\"get_my_assigned_workorders\""
+  ],
+  "never_allowed": []
+ },
+ "judge": {
+  "key_hash": "ba9e8374be4d34dc0f3aff6433061f5002a6d22c016749f8bd088fa5fb535de8",
+  "cache_hit": false,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011Ch1D5uzjDZdunykPEXiNN",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 0,
+   "inference_geo": "global",
+   "input_tokens": 1088,
+   "output_tokens": 361,
+   "output_tokens_details": {
+    "thinking_tokens": 350
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "NO MISMATCHES",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "judge_passed": true,
+ "passed": false
+}

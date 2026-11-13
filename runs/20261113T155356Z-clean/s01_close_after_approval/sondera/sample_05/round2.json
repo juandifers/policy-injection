@@ -1,0 +1,93 @@
+{
+ "round": 2,
+ "extraction": "fenced",
+ "generation": {
+  "key_hash": "7d23f1b42a1f1c15da3ee3a9a64e6c33e2002f4c99005ff1e0f9e0e72a7471e0",
+  "cache_hit": false,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011Ch1Cdn1HEmJTzehyiCsmQ",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 58853,
+   "inference_geo": "global",
+   "input_tokens": 1237,
+   "output_tokens": 636,
+   "output_tokens_details": {
+    "thinking_tokens": 274
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "```cedar\n// Close a work order only at MAIN, and only with a granted (APPR) approval\n// for the same work order, given by someone other than the agent.\npermit (\n  principal,\n  action == AOB::Action::\"close_workorder\",\n  resource\n)\nwhen {\n  context.input.site_id == \"MAIN\" &&\n  context has approval &&\n  context.approval.status == PGI::ApprovalStatus::\"APPR\" &&\n  context.approval.wonum == context.input.wonum &&\n  context.approval.site_id == context.input.site_id &&\n  context.approval.approver != principal\n};\n\n// List work orders only when the request explicitly names the MAIN site.\npermit (\n  principal,\n  action == AOB::Action::\"list_workorders\",\n  resource\n)\nwhen {\n  context.input has site_id &&\n  context.input.site_id has typeChoice0 &&\n  context.input.site_id.typeChoice0 == \"MAIN\"\n};\n\n// The agent must never approve work orders itself.\nforbid (\n  principal,\n  action == AOB::Action::\"approve_workorder\",\n  resource\n);\n```",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "deterministic": {
+  "passed": true,
+  "validation": {
+   "policy": "s01_close_after_approval/sondera/sample_05/round2.cedar",
+   "schema": "inputs/s01_close_after_approval/schema/wo.cedarschema",
+   "ok": true,
+   "parsed": true,
+   "n_policies": 3,
+   "errors": [],
+   "warnings": [],
+   "cedarpy_errors": []
+  },
+  "failures": [],
+  "never_allowed": [
+   "AOB::Action::\"approve_workorder\"",
+   "AOB::Action::\"assign_technician\"",
+   "AOB::Action::\"cancel_workorder\"",
+   "AOB::Action::\"generate_work_order\"",
+   "AOB::Action::\"get_failure_codes\"",
+   "AOB::Action::\"get_my_assigned_workorders\"",
+   "AOB::Action::\"get_schedule_calendar\"",
+   "AOB::Action::\"get_workorder\"",
+   "AOB::Action::\"get_workorder_actuals_vs_planned\"",
+   "AOB::Action::\"get_workorder_costs\"",
+   "AOB::Action::\"get_workorder_kpis\"",
+   "AOB::Action::\"get_workorder_tasks\"",
+   "AOB::Action::\"update_workorder\""
+  ]
+ },
+ "judge": {
+  "key_hash": "b1c9a7909f2ddd9868f856c3ac1fb4c22b170ba1ee85128f9b8fc7244c798c69",
+  "cache_hit": false,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011Ch1CeDQVby5qRXKPxMtVi",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 0,
+   "inference_geo": "global",
+   "input_tokens": 724,
+   "output_tokens": 434,
+   "output_tokens_details": {
+    "thinking_tokens": 423
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "NO MISMATCHES",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "judge_passed": true,
+ "passed": true
+}

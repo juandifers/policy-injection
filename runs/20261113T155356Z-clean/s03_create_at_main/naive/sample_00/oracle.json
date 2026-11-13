@@ -1,0 +1,32 @@
+{
+ "validation": {
+  "policy": "s03_create_at_main/naive/sample_00/policy.cedar",
+  "schema": "inputs/s03_create_at_main/schema/wo.cedarschema",
+  "ok": false,
+  "parsed": true,
+  "n_policies": 3,
+  "errors": [
+   "for policy `allow-generate-work-order-main-site`, unrecognized action `Action::\"generate_work_order\"` (did you mean `AOB::Action::\"generate_work_order\"`?)",
+   "for policy `forbid-approve-workorder`, unrecognized action `Action::\"approve_workorder\"` (did you mean `AOB::Action::\"approve_workorder\"`?)",
+   "for policy `forbid-cancel-workorder`, unrecognized action `Action::\"cancel_workorder\"` (did you mean `AOB::Action::\"get_workorder\"`?)"
+  ],
+  "warnings": [
+   "for policy `allow-generate-work-order-main-site`, unable to find an applicable action given the policy scope constraints",
+   "for policy `allow-generate-work-order-main-site`, policy is impossible: the policy expression evaluates to false for all valid requests",
+   "for policy `forbid-approve-workorder`, unable to find an applicable action given the policy scope constraints",
+   "for policy `forbid-approve-workorder`, policy is impossible: the policy expression evaluates to false for all valid requests",
+   "for policy `forbid-cancel-workorder`, unable to find an applicable action given the policy scope constraints",
+   "for policy `forbid-cancel-workorder`, policy is impossible: the policy expression evaluates to false for all valid requests"
+  ],
+  "cedarpy_errors": [
+   "[policy0] for policy `policy0`, unrecognized action `Action::\"generate_work_order\"`",
+   "[policy0] for policy `policy0`, unable to find an applicable action given the policy scope constraints",
+   "[policy1] for policy `policy1`, unrecognized action `Action::\"approve_workorder\"`",
+   "[policy1] for policy `policy1`, unable to find an applicable action given the policy scope constraints",
+   "[policy2] for policy `policy2`, unrecognized action `Action::\"cancel_workorder\"`",
+   "[policy2] for policy `policy2`, unable to find an applicable action given the policy scope constraints"
+  ]
+ },
+ "valid": false,
+ "cause_tags": null
+}

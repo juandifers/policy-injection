@@ -1,0 +1,519 @@
+namespace AOB {
+  type approve_workorderInput = {
+    site_id: String,
+    wonum: String
+  };
+
+  type asset_detailInput = {
+    asset_id: String,
+    site_name: String
+  };
+
+  type asset_idsInput = {
+    site_name: String
+  };
+
+  type assetsInput = {
+    assettype?: {
+      typeChoice0?: String,
+      typeChoice1?: AOB::Null
+    },
+    site_name: String
+  };
+
+  type assign_technicianInput = {
+    craft?: {
+      typeChoice0?: String,
+      typeChoice1?: AOB::Null
+    },
+    hours_planned?: AOB::Number,
+    labor_code: String,
+    site_id: String,
+    start_date?: {
+      typeChoice0?: String,
+      typeChoice1?: AOB::Null
+    },
+    wonum: String
+  };
+
+  type cancel_workorderInput = {
+    reason?: {
+      typeChoice0?: String,
+      typeChoice1?: AOB::Null
+    },
+    site_id: String,
+    wonum: String
+  };
+
+  type close_workorderInput = {
+    actual_hours?: AOB::Number,
+    failure_code?: {
+      typeChoice0?: String,
+      typeChoice1?: AOB::Null
+    },
+    resolution_notes?: {
+      typeChoice0?: String,
+      typeChoice1?: AOB::Null
+    },
+    site_id: String,
+    wonum: String
+  };
+
+  type find_assets_by_sensorsInput = {
+    match?: String,
+    sensors: Set<String>,
+    site_name: String,
+    source?: String,
+    substring?: Bool
+  };
+
+  type generate_work_orderInput = {
+    aob_source?: {
+      typeChoice0?: AOB::generate_work_order::Input::aob_source::TypeChoice0,
+      typeChoice1?: AOB::Null
+    },
+    asset_num: String,
+    description: String,
+    location?: {
+      typeChoice0?: String,
+      typeChoice1?: AOB::Null
+    },
+    notes?: {
+      typeChoice0?: String,
+      typeChoice1?: AOB::Null
+    },
+    priority?: Long,
+    reported_by?: {
+      typeChoice0?: String,
+      typeChoice1?: AOB::Null
+    },
+    site_id: String,
+    wonum?: {
+      typeChoice0?: String,
+      typeChoice1?: AOB::Null
+    },
+    work_type?: String
+  };
+
+  type get_failure_codesInput = {
+    code?: {
+      typeChoice0?: String,
+      typeChoice1?: AOB::Null
+    }
+  };
+
+  type get_my_assigned_workordersInput = {
+    labor_code: String,
+    open_only?: Bool,
+    site_id?: {
+      typeChoice0?: String,
+      typeChoice1?: AOB::Null
+    }
+  };
+
+  type get_schedule_calendarInput = {
+    date_from?: {
+      typeChoice0?: String,
+      typeChoice1?: AOB::Null
+    },
+    date_to?: {
+      typeChoice0?: String,
+      typeChoice1?: AOB::Null
+    },
+    group_by?: String,
+    site_id: String
+  };
+
+  type get_workorderInput = {
+    site_id: String,
+    wonum: String
+  };
+
+  type get_workorder_actuals_vs_plannedInput = {
+    site_id: String,
+    wonum: String
+  };
+
+  type get_workorder_costsInput = {
+    site_id: String,
+    wonum: String
+  };
+
+  type get_workorder_kpisInput = {
+    period_months?: Long,
+    site_id: String
+  };
+
+  type get_workorder_tasksInput = {
+    site_id: String,
+    wonum: String
+  };
+
+  type historyInput = {
+    asset_id: String,
+    cursor?: {
+      typeChoice0?: String,
+      typeChoice1?: AOB::Null
+    },
+    end?: {
+      typeChoice0?: String,
+      typeChoice1?: AOB::Null
+    },
+    limit?: Long,
+    sensors?: {
+      typeChoice0?: Set<String>,
+      typeChoice1?: AOB::Null
+    },
+    site_name: String,
+    start?: {
+      typeChoice0?: String,
+      typeChoice1?: AOB::Null
+    }
+  };
+
+  type installed_sensorsInput = {
+    asset_id: String,
+    site_name: String
+  };
+
+  type latest_readingInput = {
+    asset_id: String,
+    sensor?: {
+      typeChoice0?: String,
+      typeChoice1?: AOB::Null
+    },
+    site_name: String
+  };
+
+  type list_workordersInput = {
+    asset_num?: {
+      typeChoice0?: String,
+      typeChoice1?: AOB::Null
+    },
+    date_from?: {
+      typeChoice0?: String,
+      typeChoice1?: AOB::Null
+    },
+    date_to?: {
+      typeChoice0?: String,
+      typeChoice1?: AOB::Null
+    },
+    page_num?: Long,
+    page_size?: Long,
+    priority?: {
+      typeChoice0?: Long,
+      typeChoice1?: AOB::Null
+    },
+    site_id?: {
+      typeChoice0?: String,
+      typeChoice1?: AOB::Null
+    },
+    status?: {
+      typeChoice0?: String,
+      typeChoice1?: AOB::Null
+    }
+  };
+
+  type measured_sensorsInput = {
+    asset_id: String,
+    site_name: String
+  };
+
+  type sensor_coverageInput = {
+    asset_id: String,
+    site_name: String
+  };
+
+  type sensor_statsInput = {
+    asset_id: String,
+    end?: {
+      typeChoice0?: String,
+      typeChoice1?: AOB::Null
+    },
+    sensor?: {
+      typeChoice0?: String,
+      typeChoice1?: AOB::Null
+    },
+    site_name: String,
+    start?: {
+      typeChoice0?: String,
+      typeChoice1?: AOB::Null
+    }
+  };
+
+  type sitesInput = {  };
+
+  type stream_extentInput = {
+    asset_id: String,
+    end?: {
+      typeChoice0?: String,
+      typeChoice1?: AOB::Null
+    },
+    sensor?: {
+      typeChoice0?: String,
+      typeChoice1?: AOB::Null
+    },
+    site_name: String,
+    start?: {
+      typeChoice0?: String,
+      typeChoice1?: AOB::Null
+    }
+  };
+
+  type update_workorderInput = {
+    asset_num?: {
+      typeChoice0?: String,
+      typeChoice1?: AOB::Null
+    },
+    description?: {
+      typeChoice0?: String,
+      typeChoice1?: AOB::Null
+    },
+    failure_code?: {
+      typeChoice0?: String,
+      typeChoice1?: AOB::Null
+    },
+    location?: {
+      typeChoice0?: String,
+      typeChoice1?: AOB::Null
+    },
+    notes?: {
+      typeChoice0?: String,
+      typeChoice1?: AOB::Null
+    },
+    priority?: {
+      typeChoice0?: Long,
+      typeChoice1?: AOB::Null
+    },
+    site_id: String,
+    wonum: String
+  };
+
+  entity McpServer;
+
+  entity Null;
+
+  entity Number;
+
+  entity User;
+
+  action "approve_workorder" appliesTo {
+    principal: [User],
+    resource: [McpServer],
+    context: {
+      input: approve_workorderInput
+    }
+  };
+
+  action "asset_detail" appliesTo {
+    principal: [User],
+    resource: [McpServer],
+    context: {
+      input: asset_detailInput
+    }
+  };
+
+  action "asset_ids" appliesTo {
+    principal: [User],
+    resource: [McpServer],
+    context: {
+      input: asset_idsInput
+    }
+  };
+
+  action "assets" appliesTo {
+    principal: [User],
+    resource: [McpServer],
+    context: {
+      input: assetsInput
+    }
+  };
+
+  action "assign_technician" appliesTo {
+    principal: [User],
+    resource: [McpServer],
+    context: {
+      input: assign_technicianInput
+    }
+  };
+
+  action "cancel_workorder" appliesTo {
+    principal: [User],
+    resource: [McpServer],
+    context: {
+      input: cancel_workorderInput
+    }
+  };
+
+  action "close_workorder" appliesTo {
+    principal: [User],
+    resource: [McpServer],
+    context: {
+      input: close_workorderInput
+    }
+  };
+
+  action "find_assets_by_sensors" appliesTo {
+    principal: [User],
+    resource: [McpServer],
+    context: {
+      input: find_assets_by_sensorsInput
+    }
+  };
+
+  action "generate_work_order" appliesTo {
+    principal: [User],
+    resource: [McpServer],
+    context: {
+      input: generate_work_orderInput
+    }
+  };
+
+  action "get_failure_codes" appliesTo {
+    principal: [User],
+    resource: [McpServer],
+    context: {
+      input: get_failure_codesInput
+    }
+  };
+
+  action "get_my_assigned_workorders" appliesTo {
+    principal: [User],
+    resource: [McpServer],
+    context: {
+      input: get_my_assigned_workordersInput
+    }
+  };
+
+  action "get_schedule_calendar" appliesTo {
+    principal: [User],
+    resource: [McpServer],
+    context: {
+      input: get_schedule_calendarInput
+    }
+  };
+
+  action "get_workorder" appliesTo {
+    principal: [User],
+    resource: [McpServer],
+    context: {
+      input: get_workorderInput
+    }
+  };
+
+  action "get_workorder_actuals_vs_planned" appliesTo {
+    principal: [User],
+    resource: [McpServer],
+    context: {
+      input: get_workorder_actuals_vs_plannedInput
+    }
+  };
+
+  action "get_workorder_costs" appliesTo {
+    principal: [User],
+    resource: [McpServer],
+    context: {
+      input: get_workorder_costsInput
+    }
+  };
+
+  action "get_workorder_kpis" appliesTo {
+    principal: [User],
+    resource: [McpServer],
+    context: {
+      input: get_workorder_kpisInput
+    }
+  };
+
+  action "get_workorder_tasks" appliesTo {
+    principal: [User],
+    resource: [McpServer],
+    context: {
+      input: get_workorder_tasksInput
+    }
+  };
+
+  action "history" appliesTo {
+    principal: [User],
+    resource: [McpServer],
+    context: {
+      input: historyInput
+    }
+  };
+
+  action "installed_sensors" appliesTo {
+    principal: [User],
+    resource: [McpServer],
+    context: {
+      input: installed_sensorsInput
+    }
+  };
+
+  action "latest_reading" appliesTo {
+    principal: [User],
+    resource: [McpServer],
+    context: {
+      input: latest_readingInput
+    }
+  };
+
+  action "list_workorders" appliesTo {
+    principal: [User],
+    resource: [McpServer],
+    context: {
+      input: list_workordersInput
+    }
+  };
+
+  action "measured_sensors" appliesTo {
+    principal: [User],
+    resource: [McpServer],
+    context: {
+      input: measured_sensorsInput
+    }
+  };
+
+  action "sensor_coverage" appliesTo {
+    principal: [User],
+    resource: [McpServer],
+    context: {
+      input: sensor_coverageInput
+    }
+  };
+
+  action "sensor_stats" appliesTo {
+    principal: [User],
+    resource: [McpServer],
+    context: {
+      input: sensor_statsInput
+    }
+  };
+
+  action "sites" appliesTo {
+    principal: [User],
+    resource: [McpServer],
+    context: {
+      input: sitesInput
+    }
+  };
+
+  action "stream_extent" appliesTo {
+    principal: [User],
+    resource: [McpServer],
+    context: {
+      input: stream_extentInput
+    }
+  };
+
+  action "update_workorder" appliesTo {
+    principal: [User],
+    resource: [McpServer],
+    context: {
+      input: update_workorderInput
+    }
+  };
+}
+
+namespace AOB::generate_work_order::Input::aob_source {
+  entity TypeChoice0;
+}
