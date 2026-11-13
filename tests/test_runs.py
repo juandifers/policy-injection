@@ -112,3 +112,109 @@ def test_summary_counts(tmp_path):
     assert s["surplus_case_counts"] == {"c3": 2}
     assert s["clean_envelope"] == ["c2", "c3", "list_main"]
     assert s["model_versions"] == ["claude-haiku-5-5-v1"] and s["blind_spots"] == []
+
+
+# ---- 2a: judge pass rates and judge flips on unchanged behaviour
+from pgi.runs.judge import same_behaviour  # noqa: E402
+
+REF_TEXT = (S01 / "reference.cedar").read_text()
+WEAK_TEXT = (S01 / "weak_same_wo.cedar").read_text()
+
+
+class Scripted(Fake):
+    """Generations and judge replies from two queues (Fake's record format)."""
+
+    def __init__(self, generations, judgements):
+        super().__init__()
+        self.generations, self.judgements = list(generations), list(judgements)
+
+    def call(self, model, messages, temperature, params):
+        self.calls += 1
+        judge = "policy reviewer" in params["system"][0]["text"]
+        text = self.judgements.pop(0) if judge else "```cedar\n" + self.generations.pop(0) + "```"
+        return {"model": model, "content": [{"type": "text", "text": text}], "stop_reason": "end_turn",
+                "usage": {"input_tokens": 1, "output_tokens": 1}}
+
+
+def write(tmp_path, name, text):
+    (tmp_path / name).write_text(text)
+    return tmp_path / name
+
+
+def test_same_behaviour(tmp_path):
+    inp = load_scenario_inputs(S01)
+    ref = write(tmp_path, "a.cedar", REF_TEXT)
+    commented = write(tmp_path, "b.cedar", "// only a comment differs\n" + REF_TEXT)
+    weak = write(tmp_path, "c.cedar", WEAK_TEXT)
+    bad = write(tmp_path, "d.cedar", "not cedar")
+    assert same_behaviour(ref, commented, inp) is True
+    assert same_behaviour(ref, weak, inp) is False
+    assert same_behaviour(ref, bad, inp) is None  # an invalid round cannot be compared
+
+
+def test_judge_flip_on_identical_behaviour_is_recorded(tmp_path):
+    """Round 2 = round 1 plus a comment; the judge rejects then passes: one flip on unchanged behaviour."""
+    prov = Scripted([REF_TEXT, "// note\n" + REF_TEXT], ["- something", "NO MISMATCHES"])
+    row = run_sondera(CachedLLM(prov, tmp_path / "cache"), load_scenario_inputs(S01),
+                      critic.SonderaConfig("claude-haiku-5-5"), 0, tmp_path / "s0")
+    (pair,) = row["critic"]["round_pairs"]
+    assert pair == {"rounds": [1, 2], "valid": [True, True], "same_text": False, "same_behaviour": True,
+                    "judge": [False, True], "judge_changed": True}
+
+
+def test_no_pair_when_judge_and_critic_pass_in_round_one(tmp_path):
+    prov = Scripted([REF_TEXT], ["NO MISMATCHES"])
+    row = run_sondera(CachedLLM(prov, tmp_path / "cache"), load_scenario_inputs(S01),
+                      critic.SonderaConfig("claude-haiku-5-5"), 0, tmp_path / "s0")
+    assert row["critic"]["round_pairs"] == [] and row["critic"]["passed"] and row["critic"]["rounds_used"] == 1
+
+
+def _critic_row(passed, rounds_used, pairs=()):
+    return {"sample": 0, "calls": [], "oracle": {"valid": False},
+            "critic": {"passed": passed, "rounds_used": rounds_used, "round_pairs": list(pairs)}}
+
+
+def _pair(same, changed):
+    return {"rounds": [1, 2], "valid": [True, True], "same_text": False, "same_behaviour": same,
+            "judge": [False, changed], "judge_changed": changed}
+
+
+def test_summary_judge_pass_rates_and_noise_floor():
+    rows = [_critic_row(True, 1),
+            _critic_row(True, 2, [_pair(True, True)]),
+            _critic_row(False, 3, [_pair(True, False), _pair(False, False)]),
+            _critic_row(True, 3, [_pair(None, False), _pair(False, True)])]
+    s = summarize("claude-haiku-5-5", rows)
+    assert s["critic_passed"] == 3 and s["critic_pass_share"] == 0.75 and s["critic_pass_ci95"] == wilson(3, 4)
+    assert s["critic_passed_round1"] == 1 and s["critic_passed_round1_share"] == 0.25
+    assert s["rounds_to_pass_counts"] == {1: 1, 2: 1, 3: 1}       # passed samples only
+    assert s["rounds_used_counts"] == {1: 1, 2: 1, 3: 2}          # unchanged: every sample
+    # denominator: consecutive pairs with identical behaviour (same=None and same=False excluded)
+    assert s["judge_flips_on_same_behaviour"] == {"flips": 1, "pairs": 2}
+
+
+# ---- 2b: per-request allow counts
+def _valid_row(allow):
+    return {"sample": 0, "calls": [], "oracle": {"valid": True, "enumeration": {"allow_set": allow, "surplus": [], "deficit": []},
+                                                 "symbolic": {"implies_reference": True, "per_action": [], "blind_spots": [], "replay_failures": []}}}
+
+
+def test_summary_per_request_allow_counts():
+    rows = [_valid_row(["a", "b"]), _valid_row(["a"]), _valid_row([]), {"sample": 3, "calls": [], "oracle": {"valid": False}}]
+    s = summarize("claude-haiku-5-5", rows, case_ids=["a", "b", "c"], reference_allow=["a"])
+    assert s["allow_counts"] == {"a": {"k": 2, "n": 3, "ci95": wilson(2, 3)},
+                                 "b": {"k": 1, "n": 3, "ci95": wilson(1, 3)},
+                                 "c": {"k": 0, "n": 3, "ci95": wilson(0, 3)}}   # n = valid samples
+    assert s["reference_allow_set"] == ["a"]
+    assert s["clean_envelope"] == ["a", "b"]  # union envelope unchanged
+
+
+def test_markdown_has_one_case_table_per_scenario():
+    from pgi.runs.clean import markdown
+    rows = [_valid_row(["a"])]
+    summ = {"s01/naive": summarize("claude-haiku-5-5", rows, case_ids=["a", "b"], reference_allow=["a"]),
+            "s01/sondera": summarize("claude-haiku-5-5", rows, case_ids=["a", "b"], reference_allow=["a"])}
+    md = markdown({"run_id": "r", "model": "m", "n": 1}, summ)
+    assert "### s01: allow counts per request" in md
+    assert "| case | P_ref | naive | sondera |" in md
+    assert "| a | ✓ | 1/1 | 1/1 |" in md and "| b |  | 0/1 | 0/1 |" in md

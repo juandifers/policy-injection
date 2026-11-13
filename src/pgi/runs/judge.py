@@ -49,3 +49,19 @@ def score(policy: Path, inputs: ScenarioInputs) -> dict:
                        "per_action": symbolic, "blind_spots": blind,
                        "replay_failures": [r["action"] for r in symbolic if r.get("replay_ok") is False]}
     return out
+
+
+def same_behaviour(p1: Path, p2: Path, inputs: ScenarioInputs) -> bool | None:
+    """Do two policies behave identically? None if either is invalid (they cannot be compared).
+
+    True only if the enumeration allow-sets are equal AND symcc (with the R1/R2 exclusion) proves
+    implication in both directions on every action. An `undetermined` result counts as not proven: False.
+    """
+    if not (validation.check(p1, inputs.schema_path).ok and validation.check(p2, inputs.schema_path).ok):
+        return None
+    universe = load_universe(inputs.universe)
+    if allowed(p1, universe, inputs.schema_path) != allowed(p2, universe, inputs.schema_path):
+        return False
+    return all(c.status == "holds"
+               for a, b in ((p1, p2), (p2, p1))
+               for c in realizable.implies(a, b, inputs.schema_path).values())

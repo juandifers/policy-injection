@@ -28,7 +28,8 @@ from pgi.generators import critic, naive
 from pgi.generators.inputs import ScenarioInputs, load_scenario_inputs
 from pgi.llm.cache import CachedLLM, Completion
 from pgi.llm.pricing import cost
-from pgi.runs.judge import score
+from pgi.oracle.enumeration import allowed, load_universe
+from pgi.runs.judge import same_behaviour, score
 from pgi.runs.snapshot import load_snapshot, snapshot, snapshot_from_git
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -93,8 +94,15 @@ def run_sondera(llm: CachedLLM, inp: ScenarioInputs, cfg: critic.SonderaConfig, 
         calls += [rec["generation"], rec["judge"]]
     (d / "policy.cedar").write_text(res.final_policy + "\n" if res.final_policy else "")
     oracle = score(d / "policy.cedar", inp)
-    _dump(d / "oracle.json", oracle | {"critic": {"passed": res.passed, "rounds_used": res.rounds_used}})
-    return {"sample": i, "calls": calls, "oracle": oracle, "critic": {"passed": res.passed, "rounds_used": res.rounds_used}}
+    pairs = []
+    for a, b in zip(res.rounds, res.rounds[1:]):  # consecutive rounds: did the judge move on unchanged behaviour?
+        same = same_behaviour(a.policy_path, b.policy_path, inp)
+        pairs.append({"rounds": [a.index, b.index], "valid": [a.deterministic.validation.ok, b.deterministic.validation.ok],
+                      "same_text": a.policy_text == b.policy_text, "same_behaviour": same,
+                      "judge": [a.judge_passed, b.judge_passed], "judge_changed": a.judge_passed != b.judge_passed})
+    crit = {"passed": res.passed, "rounds_used": res.rounds_used, "round_pairs": pairs}
+    _dump(d / "oracle.json", oracle | {"critic": crit})
+    return {"sample": i, "calls": calls, "oracle": oracle, "critic": crit}
 
 
 def wilson(k: int, n: int, z: float = 1.96) -> list[float] | None:
@@ -107,8 +115,10 @@ def wilson(k: int, n: int, z: float = 1.96) -> list[float] | None:
     return [round(max(0.0, centre - half), 3), round(min(1.0, centre + half), 3)]
 
 
-def summarize(model: str, results: list[dict]) -> dict:
-    """Per scenario x generator: validity, surplus/deficit shares, clean envelope, symcc, blind spots, cost."""
+def summarize(model: str, results: list[dict], case_ids: list[str] | None = None,
+              reference_allow: list[str] | None = None) -> dict:
+    """Per scenario x generator: validity, surplus/deficit shares, clean envelope, per-request allow counts,
+    symcc, blind spots, cost; for the critic, pass rates and judge flips on unchanged behaviour."""
     n = len(results)
     valid = [r for r in results if r["oracle"]["valid"]]
     nv = len(valid)
@@ -131,6 +141,9 @@ def summarize(model: str, results: list[dict]) -> dict:
         "nonempty_deficit_ci95": wilson(len(dfc), nv),
         "surplus_case_counts": freq("surplus"), "deficit_case_counts": freq("deficit"),
         "clean_envelope": sorted(set().union(*(set(r["oracle"]["enumeration"]["allow_set"]) for r in valid))),
+        "reference_allow_set": sorted(reference_allow) if reference_allow is not None else None,
+        "allow_counts": {c: {"k": (k := sum(c in r["oracle"]["enumeration"]["allow_set"] for r in valid)),
+                             "n": nv, "ci95": wilson(k, nv)} for c in (case_ids or [])},
         "symbolic_not_implies_reference": len(sym_loose), "symbolic_status_counts": status,
         "blind_spots": [{"sample": r["sample"], "actions": r["oracle"]["symbolic"]["blind_spots"]}
                         for r in valid if r["oracle"]["symbolic"]["blind_spots"]],
@@ -146,8 +159,19 @@ def summarize(model: str, results: list[dict]) -> dict:
     }
     if any("critic" in r for r in results):
         rounds = [r["critic"]["rounds_used"] for r in results]
-        out["critic_passed"] = sum(r["critic"]["passed"] for r in results)
+        passed = [r for r in results if r["critic"]["passed"]]
+        out["critic_passed"] = len(passed)
+        out["critic_pass_share"] = round(len(passed) / n, 3) if n else None
+        out["critic_pass_ci95"] = wilson(len(passed), n)
+        first = sum(r["critic"]["rounds_used"] == 1 for r in passed)
+        out["critic_passed_round1"] = first
+        out["critic_passed_round1_share"] = round(first / n, 3) if n else None
+        out["critic_passed_round1_ci95"] = wilson(first, n)
+        to_pass = [r["critic"]["rounds_used"] for r in passed]
+        out["rounds_to_pass_counts"] = {k: to_pass.count(k) for k in sorted(set(to_pass))}
         out["rounds_used_counts"] = {k: rounds.count(k) for k in sorted(set(rounds))}
+        same = [p for r in results for p in r["critic"].get("round_pairs", []) if p["same_behaviour"] is True]
+        out["judge_flips_on_same_behaviour"] = {"flips": sum(p["judge_changed"] for p in same), "pairs": len(same)}
     return out
 
 
@@ -166,6 +190,32 @@ def markdown(config: dict, summary: dict) -> str:
                      f"| {len(s['blind_spots'])} | {rounds} | ${s['cost_usd_all_calls']:.3f} |")
     lines += ["", "Intervals: 95% Wilson. Surplus/deficit: enumeration over the scenario universe. "
               "symcc: realizable counterexamples (R1/R2 exclusion), per action."]
+    crit = {k: s for k, s in summary.items() if "critic_passed" in s}
+    if crit:
+        lines += ["", f"## {critic.LABEL}: critics", "",
+                  "| scenario | passed both critics | passed in round 1 | rounds to pass | judge flips on unchanged behaviour |",
+                  "|---|---|---|---|---|"]
+        for key, s in crit.items():
+            f = s["judge_flips_on_same_behaviour"]
+            lines.append(f"| {key.split('/')[0]} | {s['critic_passed']}/{s['n']} {s['critic_pass_ci95']} "
+                         f"| {s['critic_passed_round1']}/{s['n']} {s['critic_passed_round1_ci95']} "
+                         f"| {s['rounds_to_pass_counts']} | {f['flips']}/{f['pairs']} |")
+        lines += ["", "Judge flips: consecutive rounds whose policies behave identically (equal allow-sets, symcc "
+                  "implication both ways on every action) but whose judge verdicts differ / all such pairs."]
+    scenarios = sorted({k.split("/")[0] for k in summary})
+    for sc in scenarios:
+        gens = [k.split("/")[1] for k in summary if k.split("/")[0] == sc]
+        first = summary[f"{sc}/{gens[0]}"]
+        if not first.get("allow_counts"):
+            continue
+        ref = set(first.get("reference_allow_set") or [])
+        lines += ["", f"### {sc}: allow counts per request", "",
+                  "| case | P_ref | " + " | ".join(gens) + " |", "|---|---|" + "---|" * len(gens)]
+        for case in first["allow_counts"]:
+            cells = [f"{summary[f'{sc}/{g}']['allow_counts'][case]['k']}/{summary[f'{sc}/{g}']['allow_counts'][case]['n']}"
+                     for g in gens]
+            lines.append(f"| {case} | {'✓' if case in ref else ''} | " + " | ".join(cells) + " |")
+        lines += ["", "k/n = valid samples allowing the case / valid samples (enumeration). Wilson intervals in summary.json."]
     return "\n".join(lines) + "\n"
 
 
@@ -244,7 +294,11 @@ def main() -> None:
     with ThreadPoolExecutor(max_workers=len(inputs)) as pool:
         for f in [pool.submit(scenario_job, inp) for inp in inputs]:
             f.result()
-    summary = {k: summarize(args.model, results[k]) for k in sorted(results)}
+    cases = {}
+    for inp in inputs:
+        universe = load_universe(inp.universe)
+        cases[inp.name] = (list(universe.requests), sorted(allowed(inp.reference, universe, inp.schema_path)))
+    summary = {k: summarize(args.model, results[k], *cases[k.split("/")[0]]) for k in sorted(results)}
     _dump(out / "summary.json", summary)
     (out / "summary.md").write_text(markdown(config, summary))
     print(f"\nwrote {out}\napi calls this run: {llm.api_calls}")

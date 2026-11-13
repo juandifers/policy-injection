@@ -214,3 +214,16 @@ Why: run folders recorded the schema **path** and hash, but `7e0efc8` changed th
   - `test_snapshot.py`: re-scoring is unchanged after the scenario files in a tmp repo copy change (the same change does alter a live score).
   - Smoke1 re-scored from the fixture reproduces all 12 stored oracle records.
   - `runs/20261113T135411Z-clean-replay-smoke1` (a replay with `--inputs-from-git faf37e6`, 0 API calls): policies, oracle records and summary are identical to the original, apart from the file paths inside records.
+
+## 2026-11-13: Summary measures: critic pass rates, judge noise floor, per-request allow counts
+
+- **2a, Sondera-style only.** Each summary now has:
+  - `critic_pass_share` (final output passed both critics) and `critic_passed_round1_share`, each over all samples with a Wilson CI;
+  - `rounds_to_pass_counts` (passed samples only) next to the existing `rounds_used_counts`.
+  - Condition (b) is **not** defined here; that waits for the N=20 numbers.
+- **Judge noise floor.** For each pair of consecutive rounds, `run_sondera` records validity, same text, `same_behaviour` and both judge verdicts.
+  - `same_behaviour` (`pgi.runs.judge`) is True only if both rounds are valid, their enumeration allow-sets are equal, and `realizable.implies` holds both ways on every action.
+  - `undetermined` counts as not proven. An invalid round gives None, which drops the pair from the denominator.
+  - Summary: `judge_flips_on_same_behaviour = {flips, pairs}`.
+  - Cost: two extra symcc runs per action per round pair. No API calls.
+- **2b.** `allow_counts`: for each universe case, k of n_valid samples allow it, with a Wilson CI. `reference_allow_set` is recorded alongside. The union `clean_envelope` is unchanged. `summary.md` gets one case × generator table per scenario. No statistical test (Step 4).
