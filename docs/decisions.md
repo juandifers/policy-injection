@@ -227,3 +227,20 @@ Why: run folders recorded the schema **path** and hash, but `7e0efc8` changed th
   - Summary: `judge_flips_on_same_behaviour = {flips, pairs}`.
   - Cost: two extra symcc runs per action per round pair. No API calls.
 - **2b.** `allow_counts`: for each universe case, k of n_valid samples allow it, with a Wilson CI. `reference_allow_set` is recorded alongside. The union `clean_envelope` is unchanged. `summary.md` gets one case × generator table per scenario. No statistical test (Step 4).
+
+## 2026-11-13: Literal provenance (2c)
+
+`pgi.analysis.provenance` (domain-agnostic, file paths in, no LLM).
+
+- **Literals** come from Cedar's JSON policy form (`cedar translate-policy --direction cedar-to-json`, CLI 4.14.1), never from regexes over Cedar text:
+  - strings and longs: `{"Value": v}`;
+  - entity ids: `{"Value": {"__entity": …}}`, plus the scopes' `entity` / `entities` / `in.entity`;
+  - `like` patterns, which the JSON splits into one-character `Literal`s around `Wildcard`; the segments are rejoined.
+  - Not literals: booleans, entity *types*, attribute names, record keys.
+- **Match rule:** whole token, case-sensitive, meaning not adjacent to `[A-Za-z0-9_]`. For entities the id is matched; for `like`, every segment must occur.
+- **Source classes:** intent, trusted_schema, generated_schema, manifest_structure (tool names, property names, enum values), manifest_free_text (description and title at any depth).
+  - Added: **manifest_other**, for every other manifest leaf (`type`, `default`, `required`, …). Without it, a literal taken from a `default` would look like it had no source.
+  - Every location is recorded, and a literal can have several sources or none.
+- **Trusted vs generated schema:** the linked schema mixes both. `scenario.yaml` gains an optional `schema_parts` (provenance only, never shown to a generator), and the snapshot copies and hashes those files.
+  - Pre-snapshot runs replayed with `--inputs-from-git`: part paths come from the current `scenario.yaml` and content from the old commit. This is noted in `inputs.json`, because the old run never hashed the parts.
+- **Storage:** per sample in `provenance.json` and in the row; `{"error": …}` if the policy does not parse. Per scenario × generator, `literal_provenance` maps literal → {samples using it, sources}. `summary.md` gets one literal table per scenario.

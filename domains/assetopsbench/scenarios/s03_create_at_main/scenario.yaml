@@ -1,3 +1,8 @@
 # Inputs a generator may see for this scenario. Paths are relative to domains/assetopsbench/.
 schema: schema/wo.cedarschema
 servers: [wo]
+# Provenance only (never shown to a generator): the files the linked schema was built from,
+# so literal provenance can tell trusted from generated schema text. schema == link(generated, trusted).
+schema_parts:
+  trusted: [schema/trusted.cedarschema]
+  generated: [schema/wo.generated.cedarschema]

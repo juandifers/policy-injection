@@ -24,6 +24,7 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from pathlib import Path
 
+from pgi.analysis.provenance import Sources, provenance
 from pgi.generators import critic, naive
 from pgi.generators.inputs import ScenarioInputs, load_scenario_inputs
 from pgi.llm.cache import CachedLLM, Completion
@@ -71,6 +72,17 @@ def _tool_versions() -> dict:
                                              capture_output=True, text=True).stdout.strip())}
 
 
+def literal_provenance(policy: Path, inp: ScenarioInputs) -> list[dict] | dict:
+    """Provenance rows for one policy file, or {"error": ...} if it does not parse."""
+    src = Sources.from_files(intent=inp.folder / "intent.md", trusted_schemas=list(inp.schema_parts.get("trusted", ())),
+                             generated_schemas=list(inp.schema_parts.get("generated", ())),
+                             manifests=dict(zip(inp.servers, inp.manifest_paths)))
+    try:
+        return provenance(policy, src)
+    except ValueError as e:
+        return {"error": str(e)}
+
+
 def run_naive(llm: CachedLLM, inp: ScenarioInputs, cfg: naive.NaiveConfig, i: int, d: Path) -> dict:
     """One naive sample: generate, write, score."""
     s = naive.generate(llm, inp, cfg, i)
@@ -79,7 +91,9 @@ def run_naive(llm: CachedLLM, inp: ScenarioInputs, cfg: naive.NaiveConfig, i: in
     _dump(d / "response.json", _call_record(s.completion) | {"extraction": s.extraction})
     oracle = score(d / "policy.cedar", inp)
     _dump(d / "oracle.json", oracle)
-    return {"sample": i, "calls": [_call_record(s.completion)], "oracle": oracle}
+    prov = literal_provenance(d / "policy.cedar", inp)
+    _dump(d / "provenance.json", prov)
+    return {"sample": i, "calls": [_call_record(s.completion)], "oracle": oracle, "provenance": prov}
 
 
 def run_sondera(llm: CachedLLM, inp: ScenarioInputs, cfg: critic.SonderaConfig, i: int, d: Path) -> dict:
@@ -102,7 +116,9 @@ def run_sondera(llm: CachedLLM, inp: ScenarioInputs, cfg: critic.SonderaConfig, 
                       "judge": [a.judge_passed, b.judge_passed], "judge_changed": a.judge_passed != b.judge_passed})
     crit = {"passed": res.passed, "rounds_used": res.rounds_used, "round_pairs": pairs}
     _dump(d / "oracle.json", oracle | {"critic": crit})
-    return {"sample": i, "calls": calls, "oracle": oracle, "critic": crit}
+    prov = literal_provenance(d / "policy.cedar", inp)
+    _dump(d / "provenance.json", prov)
+    return {"sample": i, "calls": calls, "oracle": oracle, "critic": crit, "provenance": prov}
 
 
 def wilson(k: int, n: int, z: float = 1.96) -> list[float] | None:
@@ -157,6 +173,14 @@ def summarize(model: str, results: list[dict], case_ids: list[str] | None = None
         "cost_usd_all_calls": round(sum(cost(model, c["usage"] or {}) for c in calls), 4),
         "cost_usd_this_run": round(sum(cost(model, c["usage"] or {}) for c in fresh), 4),
     }
+    parsed = [r["provenance"] for r in results if isinstance(r.get("provenance"), list)]
+    lits: dict[str, dict] = {}
+    for rows in parsed:
+        for row in rows:
+            e = lits.setdefault(row["literal"], {"kind": row["kind"], "samples": 0, "sources": row["sources"]})
+            e["samples"] += 1
+    out["literal_provenance"] = dict(sorted(lits.items(), key=lambda kv: (-kv[1]["samples"], kv[0])))
+    out["provenance_parsed"] = len(parsed)
     if any("critic" in r for r in results):
         rounds = [r["critic"]["rounds_used"] for r in results]
         passed = [r for r in results if r["critic"]["passed"]]
@@ -216,6 +240,24 @@ def markdown(config: dict, summary: dict) -> str:
                      for g in gens]
             lines.append(f"| {case} | {'✓' if case in ref else ''} | " + " | ".join(cells) + " |")
         lines += ["", "k/n = valid samples allowing the case / valid samples (enumeration). Wilson intervals in summary.json."]
+    for sc in scenarios:
+        gens = [k.split("/")[1] for k in summary if k.split("/")[0] == sc]
+        lits: dict[str, dict] = {}
+        for g in gens:
+            for lit, e in summary[f"{sc}/{g}"].get("literal_provenance", {}).items():
+                lits.setdefault(lit, e)
+        if not lits:
+            continue
+        lines += ["", f"### {sc}: literal provenance", "",
+                  "| literal | " + " | ".join(gens) + " | sources |", "|---|" + "---|" * len(gens) + "---|"]
+        for lit, e in lits.items():
+            cells = []
+            for g in gens:
+                s = summary[f"{sc}/{g}"]
+                cells.append(f"{s['literal_provenance'].get(lit, {}).get('samples', 0)}/{s['provenance_parsed']}")
+            lines.append(f"| `{lit}` | " + " | ".join(cells) + f" | {', '.join(e['sources']) or '**none**'} |")
+        lines += ["", "k/n = samples using the literal / samples whose policy parses. Locations in summary.json and "
+                  "each sample's provenance.json. Whole-token, case-sensitive match."]
     return "\n".join(lines) + "\n"
 
 
@@ -320,7 +362,7 @@ def _inputs(args, src: dict | None, dest: Path) -> list[ScenarioInputs]:
             snap = snapshot_from_git(ROOT, args.inputs_from_git, str(domain / "scenarios" / name), dest / name, rec["hashes"])
         else:
             raise SystemExit(f"{args.replay} has no inputs/{name}; pass --inputs-from-git <commit>")
-        if snap.hashes != rec["hashes"]:
+        if {k: snap.hashes.get(k) for k in rec["hashes"]} != rec["hashes"]:
             raise SystemExit(f"{name}: inputs do not match the hashes {args.replay} recorded")
         out.append(snap)
     return out

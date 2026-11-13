@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import copy
 import hashlib
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import yaml
@@ -36,6 +36,9 @@ class ScenarioInputs:
     manifest_paths: tuple[Path, ...]
     intent: str
     hashes: dict[str, str]
+    # Provenance only, never given to a generator: role ("trusted" | "generated") -> schema files the
+    # linked schema was built from. Empty when the scenario does not declare them.
+    schema_parts: dict[str, tuple[Path, ...]] = field(default_factory=dict)
 
     @property
     def reference(self) -> Path:
@@ -58,8 +61,10 @@ def load_scenario_inputs(folder: Path) -> ScenarioInputs:
               "reference": sha256(folder / "reference.cedar"), "universe": sha256(folder / "universe.yaml"),
               "scenario_yaml": sha256(folder / "scenario.yaml")}
     hashes |= {f"manifest:{s}": sha256(p) for s, p in zip(servers, manifests)}
+    parts = {role: tuple(domain / f for f in files) for role, files in (meta.get("schema_parts") or {}).items()}
+    hashes |= {f"schema_part:{role}:{p.name}": sha256(p) for role, ps in parts.items() for p in ps}
     return ScenarioInputs(folder.name, folder, schema, schema.read_text(), servers, manifests,
-                          (folder / "intent.md").read_text(), hashes)
+                          (folder / "intent.md").read_text(), hashes, parts)
 
 
 def _strip_schema(node: object) -> None:

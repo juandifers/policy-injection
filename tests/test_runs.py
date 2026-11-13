@@ -218,3 +218,48 @@ def test_markdown_has_one_case_table_per_scenario():
     assert "### s01: allow counts per request" in md
     assert "| case | P_ref | naive | sondera |" in md
     assert "| a | ✓ | 1/1 | 1/1 |" in md and "| b |  | 0/1 | 0/1 |" in md
+
+
+# ---- 2c: literal provenance per sample and per scenario x generator
+def test_each_sample_records_literal_provenance(tmp_path):
+    """Fake returns weak_same_wo. Its APPR literal is stated by the trusted enum and by approve_workorder's free text."""
+    inp = load_scenario_inputs(S01)
+    row = run_naive(CachedLLM(Fake(), tmp_path / "cache"), inp, naive.NaiveConfig("claude-haiku-5-5"), 0, tmp_path / "n0")
+    prov = {r["literal"]: r for r in row["provenance"]}
+    assert json.loads((tmp_path / "n0" / "provenance.json").read_text()) == row["provenance"]
+    appr = prov['PGI::ApprovalStatus::"APPR"']["sources"]
+    assert "trusted_schema" in appr and "generated_schema" not in appr
+    assert any("approve_workorder" in loc for loc in appr["manifest_free_text"])
+    assert "intent" in prov['"MAIN"']["sources"]
+
+
+def test_unparseable_policy_gets_a_provenance_error_not_a_crash(tmp_path):
+    class Junk(Fake):
+        def call(self, model, messages, temperature, params):
+            return {**super().call(model, messages, temperature, params),
+                    "content": [{"type": "text", "text": "I can't help with that."}]}
+    row = run_naive(CachedLLM(Junk(), tmp_path / "cache"), load_scenario_inputs(S01),
+                    naive.NaiveConfig("claude-haiku-5-5"), 0, tmp_path / "n0")
+    assert "does not parse" in row["provenance"]["error"]
+
+
+def test_summary_literal_provenance_counts_samples_not_occurrences():
+    lit = lambda text, n, src: {"literal": text, "kind": "string", "occurrences": n, "sources": src}
+    rows = [_valid_row([]) | {"provenance": [lit('"MAIN"', 3, {"intent": ["intent.md"]}), lit('"X"', 1, {})]},
+            _valid_row([]) | {"provenance": [lit('"MAIN"', 1, {"intent": ["intent.md"]})]},
+            {"sample": 2, "calls": [], "oracle": {"valid": False}, "provenance": {"error": "does not parse"}}]
+    s = summarize("claude-haiku-5-5", rows)
+    assert s["literal_provenance"] == {
+        '"MAIN"': {"kind": "string", "samples": 2, "sources": {"intent": ["intent.md"]}},
+        '"X"': {"kind": "string", "samples": 1, "sources": {}}}
+    assert s["provenance_parsed"] == 2
+
+
+def test_markdown_has_one_literal_table_per_scenario():
+    from pgi.runs.clean import markdown
+    lit = {"literal": '"MAIN"', "kind": "string", "occurrences": 1, "sources": {"intent": ["intent.md"], "manifest_other": ["x"]}}
+    rows = [_valid_row([]) | {"provenance": [lit]}]
+    summ = {"s01/naive": summarize("m", rows), "s01/sondera": summarize("m", rows + rows)}
+    md = markdown({"run_id": "r", "model": "m", "n": 1}, summ)
+    assert "### s01: literal provenance" in md
+    assert '| `"MAIN"` | 1/1 | 2/2 | intent, manifest_other |' in md
