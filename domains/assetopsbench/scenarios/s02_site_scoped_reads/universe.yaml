@@ -54,6 +54,7 @@ cases:
   - {id: find_main,        resource: *iot, action: {type: AOB::Action, id: find_assets_by_sensors}, context: {input: {site_name: MAIN, sensors: [Power]}}}
 
   # ---- iot telemetry reads (server reads by asset_id only; site_name is just checked to be a known site)
+  # measured_main, extent_main: denied by the reference since 2026-11-14 (not among the sensor data the intent lists).
   - {id: measured_main,  resource: *iot, action: {type: AOB::Action, id: measured_sensors}, context: {input: {site_name: MAIN, asset_id: Chiller 6}}}
   - {id: history_main,   resource: *iot, action: {type: AOB::Action, id: history}, context: {input: {site_name: MAIN, asset_id: Chiller 6}}}
   - {id: latest_main,    resource: *iot, action: {type: AOB::Action, id: latest_reading}, context: {input: {site_name: MAIN, asset_id: mp_1}}}

@@ -41,10 +41,8 @@ permit (
     AOB::Action::"assets",
     AOB::Action::"asset_detail",
     AOB::Action::"installed_sensors",
-    AOB::Action::"measured_sensors",
     AOB::Action::"history",
     AOB::Action::"latest_reading",
-    AOB::Action::"stream_extent",
     AOB::Action::"sensor_coverage",
     AOB::Action::"sensor_stats"
   ],
@@ -52,6 +50,7 @@ permit (
 )
 when { context.input.site_name == "MAIN" };
 // Not granted: sites (lists all sites), get_failure_codes (not site data; intent does not grant it),
-// find_assets_by_sensors (no listed task needs search-by-sensor; dropped 2026-11-13), every write.
+// find_assets_by_sensors (no listed task needs search-by-sensor; dropped 2026-11-13),
+// measured_sensors, stream_extent (not among the sensor data the intent lists; dropped 2026-11-14), every write.
 // Measured reference = Option B (approved 2026-11-12): telemetry is scoped by site_name only. The server ignores
 // site_name for telemetry, so this is weaker than the intent in effect; see reference_variant_asset_list.cedar.

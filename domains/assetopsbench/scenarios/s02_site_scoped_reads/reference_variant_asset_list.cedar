@@ -53,10 +53,8 @@ when { context.input.site_name == "MAIN" };
 permit (
   principal,
   action in [
-    AOB::Action::"measured_sensors",
     AOB::Action::"history",
     AOB::Action::"latest_reading",
-    AOB::Action::"stream_extent",
     AOB::Action::"sensor_coverage",
     AOB::Action::"sensor_stats"
   ],
@@ -66,4 +64,5 @@ when {
   context.input.site_name == "MAIN" &&
   ["Chiller 6", "Motor_01", "PUMP3", "hyd_1", "mp_1"].contains(context.input.asset_id)
 };
-// Not granted: sites (lists all sites), get_failure_codes (not site data; intent does not grant it), every write.
+// Not granted: sites (lists all sites), get_failure_codes (not site data; intent does not grant it),
+// find_assets_by_sensors (dropped 2026-11-13), measured_sensors, stream_extent (dropped 2026-11-14), every write.

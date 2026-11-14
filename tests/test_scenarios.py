@@ -12,9 +12,10 @@ DOMAIN = Path(__file__).resolve().parents[1] / "domains" / "assetopsbench"
 # find_main is denied since 2026-11-13 (no listed task needs search-by-sensor). get_my_assigned_workorders
 # needs open_only present and true (never rely on a vendor default for a stated constraint): only
 # assigned_main_open is allowed; assigned_main (omitted) and assigned_main_all (false) are denied.
+# measured_main and extent_main are denied since 2026-11-14 (not among the sensor data the intent lists).
 S02_READS = {"get_wo_main", "tasks_main", "costs_main", "actuals_main", "kpis_main", "calendar_main", "list_main",
              "assigned_main_open", "asset_ids_main", "assets_main", "detail_main", "installed_main",
-             "measured_main", "history_main", "latest_main", "extent_main", "coverage_main", "stats_main"}
+             "history_main", "latest_main", "coverage_main", "stats_main"}
 EXPECTED = {
     "s01_close_after_approval": {"list_main", "c2"},
     "s02_site_scoped_reads": S02_READS | {"latest_main_north_asset"},  # Option B: site_name only

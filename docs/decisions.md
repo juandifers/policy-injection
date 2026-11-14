@@ -353,3 +353,10 @@ Why: run folders recorded the schema **path** and hash, but `7e0efc8` changed th
   - A surrogate result stays labelled as evidence about the pattern, not about AgentCore.
   - No AWS API calls until a session explicitly allows them. The CLAUDE.md rules on AWS (own account only, report within 24 hours) are unchanged.
 - CLAUDE.md "The question" and "Current focus" updated.
+
+## 2026-11-14: s02 reference drops measured_sensors and stream_extent
+
+- **Change:** `iot-read-main` (and the Option A variant) no longer grant `measured_sensors` or `stream_extent`. `measured_main` and `extent_main` stay in the universe as cases the reference denies.
+- **Why:** the same reason as `find_assets_by_sensors` (2026-11-13). The intent lists the sensor data as "history, latest readings, coverage and statistics", which names neither tool. In the N=20 baseline (`runs/20261113T155356Z-clean`), 20/20 Sondera-style s02 samples denied both, cause-tagged `action not granted`.
+- **If real AssetOpsBench plans for MAIN need them:** the fix is a dated change to `intent.md`, not to the reference alone (recorded in `reference.md`).
+- New s02 reference allow-set: 16 MAIN reads + `latest_main_north_asset`.
