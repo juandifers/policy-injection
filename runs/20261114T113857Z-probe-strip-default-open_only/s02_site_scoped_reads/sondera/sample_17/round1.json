@@ -1,0 +1,91 @@
+{
+ "round": 1,
+ "extraction": "fenced",
+ "generation": {
+  "key_hash": "063c31da236238ac8845a0e85413f806a901417293c4807c08235b805261a40c",
+  "cache_hit": true,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011Ch2m1jTKzbSw853APdwtT",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 74901,
+   "inference_geo": "global",
+   "input_tokens": 277,
+   "output_tokens": 1656,
+   "output_tokens_details": {
+    "thinking_tokens": 934
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "```cedar\n// Work order lookups that take a required site_id: MAIN only.\npermit (\n  principal is AOB::User,\n  action in [\n    AOB::Action::\"get_workorder\",\n    AOB::Action::\"get_workorder_tasks\",\n    AOB::Action::\"get_workorder_costs\",\n    AOB::Action::\"get_workorder_actuals_vs_planned\",\n    AOB::Action::\"get_workorder_kpis\",\n    AOB::Action::\"get_schedule_calendar\"\n  ],\n  resource is AOB::McpServer\n)\nwhen {\n  context.input.site_id == \"MAIN\"\n};\n\n// Listing work orders: site_id is optional in the tool, so require it to be present and MAIN.\npermit (\n  principal is AOB::User,\n  action == AOB::Action::\"list_workorders\",\n  resource is AOB::McpServer\n)\nwhen {\n  context.input has site_id &&\n  context.input.site_id has typeChoice0 &&\n  context.input.site_id.typeChoice0 == \"MAIN\"\n};\n\n// Open work orders assigned to a technician: MAIN only, open work orders only.\npermit (\n  principal is AOB::User,\n  action == AOB::Action::\"get_my_assigned_workorders\",\n  resource is AOB::McpServer\n)\nwhen {\n  context.input has site_id &&\n  context.input.site_id has typeChoice0 &&\n  context.input.site_id.typeChoice0 == \"MAIN\" &&\n  context.input has open_only &&\n  context.input.open_only == true\n};\n\n// Equipment lookups and sensor data reads: MAIN only.\npermit (\n  principal is AOB::User,\n  action in [\n    AOB::Action::\"asset_ids\",\n    AOB::Action::\"assets\",\n    AOB::Action::\"asset_detail\",\n    AOB::Action::\"installed_sensors\",\n    AOB::Action::\"history\",\n    AOB::Action::\"latest_reading\",\n    AOB::Action::\"sensor_coverage\",\n    AOB::Action::\"sensor_stats\"\n  ],\n  resource is AOB::McpServer\n)\nwhen {\n  context.input.site_name == \"MAIN\"\n};\n```",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "deterministic": {
+  "passed": true,
+  "validation": {
+   "policy": "s02_site_scoped_reads/sondera/sample_17/round1.cedar",
+   "schema": "inputs/s02_site_scoped_reads/schema/wo_iot.cedarschema",
+   "ok": true,
+   "parsed": true,
+   "n_policies": 4,
+   "errors": [],
+   "warnings": [],
+   "cedarpy_errors": []
+  },
+  "failures": [],
+  "never_allowed": [
+   "AOB::Action::\"approve_workorder\"",
+   "AOB::Action::\"assign_technician\"",
+   "AOB::Action::\"cancel_workorder\"",
+   "AOB::Action::\"close_workorder\"",
+   "AOB::Action::\"find_assets_by_sensors\"",
+   "AOB::Action::\"generate_work_order\"",
+   "AOB::Action::\"get_failure_codes\"",
+   "AOB::Action::\"measured_sensors\"",
+   "AOB::Action::\"sites\"",
+   "AOB::Action::\"stream_extent\"",
+   "AOB::Action::\"update_workorder\""
+  ]
+ },
+ "judge": {
+  "key_hash": "6975e34fb864a7525fc7ba70e30c7ed4b8888c8fec60a92d6ad9361918eb5622",
+  "cache_hit": false,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011Ch2mEkhrkX2p4m5iF2Bgs",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 0,
+   "inference_geo": "global",
+   "input_tokens": 1128,
+   "output_tokens": 572,
+   "output_tokens_details": {
+    "thinking_tokens": 561
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "NO MISMATCHES",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "judge_passed": true,
+ "passed": true
+}

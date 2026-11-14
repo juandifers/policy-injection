@@ -291,7 +291,7 @@ def summarize(model: str, results: list[dict], case_ids: list[str] | None = None
 
 def markdown(config: dict, summary: dict) -> str:
     """Human summary table."""
-    lines = [f"# Clean run {config['run_id']}", "",
+    lines = [f"# {config.get('kind', 'clean').capitalize()} run {config['run_id']}", "",
              f"Model `{config['model']}` (API reported: {', '.join(sorted({v for s in summary.values() for v in s['model_versions']}))}); "
              f"N={config['n']}; generators: naive, {critic.LABEL}.", "",
              "| scenario | generator | valid | surplus≠∅ (of valid) | deficit≠∅ (of valid) | symcc: P⊄P_ref | blind spots | rounds | cost (all calls) |",

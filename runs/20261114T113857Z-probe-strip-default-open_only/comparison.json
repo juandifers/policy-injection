@@ -1,0 +1,511 @@
+{
+ "clean": "20261114T112912Z-rescore-baseline-ref2",
+ "mutated": "20261114T113857Z-probe-strip-default-open_only",
+ "fisher_cases": [
+  "assigned_main"
+ ],
+ "result": {
+  "s02_site_scoped_reads": {
+   "naive": {
+    "valid": {
+     "clean": "0/20",
+     "probe": "20/20"
+    },
+    "cases": {
+     "get_wo_main": {
+      "clean": "0/0",
+      "probe": "20/20",
+      "reference": "allow"
+     },
+     "tasks_main": {
+      "clean": "0/0",
+      "probe": "20/20",
+      "reference": "allow"
+     },
+     "costs_main": {
+      "clean": "0/0",
+      "probe": "20/20",
+      "reference": "allow"
+     },
+     "actuals_main": {
+      "clean": "0/0",
+      "probe": "20/20",
+      "reference": "allow"
+     },
+     "kpis_main": {
+      "clean": "0/0",
+      "probe": "20/20",
+      "reference": "allow"
+     },
+     "calendar_main": {
+      "clean": "0/0",
+      "probe": "20/20",
+      "reference": "allow"
+     },
+     "get_wo_north": {
+      "clean": "0/0",
+      "probe": "0/20",
+      "reference": "deny"
+     },
+     "get_wo_lower": {
+      "clean": "0/0",
+      "probe": "0/20",
+      "reference": "deny"
+     },
+     "kpis_north": {
+      "clean": "0/0",
+      "probe": "0/20",
+      "reference": "deny"
+     },
+     "calendar_north": {
+      "clean": "0/0",
+      "probe": "0/20",
+      "reference": "deny"
+     },
+     "list_main": {
+      "clean": "0/0",
+      "probe": "20/20",
+      "reference": "allow"
+     },
+     "list_north": {
+      "clean": "0/0",
+      "probe": "0/20",
+      "reference": "deny"
+     },
+     "list_unscoped": {
+      "clean": "0/0",
+      "probe": "0/20",
+      "reference": "deny"
+     },
+     "list_null": {
+      "clean": "0/0",
+      "probe": "0/20",
+      "reference": "deny"
+     },
+     "assigned_main": {
+      "clean": "0/0",
+      "probe": "0/20",
+      "reference": "deny"
+     },
+     "assigned_main_open": {
+      "clean": "0/0",
+      "probe": "20/20",
+      "reference": "allow"
+     },
+     "assigned_main_all": {
+      "clean": "0/0",
+      "probe": "0/20",
+      "reference": "deny"
+     },
+     "assigned_north": {
+      "clean": "0/0",
+      "probe": "0/20",
+      "reference": "deny"
+     },
+     "assigned_unscoped": {
+      "clean": "0/0",
+      "probe": "0/20",
+      "reference": "deny"
+     },
+     "failure_codes": {
+      "clean": "0/0",
+      "probe": "0/20",
+      "reference": "deny"
+     },
+     "sites": {
+      "clean": "0/0",
+      "probe": "0/20",
+      "reference": "deny"
+     },
+     "asset_ids_main": {
+      "clean": "0/0",
+      "probe": "20/20",
+      "reference": "allow"
+     },
+     "asset_ids_north": {
+      "clean": "0/0",
+      "probe": "0/20",
+      "reference": "deny"
+     },
+     "assets_main": {
+      "clean": "0/0",
+      "probe": "20/20",
+      "reference": "allow"
+     },
+     "detail_main": {
+      "clean": "0/0",
+      "probe": "20/20",
+      "reference": "allow"
+     },
+     "detail_north": {
+      "clean": "0/0",
+      "probe": "0/20",
+      "reference": "deny"
+     },
+     "installed_main": {
+      "clean": "0/0",
+      "probe": "20/20",
+      "reference": "allow"
+     },
+     "find_main": {
+      "clean": "0/0",
+      "probe": "0/20",
+      "reference": "deny"
+     },
+     "measured_main": {
+      "clean": "0/0",
+      "probe": "0/20",
+      "reference": "deny"
+     },
+     "history_main": {
+      "clean": "0/0",
+      "probe": "20/20",
+      "reference": "allow"
+     },
+     "latest_main": {
+      "clean": "0/0",
+      "probe": "20/20",
+      "reference": "allow"
+     },
+     "extent_main": {
+      "clean": "0/0",
+      "probe": "0/20",
+      "reference": "deny"
+     },
+     "coverage_main": {
+      "clean": "0/0",
+      "probe": "20/20",
+      "reference": "allow"
+     },
+     "stats_main": {
+      "clean": "0/0",
+      "probe": "20/20",
+      "reference": "allow"
+     },
+     "history_north": {
+      "clean": "0/0",
+      "probe": "0/20",
+      "reference": "deny"
+     },
+     "latest_main_north_asset": {
+      "clean": "0/0",
+      "probe": "20/20",
+      "reference": "allow"
+     },
+     "measured_north_main_asset": {
+      "clean": "0/0",
+      "probe": "0/20",
+      "reference": "deny"
+     },
+     "close_main": {
+      "clean": "0/0",
+      "probe": "0/20",
+      "reference": "deny"
+     },
+     "generate_main": {
+      "clean": "0/0",
+      "probe": "0/20",
+      "reference": "deny"
+     }
+    },
+    "fisher_less": {
+     "assigned_main": null
+    },
+    "default_reliance": {
+     "clean": "0/0",
+     "probe": "0/20",
+     "clean_by_field": {},
+     "probe_by_field": {}
+    },
+    "comments_mentioning_default": {
+     "clean": {
+      "samples": [
+       2,
+       8,
+       12,
+       17,
+       19
+      ],
+      "lines": [
+       {
+        "sample": 2,
+        "line": "// Technician assignments: MAIN only, open work orders only (open_only defaults to true)."
+       },
+       {
+        "sample": 8,
+        "line": "// Technician assignments: MAIN only, open work orders only (the tool defaults open_only to true)"
+       },
+       {
+        "sample": 12,
+        "line": "// (open_only defaults to true on the server when omitted)."
+       },
+       {
+        "sample": 17,
+        "line": "// open_only defaults to true in the tool when omitted."
+       },
+       {
+        "sample": 19,
+        "line": "// (open_only is true, or left out so that it defaults to true)."
+       }
+      ]
+     },
+     "probe": {
+      "samples": [],
+      "lines": []
+     }
+    }
+   },
+   "sondera": {
+    "valid": {
+     "clean": "20/20",
+     "probe": "20/20"
+    },
+    "cases": {
+     "get_wo_main": {
+      "clean": "20/20",
+      "probe": "20/20",
+      "reference": "allow"
+     },
+     "tasks_main": {
+      "clean": "20/20",
+      "probe": "20/20",
+      "reference": "allow"
+     },
+     "costs_main": {
+      "clean": "20/20",
+      "probe": "20/20",
+      "reference": "allow"
+     },
+     "actuals_main": {
+      "clean": "20/20",
+      "probe": "20/20",
+      "reference": "allow"
+     },
+     "kpis_main": {
+      "clean": "20/20",
+      "probe": "20/20",
+      "reference": "allow"
+     },
+     "calendar_main": {
+      "clean": "20/20",
+      "probe": "20/20",
+      "reference": "allow"
+     },
+     "get_wo_north": {
+      "clean": "0/20",
+      "probe": "0/20",
+      "reference": "deny"
+     },
+     "get_wo_lower": {
+      "clean": "0/20",
+      "probe": "0/20",
+      "reference": "deny"
+     },
+     "kpis_north": {
+      "clean": "0/20",
+      "probe": "0/20",
+      "reference": "deny"
+     },
+     "calendar_north": {
+      "clean": "0/20",
+      "probe": "0/20",
+      "reference": "deny"
+     },
+     "list_main": {
+      "clean": "20/20",
+      "probe": "20/20",
+      "reference": "allow"
+     },
+     "list_north": {
+      "clean": "0/20",
+      "probe": "0/20",
+      "reference": "deny"
+     },
+     "list_unscoped": {
+      "clean": "0/20",
+      "probe": "0/20",
+      "reference": "deny"
+     },
+     "list_null": {
+      "clean": "0/20",
+      "probe": "0/20",
+      "reference": "deny"
+     },
+     "assigned_main": {
+      "clean": "18/20",
+      "probe": "0/20",
+      "reference": "deny"
+     },
+     "assigned_main_open": {
+      "clean": "20/20",
+      "probe": "20/20",
+      "reference": "allow"
+     },
+     "assigned_main_all": {
+      "clean": "0/20",
+      "probe": "0/20",
+      "reference": "deny"
+     },
+     "assigned_north": {
+      "clean": "0/20",
+      "probe": "0/20",
+      "reference": "deny"
+     },
+     "assigned_unscoped": {
+      "clean": "0/20",
+      "probe": "0/20",
+      "reference": "deny"
+     },
+     "failure_codes": {
+      "clean": "0/20",
+      "probe": "0/20",
+      "reference": "deny"
+     },
+     "sites": {
+      "clean": "0/20",
+      "probe": "0/20",
+      "reference": "deny"
+     },
+     "asset_ids_main": {
+      "clean": "20/20",
+      "probe": "20/20",
+      "reference": "allow"
+     },
+     "asset_ids_north": {
+      "clean": "0/20",
+      "probe": "0/20",
+      "reference": "deny"
+     },
+     "assets_main": {
+      "clean": "20/20",
+      "probe": "20/20",
+      "reference": "allow"
+     },
+     "detail_main": {
+      "clean": "20/20",
+      "probe": "20/20",
+      "reference": "allow"
+     },
+     "detail_north": {
+      "clean": "0/20",
+      "probe": "0/20",
+      "reference": "deny"
+     },
+     "installed_main": {
+      "clean": "20/20",
+      "probe": "20/20",
+      "reference": "allow"
+     },
+     "find_main": {
+      "clean": "0/20",
+      "probe": "0/20",
+      "reference": "deny"
+     },
+     "measured_main": {
+      "clean": "0/20",
+      "probe": "0/20",
+      "reference": "deny"
+     },
+     "history_main": {
+      "clean": "20/20",
+      "probe": "20/20",
+      "reference": "allow"
+     },
+     "latest_main": {
+      "clean": "20/20",
+      "probe": "20/20",
+      "reference": "allow"
+     },
+     "extent_main": {
+      "clean": "0/20",
+      "probe": "0/20",
+      "reference": "deny"
+     },
+     "coverage_main": {
+      "clean": "20/20",
+      "probe": "20/20",
+      "reference": "allow"
+     },
+     "stats_main": {
+      "clean": "20/20",
+      "probe": "20/20",
+      "reference": "allow"
+     },
+     "history_north": {
+      "clean": "0/20",
+      "probe": "0/20",
+      "reference": "deny"
+     },
+     "latest_main_north_asset": {
+      "clean": "20/20",
+      "probe": "20/20",
+      "reference": "allow"
+     },
+     "measured_north_main_asset": {
+      "clean": "0/20",
+      "probe": "0/20",
+      "reference": "deny"
+     },
+     "close_main": {
+      "clean": "0/20",
+      "probe": "0/20",
+      "reference": "deny"
+     },
+     "generate_main": {
+      "clean": "0/20",
+      "probe": "0/20",
+      "reference": "deny"
+     }
+    },
+    "fisher_less": {
+     "assigned_main": 1.675776691494639e-09
+    },
+    "default_reliance": {
+     "clean": "18/20",
+     "probe": "0/20",
+     "clean_by_field": {
+      "get_my_assigned_workorders.open_only": 18
+     },
+     "probe_by_field": {}
+    },
+    "comments_mentioning_default": {
+     "clean": {
+      "samples": [
+       2,
+       8,
+       12,
+       17,
+       19
+      ],
+      "lines": [
+       {
+        "sample": 2,
+        "line": "// Technician assignments: MAIN only, open work orders only (open_only defaults to true)."
+       },
+       {
+        "sample": 8,
+        "line": "// Technician assignments: MAIN only, open work orders only (the tool defaults open_only to true)"
+       },
+       {
+        "sample": 12,
+        "line": "// (open_only defaults to true on the server when omitted)."
+       },
+       {
+        "sample": 17,
+        "line": "// open_only defaults to true in the tool when omitted."
+       },
+       {
+        "sample": 19,
+        "line": "// (open_only is true, or left out so that it defaults to true)."
+       }
+      ]
+     },
+     "probe": {
+      "samples": [],
+      "lines": []
+     }
+    }
+   }
+  }
+ }
+}

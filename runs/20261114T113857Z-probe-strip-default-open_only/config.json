@@ -1,0 +1,117 @@
+{
+ "run_id": "20261114T113857Z-probe-strip-default-open_only",
+ "created": "20261114T113857Z",
+ "kind": "probe-strip-default-open_only",
+ "model": "claude-sonnet-5-5",
+ "n": 20,
+ "replay": false,
+ "replay_of": null,
+ "cache_only": false,
+ "mutation": {
+  "name": "strip-default-open_only",
+  "kind": "probe",
+  "server": "wo",
+  "description": "Remove `default: true` from get_my_assigned_workorders.open_only and change nothing else. The schema generator drops defaults, so the schema must come out identical; only the manifest text the generator reads changes. Tests whether the clean \"absent -> allow\" surplus comes from that default.",
+  "structural": false,
+  "per_scenario": [
+   {
+    "name": "strip-default-open_only",
+    "kind": "probe",
+    "server": "wo",
+    "description": "Remove `default: true` from get_my_assigned_workorders.open_only and change nothing else. The schema generator drops defaults, so the schema must come out identical; only the manifest text the generator reads changes. Tests whether the clean \"absent -> allow\" surplus comes from that default.",
+    "structural": false,
+    "scenario": "s02_site_scoped_reads",
+    "changed_paths": [
+     "tools[get_my_assigned_workorders].inputSchema.properties.open_only.default"
+    ],
+    "manifest": {
+     "path": "manifests/wo.tools.json",
+     "pinned_sha256": "343611eceeda99e0148b96a87a47879ed074a0fe90bcad64b07428f88a0907e6",
+     "mutated_sha256": "1e41de8b92abad18e52ece54f449ef1155b7d112403637fa9cb7d87532930adc"
+    },
+    "schema": {
+     "generated_identical": true,
+     "pinned_generated_sha256": "c3057c9ed6920ca5131ecb0bdb39241988833a3f1dcfa7fe4a1f6f21591b563d",
+     "regenerated_sha256": "c3057c9ed6920ca5131ecb0bdb39241988833a3f1dcfa7fe4a1f6f21591b563d",
+     "final_sha256": "cc85090b1829deac150d09768b944e538a7691b24316bf79d8b3705bc5e2363e",
+     "pinned_final_sha256": "cc85090b1829deac150d09768b944e538a7691b24316bf79d8b3705bc5e2363e",
+     "stub_sha256": "de23717da3b833787c69094078075852e9057fbfe179f13846267f709caab515",
+     "generator_config": {
+      "includeOutputs": false,
+      "objectsAsRecords": false,
+      "eraseAnnotations": true,
+      "flattenNamespaces": false,
+      "numbersAsDecimal": false,
+      "deduplicateEntityTypes": false
+     }
+    }
+   }
+  ]
+ },
+ "inputs": "inputs/<scenario>/ (snapshot; generation and scoring read only from it)",
+ "generators": {
+  "naive": {
+   "model": "claude-sonnet-5-5",
+   "include_descriptions": true,
+   "effort": "high",
+   "max_tokens": 16000,
+   "generator": "naive"
+  },
+  "sondera": {
+   "model": "claude-sonnet-5-5",
+   "include_descriptions": true,
+   "judge_sees_manifests": false,
+   "max_rounds": 3,
+   "effort": "high",
+   "max_tokens": 16000,
+   "generator": "Sondera-style (our reimplementation)"
+  }
+ },
+ "generators_run": [
+  "naive",
+  "sondera"
+ ],
+ "request": {
+  "sampling": "not sent (API default)",
+  "thinking": {
+   "type": "adaptive"
+  },
+  "output_config": {
+   "effort": "high"
+  },
+  "max_tokens": 16000,
+  "fallbacks": "none",
+  "prompt_cache": "ephemeral breakpoint on last static system block"
+ },
+ "scenarios": {
+  "s02_site_scoped_reads": {
+   "schema": "inputs/s02_site_scoped_reads/schema/wo_iot.cedarschema",
+   "servers": [
+    "wo",
+    "iot"
+   ],
+   "hashes": {
+    "scenario_yaml": "09095a5b0021a45ceb1edb6c5181f18bdbfb8141a24a59233d155668db9f27df",
+    "intent": "a090e9d4cd619c479fccd87ddf6a138f4c349aded1899c64da4fb2c6cbcfc306",
+    "reference": "20f8d25c40c4d457268bfea66a654d94104eda9ea264afdfbfe4061f3fff2d25",
+    "universe": "d5abc7d303f37e88395f0de35d1d6d326f95bda691dc57ddde4ebd83e6d9764f",
+    "schema": "cc85090b1829deac150d09768b944e538a7691b24316bf79d8b3705bc5e2363e",
+    "manifest:wo": "1e41de8b92abad18e52ece54f449ef1155b7d112403637fa9cb7d87532930adc",
+    "manifest:iot": "50a3c21bbda8663f979ac45d9df69619e37f7d990ca9ed46e596d029656668d4",
+    "schema_part:generated:wo_iot.generated.cedarschema": "c3057c9ed6920ca5131ecb0bdb39241988833a3f1dcfa7fe4a1f6f21591b563d",
+    "schema_part:trusted:trusted.cedarschema": "766960fd1f9512456b92632e0a0233fbe278e24ca9d5820bcde77b63af094bbc",
+    "pinned_manifest:wo": "343611eceeda99e0148b96a87a47879ed074a0fe90bcad64b07428f88a0907e6",
+    "pinned_manifest:iot": "50a3c21bbda8663f979ac45d9df69619e37f7d990ca9ed46e596d029656668d4"
+   }
+  }
+ },
+ "versions": {
+  "cedarpy": "4.12.2",
+  "anthropic": "2.8.0",
+  "cedar-policy-mcp-schema-generator": "0.7.0",
+  "cedar_cli": "cedar-policy-cli 4.14.1",
+  "cvc5": "This is cvc5 version 1.3.1 [git ea1b484 on branch HEAD]",
+  "git_commit": "c297f7d29294922608c9b9a1c3ce50bdd3c36b5a",
+  "git_dirty": false
+ }
+}

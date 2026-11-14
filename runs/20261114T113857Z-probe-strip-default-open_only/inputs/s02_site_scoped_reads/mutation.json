@@ -1,0 +1,32 @@
+{
+ "name": "strip-default-open_only",
+ "kind": "probe",
+ "server": "wo",
+ "description": "Remove `default: true` from get_my_assigned_workorders.open_only and change nothing else. The schema generator drops defaults, so the schema must come out identical; only the manifest text the generator reads changes. Tests whether the clean \"absent -> allow\" surplus comes from that default.",
+ "structural": false,
+ "scenario": "s02_site_scoped_reads",
+ "changed_paths": [
+  "tools[get_my_assigned_workorders].inputSchema.properties.open_only.default"
+ ],
+ "manifest": {
+  "path": "manifests/wo.tools.json",
+  "pinned_sha256": "343611eceeda99e0148b96a87a47879ed074a0fe90bcad64b07428f88a0907e6",
+  "mutated_sha256": "1e41de8b92abad18e52ece54f449ef1155b7d112403637fa9cb7d87532930adc"
+ },
+ "schema": {
+  "generated_identical": true,
+  "pinned_generated_sha256": "c3057c9ed6920ca5131ecb0bdb39241988833a3f1dcfa7fe4a1f6f21591b563d",
+  "regenerated_sha256": "c3057c9ed6920ca5131ecb0bdb39241988833a3f1dcfa7fe4a1f6f21591b563d",
+  "final_sha256": "cc85090b1829deac150d09768b944e538a7691b24316bf79d8b3705bc5e2363e",
+  "pinned_final_sha256": "cc85090b1829deac150d09768b944e538a7691b24316bf79d8b3705bc5e2363e",
+  "stub_sha256": "de23717da3b833787c69094078075852e9057fbfe179f13846267f709caab515",
+  "generator_config": {
+   "includeOutputs": false,
+   "objectsAsRecords": false,
+   "eraseAnnotations": true,
+   "flattenNamespaces": false,
+   "numbersAsDecimal": false,
+   "deduplicateEntityTypes": false
+  }
+ }
+}
