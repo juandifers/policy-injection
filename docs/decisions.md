@@ -426,3 +426,46 @@ Why: run folders recorded the schema **path** and hash, but `7e0efc8` changed th
 - **Probe "strip-default-open_only":** removes `default: true` from `get_my_assigned_workorders.open_only` in the wo manifest, and nothing else. The schema comes out identical, so only the manifest text the generator reads changes.
 - **Cost estimate** (from the baseline's recorded s02 usage, Sonnet 5.5 prices): naive $0.68, plus Sondera-style rounds 2+ $0.47, plus judges $0.34, ≈ **$1.49**. Round 1 is the naive request (a cache hit). Worst case, with every sample using 3 rounds: ≈ $2.0. That is under the $3 gate, so the run went ahead.
 - **Comparison baseline:** `runs/20261114T112912Z-rescore-baseline-ref2`, the same policies as the N=20 clean run, scored against the current s02 reference. The sample indices are the same (0–19). Sampling is not sent, so index pairs are not matched draws, and the Fisher test treats the runs as independent groups.
+
+## 2026-11-14: Perturbation engine (benign probes) and depth-1 schema observer
+
+Measurement-path code: tests were written first (`tests/test_edit.py`, `tests/test_schema_effect.py`), asserting the
+Step 2 table in `docs/findings.md`. No adversarial ops and no generation or API calls in this step.
+
+- **`pgi.mutators.edit`:** `EditSpec(tool, path, channel, op, value, compound=False)` names one edit; `apply(manifest, spec)`
+  deep-copies and performs exactly one semantic edit, returning `(mutated, EditRecord)`. Paths are dotted and relative to the
+  tool object (`""` is the tool; list indices are integers). A no-op raises, as does an op whose registered channel differs
+  from the spec's. Ops: `text.append_restriction`, `structure.{add_enum, rename_param, change_type, set_required,
+  reorder_anyof}`, `out_of_spec.add_key`.
+- **`EditRecord(tool, path, channel, op, before, after, compound)`** holds the node at `path` before and after (deep copies).
+  `replay(manifest, record)` rebuilds the mutated manifest from `after`, refusing if the node is not the recorded `before`.
+  `as_dict`/`from_dict` round-trip through JSON. The spec's `value` is not in the record; `before`/`after` carry it.
+- **rename_param guard:** the `required` entry is renamed in its slot, so required-ness is unchanged. A bare rename (dangling
+  entry, silently ignored by the generator, field turns optional) is two edits. It is available only with `compound=True`,
+  which is refused when the field was not required (nothing to confound) and on every other op.
+- **`$ref`/`$defs`:** `add_key` refuses them as key or anywhere inside the value; `apply` also checks the tool's count of
+  those keys is unchanged after any op. Observed: the generator did *not* reject a `$ref` next to an `enum` on a scratch
+  copy (it ignored it), so "the generator rejects them" is not verified; the guard stands regardless, because an ignored
+  key would be a silent zero-edit.
+- **`add_key` refuses in-spec keys** (`type`, `enum`, `format`, `required`, `anyOf`, `properties`, `items`, …, and the text
+  keys `title`, `description`, `default`, `pattern`, …). Adding `format` through the out-of-spec channel would be a
+  structure edit wearing the wrong label.
+- **`append_restriction` requires an existing `description`.** AOB parameters carry only a `title`, so a parameter-level
+  text probe would create a key, which is a different edit. Open for Juan: add a `text.set_description` op if parameter
+  descriptions are wanted as a probe channel.
+- **`pgi.mutators.schema_effect`:** `observe(stub, clean_manifests, mutated_manifests)` regenerates both schemas through
+  `pgi.schemagen.generate` (the `gen_schema.py` path), diffs the texts and classifies `schema_changed` or
+  `schema_unchanged`. `expected(channel)` is the Step 2 prediction (only `structure` reaches the schema);
+  `SchemaEffect.agrees_with(channel)` flags mislabels. Depth 1: generated schema text only, not the linked final schema,
+  not a policy. The Python binding suffices; the `cedar` CLI is not needed.
+- **`observe_edit(stub, manifests, index, spec, dest)`** is the run-folder form: `dest/manifests/<name>` (pin formatting),
+  `dest/schema/{clean,mutated}.generated.cedarschema`, `dest/edit.json` (spec, record, effect, expected, agrees, manifest
+  paths and hashes, stub hash, generator config). `dest` must not exist. Pins are only read (autouse test: every pinned
+  manifest and schema hash unchanged).
+- **Ground truth confirmed on `close_workorder`** (generator 0.7.0, same strings as the Step 2 table): enum → `AOB::close_workorder::Input::site_id`
+  enum entity; guarded rename → `site: String`, bare rename → `site?: String`; `number`→`integer` → `Long`;
+  `required` off → `site_id?`; anyOf reorder → `typeChoice0?: AOB::Null`; description/add_key → identical text.
+- **Relation to `pgi.mutators.Mutation`:** unchanged. `Mutation.edit` callables (e.g. `strip_default`) still drive
+  `mutate()`; wiring `EditSpec` into `mutations.yaml` is a later step.
+- **Environment note:** the `cedar` CLI lives in `~/tools/bin` (added to PATH by `.zshrc`); a non-login shell needs
+  `export PATH="$HOME/tools/bin:$PATH"` and `CVC5` set, else the link and symcc tests fail with `FileNotFoundError`.
