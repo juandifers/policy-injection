@@ -39,6 +39,14 @@ class ScenarioInputs:
     # Provenance only, never given to a generator: role ("trusted" | "generated") -> schema files the
     # linked schema was built from. Empty when the scenario does not declare them.
     schema_parts: dict[str, tuple[Path, ...]] = field(default_factory=dict)
+    # Scoring only, never given to a generator: when the generator saw mutated manifests, the pinned
+    # manifests (one per server), i.e. what the server actually implements. Empty for clean inputs.
+    pinned_manifest_paths: tuple[Path, ...] = ()
+
+    @property
+    def defaults_manifests(self) -> dict[str, Path]:
+        """server -> manifest whose defaults the server applies: the pinned one if the inputs are mutated."""
+        return dict(zip(self.servers, self.pinned_manifest_paths or self.manifest_paths))
 
     @property
     def reference(self) -> Path:

@@ -6,3 +6,6 @@ servers: [wo]
 schema_parts:
   trusted: [schema/trusted.cedarschema]
   generated: [schema/wo.generated.cedarschema]
+# How the generated schema part is built from the manifests (pgi.schemagen; used by mutators to regenerate it).
+schema_build:
+  stub: schema/stub.cedarschema

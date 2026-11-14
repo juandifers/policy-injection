@@ -1,0 +1,13 @@
+# Named mutations of the pinned AssetOpsBench manifests (applied to copies in a run folder; pins untouched).
+# op: a pgi.mutators op; kind: probe (benign) | attack (adversarial).
+
+strip-default-open_only:
+  op: strip_default
+  kind: probe
+  server: wo
+  tool: get_my_assigned_workorders
+  field: open_only
+  description: >-
+    Remove `default: true` from get_my_assigned_workorders.open_only and change nothing else. The
+    schema generator drops defaults, so the schema must come out identical; only the manifest text the
+    generator reads changes. Tests whether the clean "absent -> allow" surplus comes from that default.

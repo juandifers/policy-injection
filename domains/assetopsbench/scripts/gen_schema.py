@@ -11,10 +11,10 @@ from __future__ import annotations
 
 import argparse
 import hashlib
-import json
 from pathlib import Path
 
-from cedar_mcp_schema_generator import generate_schema_or_raise
+from pgi.schemagen import CONFIG, SchemaGenError  # noqa: F401  (CONFIG: every generator setting, spelled out)
+from pgi.schemagen import generate as _generate
 
 DOMAIN = Path(__file__).resolve().parents[1]
 STUB = DOMAIN / "schema" / "stub.cedarschema"
@@ -22,28 +22,13 @@ MANIFESTS = DOMAIN / "manifests"
 # Target name -> pinned manifests whose tools are passed to the generator together, in this order.
 TARGETS = {"wo": ["wo"], "iot": ["iot"], "wo_iot": ["wo", "iot"]}
 
-# Every setting the Python binding accepts, spelled out. These are the generator defaults;
-# AWS AgentCore's settings are unknown (see docs/decisions.md).
-CONFIG = {
-    "includeOutputs": False,
-    "objectsAsRecords": False,
-    "eraseAnnotations": True,
-    "flattenNamespaces": False,
-    "numbersAsDecimal": False,
-    "deduplicateEntityTypes": False,
-}
-
 
 def generate(target: str) -> str:
-    """The generated .cedarschema text for one target (one or more pinned manifests' tools, concatenated)."""
-    tools = []
-    for server in TARGETS[target]:
-        tools += json.loads((MANIFESTS / f"{server}.tools.json").read_text())["tools"]
-    names = [t["name"] for t in tools]
-    if len(names) != len(set(names)):
-        raise SystemExit(f"{target}: tool names collide across servers: {sorted({n for n in names if names.count(n) > 1})}")
-    result = generate_schema_or_raise(STUB.read_text(), json.dumps({"result": {"tools": tools}}), config=CONFIG)
-    return result["schema"]
+    """The generated .cedarschema text for one target (pgi.schemagen.generate over its pinned manifests)."""
+    try:
+        return _generate(STUB, [MANIFESTS / f"{s}.tools.json" for s in TARGETS[target]])
+    except SchemaGenError as e:
+        raise SystemExit(f"{target}: {e}")
 
 
 def main(out: Path, targets: list[str]) -> None:

@@ -4,6 +4,8 @@
     uv run python -m pgi.runs.clean --replay runs/<id>          # cache only, zero API calls, new folder
     uv run python -m pgi.runs.clean --replay runs/<old> --inputs-from-git <commit>   # runs before snapshots
     uv run python -m pgi.runs.clean --model M --n N --cache-only --label L   # current inputs, cache only
+    uv run python -m pgi.runs.clean --model M --n N --scenarios S --mutation NAME \
+        [--compare-to runs/<clean>] [--fisher CASE ...]     # probe/attack: generators see mutated manifests
 
 Layout: runs/<id>/config.json, summary.json, summary.md, inputs/<scenario>/ (snapshot of every input a
 score depends on; generation and scoring read only from it), and per scenario/generator/sample:
@@ -35,8 +37,11 @@ from pgi.generators import critic, naive
 from pgi.generators.inputs import ScenarioInputs, load_scenario_inputs
 from pgi.llm.cache import CachedLLM, Completion
 from pgi.llm.pricing import cost
+from pgi.mutators import load_mutations, mutate
 from pgi.oracle.causes import causes
 from pgi.oracle.enumeration import allowed, load_universe
+from pgi.runs.compare import compare
+from pgi.runs.compare import markdown as compare_markdown
 from pgi.runs.judge import same_behaviour, score
 from pgi.runs.snapshot import load_snapshot, snapshot, snapshot_from_git
 
@@ -130,11 +135,12 @@ def cause_tags(policy: Path, inp: ScenarioInputs, oracle: dict) -> dict | None:
 
 
 def default_reliance_rows(policy: Path, inp: ScenarioInputs, oracle: dict) -> list[dict] | None:
-    """Default-reliance rows for a valid sample (pgi.analysis.defaults); None for an invalid one."""
+    """Default-reliance rows for a valid sample (pgi.analysis.defaults), against the defaults the server
+    applies (the pinned manifests when the generator saw mutated ones); None for an invalid one."""
     if not oracle["valid"]:
         return None
     return default_reliance(policy, load_universe(inp.universe), inp.schema_path,
-                            dict(zip(inp.servers, inp.manifest_paths)))
+                            inp.defaults_manifests)
 
 
 def run_naive(llm: CachedLLM, inp: ScenarioInputs, cfg: naive.NaiveConfig, i: int, d: Path) -> dict:
@@ -398,6 +404,9 @@ def main() -> None:
                    help="with --replay, for a run without inputs/: rebuild them from git, checked against its hashes")
     p.add_argument("--cache-only", action="store_true",
                    help="current repo inputs, but every LLM call must hit the cache (re-score with new references)")
+    p.add_argument("--mutation", help="a named mutation from <domain>/mutations.yaml (pgi.mutators)")
+    p.add_argument("--compare-to", type=Path, metavar="RUN_DIR", help="clean run to compare with (pgi.runs.compare)")
+    p.add_argument("--fisher", nargs="*", default=[], help="cases for the one-sided Fisher test in the comparison")
     p.add_argument("--cache", type=Path, default=ROOT / "cache/llm")
     args = p.parse_args()
     src = None
@@ -412,20 +421,37 @@ def main() -> None:
         p.error("--model and --n are required unless --replay is given")
     elif args.inputs_from_git:
         p.error("--inputs-from-git needs --replay")
+    mutation = None
+    if args.mutation:
+        if args.replay:
+            p.error("--replay takes the (possibly mutated) inputs from the source run; drop --mutation")
+        domains = {Path(s).resolve().parents[1] for s in args.scenarios}
+        if len(domains) != 1:
+            p.error("--mutation needs scenarios from one domain")
+        mutation = load_mutations(domains.pop() / "mutations.yaml")[args.mutation]
+    kind = (f"{mutation.kind}-{mutation.name}" if mutation
+            else (src.get("kind", "clean") if src else "clean"))
 
     from pgi.llm.anthropic_provider import AnthropicProvider
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    run_id = "-".join(x for x in (stamp, "clean", args.label) if x)
+    run_id = "-".join(x for x in (stamp, kind, args.label) if x)
     with atomic_run_dir(ROOT / "runs", run_id) as out:
         offline = bool(args.replay or args.cache_only)
         llm = CachedLLM(_NoProvider() if offline else AnthropicProvider(), args.cache, allow_api=not offline)
         ncfg = naive.NaiveConfig(args.model, include_descriptions=not args.no_descriptions)
         scfg = critic.SonderaConfig(args.model, include_descriptions=not args.no_descriptions,
                                     judge_sees_manifests=args.judge_sees_manifests)
-        inputs = _inputs(args, src, out / "inputs")
-        config = {"run_id": run_id, "created": stamp, "model": args.model, "n": args.n,
+        records: list[dict] = []
+        if mutation:
+            pairs = [mutate(mutation, load_scenario_inputs(s), out / "inputs" / Path(s).name) for s in args.scenarios]
+            inputs, records = [i for i, _ in pairs], [r for _, r in pairs]
+        else:
+            inputs = _inputs(args, src, out / "inputs")
+        config = {"run_id": run_id, "created": stamp, "kind": kind, "model": args.model, "n": args.n,
                   "replay": bool(args.replay), "replay_of": args.replay.name if args.replay else None,
                   "cache_only": offline,
+                  "mutation": ({**mutation.as_dict(), "per_scenario": records} if mutation
+                               else (src.get("mutation") if src else None)),
                   "inputs": "inputs/<scenario>/ (snapshot; generation and scoring read only from it)"
                             + (f"; rebuilt from git {args.inputs_from_git}" if args.inputs_from_git else ""),
                   "generators": {"naive": ncfg.as_dict(), "sondera": scfg.as_dict()},
@@ -467,6 +493,11 @@ def main() -> None:
         summary = {k: summarize(args.model, results[k], *cases[k.split("/")[0]]) for k in sorted(results)}
         _dump(out / "summary.json", summary)
         (out / "summary.md").write_text(markdown(config, summary))
+        if args.compare_to:
+            res = compare(args.compare_to, out, args.fisher)
+            _dump(out / "comparison.json", {"clean": args.compare_to.name, "mutated": run_id,
+                                            "fisher_cases": args.fisher, "result": res})
+            (out / "comparison.md").write_text(compare_markdown(res, args.compare_to.name, run_id))
     print(f"\nwrote {ROOT / 'runs' / run_id}\napi calls this run: {llm.api_calls}")
 
 

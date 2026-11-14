@@ -8,6 +8,7 @@ Layout of runs/<id>/inputs/<scenario>/ (domain-agnostic):
     schema/<schema file>
     manifests/<server>.tools.json
     schema_parts/<role>/<file>   optional: the files the linked schema was built from (provenance only)
+    pinned_manifests/<server>.tools.json   only for mutated inputs: the pinned manifests (scoring only)
 
 `load_snapshot` re-hashes every file and raises SnapshotError on any mismatch, so a snapshot that has
 been edited can never be scored silently. `snapshot_from_git` rebuilds the same layout for a run that
@@ -33,17 +34,21 @@ class SnapshotError(Exception):
     """A snapshot is missing a file or a file's hash differs from the one recorded."""
 
 
-def _layout(schema_name: str, servers: list[str], parts: dict[str, list[str]] | None = None) -> dict[str, str]:
+def _layout(schema_name: str, servers: list[str], parts: dict[str, list[str]] | None = None,
+            pinned: bool = False) -> dict[str, str]:
     """Hash key -> path relative to the snapshot folder (keys match ScenarioInputs.hashes)."""
     return {**SCENARIO_FILES, "schema": f"schema/{schema_name}",
             **{f"manifest:{s}": f"manifests/{s}.tools.json" for s in servers},
-            **{f"schema_part:{r}:{n}": f"schema_parts/{r}/{n}" for r, ns in (parts or {}).items() for n in ns}}
+            **{f"schema_part:{r}:{n}": f"schema_parts/{r}/{n}" for r, ns in (parts or {}).items() for n in ns},
+            **({f"pinned_manifest:{s}": f"pinned_manifests/{s}.tools.json" for s in servers} if pinned else {})}
 
 
 def _write_index(dest: Path, name: str, schema_name: str, servers: list[str], hashes: dict[str, str],
-                 parts: dict[str, list[str]] | None = None, note: str | None = None) -> None:
+                 parts: dict[str, list[str]] | None = None, note: str | None = None, pinned: bool = False) -> None:
     index = {"name": name, "schema": f"schema/{schema_name}", "servers": servers, "sha256": hashes,
              "schema_parts": parts or {}}
+    if pinned:
+        index["pinned_manifests"] = True
     if note:
         index["note"] = note
     (dest / "inputs.json").write_text(json.dumps(index, indent=2, sort_keys=True) + "\n")
@@ -54,16 +59,18 @@ def snapshot(inputs: ScenarioInputs, dest: Path) -> ScenarioInputs:
     dest = Path(dest)
     dest.mkdir(parents=True, exist_ok=False)
     parts = {r: [p.name for p in ps] for r, ps in inputs.schema_parts.items()}
+    pinned = bool(inputs.pinned_manifest_paths)
     sources = {**{k: inputs.folder / f for k, f in SCENARIO_FILES.items()}, "schema": inputs.schema_path,
                **{f"manifest:{s}": p for s, p in zip(inputs.servers, inputs.manifest_paths)},
-               **{f"schema_part:{r}:{p.name}": p for r, ps in inputs.schema_parts.items() for p in ps}}
-    layout = _layout(inputs.schema_path.name, list(inputs.servers), parts)
+               **{f"schema_part:{r}:{p.name}": p for r, ps in inputs.schema_parts.items() for p in ps},
+               **{f"pinned_manifest:{s}": p for s, p in zip(inputs.servers, inputs.pinned_manifest_paths)}}
+    layout = _layout(inputs.schema_path.name, list(inputs.servers), parts, pinned)
     if set(sources) != set(inputs.hashes):
         raise SnapshotError(f"inputs hash keys {sorted(inputs.hashes)} != snapshot files {sorted(sources)}")
     for key, rel in layout.items():
         (dest / rel).parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(sources[key], dest / rel)
-    _write_index(dest, inputs.name, inputs.schema_path.name, list(inputs.servers), inputs.hashes, parts)
+    _write_index(dest, inputs.name, inputs.schema_path.name, list(inputs.servers), inputs.hashes, parts, pinned=pinned)
     snap = load_snapshot(dest)
     if snap.hashes != inputs.hashes:
         raise SnapshotError(f"{dest}: copied files do not hash like their sources")
@@ -79,7 +86,8 @@ def load_snapshot(folder: Path) -> ScenarioInputs:
     index = json.loads(index_path.read_text())
     servers = list(index["servers"])
     parts = index.get("schema_parts") or {}
-    layout = _layout(Path(index["schema"]).name, servers, parts)
+    pinned = bool(index.get("pinned_manifests"))
+    layout = _layout(Path(index["schema"]).name, servers, parts, pinned)
     if set(layout) != set(index["sha256"]):
         raise SnapshotError(f"{folder}: inputs.json lists {sorted(index['sha256'])}, expected {sorted(layout)}")
     hashes = {}
@@ -94,7 +102,8 @@ def load_snapshot(folder: Path) -> ScenarioInputs:
     return ScenarioInputs(index["name"], folder, schema, schema.read_text(), tuple(servers),
                           tuple(folder / layout[f"manifest:{s}"] for s in servers),
                           (folder / "intent.md").read_text(), hashes,
-                          {r: tuple(folder / layout[f"schema_part:{r}:{n}"] for n in ns) for r, ns in parts.items()})
+                          {r: tuple(folder / layout[f"schema_part:{r}:{n}"] for n in ns) for r, ns in parts.items()},
+                          tuple(folder / layout[f"pinned_manifest:{s}"] for s in servers) if pinned else ())
 
 
 def _git_show(repo: Path, commit: str, path: str) -> bytes:

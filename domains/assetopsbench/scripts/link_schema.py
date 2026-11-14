@@ -12,56 +12,26 @@ only once per file, and an action's context cannot be extended from another decl
    Fail if the action is missing, its context is not an inline record, or the attribute exists.
 4. Merge the namespaces (so trusted entity types, e.g. enums, are carried over) and translate back.
 
-The generated file is only read. With --check, compare against OUT instead of writing it.
+The logic lives in pgi.schemagen.link. The generated file is only read. With --check, compare
+against OUT instead of writing it.
 """
 
 from __future__ import annotations
 
 import argparse
-import json
-import subprocess
 import sys
-import tempfile
 from pathlib import Path
 
-
-def cedar(*args: str) -> str:
-    """Run the cedar CLI and return stdout; exit loudly on failure."""
-    proc = subprocess.run(["cedar", *args], capture_output=True, text=True)
-    if proc.returncode != 0:
-        sys.exit(f"cedar {' '.join(args)} failed:\n{proc.stdout}{proc.stderr}")
-    return proc.stdout
-
-
-def to_json(path: Path) -> dict:
-    """A Cedar-syntax schema file as Cedar's JSON schema form."""
-    return json.loads(cedar("translate-schema", "--direction", "cedar-to-json", "--schema", str(path)))
+from pgi.schemagen import SchemaGenError
+from pgi.schemagen import link as _link
 
 
 def link(generated: Path, trusted: Path) -> str:
-    """The final schema text: generated + trusted types + annotated context attributes."""
-    gen, tr = to_json(generated), to_json(trusted)
-    if shared := set(gen) & set(tr):
-        sys.exit(f"trusted file reuses generated namespace(s) {sorted(shared)}")
-    for ns, body in tr.items():
-        for name, ty in body.get("commonTypes", {}).items():
-            ann = ty.get("annotations", {})
-            if "pgi_action" not in ann:
-                continue
-            target_ns, _, action = ann["pgi_action"].rpartition("::")
-            attr = ann["pgi_context_attribute"]
-            decl = gen.get(target_ns, {}).get("actions", {}).get(action)
-            if decl is None:
-                sys.exit(f"{ns}::{name}: action {ann['pgi_action']!r} not in {generated}")
-            ctx = decl.get("appliesTo", {}).get("context")
-            if not ctx or ctx.get("type") != "Record":
-                sys.exit(f"{ns}::{name}: context of {ann['pgi_action']} is not an inline record: {ctx}")
-            if attr in ctx["attributes"]:
-                sys.exit(f"{ns}::{name}: {ann['pgi_action']} context already has {attr!r}")
-            ctx["attributes"][attr] = {"type": f"{ns}::{name}", "required": False}
-    with tempfile.NamedTemporaryFile("w", suffix=".cedarschema.json", delete=False) as f:
-        json.dump({**gen, **tr}, f)
-    return cedar("translate-schema", "--direction", "json-to-cedar", "--schema", f.name)
+    """The final schema text (pgi.schemagen.link); exit loudly on failure."""
+    try:
+        return _link(generated, trusted)
+    except SchemaGenError as e:
+        sys.exit(str(e))
 
 
 def main() -> None:

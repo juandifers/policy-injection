@@ -404,3 +404,25 @@ Why: run folders recorded the schema **path** and hash, but `7e0efc8` changed th
   - the critic record, copied.
   - The source run is only read (test: tree hash unchanged).
 - **`--cache-only`** for `pgi.runs.clean`: current inputs, any cache miss fails. Kept for regeneration checks; not usable for Sondera-style runs that reach round 2 while the hint is nondeterministic.
+
+## 2026-11-14: Mutators, schemagen module, probe runs, Fisher test
+
+- **`pgi.schemagen`:** `generate(stub, manifests)` and `link(generated, trusted)` are moved out of the domain scripts and are domain-agnostic. `gen_schema.py` and `link_schema.py` are now thin wrappers. Both reproduce the pinned `*.generated.cedarschema` (hashes unchanged) and the linked final schemas byte-for-byte (`tests/test_schemagen.py`, `tests/test_pins.py`).
+- **`pgi.mutators`:** a `Mutation` is a named edit of one server's manifest, with a kind (probe or attack) and a declared `structural` flag. Named instances live in `<domain>/mutations.yaml`. The first op is `strip_default`.
+- **`mutate(mutation, inputs, dest)`:**
+  - snapshots the clean inputs into the run folder;
+  - writes the edited manifest there, in the pin's own JSON formatting, so the bytes differ only at the edit;
+  - keeps the pinned manifests in `pinned_manifests/`;
+  - regenerates the schema from the mutated manifests with the scenario's `schema_build.stub` (new key in `scenario.yaml`, s01–s03);
+  - non-structural: the regenerated generated schema and its link must be byte-identical to the pinned ones, else `MutationError`;
+  - structural: the regenerated schemas replace the pinned ones in the run folder;
+  - writes `mutation.json`: changed JSON paths, pinned and mutated hashes, schema hashes, stub hash, generator config.
+  - Pinned files are never touched (test: every pinned manifest and schema hash unchanged).
+- **Scoring after a mutation still uses the pinned truth.** `ScenarioInputs.pinned_manifest_paths` is scoring-only and never shown to a generator. The default-reliance detector reads defaults from it, because the server still applies the pinned default. Provenance reads the manifests the generator saw.
+- **Runner:**
+  - `pgi.runs.clean --mutation NAME [--compare-to RUN --fisher CASE…]` writes `runs/<stamp>-<kind>-<name>[-label]/`, and its config records the mutation.
+  - `pgi.runs.compare`: per-case k/n in both runs; a one-sided Fisher test per named case; detector counts; final-policy comment lines matching `\bdefault` (case-insensitive). It refuses runs scored against different reference or universe hashes.
+- **`pgi.analysis.stats.fisher_less`:** exact hypergeometric tail P(X ≤ k₂), using `fractions` and `math.comb` (no new dependency). Tested against the tea-tasting 17/70 and the dieting table 3731/2704156.
+- **Probe "strip-default-open_only":** removes `default: true` from `get_my_assigned_workorders.open_only` in the wo manifest, and nothing else. The schema comes out identical, so only the manifest text the generator reads changes.
+- **Cost estimate** (from the baseline's recorded s02 usage, Sonnet 5.5 prices): naive $0.68, plus Sondera-style rounds 2+ $0.47, plus judges $0.34, ≈ **$1.49**. Round 1 is the naive request (a cache hit). Worst case, with every sample using 3 rounds: ≈ $2.0. That is under the $3 gate, so the run went ahead.
+- **Comparison baseline:** `runs/20261114T112912Z-rescore-baseline-ref2`, the same policies as the N=20 clean run, scored against the current s02 reference. The sample indices are the same (0–19). Sampling is not sent, so index pairs are not matched draws, and the Fisher test treats the runs as independent groups.
