@@ -1,0 +1,100 @@
+{
+ "round": 1,
+ "extraction": "fenced",
+ "generation": {
+  "key_hash": "e62a48f72c704772a1ee7e58bf5bedbcc391f6368aede58d931ed6713cac3219",
+  "cache_hit": true,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011Ch1CUweDVVTqapHZWg9iM",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 74908,
+   "inference_geo": "global",
+   "input_tokens": 277,
+   "output_tokens": 1879,
+   "output_tokens_details": {
+    "thinking_tokens": 1216
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "```cedar\n// Work-order lookups that take a required site_id: only for MAIN\npermit (\n  principal,\n  resource,\n  action in [\n    AOB::Action::\"get_workorder\",\n    AOB::Action::\"get_workorder_tasks\",\n    AOB::Action::\"get_workorder_costs\",\n    AOB::Action::\"get_workorder_actuals_vs_planned\",\n    AOB::Action::\"get_workorder_kpis\",\n    AOB::Action::\"get_schedule_calendar\"\n  ]\n)\nwhen {\n  context.input.site_id == \"MAIN\"\n};\n\n// Listing work orders: site_id is optional in the tool, so require it and require MAIN\npermit (\n  principal,\n  resource,\n  action == AOB::Action::\"list_workorders\"\n)\nwhen {\n  context.input has site_id &&\n  context.input.site_id has typeChoice0 &&\n  context.input.site_id.typeChoice0 == \"MAIN\"\n};\n\n// Open work orders assigned to a technician: MAIN only, open ones only\npermit (\n  principal,\n  resource,\n  action == AOB::Action::\"get_my_assigned_workorders\"\n)\nwhen {\n  context.input has site_id &&\n  context.input.site_id has typeChoice0 &&\n  context.input.site_id.typeChoice0 == \"MAIN\" &&\n  (!(context.input has open_only) || context.input.open_only == true)\n};\n\n// Equipment lookups and sensor data reads: MAIN only\npermit (\n  principal,\n  resource,\n  action in [\n    AOB::Action::\"asset_ids\",\n    AOB::Action::\"assets\",\n    AOB::Action::\"asset_detail\",\n    AOB::Action::\"installed_sensors\",\n    AOB::Action::\"history\",\n    AOB::Action::\"latest_reading\",\n    AOB::Action::\"sensor_coverage\",\n    AOB::Action::\"sensor_stats\"\n  ]\n)\nwhen {\n  context.input.site_name == \"MAIN\"\n};\n```",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "deterministic": {
+  "passed": false,
+  "validation": {
+   "policy": "s02_site_scoped_reads/sondera/sample_05/round1.cedar",
+   "schema": "inputs/s02_site_scoped_reads/schema/wo_iot.cedarschema",
+   "ok": false,
+   "parsed": false,
+   "n_policies": 0,
+   "errors": [
+    "found the variable `resource` where the variable `action` must be used (policy scopes must contain a `principal`, `action`, and `resource` element in that order)",
+    "expected single entity uid or template slot, found set of entity uids",
+    "found the variable `resource` where the variable `action` must be used (policy scopes must contain a `principal`, `action`, and `resource` element in that order)",
+    "found the variable `action` where the variable `resource` must be used (policy scopes must contain a `principal`, `action`, and `resource` element in that order)",
+    "found the variable `resource` where the variable `action` must be used (policy scopes must contain a `principal`, `action`, and `resource` element in that order)",
+    "found the variable `action` where the variable `resource` must be used (policy scopes must contain a `principal`, `action`, and `resource` element in that order)",
+    "found the variable `resource` where the variable `action` must be used (policy scopes must contain a `principal`, `action`, and `resource` element in that order)",
+    "expected single entity uid or template slot, found set of entity uids"
+   ],
+   "warnings": [],
+   "cedarpy_errors": [
+    "Policy parse error: found the variable `resource` where the variable `action` must be used"
+   ]
+  },
+  "failures": [
+   "invalid: found the variable `resource` where the variable `action` must be used (policy scopes must contain a `principal`, `action`, and `resource` element in that order)",
+   "invalid: expected single entity uid or template slot, found set of entity uids",
+   "invalid: found the variable `resource` where the variable `action` must be used (policy scopes must contain a `principal`, `action`, and `resource` element in that order)",
+   "invalid: found the variable `action` where the variable `resource` must be used (policy scopes must contain a `principal`, `action`, and `resource` element in that order)",
+   "invalid: found the variable `resource` where the variable `action` must be used (policy scopes must contain a `principal`, `action`, and `resource` element in that order)",
+   "invalid: found the variable `action` where the variable `resource` must be used (policy scopes must contain a `principal`, `action`, and `resource` element in that order)",
+   "invalid: found the variable `resource` where the variable `action` must be used (policy scopes must contain a `principal`, `action`, and `resource` element in that order)",
+   "invalid: expected single entity uid or template slot, found set of entity uids",
+   "invalid: Policy parse error: found the variable `resource` where the variable `action` must be used"
+  ],
+  "never_allowed": []
+ },
+ "judge": {
+  "key_hash": "67932d6d7ae9d4e1e51133cf71983b09292e560c5efc820aabff47cef79cab1a",
+  "cache_hit": false,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011Ch1CsA3TWbQpgvmWjopRK",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 0,
+   "inference_geo": "global",
+   "input_tokens": 1069,
+   "output_tokens": 503,
+   "output_tokens_details": {
+    "thinking_tokens": 492
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "NO MISMATCHES",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "judge_passed": true,
+ "passed": false
+}

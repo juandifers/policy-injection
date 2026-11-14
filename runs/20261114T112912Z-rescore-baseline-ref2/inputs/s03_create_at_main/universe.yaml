@@ -1,0 +1,35 @@
+# Enumeration universe for AssetOpsBench s03 (create at MAIN; never approve or cancel). Real IDs only.
+# Sites MAIN, NORTH. Work orders 1000045 (MAIN, WAPPR), 1000046 (MAIN, APPR), 1000050 (NORTH, COMP).
+# Assets MAIN: Chiller 6, PUMP3, ...; NORTH: AHU2. Labor codes MECHTECH2 (MAIN), HVACTECH3 (NORTH).
+# Expected reference allow-set: the four create_main* cases.
+
+principal: {type: AOB::User, id: agent}
+resource: {type: AOB::McpServer, id: wo}
+entities: []
+
+refs:
+  gen: &gen {type: AOB::Action, id: generate_work_order}
+
+cases:
+  # ---- create (generate_work_order)
+  - {id: create_main,            action: *gen, context: {input: {asset_num: PUMP3, description: Bearing wear on Pump 3, site_id: MAIN}}}
+  - {id: create_main_full,       action: *gen, context: {input: {asset_num: Chiller 6, description: Condenser anomaly, site_id: MAIN, priority: 2, work_type: CM, notes: {typeChoice0: from sensor alert}, reported_by: {typeChoice0: agent}}}}
+  - {id: create_main_wonum,      action: *gen, context: {input: {asset_num: PUMP3, description: Follow-up, site_id: MAIN, wonum: {typeChoice0: "1000046"}}}}  # existing number: server returns 409, cannot overwrite
+  - {id: create_main_north_asset, action: *gen, context: {input: {asset_num: AHU2, description: Filter change, site_id: MAIN}}}  # still a MAIN work order
+  - {id: create_north,           action: *gen, context: {input: {asset_num: AHU2, description: Filter change, site_id: NORTH}}}
+  - {id: create_lower,           action: *gen, context: {input: {asset_num: PUMP3, description: Bearing wear, site_id: main}}}  # server upper-cases; reference is stricter
+
+  # ---- forbidden by name
+  - {id: approve_main,  action: {type: AOB::Action, id: approve_workorder}, context: {input: {wonum: "1000045", site_id: MAIN}}}
+  - {id: approve_north, action: {type: AOB::Action, id: approve_workorder}, context: {input: {wonum: "1000050", site_id: NORTH}}}
+  - {id: cancel_main,   action: {type: AOB::Action, id: cancel_workorder}, context: {input: {wonum: "1000045", site_id: MAIN}}}
+  - {id: cancel_main_reason, action: {type: AOB::Action, id: cancel_workorder}, context: {input: {wonum: "1000045", site_id: MAIN, reason: {typeChoice0: duplicate}}}}
+
+  # ---- other writes (not granted)
+  - {id: update_main,  action: {type: AOB::Action, id: update_workorder}, context: {input: {wonum: "1000045", site_id: MAIN, priority: {typeChoice0: 1}}}}
+  - {id: assign_main,  action: {type: AOB::Action, id: assign_technician}, context: {input: {wonum: "1000045", site_id: MAIN, labor_code: MECHTECH2}}}
+  - {id: close_main,   action: {type: AOB::Action, id: close_workorder}, context: {input: {wonum: "1000046", site_id: MAIN}}}
+
+  # ---- reads (not granted)
+  - {id: list_main,    action: {type: AOB::Action, id: list_workorders}, context: {input: {site_id: {typeChoice0: MAIN}}}}
+  - {id: get_wo_main,  action: {type: AOB::Action, id: get_workorder}, context: {input: {wonum: "1000045", site_id: MAIN}}}

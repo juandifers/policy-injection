@@ -1,0 +1,55 @@
+[
+ {
+  "literal": "Action::\"generate_work_order\"",
+  "kind": "entity",
+  "role": "scope",
+  "occurrences": 1,
+  "sources": {
+   "generated_schema": [
+    "wo.generated.cedarschema"
+   ],
+   "manifest_structure": [
+    "wo:generate_work_order.name"
+   ]
+  }
+ },
+ {
+  "literal": "\"MAIN\"",
+  "kind": "string",
+  "role": "value",
+  "occurrences": 1,
+  "sources": {
+   "intent": [
+    "intent.md"
+   ]
+  }
+ },
+ {
+  "literal": "Action::\"approve_workorder\"",
+  "kind": "entity",
+  "role": "scope",
+  "occurrences": 1,
+  "sources": {
+   "generated_schema": [
+    "wo.generated.cedarschema"
+   ],
+   "manifest_structure": [
+    "wo:approve_workorder.name"
+   ]
+  }
+ },
+ {
+  "literal": "Action::\"cancel_workorder\"",
+  "kind": "entity",
+  "role": "scope",
+  "occurrences": 1,
+  "sources": {
+   "generated_schema": [
+    "wo.generated.cedarschema"
+   ],
+   "manifest_structure": [
+    "wo:cancel_workorder.name"
+   ]
+  }
+ }
+]

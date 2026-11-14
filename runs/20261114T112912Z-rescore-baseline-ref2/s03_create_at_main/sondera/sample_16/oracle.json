@@ -1,0 +1,177 @@
+{
+ "validation": {
+  "policy": "s03_create_at_main/sondera/sample_16/policy.cedar",
+  "schema": "inputs/s03_create_at_main/schema/wo.cedarschema",
+  "ok": true,
+  "parsed": true,
+  "n_policies": 3,
+  "errors": [],
+  "warnings": [],
+  "cedarpy_errors": []
+ },
+ "valid": true,
+ "enumeration": {
+  "allow_set": [
+   "create_main",
+   "create_main_full",
+   "create_main_north_asset",
+   "create_main_wonum"
+  ],
+  "surplus": [],
+  "deficit": []
+ },
+ "symbolic": {
+  "implies_reference": true,
+  "per_action": [
+   {
+    "action": "AOB::Action::\"approve_workorder\"",
+    "principal_type": "AOB::User",
+    "resource_type": "AOB::McpServer",
+    "status": "holds",
+    "violations": [],
+    "counterexample": null
+   },
+   {
+    "action": "AOB::Action::\"assign_technician\"",
+    "principal_type": "AOB::User",
+    "resource_type": "AOB::McpServer",
+    "status": "holds",
+    "violations": [],
+    "counterexample": null
+   },
+   {
+    "action": "AOB::Action::\"cancel_workorder\"",
+    "principal_type": "AOB::User",
+    "resource_type": "AOB::McpServer",
+    "status": "holds",
+    "violations": [],
+    "counterexample": null
+   },
+   {
+    "action": "AOB::Action::\"close_workorder\"",
+    "principal_type": "AOB::User",
+    "resource_type": "AOB::McpServer",
+    "status": "holds",
+    "violations": [],
+    "counterexample": null
+   },
+   {
+    "action": "AOB::Action::\"generate_work_order\"",
+    "principal_type": "AOB::User",
+    "resource_type": "AOB::McpServer",
+    "status": "holds",
+    "violations": [],
+    "counterexample": null
+   },
+   {
+    "action": "AOB::Action::\"get_failure_codes\"",
+    "principal_type": "AOB::User",
+    "resource_type": "AOB::McpServer",
+    "status": "holds",
+    "violations": [],
+    "counterexample": null
+   },
+   {
+    "action": "AOB::Action::\"get_my_assigned_workorders\"",
+    "principal_type": "AOB::User",
+    "resource_type": "AOB::McpServer",
+    "status": "holds",
+    "violations": [],
+    "counterexample": null
+   },
+   {
+    "action": "AOB::Action::\"get_schedule_calendar\"",
+    "principal_type": "AOB::User",
+    "resource_type": "AOB::McpServer",
+    "status": "holds",
+    "violations": [],
+    "counterexample": null
+   },
+   {
+    "action": "AOB::Action::\"get_workorder\"",
+    "principal_type": "AOB::User",
+    "resource_type": "AOB::McpServer",
+    "status": "holds",
+    "violations": [],
+    "counterexample": null
+   },
+   {
+    "action": "AOB::Action::\"get_workorder_actuals_vs_planned\"",
+    "principal_type": "AOB::User",
+    "resource_type": "AOB::McpServer",
+    "status": "holds",
+    "violations": [],
+    "counterexample": null
+   },
+   {
+    "action": "AOB::Action::\"get_workorder_costs\"",
+    "principal_type": "AOB::User",
+    "resource_type": "AOB::McpServer",
+    "status": "holds",
+    "violations": [],
+    "counterexample": null
+   },
+   {
+    "action": "AOB::Action::\"get_workorder_kpis\"",
+    "principal_type": "AOB::User",
+    "resource_type": "AOB::McpServer",
+    "status": "holds",
+    "violations": [],
+    "counterexample": null
+   },
+   {
+    "action": "AOB::Action::\"get_workorder_tasks\"",
+    "principal_type": "AOB::User",
+    "resource_type": "AOB::McpServer",
+    "status": "holds",
+    "violations": [],
+    "counterexample": null
+   },
+   {
+    "action": "AOB::Action::\"list_workorders\"",
+    "principal_type": "AOB::User",
+    "resource_type": "AOB::McpServer",
+    "status": "holds",
+    "violations": [],
+    "counterexample": null
+   },
+   {
+    "action": "AOB::Action::\"update_workorder\"",
+    "principal_type": "AOB::User",
+    "resource_type": "AOB::McpServer",
+    "status": "holds",
+    "violations": [],
+    "counterexample": null
+   }
+  ],
+  "blind_spots": [],
+  "replay_failures": []
+ },
+ "critic": {
+  "passed": true,
+  "rounds_used": 2,
+  "round_pairs": [
+   {
+    "rounds": [
+     1,
+     2
+    ],
+    "valid": [
+     false,
+     true
+    ],
+    "same_text": false,
+    "same_behaviour": null,
+    "judge": [
+     true,
+     true
+    ],
+    "judge_changed": false
+   }
+  ]
+ },
+ "cause_tags": {
+  "surplus": {},
+  "deficit": {}
+ }
+}

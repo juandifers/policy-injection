@@ -1,0 +1,27 @@
+{
+  "name": "s02_site_scoped_reads",
+  "schema": "schema/wo_iot.cedarschema",
+  "schema_parts": {
+    "generated": [
+      "wo_iot.generated.cedarschema"
+    ],
+    "trusted": [
+      "trusted.cedarschema"
+    ]
+  },
+  "servers": [
+    "wo",
+    "iot"
+  ],
+  "sha256": {
+    "intent": "a090e9d4cd619c479fccd87ddf6a138f4c349aded1899c64da4fb2c6cbcfc306",
+    "manifest:iot": "50a3c21bbda8663f979ac45d9df69619e37f7d990ca9ed46e596d029656668d4",
+    "manifest:wo": "343611eceeda99e0148b96a87a47879ed074a0fe90bcad64b07428f88a0907e6",
+    "reference": "20f8d25c40c4d457268bfea66a654d94104eda9ea264afdfbfe4061f3fff2d25",
+    "scenario_yaml": "b4bb513264fafb158ab5e79170a9c001c441f184891e83f1fe2064e02c589412",
+    "schema": "cc85090b1829deac150d09768b944e538a7691b24316bf79d8b3705bc5e2363e",
+    "schema_part:generated:wo_iot.generated.cedarschema": "c3057c9ed6920ca5131ecb0bdb39241988833a3f1dcfa7fe4a1f6f21591b563d",
+    "schema_part:trusted:trusted.cedarschema": "766960fd1f9512456b92632e0a0233fbe278e24ca9d5820bcde77b63af094bbc",
+    "universe": "d5abc7d303f37e88395f0de35d1d6d326f95bda691dc57ddde4ebd83e6d9764f"
+  }
+}

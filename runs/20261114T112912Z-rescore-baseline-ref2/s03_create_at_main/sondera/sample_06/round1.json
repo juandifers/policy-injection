@@ -1,0 +1,112 @@
+{
+ "round": 1,
+ "extraction": "fenced",
+ "generation": {
+  "key_hash": "baae7a0a3f125c7d0ab7040b17a5a11301ab1924ef3c11a5a1607e2d046c7a7f",
+  "cache_hit": true,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011Ch1CRuiYXJxcdDPXUFHhT",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 58853,
+   "inference_geo": "global",
+   "input_tokens": 174,
+   "output_tokens": 171,
+   "output_tokens_details": {
+    "thinking_tokens": 0
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "```cedar\n@id(\"allow-generate-work-order-main-only\")\npermit (\n  principal,\n  action == Action::\"generate_work_order\",\n  resource\n)\nwhen {\n  context.input.site_id == \"MAIN\"\n};\n\n@id(\"forbid-approve-workorder\")\nforbid (\n  principal,\n  action == Action::\"approve_workorder\",\n  resource\n);\n\n@id(\"forbid-cancel-workorder\")\nforbid (\n  principal,\n  action == Action::\"cancel_workorder\",\n  resource\n);\n```",
+  "content_types": [
+   "text"
+  ]
+ },
+ "deterministic": {
+  "passed": false,
+  "validation": {
+   "policy": "s03_create_at_main/sondera/sample_06/round1.cedar",
+   "schema": "inputs/s03_create_at_main/schema/wo.cedarschema",
+   "ok": false,
+   "parsed": true,
+   "n_policies": 3,
+   "errors": [
+    "for policy `allow-generate-work-order-main-only`, unrecognized action `Action::\"generate_work_order\"` (did you mean `AOB::Action::\"generate_work_order\"`?)",
+    "for policy `forbid-approve-workorder`, unrecognized action `Action::\"approve_workorder\"` (did you mean `AOB::Action::\"approve_workorder\"`?)",
+    "for policy `forbid-cancel-workorder`, unrecognized action `Action::\"cancel_workorder\"` (did you mean `AOB::Action::\"cancel_workorder\"`?)"
+   ],
+   "warnings": [
+    "for policy `allow-generate-work-order-main-only`, unable to find an applicable action given the policy scope constraints",
+    "for policy `allow-generate-work-order-main-only`, policy is impossible: the policy expression evaluates to false for all valid requests",
+    "for policy `forbid-approve-workorder`, unable to find an applicable action given the policy scope constraints",
+    "for policy `forbid-approve-workorder`, policy is impossible: the policy expression evaluates to false for all valid requests",
+    "for policy `forbid-cancel-workorder`, unable to find an applicable action given the policy scope constraints",
+    "for policy `forbid-cancel-workorder`, policy is impossible: the policy expression evaluates to false for all valid requests"
+   ],
+   "cedarpy_errors": [
+    "[policy0] for policy `policy0`, unrecognized action `Action::\"generate_work_order\"`",
+    "[policy0] for policy `policy0`, unable to find an applicable action given the policy scope constraints",
+    "[policy1] for policy `policy1`, unrecognized action `Action::\"approve_workorder\"`",
+    "[policy1] for policy `policy1`, unable to find an applicable action given the policy scope constraints",
+    "[policy2] for policy `policy2`, unrecognized action `Action::\"cancel_workorder\"`",
+    "[policy2] for policy `policy2`, unable to find an applicable action given the policy scope constraints"
+   ]
+  },
+  "failures": [
+   "invalid: for policy `allow-generate-work-order-main-only`, unrecognized action `Action::\"generate_work_order\"` (did you mean `AOB::Action::\"generate_work_order\"`?)",
+   "invalid: for policy `forbid-approve-workorder`, unrecognized action `Action::\"approve_workorder\"` (did you mean `AOB::Action::\"approve_workorder\"`?)",
+   "invalid: for policy `forbid-cancel-workorder`, unrecognized action `Action::\"cancel_workorder\"` (did you mean `AOB::Action::\"cancel_workorder\"`?)",
+   "invalid: for policy `allow-generate-work-order-main-only`, unable to find an applicable action given the policy scope constraints",
+   "invalid: for policy `allow-generate-work-order-main-only`, policy is impossible: the policy expression evaluates to false for all valid requests",
+   "invalid: for policy `forbid-approve-workorder`, unable to find an applicable action given the policy scope constraints",
+   "invalid: for policy `forbid-approve-workorder`, policy is impossible: the policy expression evaluates to false for all valid requests",
+   "invalid: for policy `forbid-cancel-workorder`, unable to find an applicable action given the policy scope constraints",
+   "invalid: for policy `forbid-cancel-workorder`, policy is impossible: the policy expression evaluates to false for all valid requests",
+   "invalid: [policy0] for policy `policy0`, unrecognized action `Action::\"generate_work_order\"`",
+   "invalid: [policy0] for policy `policy0`, unable to find an applicable action given the policy scope constraints",
+   "invalid: [policy1] for policy `policy1`, unrecognized action `Action::\"approve_workorder\"`",
+   "invalid: [policy1] for policy `policy1`, unable to find an applicable action given the policy scope constraints",
+   "invalid: [policy2] for policy `policy2`, unrecognized action `Action::\"cancel_workorder\"`",
+   "invalid: [policy2] for policy `policy2`, unable to find an applicable action given the policy scope constraints"
+  ],
+  "never_allowed": []
+ },
+ "judge": {
+  "key_hash": "96a733f23a695148caaf1fba0d4317b71375f38454e2efac64c514403a76027b",
+  "cache_hit": false,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011Ch1CYLxktHAMPHgXBoktg",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 0,
+   "inference_geo": "global",
+   "input_tokens": 474,
+   "output_tokens": 243,
+   "output_tokens_details": {
+    "thinking_tokens": 232
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "NO MISMATCHES",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "judge_passed": true,
+ "passed": false
+}

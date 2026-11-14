@@ -1,0 +1,103 @@
+{
+ "round": 1,
+ "extraction": "fenced",
+ "generation": {
+  "key_hash": "3d0d3bbe368d3c174cdff49eb0e002b492a65e8113ba1325cd0373bd88076469",
+  "cache_hit": true,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011Ch1CUiYvLho3b273TX1kB",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 58853,
+   "inference_geo": "global",
+   "input_tokens": 233,
+   "output_tokens": 794,
+   "output_tokens_details": {
+    "thinking_tokens": 488
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "```cedar\n// Close a work order only at MAIN, and only with a granted approval that\n// is for the same work order, at MAIN, and from someone other than the agent.\npermit (\n  principal,\n  action == Action::\"close_workorder\",\n  resource\n)\nwhen {\n  context.input.site_id == \"MAIN\" &&\n  context has approval &&\n  context.approval.status == PGI::ApprovalStatus::\"APPR\" &&\n  context.approval.wonum == context.input.wonum &&\n  context.approval.site_id == \"MAIN\" &&\n  context.approval.approver != principal\n};\n\n// List work orders only when the site filter is explicitly MAIN.\npermit (\n  principal,\n  action == Action::\"list_workorders\",\n  resource\n)\nwhen {\n  context.input has site_id &&\n  context.input.site_id has typeChoice0 &&\n  context.input.site_id.typeChoice0 == \"MAIN\"\n};\n```",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "deterministic": {
+  "passed": false,
+  "validation": {
+   "policy": "s01_close_after_approval/sondera/sample_08/round1.cedar",
+   "schema": "inputs/s01_close_after_approval/schema/wo.cedarschema",
+   "ok": false,
+   "parsed": true,
+   "n_policies": 2,
+   "errors": [
+    "for policy `policy0`, unrecognized action `Action::\"close_workorder\"` (did you mean `AOB::Action::\"close_workorder\"`?)",
+    "for policy `policy1`, unrecognized action `Action::\"list_workorders\"` (did you mean `AOB::Action::\"list_workorders\"`?)"
+   ],
+   "warnings": [
+    "for policy `policy0`, unable to find an applicable action given the policy scope constraints",
+    "for policy `policy0`, policy is impossible: the policy expression evaluates to false for all valid requests",
+    "for policy `policy1`, unable to find an applicable action given the policy scope constraints",
+    "for policy `policy1`, policy is impossible: the policy expression evaluates to false for all valid requests"
+   ],
+   "cedarpy_errors": [
+    "[policy0] for policy `policy0`, unrecognized action `Action::\"close_workorder\"`",
+    "[policy0] for policy `policy0`, unable to find an applicable action given the policy scope constraints",
+    "[policy1] for policy `policy1`, unrecognized action `Action::\"list_workorders\"`",
+    "[policy1] for policy `policy1`, unable to find an applicable action given the policy scope constraints"
+   ]
+  },
+  "failures": [
+   "invalid: for policy `policy0`, unrecognized action `Action::\"close_workorder\"` (did you mean `AOB::Action::\"close_workorder\"`?)",
+   "invalid: for policy `policy1`, unrecognized action `Action::\"list_workorders\"` (did you mean `AOB::Action::\"list_workorders\"`?)",
+   "invalid: for policy `policy0`, unable to find an applicable action given the policy scope constraints",
+   "invalid: for policy `policy0`, policy is impossible: the policy expression evaluates to false for all valid requests",
+   "invalid: for policy `policy1`, unable to find an applicable action given the policy scope constraints",
+   "invalid: for policy `policy1`, policy is impossible: the policy expression evaluates to false for all valid requests",
+   "invalid: [policy0] for policy `policy0`, unrecognized action `Action::\"close_workorder\"`",
+   "invalid: [policy0] for policy `policy0`, unable to find an applicable action given the policy scope constraints",
+   "invalid: [policy1] for policy `policy1`, unrecognized action `Action::\"list_workorders\"`",
+   "invalid: [policy1] for policy `policy1`, unable to find an applicable action given the policy scope constraints"
+  ],
+  "never_allowed": []
+ },
+ "judge": {
+  "key_hash": "3d88b4e0df76ec78099adafe7fd7f90dd74ab901b4a1ef532473b6e4d9f85122",
+  "cache_hit": false,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011Ch1Cfb7FmqdXEXutbu2xw",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 0,
+   "inference_geo": "global",
+   "input_tokens": 668,
+   "output_tokens": 586,
+   "output_tokens_details": {
+    "thinking_tokens": 575
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "NO MISMATCHES",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "judge_passed": true,
+ "passed": false
+}

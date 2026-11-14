@@ -3,6 +3,7 @@
     uv run python -m pgi.runs.clean --model claude-haiku-5-5 --n 2 --label smoke
     uv run python -m pgi.runs.clean --replay runs/<id>          # cache only, zero API calls, new folder
     uv run python -m pgi.runs.clean --replay runs/<old> --inputs-from-git <commit>   # runs before snapshots
+    uv run python -m pgi.runs.clean --model M --n N --cache-only --label L   # current inputs, cache only
 
 Layout: runs/<id>/config.json, summary.json, summary.md, inputs/<scenario>/ (snapshot of every input a
 score depends on; generation and scoring read only from it), and per scenario/generator/sample:
@@ -395,6 +396,8 @@ def main() -> None:
                    help="re-run RUN_DIR from the cache into a new folder (its settings and inputs); fail on a miss")
     p.add_argument("--inputs-from-git", metavar="COMMIT",
                    help="with --replay, for a run without inputs/: rebuild them from git, checked against its hashes")
+    p.add_argument("--cache-only", action="store_true",
+                   help="current repo inputs, but every LLM call must hit the cache (re-score with new references)")
     p.add_argument("--cache", type=Path, default=ROOT / "cache/llm")
     args = p.parse_args()
     src = None
@@ -414,13 +417,15 @@ def main() -> None:
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     run_id = "-".join(x for x in (stamp, "clean", args.label) if x)
     with atomic_run_dir(ROOT / "runs", run_id) as out:
-        llm = CachedLLM(AnthropicProvider() if not args.replay else _NoProvider(), args.cache, allow_api=not args.replay)
+        offline = bool(args.replay or args.cache_only)
+        llm = CachedLLM(_NoProvider() if offline else AnthropicProvider(), args.cache, allow_api=not offline)
         ncfg = naive.NaiveConfig(args.model, include_descriptions=not args.no_descriptions)
         scfg = critic.SonderaConfig(args.model, include_descriptions=not args.no_descriptions,
                                     judge_sees_manifests=args.judge_sees_manifests)
         inputs = _inputs(args, src, out / "inputs")
         config = {"run_id": run_id, "created": stamp, "model": args.model, "n": args.n,
                   "replay": bool(args.replay), "replay_of": args.replay.name if args.replay else None,
+                  "cache_only": offline,
                   "inputs": "inputs/<scenario>/ (snapshot; generation and scoring read only from it)"
                             + (f"; rebuilt from git {args.inputs_from_git}" if args.inputs_from_git else ""),
                   "generators": {"naive": ncfg.as_dict(), "sondera": scfg.as_dict()},

@@ -1,0 +1,25 @@
+{
+  "name": "s03_create_at_main",
+  "schema": "schema/wo.cedarschema",
+  "schema_parts": {
+    "generated": [
+      "wo.generated.cedarschema"
+    ],
+    "trusted": [
+      "trusted.cedarschema"
+    ]
+  },
+  "servers": [
+    "wo"
+  ],
+  "sha256": {
+    "intent": "c0917e160ad52553ae545c1a820e62c38439f77b39a6eced3b39704890866d20",
+    "manifest:wo": "343611eceeda99e0148b96a87a47879ed074a0fe90bcad64b07428f88a0907e6",
+    "reference": "b1ff9972299c66ce7b6078588428a315b9936048e20582b4ca1bab181333d106",
+    "scenario_yaml": "d0e45c1412e5cde19d10c468526d01f8f4dbd574d6f5c5d7d59300eba6df89ae",
+    "schema": "544514c280aba61d75396289ea56846495e28ac1fbe8e4d0451f7f41cf17fbb6",
+    "schema_part:generated:wo.generated.cedarschema": "ca4e73eb1c36f6e04dc10c8607af35a546d3cb9c348b0095db05810dcbf7aae5",
+    "schema_part:trusted:trusted.cedarschema": "766960fd1f9512456b92632e0a0233fbe278e24ca9d5820bcde77b63af094bbc",
+    "universe": "6e0352c96b96e9945526a01a16ec9df3b94a69036e4ecfe028de76cf53959f36"
+  }
+}

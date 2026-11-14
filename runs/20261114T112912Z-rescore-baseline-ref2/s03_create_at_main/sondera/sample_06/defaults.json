@@ -1,0 +1,58 @@
+[
+ {
+  "case": "create_main_full",
+  "tool": "generate_work_order",
+  "field": "notes",
+  "default": null,
+  "set_value": {
+   "typeChoice0": "from sensor alert"
+  },
+  "omitted_allowed": true,
+  "alternatives": [],
+  "verdict": "untestable"
+ },
+ {
+  "case": "create_main_full",
+  "tool": "generate_work_order",
+  "field": "priority",
+  "default": 3,
+  "set_value": 2,
+  "omitted_allowed": true,
+  "alternatives": [],
+  "verdict": "untestable"
+ },
+ {
+  "case": "create_main_full",
+  "tool": "generate_work_order",
+  "field": "reported_by",
+  "default": null,
+  "set_value": {
+   "typeChoice0": "agent"
+  },
+  "omitted_allowed": true,
+  "alternatives": [],
+  "verdict": "untestable"
+ },
+ {
+  "case": "create_main_full",
+  "tool": "generate_work_order",
+  "field": "work_type",
+  "default": "CM",
+  "set_value": "CM",
+  "omitted_allowed": true,
+  "alternatives": [],
+  "verdict": "untestable"
+ },
+ {
+  "case": "create_main_wonum",
+  "tool": "generate_work_order",
+  "field": "wonum",
+  "default": null,
+  "set_value": {
+   "typeChoice0": "1000046"
+  },
+  "omitted_allowed": true,
+  "alternatives": [],
+  "verdict": "untestable"
+ }
+]

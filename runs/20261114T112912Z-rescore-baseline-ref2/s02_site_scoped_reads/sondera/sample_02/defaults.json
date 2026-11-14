@@ -1,0 +1,95 @@
+[
+ {
+  "case": "assigned_main",
+  "tool": "get_my_assigned_workorders",
+  "field": "site_id",
+  "default": null,
+  "set_value": {
+   "typeChoice0": "MAIN"
+  },
+  "omitted_allowed": false,
+  "alternatives": [
+   {
+    "value": {
+     "typeChoice0": "NORTH"
+    },
+    "allowed": false
+   }
+  ],
+  "verdict": "omission_denied"
+ },
+ {
+  "case": "assigned_main_open",
+  "tool": "get_my_assigned_workorders",
+  "field": "open_only",
+  "default": true,
+  "set_value": true,
+  "omitted_allowed": true,
+  "alternatives": [
+   {
+    "value": false,
+    "allowed": false
+   }
+  ],
+  "verdict": "relies"
+ },
+ {
+  "case": "assigned_main_open",
+  "tool": "get_my_assigned_workorders",
+  "field": "site_id",
+  "default": null,
+  "set_value": {
+   "typeChoice0": "MAIN"
+  },
+  "omitted_allowed": false,
+  "alternatives": [
+   {
+    "value": {
+     "typeChoice0": "NORTH"
+    },
+    "allowed": false
+   }
+  ],
+  "verdict": "omission_denied"
+ },
+ {
+  "case": "kpis_main",
+  "tool": "get_workorder_kpis",
+  "field": "period_months",
+  "default": 3,
+  "set_value": 3,
+  "omitted_allowed": true,
+  "alternatives": [],
+  "verdict": "untestable"
+ },
+ {
+  "case": "list_main",
+  "tool": "list_workorders",
+  "field": "site_id",
+  "default": null,
+  "set_value": {
+   "typeChoice0": "MAIN"
+  },
+  "omitted_allowed": false,
+  "alternatives": [
+   {
+    "value": {
+     "typeChoice0": "NORTH"
+    },
+    "allowed": false
+   },
+   {
+    "value": {
+     "typeChoice1": {
+      "__entity": {
+       "type": "AOB::Null",
+       "id": "null"
+      }
+     }
+    },
+    "allowed": false
+   }
+  ],
+  "verdict": "omission_denied"
+ }
+]

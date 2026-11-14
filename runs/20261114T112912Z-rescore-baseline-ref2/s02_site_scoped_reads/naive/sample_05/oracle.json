@@ -1,0 +1,25 @@
+{
+ "validation": {
+  "policy": "s02_site_scoped_reads/naive/sample_05/policy.cedar",
+  "schema": "inputs/s02_site_scoped_reads/schema/wo_iot.cedarschema",
+  "ok": false,
+  "parsed": false,
+  "n_policies": 0,
+  "errors": [
+   "found the variable `resource` where the variable `action` must be used (policy scopes must contain a `principal`, `action`, and `resource` element in that order)",
+   "expected single entity uid or template slot, found set of entity uids",
+   "found the variable `resource` where the variable `action` must be used (policy scopes must contain a `principal`, `action`, and `resource` element in that order)",
+   "found the variable `action` where the variable `resource` must be used (policy scopes must contain a `principal`, `action`, and `resource` element in that order)",
+   "found the variable `resource` where the variable `action` must be used (policy scopes must contain a `principal`, `action`, and `resource` element in that order)",
+   "found the variable `action` where the variable `resource` must be used (policy scopes must contain a `principal`, `action`, and `resource` element in that order)",
+   "found the variable `resource` where the variable `action` must be used (policy scopes must contain a `principal`, `action`, and `resource` element in that order)",
+   "expected single entity uid or template slot, found set of entity uids"
+  ],
+  "warnings": [],
+  "cedarpy_errors": [
+   "Policy parse error: found the variable `resource` where the variable `action` must be used"
+  ]
+ },
+ "valid": false,
+ "cause_tags": null
+}

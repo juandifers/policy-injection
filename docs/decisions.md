@@ -389,3 +389,18 @@ Why: run folders recorded the schema **path** and hash, but `7e0efc8` changed th
   - synthetic schema: absent→true relies; required-present doesn't; ignored field is unconstrained; enum alternatives; untestable; only allowed cases are examined; a required field raises; duplicate tool raises; summary;
   - baseline `sample_00` relies, `sample_03` doesn't.
   - Plus run-plumbing tests in `tests/test_runs.py`.
+
+## 2026-11-14: Re-scoring into a new run folder; Cedar CLI suggestions are nondeterministic
+
+- **Found:** `cedar validate` (CLI 4.14.1) is nondeterministic in its "did you mean …" hint. On the same file it printed `AOB::Action::"close_workorder"` 10/12 times and `AOB::Action::"get_workorder"` 2/12.
+  - The Sondera-style round-k prompt quotes the deterministic critic's messages, so a round-2+ prompt is not reproducible byte-for-byte.
+  - A cache-only regeneration of the N=20 baseline missed the cache at s01 sondera sample 5 (the failed tmp folder was deleted).
+  - This breaks "generators are pure" for the critic loop.
+- **Not changed yet:** the critic feedback stays as is. The probe (2026-11-14) is compared against the baseline, which was generated with this critic, so both arms see the same noise. Normalising the hint (e.g. stripping "(did you mean …)") is open for Juan.
+- **Re-scoring without generation:** `python -m pgi.runs.rescore RUN --into --label L` (`rescore_into`) writes `runs/<stamp>-rescore-<L>/`:
+  - a snapshot of the *current* scenario inputs;
+  - the source's policies, round files and call records, copied (calls marked `cache_hit`; no LLM is reachable);
+  - recomputed oracle, cause tags, provenance, default reliance and summary;
+  - the critic record, copied.
+  - The source run is only read (test: tree hash unchanged).
+- **`--cache-only`** for `pgi.runs.clean`: current inputs, any cache miss fails. Kept for regeneration checks; not usable for Sondera-style runs that reach round 2 while the hint is nondeterministic.

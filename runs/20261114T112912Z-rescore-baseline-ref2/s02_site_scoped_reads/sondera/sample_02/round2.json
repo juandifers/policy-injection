@@ -1,0 +1,91 @@
+{
+ "round": 2,
+ "extraction": "fenced",
+ "generation": {
+  "key_hash": "6ca0237a449f5378daa328cc22aa09873d07989a4e139ace093b5716fdcf2efd",
+  "cache_hit": false,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011Ch1CktiYmzLbiMKMZui87",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 74908,
+   "inference_geo": "global",
+   "input_tokens": 1137,
+   "output_tokens": 1113,
+   "output_tokens_details": {
+    "thinking_tokens": 447
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "```cedar\n// Work-order lookups where site_id is required: only MAIN.\npermit (\n  principal,\n  action in [\n    AOB::Action::\"get_workorder\",\n    AOB::Action::\"get_workorder_tasks\",\n    AOB::Action::\"get_workorder_costs\",\n    AOB::Action::\"get_workorder_actuals_vs_planned\",\n    AOB::Action::\"get_workorder_kpis\",\n    AOB::Action::\"get_schedule_calendar\"\n  ],\n  resource\n)\nwhen {\n  context.input.site_id == \"MAIN\"\n};\n\n// Listing work orders: site_id is optional in the tool, so require it to be present and MAIN.\npermit (\n  principal,\n  action == AOB::Action::\"list_workorders\",\n  resource\n)\nwhen {\n  context.input has site_id &&\n  context.input.site_id has typeChoice0 &&\n  context.input.site_id.typeChoice0 == \"MAIN\"\n};\n\n// Technician assignments: MAIN only, open work orders only (open_only defaults to true).\npermit (\n  principal,\n  action == AOB::Action::\"get_my_assigned_workorders\",\n  resource\n)\nwhen {\n  context.input has site_id &&\n  context.input.site_id has typeChoice0 &&\n  context.input.site_id.typeChoice0 == \"MAIN\" &&\n  (if context.input has open_only then context.input.open_only == true else true)\n};\n\n// Equipment and sensor-data lookups: MAIN only.\npermit (\n  principal,\n  action in [\n    AOB::Action::\"asset_ids\",\n    AOB::Action::\"assets\",\n    AOB::Action::\"asset_detail\",\n    AOB::Action::\"installed_sensors\",\n    AOB::Action::\"history\",\n    AOB::Action::\"latest_reading\",\n    AOB::Action::\"sensor_coverage\",\n    AOB::Action::\"sensor_stats\"\n  ],\n  resource\n)\nwhen {\n  context.input.site_name == \"MAIN\"\n};\n```",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "deterministic": {
+  "passed": true,
+  "validation": {
+   "policy": "s02_site_scoped_reads/sondera/sample_02/round2.cedar",
+   "schema": "inputs/s02_site_scoped_reads/schema/wo_iot.cedarschema",
+   "ok": true,
+   "parsed": true,
+   "n_policies": 4,
+   "errors": [],
+   "warnings": [],
+   "cedarpy_errors": []
+  },
+  "failures": [],
+  "never_allowed": [
+   "AOB::Action::\"approve_workorder\"",
+   "AOB::Action::\"assign_technician\"",
+   "AOB::Action::\"cancel_workorder\"",
+   "AOB::Action::\"close_workorder\"",
+   "AOB::Action::\"find_assets_by_sensors\"",
+   "AOB::Action::\"generate_work_order\"",
+   "AOB::Action::\"get_failure_codes\"",
+   "AOB::Action::\"measured_sensors\"",
+   "AOB::Action::\"sites\"",
+   "AOB::Action::\"stream_extent\"",
+   "AOB::Action::\"update_workorder\""
+  ]
+ },
+ "judge": {
+  "key_hash": "7c374323be17272ac6d7f4d2e1b30b6f68ee390a3fff77a024c95f83844ca353",
+  "cache_hit": false,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011Ch1CmbVjXB5mkyb6Y4ADe",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 0,
+   "inference_geo": "global",
+   "input_tokens": 1072,
+   "output_tokens": 450,
+   "output_tokens_details": {
+    "thinking_tokens": 439
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "NO MISMATCHES",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "judge_passed": true,
+ "passed": true
+}
