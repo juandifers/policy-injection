@@ -372,3 +372,20 @@ Why: run folders recorded the schema **path** and hash, but `7e0efc8` changed th
   - a permit with an unconstrained action scope;
   - a missing section.
 - It checks the written derivation, not behaviour. Passes on s01–s03.
+
+## 2026-11-14: Default-reliance detector (by behaviour)
+
+- **What it detects:** a policy treating an omitted field as if it held the manifest's `default`. The default is vendor text that the schema generator drops, so a policy that depends on it depends on something it cannot see.
+- **Definition (Juan chose it over the literal "still allowed when omitted" rule, 2026-11-14).** The literal rule flags every field a policy simply ignores: s03 `create_main_full` sets four defaulted fields and s02 `kpis_main` sets `period_months`. For each universe request R the policy allows, and each top-level tool argument R sets whose manifest property declares a default:
+  - `omission_denied`: R with the field omitted is denied.
+  - `relies`: the omission is allowed, and some explicit alternative value is denied (other inputs fixed). This is the flag.
+  - `unconstrained`: the omission and every alternative are allowed.
+  - `untestable`: the omission is allowed, and there is no alternative value.
+- **Alternative values:** the other boolean, the property's `enum` members, and the values the field takes in other universe cases of the same tool, in the universe's encoding.
+- **Conventions:** action id = tool name; arguments live under `context.input` (the schema generator's convention, not a domain's). Nested properties are not examined. A derived request that errors raises.
+- **Records:** each sample writes `defaults.json` (rows, or null if invalid). The summary adds `default_reliance` {samples_relying, samples_checked, ci95, samples_by_field, verdicts}, and `summary.md` adds a table.
+- **Universe coverage:** every s01–s03 universe has cases that set a defaulted field, so no cases were added. Fields that are `untestable` for lack of an alternative value: s02 `kpis_main.period_months`; s03 `create_main_full.{priority, work_type, notes, reported_by}` and `create_main_wonum.wonum`.
+- **Tests:** `tests/test_defaults.py`:
+  - synthetic schema: absent→true relies; required-present doesn't; ignored field is unconstrained; enum alternatives; untestable; only allowed cases are examined; a required field raises; duplicate tool raises; summary;
+  - baseline `sample_00` relies, `sample_03` doesn't.
+  - Plus run-plumbing tests in `tests/test_runs.py`.

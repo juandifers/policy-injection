@@ -23,10 +23,12 @@ import shutil
 import subprocess
 import threading
 import traceback
+from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from pathlib import Path
 
+from pgi.analysis.defaults import default_reliance
 from pgi.analysis.provenance import Sources, provenance
 from pgi.generators import critic, naive
 from pgi.generators.inputs import ScenarioInputs, load_scenario_inputs
@@ -126,6 +128,14 @@ def cause_tags(policy: Path, inp: ScenarioInputs, oracle: dict) -> dict | None:
     return causes(policy, inp.reference, e["surplus"], e["deficit"], load_universe(inp.universe), inp.schema_path)
 
 
+def default_reliance_rows(policy: Path, inp: ScenarioInputs, oracle: dict) -> list[dict] | None:
+    """Default-reliance rows for a valid sample (pgi.analysis.defaults); None for an invalid one."""
+    if not oracle["valid"]:
+        return None
+    return default_reliance(policy, load_universe(inp.universe), inp.schema_path,
+                            dict(zip(inp.servers, inp.manifest_paths)))
+
+
 def run_naive(llm: CachedLLM, inp: ScenarioInputs, cfg: naive.NaiveConfig, i: int, d: Path) -> dict:
     """One naive sample: generate, write, score."""
     s = naive.generate(llm, inp, cfg, i)
@@ -137,7 +147,10 @@ def run_naive(llm: CachedLLM, inp: ScenarioInputs, cfg: naive.NaiveConfig, i: in
     _dump(d / "oracle.json", oracle | {"cause_tags": tags})
     prov = literal_provenance(d / "policy.cedar", inp)
     _dump(d / "provenance.json", prov)
-    return {"sample": i, "calls": [_call_record(s.completion)], "oracle": oracle, "cause_tags": tags, "provenance": prov}
+    rel = default_reliance_rows(d / "policy.cedar", inp, oracle)
+    _dump(d / "defaults.json", rel)
+    return {"sample": i, "calls": [_call_record(s.completion)], "oracle": oracle, "cause_tags": tags, "provenance": prov,
+            "default_reliance": rel}
 
 
 def run_sondera(llm: CachedLLM, inp: ScenarioInputs, cfg: critic.SonderaConfig, i: int, d: Path) -> dict:
@@ -163,7 +176,10 @@ def run_sondera(llm: CachedLLM, inp: ScenarioInputs, cfg: critic.SonderaConfig, 
     _dump(d / "oracle.json", oracle | {"critic": crit, "cause_tags": tags})
     prov = literal_provenance(d / "policy.cedar", inp)
     _dump(d / "provenance.json", prov)
-    return {"sample": i, "calls": calls, "oracle": oracle, "critic": crit, "cause_tags": tags, "provenance": prov}
+    rel = default_reliance_rows(d / "policy.cedar", inp, oracle)
+    _dump(d / "defaults.json", rel)
+    return {"sample": i, "calls": calls, "oracle": oracle, "critic": crit, "cause_tags": tags, "provenance": prov,
+            "default_reliance": rel}
 
 
 def wilson(k: int, n: int, z: float = 1.96) -> list[float] | None:
@@ -241,6 +257,13 @@ def summarize(model: str, results: list[dict], case_ids: list[str] | None = None
                     per = tag_counts[side].setdefault(case, {})
                     per[tag] = per.get(tag, 0) + 1
     out["cause_tag_counts"] = {s: dict(sorted(v.items())) for s, v in tag_counts.items()}
+    checked = [r["default_reliance"] for r in results if isinstance(r.get("default_reliance"), list)]
+    relying = [{f'{x["tool"]}.{x["field"]}' for x in rows if x["verdict"] == "relies"} for rows in checked]
+    out["default_reliance"] = {
+        "samples_relying": sum(bool(f) for f in relying), "samples_checked": len(checked),
+        "samples_relying_ci95": wilson(sum(bool(f) for f in relying), len(checked)),
+        "samples_by_field": dict(sorted(Counter(f for fs in relying for f in fs).items())),
+        "verdicts": dict(sorted(Counter(x["verdict"] for rows in checked for x in rows).items()))}
     if any("critic" in r for r in results):
         rounds = [r["critic"]["rounds_used"] for r in results]
         passed = [r for r in results if r["critic"]["passed"]]
@@ -301,6 +324,18 @@ def markdown(config: dict, summary: dict) -> str:
                      for g in gens]
             lines.append(f"| {case} | {'✓' if case in ref else ''} | " + " | ".join(cells) + " |")
         lines += ["", "k/n = valid samples allowing the case / valid samples (enumeration). Wilson intervals in summary.json."]
+    lines += ["", "## Default reliance", "",
+              "| scenario | generator | samples relying on a default (of checked) | by tool.field | verdicts |",
+              "|---|---|---|---|---|"]
+    for key, s in summary.items():
+        d = s.get("default_reliance") or {}
+        if not d:
+            continue
+        by = ", ".join(f"{f}: {n}" for f, n in d["samples_by_field"].items()) or "—"
+        lines.append(f"| {key.split('/')[0]} | {key.split('/')[1]} | {d['samples_relying']}/{d['samples_checked']} "
+                     f"| {by} | {d['verdicts']} |")
+    lines += ["", "Relies: the policy allows the request with the defaulted field omitted, yet denies an explicit "
+              "alternative value of it (pgi.analysis.defaults). Checked = valid samples."]
     lines += _literal_tables(summary, scenarios, "scope")
     for sc in scenarios:
         rows = [(side, case, k.split("/")[1], tag, n)

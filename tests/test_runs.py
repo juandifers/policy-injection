@@ -308,6 +308,35 @@ def test_markdown_lists_cause_tags_per_scenario():
     assert "### s01: cause tags" in md and "| deficit | d1 | naive | `p: x == 1` | 1 |" in md
 
 
+# ---- default reliance per sample and per scenario x generator
+def test_each_sample_records_default_reliance(tmp_path):
+    """weak_same_wo allows list_main, which sets the defaulted site_id; omitting it is denied."""
+    row = run_naive(CachedLLM(Fake(), tmp_path / "cache"), load_scenario_inputs(S01),
+                    naive.NaiveConfig("claude-haiku-5-5"), 0, tmp_path / "n0")
+    rows = row["default_reliance"]
+    assert [(r["case"], r["field"], r["verdict"]) for r in rows] == [("list_main", "site_id", "omission_denied")]
+    assert json.loads((tmp_path / "n0" / "defaults.json").read_text()) == rows
+
+
+def test_summary_counts_samples_relying_on_a_default():
+    rel = lambda *fields: [{"tool": "t", "field": f, "verdict": v} for f, v in fields]
+    rows = [_valid_row([]) | {"default_reliance": rel(("a", "relies"), ("b", "relies"))},
+            _valid_row([]) | {"default_reliance": rel(("a", "relies"), ("c", "untestable"))},
+            _valid_row([]) | {"default_reliance": rel(("a", "omission_denied"))},
+            _valid_row([]) | {"default_reliance": None}]  # invalid samples record None
+    d = summarize("m", rows)["default_reliance"]
+    assert (d["samples_relying"], d["samples_checked"]) == (2, 3)
+    assert d["samples_by_field"] == {"t.a": 2, "t.b": 1}
+    assert d["verdicts"] == {"omission_denied": 1, "relies": 3, "untestable": 1}
+
+
+def test_markdown_lists_default_reliance():
+    from pgi.runs.clean import markdown
+    rows = [_valid_row([]) | {"default_reliance": [{"tool": "t", "field": "a", "verdict": "relies"}]}]
+    md = markdown({"run_id": "r", "model": "m", "n": 1}, {"s01/naive": summarize("m", rows)})
+    assert "## Default reliance" in md and "| s01 | naive | 1/1 | t.a: 1 |" in md
+
+
 # ---- atomic run folders
 from pgi.runs.clean import atomic_run_dir  # noqa: E402
 
