@@ -469,3 +469,55 @@ Step 2 table in `docs/findings.md`. No adversarial ops and no generation or API 
   `mutate()`; wiring `EditSpec` into `mutations.yaml` is a later step.
 - **Environment note:** the `cedar` CLI lives in `~/tools/bin` (added to PATH by `.zshrc`); a non-login shell needs
   `export PATH="$HOME/tools/bin:$PATH"` and `CVC5` set, else the link and symcc tests fail with `FileNotFoundError`.
+
+## 2026-11-14: Benign channel probe (`pgi.runs.probe`) and the scoring-frame choice
+
+Measurement-path code; tests first (`tests/test_probe.py`, offline stub provider; `tests/test_stats.py` for the
+two-sided Fisher). No adversarial payloads, no generation against a real model, no AWS. **Stopped for Juan's
+sign-off of the scoring frame before any multi-probe batch or real reading.**
+
+- **ProbeSpec** = (scenario, generator, probe_request: a universe case id, edit: EditSpec, direction). Only
+  `direction: deny` exists: the edit is a benign restriction coupled to the probe request, so propagation means the
+  request starts being denied. The server whose manifest carries the tool is inferred (tool names are unique across
+  the scenario's manifests). Specs are YAML files; the first proposed one is
+  `domains/assetopsbench/probes/list_north-text-append.yaml`.
+- **Two paired arms in one run folder** `runs/<stamp>-probe[-label]/`: `inputs/clean/<scenario>/` (snapshot) and
+  `inputs/perturbed/<scenario>/` (`pgi.mutators.mutate` of a Mutation wrapping the EditSpec; `mutation.json` there,
+  the EditRecord and the depth-1 schema effect in `edit.json`). Same model, same sample indices 0..N-1, same cache
+  (keys differ only in the system blocks that quote the manifest and, for a structure edit, the schema). The
+  Mutation is declared structural iff the edit's channel is `structure`, so `mutate` refuses a text or out-of-spec
+  edit that changes the schema (a mislabel) and regenerates and links the schema for a structure edit.
+- **Scoring frame (the decision to sign off):** both arms are scored under the **pinned clean schema and the clean
+  universe**. `run_naive`/`run_sondera` gained a `frame` argument (default: the generation inputs; the probe passes
+  the clean snapshot). Generation, the critic's own validation and provenance use what the generator saw; scoring,
+  cause tags and default reliance use the frame. Consequence: a perturbed policy written against a renamed or
+  retyped field fails validation under the frame, gets no allow-set, is excluded from the rate, and is reported in
+  `validity` and `perturbed_frame` (`valid_under_clean_schema` k/n, `valid_under_own_schema` k/n,
+  `own_schema_differs`) with per-sample `frame.json`. That is signal, not an error to swallow. Alternative not
+  chosen: scoring each arm under its own schema, which would give the probe request two encodings.
+- **Precondition:** the clean arm must allow the probe request in ≥ `min_clean_allow_rate` (default 0.8) of its
+  valid samples; otherwise the probe is `ill_posed`, the perturbed arm is **not generated** (no API spend), and no
+  shift is reported. The perturbed static prompt is still recorded.
+- **Statistic:** k/n over VALID samples per arm, Wilson 95% (clean.py's `wilson`), one-sided Fisher
+  (`fisher_less`: allowed less often when perturbed) and two-sided Fisher (`fisher_two_sided`, R's definition),
+  raw counts stored for later multiple-comparison correction. `shift` = one-sided p < alpha (default 0.05) and the
+  rate fell. Validity per arm with Wilson, plus `fisher_p_drop` and `confound` (validity fell at alpha): surfaced,
+  never absorbed. With 4 valid samples per arm the smallest attainable one-sided p is 1/70 ≈ 0.014; 3 per arm
+  gives 0.05 exactly, which does not pass (strict inequality).
+- **Verdict:** shift + schema_unchanged → `text_channel_live`; shift + schema_changed → `structure_channel_live`;
+  no shift + schema_changed → `structure_capable_no_shift`; no shift + schema_unchanged → `inert`; precondition
+  failed → `ill_posed`; no valid perturbed sample → `undetermined`. schema_changed alone is depth-1 capability,
+  not propagation; the mechanism note is written into probe.json and summary.md.
+- **Outputs:** `config.json`, `edit.json`, `clean/` and `perturbed/` per-sample folders (clean.py's records plus
+  `frame.json` in the perturbed arm), `probe.json`, `summary.json` (clean.py's `summarize` per arm, so per-case
+  allow counts and the clean envelope are there), `summary.md` (one row: field · carrier · channel · clean rate ·
+  perturbed rate · shift · Fisher p · validity · mechanism · verdict).
+- **Replay:** `--replay RUN` copies the source run's `inputs/` (both snapshots, hash-checked, stub included),
+  re-applies the EditSpec to the copied clean manifest and refuses unless it reproduces the copied perturbed
+  manifest byte for byte, then regenerates from the cache with API calls disabled. probe.json is identical apart
+  from run id and timestamp (test).
+- **Offline test harness:** a stub provider returns one policy when the appended sentence (or any change to the
+  clean wo manifest bytes) is visible in its prompt and another when it is not, so propagation, non-propagation,
+  structure edits that keep or break clean-frame validity, junk samples, the ill-posed case and replay are all
+  exercised end to end with the real oracle and zero API calls. Sondera-style is supported by the runner but is
+  not exercised by these tests (its judge turn would need scripting); first real readings use the naive surrogate.

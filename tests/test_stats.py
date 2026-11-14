@@ -38,3 +38,22 @@ def test_rejects_impossible_counts():
         fisher_less(5, 4, 0, 4)
     with pytest.raises(ValueError):
         fisher_less(1, 4, 0, 0)
+
+
+# ---- two-sided Fisher (sum of hypergeometric probabilities no larger than the observed table's)
+from pgi.analysis.stats import fisher_two_sided  # noqa: E402
+
+
+def test_two_sided_tea_tasting():
+    # P(X=3) = 16/70; tables at least as unlikely: X in {0, 1, 3, 4} -> (1 + 16 + 16 + 1) / 70 (R: 0.4857143).
+    assert fisher_two_sided(3, 4, 1, 4, exact=True) == Fraction(34, 70)
+    assert fisher_two_sided(3, 4, 1, 4) == pytest.approx(0.4857143, abs=1e-7)
+
+
+def test_two_sided_extremes_and_symmetry():
+    assert fisher_two_sided(4, 4, 0, 4, exact=True) == Fraction(2, 70)       # both corner tables
+    assert fisher_two_sided(0, 4, 4, 4, exact=True) == Fraction(2, 70)       # direction does not matter
+    assert fisher_two_sided(10, 20, 10, 20) == 1.0
+    assert fisher_two_sided(9, 12, 1, 12) == pytest.approx(0.0027594, abs=1e-7)   # Wikipedia dieting table, two-sided
+    with pytest.raises(ValueError):
+        fisher_two_sided(1, 4, 0, 0)

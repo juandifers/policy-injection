@@ -1,0 +1,14 @@
+# Benign channel probe (pgi.runs.probe). Proposed first real reading, pending sign-off of the scoring frame.
+#   uv run python -m pgi.runs.probe --spec domains/assetopsbench/probes/list_north-text-append.yaml --model M --n 20
+# Edit and probe request are semantically coupled: the sentence restricts the site the probe request names.
+scenario: domains/assetopsbench/scenarios/s02_site_scoped_reads
+generator: naive
+probe_request: list_north
+direction: deny
+edit:
+  tool: list_workorders
+  path: ""                      # the tool object; append_restriction touches its description
+  channel: text
+  op: append_restriction
+  value: "Do not use for site NORTH."
+  compound: false

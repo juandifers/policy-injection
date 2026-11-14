@@ -143,25 +143,35 @@ def default_reliance_rows(policy: Path, inp: ScenarioInputs, oracle: dict) -> li
                             inp.defaults_manifests)
 
 
-def run_naive(llm: CachedLLM, inp: ScenarioInputs, cfg: naive.NaiveConfig, i: int, d: Path) -> dict:
-    """One naive sample: generate, write, score."""
+def run_naive(llm: CachedLLM, inp: ScenarioInputs, cfg: naive.NaiveConfig, i: int, d: Path,
+              frame: ScenarioInputs | None = None) -> dict:
+    """One naive sample: generate from `inp`, write, score.
+
+    `frame` is the measuring frame (schema, universe, reference, server defaults) the policy is scored in;
+    by default the inputs it was generated from. A probe passes the clean inputs here so that both arms
+    are scored under one fixed frame. Provenance always reads what the generator saw (`inp`).
+    """
+    frame = frame or inp
     s = naive.generate(llm, inp, cfg, i)
     (d / "policy.cedar").parent.mkdir(parents=True, exist_ok=True)
     (d / "policy.cedar").write_text(s.policy_text + "\n" if s.policy_text else "")
     _dump(d / "response.json", _call_record(s.completion) | {"extraction": s.extraction})
-    oracle = score(d / "policy.cedar", inp)
-    tags = cause_tags(d / "policy.cedar", inp, oracle)
+    oracle = score(d / "policy.cedar", frame)
+    tags = cause_tags(d / "policy.cedar", frame, oracle)
     _dump(d / "oracle.json", oracle | {"cause_tags": tags})
     prov = literal_provenance(d / "policy.cedar", inp)
     _dump(d / "provenance.json", prov)
-    rel = default_reliance_rows(d / "policy.cedar", inp, oracle)
+    rel = default_reliance_rows(d / "policy.cedar", frame, oracle)
     _dump(d / "defaults.json", rel)
     return {"sample": i, "calls": [_call_record(s.completion)], "oracle": oracle, "cause_tags": tags, "provenance": prov,
             "default_reliance": rel}
 
 
-def run_sondera(llm: CachedLLM, inp: ScenarioInputs, cfg: critic.SonderaConfig, i: int, d: Path) -> dict:
-    """One Sondera-style sample: up to max_rounds of generate + critics, then score the output."""
+def run_sondera(llm: CachedLLM, inp: ScenarioInputs, cfg: critic.SonderaConfig, i: int, d: Path,
+                frame: ScenarioInputs | None = None) -> dict:
+    """One Sondera-style sample: up to max_rounds of generate + critics (in `inp`'s world), then score the
+    output in `frame` (default `inp`; see run_naive). Round-to-round behaviour is compared in `inp`'s world."""
+    frame = frame or inp
     res = critic.run(llm, inp, cfg, i, d)
     calls = []
     for r in res.rounds:
@@ -171,7 +181,7 @@ def run_sondera(llm: CachedLLM, inp: ScenarioInputs, cfg: critic.SonderaConfig, 
         _dump(d / f"round{r.index}.json", rec)
         calls += [rec["generation"], rec["judge"]]
     (d / "policy.cedar").write_text(res.final_policy + "\n" if res.final_policy else "")
-    oracle = score(d / "policy.cedar", inp)
+    oracle = score(d / "policy.cedar", frame)
     pairs = []
     for a, b in zip(res.rounds, res.rounds[1:]):  # consecutive rounds: did the judge move on unchanged behaviour?
         same = same_behaviour(a.policy_path, b.policy_path, inp)
@@ -179,11 +189,11 @@ def run_sondera(llm: CachedLLM, inp: ScenarioInputs, cfg: critic.SonderaConfig, 
                       "same_text": a.policy_text == b.policy_text, "same_behaviour": same,
                       "judge": [a.judge_passed, b.judge_passed], "judge_changed": a.judge_passed != b.judge_passed})
     crit = {"passed": res.passed, "rounds_used": res.rounds_used, "round_pairs": pairs}
-    tags = cause_tags(d / "policy.cedar", inp, oracle)
+    tags = cause_tags(d / "policy.cedar", frame, oracle)
     _dump(d / "oracle.json", oracle | {"critic": crit, "cause_tags": tags})
     prov = literal_provenance(d / "policy.cedar", inp)
     _dump(d / "provenance.json", prov)
-    rel = default_reliance_rows(d / "policy.cedar", inp, oracle)
+    rel = default_reliance_rows(d / "policy.cedar", frame, oracle)
     _dump(d / "defaults.json", rel)
     return {"sample": i, "calls": calls, "oracle": oracle, "critic": crit, "cause_tags": tags, "provenance": prov,
             "default_reliance": rel}
