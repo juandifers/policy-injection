@@ -4,7 +4,10 @@ Research prototype. Results will steer the plan, so this file holds what stays t
 
 ## The question
 
-LLM pipelines now compile natural-language intent plus MCP tool metadata into authorization policies (Cedar) for agents. Examples: AWS AgentCore Policy, and Sondera-style generator-critic loops.
+LLM pipelines now compile natural-language intent plus MCP tool metadata into authorization policies (Cedar) for agents.
+
+- **System under test:** AWS AgentCore Policy's natural-language policy generation (Cedar first, then Dogwood).
+- **Surrogates:** our local generators (naive, Sondera-style (our reimplementation)). They decide which AgentCore experiments to run and how to score them. A surrogate result is evidence about the pattern, not about AgentCore.
 
 Can an attacker who controls lower-trust text make the generator emit a policy that:
 
@@ -125,5 +128,6 @@ AssetOpsBench lives outside the repo at `$AOB_DIR` (default `../AssetOpsBench`, 
 ## Current focus
 
 <!-- Update when the phase changes. -->
+AWS-first: each experiment is designed and scored on the surrogates, then run against AgentCore Policy.
 Phase A: Cedar access layer. Oracle, then schema, clean baseline, channel probe, attack, defense.
 Phase B (later): Dogwood stateful policies.

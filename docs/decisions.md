@@ -343,3 +343,13 @@ Why: run folders recorded the schema **path** and hash, but `7e0efc8` changed th
   - an injected provider failure in the second sample → no final folder, `FAILED` with the traceback, and the first sample's records kept;
   - an existing run id is refused;
   - recorded paths are relative.
+
+## 2026-11-14: Direction change: AgentCore Policy is the system under test
+
+- **Decision:** the main target is AWS AgentCore Policy's natural-language policy generation, Cedar first, then Dogwood. The local generators (naive, Sondera-style (our reimplementation)) become surrogates.
+- **Why:** the N=20 clean baseline (`runs/20261113T155356Z-clean`) showed the surrogates already reproduce a measurable baseline over-permission (s02 `assigned_main`, vendor-default reliance). The research question matters most for a shipping system, so the surrogates' job is to pick which AgentCore experiments are worth running and to supply the scoring (oracle, references, universes, detectors).
+- **Consequences:**
+  - Every experiment is designed and scored on the surrogates first, then run against AgentCore.
+  - A surrogate result stays labelled as evidence about the pattern, not about AgentCore.
+  - No AWS API calls until a session explicitly allows them. The CLAUDE.md rules on AWS (own account only, report within 24 hours) are unchanged.
+- CLAUDE.md "The question" and "Current focus" updated.
