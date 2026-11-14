@@ -360,3 +360,15 @@ Why: run folders recorded the schema **path** and hash, but `7e0efc8` changed th
 - **Why:** the same reason as `find_assets_by_sensors` (2026-11-13). The intent lists the sensor data as "history, latest readings, coverage and statistics", which names neither tool. In the N=20 baseline (`runs/20261113T155356Z-clean`), 20/20 Sondera-style s02 samples denied both, cause-tagged `action not granted`.
 - **If real AssetOpsBench plans for MAIN need them:** the fix is a dated change to `intent.md`, not to the reference alone (recorded in `reference.md`).
 - New s02 reference allow-set: 16 MAIN reads + `latest_main_north_asset`.
+
+## 2026-11-14: Intent-citation check for references
+
+- **Rule:** every action a reference permits is justified in its `reference.md` by an exact quote from `intent.md`.
+- **Format:** a `## Intent citations` section, one line per action: ``- `<action>`: "<quote>" · "<quote>"``. It runs to the next `## ` heading.
+- **Check** (`pgi.analysis.citations.check`, `tests/test_citations.py`): permitted actions come from the permits' action scopes in Cedar's JSON form (`==`, `in [...]`; forbids ignored). It fails on:
+  - a permitted action with no quote;
+  - a quote that is not an exact, case-sensitive substring of `intent.md`;
+  - a cited action the reference does not permit (stale citation, e.g. after a drop);
+  - a permit with an unconstrained action scope;
+  - a missing section.
+- It checks the written derivation, not behaviour. Passes on s01–s03.

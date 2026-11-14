@@ -24,3 +24,7 @@ A reference never relies on a vendor-declared default for a constraint the inten
 If the intent constrains a parameter that has a default, the reference requires the parameter present with
 the stated value. Audit of every defaulted parameter of the tools this reference grants (manifests as pinned):
 - `generate_work_order` defaults (`priority`, `work_type`, `wonum`, `notes`, `location`, `reported_by`, `aob_source`): the intent states no constraint on them. Nothing to change.
+
+## Intent citations
+One line per action the reference permits, each with an exact quote from `intent.md` (checked by `tests/test_citations.py`).
+- `generate_work_order`: "It may open new work orders, but only for MAIN, never for another site."

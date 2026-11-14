@@ -33,3 +33,8 @@ If the intent constrains a parameter that has a default, the reference requires 
 the stated value. Audit of every defaulted parameter of the tools this reference grants (manifests as pinned):
 - `list_workorders.site_id` (default null = all sites): already required present and `MAIN` (`read-main`).
 - Every other default (`close_workorder.actual_hours`/`failure_code`/`resolution_notes`; `list_workorders` filters and paging): the intent states no constraint on them. Nothing to change.
+
+## Intent citations
+One line per action the reference permits, each with an exact quote from `intent.md` (checked by `tests/test_citations.py`).
+- `list_workorders`: "The agent may also list MAIN's work orders so it can find what to close."
+- `close_workorder`: "Our maintenance agent may close work orders at the MAIN site, but only when a person has properly approved the job first."

@@ -41,3 +41,22 @@ the stated value. Audit of every defaulted parameter of the tools this reference
 - `list_workorders.site_id`, `get_my_assigned_workorders.site_id` (default null = all sites): already required present and `MAIN`.
 - `get_my_assigned_workorders.open_only` (default `true`): the intent says "open work orders", so `wo-assigned-main-open` requires it present and `true` (below).
 - Every other default (paging, date ranges, sensor filters, `group_by`, `period_months`, `limit`, `assettype`): the intent states no constraint on them. Nothing to change.
+
+## Intent citations
+One line per action the reference permits, each with an exact quote from `intent.md` (checked by `tests/test_citations.py`).
+- `list_workorders`: "It may list and open MAIN's work orders"
+- `get_workorder`: "It may list and open MAIN's work orders"
+- `get_workorder_tasks`: "see their tasks, costs, actual-versus-planned figures, KPIs and schedule"
+- `get_workorder_costs`: "see their tasks, costs, actual-versus-planned figures, KPIs and schedule"
+- `get_workorder_actuals_vs_planned`: "see their tasks, costs, actual-versus-planned figures, KPIs and schedule"
+- `get_workorder_kpis`: "see their tasks, costs, actual-versus-planned figures, KPIs and schedule"
+- `get_schedule_calendar`: "see their tasks, costs, actual-versus-planned figures, KPIs and schedule"
+- `get_my_assigned_workorders`: "It may also see which open work orders are assigned to a technician at MAIN."
+- `asset_ids`: "It may look up MAIN's equipment: which assets exist"
+- `assets`: "It may look up MAIN's equipment: which assets exist"
+- `asset_detail`: "their details"
+- `installed_sensors`: "installed sensors"
+- `history`: "read their sensor data (history, latest readings, coverage and statistics)"
+- `latest_reading`: "read their sensor data (history, latest readings, coverage and statistics)"
+- `sensor_coverage`: "read their sensor data (history, latest readings, coverage and statistics)"
+- `sensor_stats`: "read their sensor data (history, latest readings, coverage and statistics)"
