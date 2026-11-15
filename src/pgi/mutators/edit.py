@@ -4,7 +4,9 @@ An `EditSpec` names one tool, one node inside it (a dotted path relative to the 
 list indices are integers), the channel the edit travels on and the op:
 
   channel      op                   value                                    node at `path`
-  text         append_restriction   sentence                                 anything with a `description`
+  text         append               {"field": description|title, "text"}     the tool ("") or a parameter; field must exist
+  text         set                  {"field": description|title, "text"}     the tool or a parameter; creates or replaces
+  text         append_restriction   sentence (alias: append to description)  the tool or a parameter
   structure    add_enum             [scalar, ...]                            a typed node (not a union)
   structure    rename_param         {"old", "new"[, "update_required"]}      an object schema (`properties`)
   structure    change_type          JSON Schema primitive type name          a typed node (not a union)
@@ -19,7 +21,12 @@ rename_param keeps the field's required-ness by renaming its `required` entry in
 a dangling entry that the schema generator silently ignores, so the field becomes optional: two edits in one.
 It is available only with `compound=True`, and only when the field was required (otherwise the flag lies).
 
-$ref / $defs are never introduced, and add_key refuses keys the schema generator or the text channel owns.
+Text carriers are tool.description, tool.title, param.title and param.description (a bare string value means the
+description). `append` requires the carrier to exist; `set` creates or replaces it, because a vendor adding a
+description is one realistic edit, not a confound. The EditRecord names the carrier (level, field).
+
+$ref / $defs are never introduced, and add_key refuses every key in OUT_OF_SPEC_DENYLIST (JSON Schema keywords
+plus MCP tool fields): those belong to the structure or text channel.
 """
 
 from __future__ import annotations
@@ -31,7 +38,9 @@ from typing import Any
 
 CHANNELS = frozenset({"text", "structure", "out_of_spec"})
 OPS: dict[str, str] = {               # op -> channel
-    "append_restriction": "text",
+    "append": "text",                 # append text to an existing carrier (tool/param description or title)
+    "set": "text",                    # create or replace a carrier (a vendor adding a description is one edit)
+    "append_restriction": "text",     # alias of append on the description (kept so older specs still run)
     "add_enum": "structure",
     "rename_param": "structure",
     "change_type": "structure",
@@ -39,16 +48,30 @@ OPS: dict[str, str] = {               # op -> channel
     "reorder_anyof": "structure",
     "add_key": "out_of_spec",
 }
+TEXT_FIELDS = frozenset({"description", "title"})      # the carriers the text channel may touch
+TEXT_LEVELS = ("tool", "param")                        # "" (the tool object) or inputSchema.properties.<name>
 JSON_TYPES = frozenset({"string", "integer", "number", "boolean", "array", "object", "null"})
 FORBIDDEN_KEYS = frozenset({"$ref", "$defs"})
-# Keys add_key refuses: the generator reads the structural ones (a mislabelled structure edit), and the text
-# channel owns the free-text ones. Both have their own op or channel.
-IN_SPEC_KEYS = frozenset({
-    "type", "enum", "const", "format", "required", "anyOf", "oneOf", "allOf", "not", "properties", "items",
-    "prefixItems", "additionalProperties", "patternProperties", "definitions", "if", "then", "else",
-    "name", "inputSchema", "outputSchema", "annotations",
-    "title", "description", "default", "pattern", "maxLength", "minLength", "minimum", "maximum", "examples",
+
+# Explicit denylist for out_of_spec.add_key. Anything here is in-spec: the schema generator reads it (a structure
+# edit wearing the wrong label), the text channel owns it, or MCP defines it on the tool object. Keys outside the
+# list (e.g. vendor "x-..." extensions) are the out-of-spec channel.
+JSON_SCHEMA_KEYWORDS = frozenset({
+    # core and structure
+    "$schema", "$id", "$ref", "$defs", "$anchor", "$comment", "definitions", "type", "enum", "const",
+    "properties", "patternProperties", "additionalProperties", "unevaluatedProperties", "propertyNames",
+    "required", "dependentRequired", "dependentSchemas", "minProperties", "maxProperties",
+    "items", "prefixItems", "additionalItems", "unevaluatedItems", "contains", "minContains", "maxContains",
+    "minItems", "maxItems", "uniqueItems",
+    "anyOf", "oneOf", "allOf", "not", "if", "then", "else",
+    # validation keywords for scalars
+    "format", "pattern", "minLength", "maxLength", "minimum", "maximum", "exclusiveMinimum", "exclusiveMaximum",
+    "multipleOf", "contentEncoding", "contentMediaType", "contentSchema",
+    # annotations (text channel, or dropped by the generator)
+    "title", "description", "default", "examples", "deprecated", "readOnly", "writeOnly",
 })
+MCP_TOOL_FIELDS = frozenset({"name", "title", "description", "inputSchema", "outputSchema", "annotations", "icons", "_meta"})
+OUT_OF_SPEC_DENYLIST = JSON_SCHEMA_KEYWORDS | MCP_TOOL_FIELDS
 SCALARS = (str, int, float, bool)
 _TYPE_OF_SCALAR = {"string": str, "integer": int, "number": (int, float), "boolean": bool}
 
@@ -72,7 +95,11 @@ class EditSpec:
 
 @dataclass(frozen=True)
 class EditRecord:
-    """Exact, diffable provenance: the node at `path` inside `tool`, before and after the edit."""
+    """Exact, diffable provenance: the node at `path` inside `tool`, before and after the edit.
+
+    `carrier` names the text field a text op touched: {"level": "tool" | "param", "field": "description" | "title"};
+    None for structure and out-of-spec ops.
+    """
     tool: str
     path: str
     channel: str
@@ -80,6 +107,7 @@ class EditRecord:
     before: Any
     after: Any
     compound: bool = field(default=False)
+    carrier: dict | None = None
 
     def as_dict(self) -> dict:
         return copy.deepcopy(asdict(self))
@@ -157,13 +185,48 @@ def _typed(node: Any, spec: EditSpec) -> dict:
 
 # --- ops: each edits `node` (already a private copy) in place and returns nothing ----------------------------------
 
-def _append_restriction(node: Any, spec: EditSpec) -> None:
-    sentence = spec.value
-    if not isinstance(sentence, str) or not sentence.strip():
-        raise EditError("append_restriction needs a non-empty sentence")
-    if not isinstance(node, dict) or not isinstance(node.get("description"), str):
-        raise EditError(f"{spec.path!r} has no `description` to append to (creating one is a different edit)")
-    node["description"] = node["description"] + " " + sentence if node["description"] else sentence
+def text_level(path: str) -> str:
+    """"tool" for the tool object, "param" for inputSchema.properties.<name>; EditError for any other node."""
+    segs = _segments(path)
+    if not segs:
+        return "tool"
+    if len(segs) == 3 and segs[:2] == ["inputSchema", "properties"]:
+        return "param"
+    raise EditError(f"text carriers live on the tool or a parameter node (level tool or param), not at {path!r}")
+
+
+def text_target(spec: EditSpec) -> tuple[str, str]:
+    """(field, text) of a text op's value: a bare string means the description; a dict names the field."""
+    v = spec.value
+    if isinstance(v, str):
+        field_, text = "description", v
+    elif isinstance(v, dict) and "field" in v and "text" in v:
+        field_, text = v["field"], v["text"]
+    else:
+        raise EditError(f"{spec.op} needs a value {{field, text}} or a bare string (the description text), got {v!r}")
+    if field_ not in TEXT_FIELDS:
+        raise EditError(f"{spec.op}: field {field_!r} is not a text carrier {sorted(TEXT_FIELDS)}")
+    if not isinstance(text, str) or not text.strip():
+        raise EditError(f"{spec.op} needs non-empty text (the sentence to write)")
+    return field_, text
+
+
+def _append(node: Any, spec: EditSpec) -> None:
+    text_level(spec.path)
+    field_, text = text_target(spec)
+    if not isinstance(node, dict) or not isinstance(node.get(field_), str):
+        raise EditError(f"{spec.path!r} has no `{field_}` to append to (absent; text.set creates one)")
+    node[field_] = node[field_] + " " + text if node[field_] else text
+
+
+def _set(node: Any, spec: EditSpec) -> None:
+    text_level(spec.path)
+    field_, text = text_target(spec)
+    if not isinstance(node, dict):
+        raise EditError(f"set: {spec.path!r} is not an object")
+    if node.get(field_) == text:
+        raise EditError(f"set: {spec.path!r}.{field_} already is that text (no-op)")
+    node[field_] = text
 
 
 def _add_enum(node: Any, spec: EditSpec) -> None:
@@ -250,15 +313,17 @@ def _add_key(node: Any, spec: EditSpec) -> None:
         raise EditError("add_key: key must be a non-empty string")
     if key in FORBIDDEN_KEYS or _count_forbidden(v["value"]):
         raise EditError("add_key must not introduce $ref or $defs")
-    if key in IN_SPEC_KEYS:
-        raise EditError(f"add_key: {key!r} is an in-spec key; use the structure or text channel for it")
+    if key in OUT_OF_SPEC_DENYLIST:
+        raise EditError(f"add_key: {key!r} is an in-spec key (OUT_OF_SPEC_DENYLIST); use the structure or text channel for it")
     if key in node:
         raise EditError(f"add_key: {key!r} already exists at {spec.path!r}")
     node[key] = copy.deepcopy(v["value"])
 
 
 _IMPL: dict[str, Callable[[Any, EditSpec], None]] = {
-    "append_restriction": _append_restriction,
+    "append": _append,
+    "set": _set,
+    "append_restriction": _append,
     "add_enum": _add_enum,
     "rename_param": _rename_param,
     "change_type": _change_type,
@@ -291,7 +356,8 @@ def apply(manifest: dict, spec: EditSpec) -> tuple[dict, EditRecord]:
         raise EditError(f"{spec.op} at {spec.path!r} changed nothing (no-op)")
     if _count_forbidden(tool) != forbidden_before:
         raise EditError("the edit introduced $ref or $defs")
-    return mutated, EditRecord(spec.tool, spec.path, spec.channel, spec.op, before, after, spec.compound)
+    carrier = {"level": text_level(spec.path), "field": text_target(spec)[0]} if spec.channel == "text" else None
+    return mutated, EditRecord(spec.tool, spec.path, spec.channel, spec.op, before, after, spec.compound, carrier)
 
 
 def replay(manifest: dict, record: EditRecord) -> dict:

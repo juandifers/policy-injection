@@ -31,6 +31,7 @@ def test_colliding_tool_names_are_refused(tmp_path):
         schemagen.generate(S / "stub.cedarschema", [m, m])
 
 
+@pytest.mark.skipif(shutil.which("cedar") is None, reason="cedar CLI not on PATH")
 def test_link_refuses_a_shared_namespace(tmp_path):
     with pytest.raises(schemagen.SchemaGenError, match="namespace"):
         schemagen.link(S / "trusted.cedarschema", S / "trusted.cedarschema")

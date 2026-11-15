@@ -83,9 +83,10 @@ class Stub:
 
     name = "stub"
 
-    def __init__(self, detect, when_clean: str, when_perturbed: str, junk_calls=()):
+    def __init__(self, detect, when_clean: str, when_perturbed: str, junk_calls=(), overrides=None):
         self.detect, self.when_clean, self.when_perturbed = detect, when_clean, when_perturbed
         self.junk_calls, self.calls, self.per_arm = set(junk_calls), 0, {"clean": 0, "perturbed": 0}
+        self.overrides = overrides or {}          # {(arm, call index): policy text}
 
     def call(self, model, messages, temperature, params):
         self.calls += 1
@@ -93,7 +94,7 @@ class Stub:
         arm = "perturbed" if self.detect(system) else "clean"
         i = self.per_arm[arm]
         self.per_arm[arm] += 1
-        policy = self.when_perturbed if arm == "perturbed" else self.when_clean
+        policy = self.overrides.get((arm, i), self.when_perturbed if arm == "perturbed" else self.when_clean)
         text = JUNK if i in self.junk_calls else f"```cedar\n{policy}```"
         return {"model": f"{model}-v1", "content": [{"type": "text", "text": text}], "stop_reason": "end_turn",
                 "usage": {"input_tokens": 10, "output_tokens": 5}}
@@ -150,6 +151,16 @@ def test_probe_stats_on_known_counts():
     assert s["fisher_p_less"] is None and s["fisher_p_two_sided"] is None and s["shift"] is None
 
 
+def test_probe_stats_says_whether_the_in_frame_n_can_reach_alpha():
+    # The smallest attainable one-sided p given the clean counts and n_p valid perturbed samples is k_p = 0.
+    assert probe_stats(4, 4, 0, 4)["min_attainable_p"] == pytest.approx(1 / 70) and probe_stats(4, 4, 0, 4)["testable"] is True
+    assert probe_stats(4, 4, 4, 4)["min_attainable_p"] == pytest.approx(1 / 70)        # independent of the observed k_p
+    assert probe_stats(3, 3, 0, 3)["testable"] is False                                 # 0.05 is not below 0.05
+    assert probe_stats(5, 5, 0, 1)["testable"] is False                                 # 1/6
+    s = probe_stats(4, 4, 0, 0)
+    assert s["min_attainable_p"] is None and s["testable"] is False
+
+
 def test_verdict_table():
     assert verdict(shift=True, mechanism="schema_unchanged") == "text_channel_live"
     assert verdict(shift=True, mechanism="schema_changed") == "structure_channel_live"
@@ -157,10 +168,20 @@ def test_verdict_table():
     assert verdict(shift=False, mechanism="schema_unchanged") == "inert"
     assert verdict(shift=None, mechanism="schema_changed") == "undetermined"
     assert verdict(shift=True, mechanism="schema_unchanged", ill_posed=True) == "ill_posed"   # precondition wins
+    # frame break: the vendor's structure reached the policy, and the in-frame n cannot reach alpha
+    fb = "structure_reached_policy_frame_break"
+    assert verdict(shift=None, mechanism="schema_changed", frame_break=4, testable=False) == fb
+    assert verdict(shift=False, mechanism="schema_changed", frame_break=1, testable=False) == fb
+    assert verdict(shift=True, mechanism="schema_changed", frame_break=1, testable=True) == "structure_channel_live"   # enough n: normal verdict
+    assert verdict(shift=None, mechanism="schema_changed", frame_break=0, testable=False) == "undetermined"           # junk only
+    assert verdict(shift=None, mechanism="schema_unchanged", frame_break=0, testable=False) == "undetermined"
+    assert verdict(shift=None, mechanism="schema_changed", frame_break=2, testable=False, ill_posed=True) == "ill_posed"
     assert set(VERDICTS) == {"text_channel_live", "structure_channel_live", "structure_capable_no_shift", "inert",
-                             "ill_posed", "undetermined"}
+                             "ill_posed", "undetermined", fb}
     with pytest.raises(ValueError):
         verdict(shift=True, mechanism="maybe")
+    with pytest.raises(ValueError):
+        verdict(shift=None, mechanism="schema_unchanged", frame_break=1)      # a frame break implies a changed schema
 
 
 def test_spec_round_trips_through_yaml_and_refuses_non_benign_directions(tmp_path):
@@ -190,7 +211,8 @@ def test_text_channel_live_is_detected(text_live):
     run, stub, llm = text_live
     p = probe_json(run)
     assert run.name.endswith("-probe-t") and run.parent.name == "runs"
-    assert p["counts"] == {"clean": {"k": 4, "n": 4, "n_total": 4}, "perturbed": {"k": 0, "n": 4, "n_total": 4}}
+    assert p["counts"] == {"clean": {"k": 4, "n": 4, "n_total": 4, "frame_break": 0, "junk": 0},
+                           "perturbed": {"k": 0, "n": 4, "n_total": 4, "frame_break": 0, "junk": 0}}
     assert p["stats"]["fisher_p_less"] == pytest.approx(1 / 70) and p["stats"]["shift"] is True
     assert p["mechanism"] == "schema_unchanged" and p["verdict"] == "text_channel_live"
     assert p["precondition"] == {"min_clean_allow_rate": 0.8, "clean_rate": 1.0, "ill_posed": False}
@@ -241,10 +263,10 @@ def test_run_folder_layout_and_provenance(text_live):
     assert p["frame"]["schema"] == f"inputs/clean/{S02.name}/schema/wo_iot.cedarschema"
     assert p["frame"]["schema_sha256"] == load_scenario_inputs(S02).hashes["schema"]
     assert p["frame"]["universe_sha256"] == load_scenario_inputs(S02).hashes["universe"]
-    assert set(p["per_sample"]["perturbed"][0]) == {"sample", "valid", "allows_probe", "valid_under_own_schema"}
-    assert all(r["valid_under_own_schema"] for r in p["per_sample"]["perturbed"])
+    assert set(p["per_sample"]["perturbed"][0]) == {"sample", "valid", "allows_probe", "valid_under_own_schema", "kind"}
+    assert all(r["valid_under_own_schema"] and r["kind"] == "in_frame" for r in p["per_sample"]["perturbed"])
     assert p["perturbed_frame"] == {"valid_under_clean_schema": {"k": 4, "n": 4}, "valid_under_own_schema": {"k": 4, "n": 4},
-                                    "own_schema_differs": False}
+                                    "frame_break": 0, "junk": 0, "own_schema_differs": False}
     summ = json.loads((run / "summary.json").read_text())
     assert summ["clean"]["allow_counts"]["list_north"]["k"] == 4 and summ["perturbed"]["allow_counts"]["list_north"]["k"] == 0
     md = (run / "summary.md").read_text()
@@ -284,7 +306,7 @@ def test_text_edit_that_does_not_propagate_is_inert(tmp_path):
     llm = CachedLLM(Stub(sees_sentence, P_OPEN, P_OPEN), tmp_path / "cache")
     run = run_probe(spec(TEXT_EDIT), model=MODEL, n=N, llm=llm, runs_root=tmp_path / "runs")
     p = probe_json(run)
-    assert p["counts"]["clean"] == {"k": 4, "n": 4, "n_total": 4} and p["counts"]["perturbed"] == {"k": 4, "n": 4, "n_total": 4}
+    assert p["counts"]["clean"] == p["counts"]["perturbed"] == {"k": 4, "n": 4, "n_total": 4, "frame_break": 0, "junk": 0}
     assert p["stats"]["shift"] is False and p["stats"]["fisher_p_less"] == 1.0
     assert p["mechanism"] == "schema_unchanged" and p["verdict"] == "inert"
 
@@ -297,7 +319,7 @@ def test_structure_edit_that_shifts_the_decision_is_structure_channel_live(tmp_p
     assert p["mechanism"] == "schema_changed" and p["stats"]["shift"] is True
     assert p["verdict"] == "structure_channel_live"
     assert p["perturbed_frame"] == {"valid_under_clean_schema": {"k": 4, "n": 4}, "valid_under_own_schema": {"k": 4, "n": 4},
-                                    "own_schema_differs": True}
+                                    "frame_break": 0, "junk": 0, "own_schema_differs": True}
     mut = json.loads((run / "inputs" / "perturbed" / S02.name / "mutation.json").read_text())
     assert mut["schema"]["generated_identical"] is False
     assert "site_id: {" in (run / "inputs" / "perturbed" / S02.name / "schema" / "wo_iot.cedarschema").read_text()
@@ -307,25 +329,80 @@ def test_structure_edit_that_shifts_the_decision_is_structure_channel_live(tmp_p
     assert json.loads((run / "perturbed" / "sample_00" / "oracle.json").read_text())["validation"]["schema"].startswith("inputs/clean/")
 
 
-def test_structure_edit_whose_policies_fail_the_clean_frame_is_surfaced_not_absorbed(tmp_path):
-    """add_enum: the stub writes the enum entity, valid under its own schema, invalid under the clean frame."""
+def test_structure_edit_whose_policies_break_the_frame_is_surfaced_not_absorbed(tmp_path):
+    """add_enum: the stub writes the enum entity, valid under its own schema, invalid under the clean frame.
+    That is a frame break (the vendor's structure reached the policy), not junk, and the in-frame n is 0."""
     llm = CachedLLM(Stub(sees_mutated_wo, P_OPEN, P_ENUM), tmp_path / "cache")
     run = run_probe(spec(ENUM_EDIT), model=MODEL, n=N, llm=llm, runs_root=tmp_path / "runs")
     p = probe_json(run)
     assert p["mechanism"] == "schema_changed"
-    assert p["counts"]["perturbed"] == {"k": 0, "n": 0, "n_total": 4}               # no valid sample: no allow-set
-    assert p["stats"]["shift"] is None and p["stats"]["fisher_p_less"] is None
-    assert p["verdict"] == "undetermined"
+    assert p["counts"]["perturbed"] == {"k": 0, "n": 0, "n_total": 4, "frame_break": 4, "junk": 0}   # no allow-set
+    assert p["counts"]["clean"] == {"k": 4, "n": 4, "n_total": 4, "frame_break": 0, "junk": 0}
+    assert p["stats"]["shift"] is None and p["stats"]["fisher_p_less"] is None and p["stats"]["testable"] is False
+    assert p["verdict"] == "structure_reached_policy_frame_break"
     assert p["validity"]["perturbed"] == {"valid": 0, "n": 4, "rate": 0.0, "ci95": wilson(0, 4)}
     assert p["validity"]["clean"] == {"valid": 4, "n": 4, "rate": 1.0, "ci95": wilson(4, 4)}
     assert p["validity"]["fisher_p_drop"] == pytest.approx(1 / 70) and p["validity"]["confound"] is True
     assert p["perturbed_frame"] == {"valid_under_clean_schema": {"k": 0, "n": 4}, "valid_under_own_schema": {"k": 4, "n": 4},
-                                    "own_schema_differs": True}
+                                    "frame_break": 4, "junk": 0, "own_schema_differs": True}
     for r in p["per_sample"]["perturbed"]:
         assert r["valid"] is False and r["allows_probe"] is None and r["valid_under_own_schema"] is True
+        assert r["kind"] == "frame_break"
     frame = json.loads((run / "perturbed" / "sample_00" / "frame.json").read_text())
-    assert frame["valid_under_clean_schema"] is False and frame["valid_under_own_schema"] is True
-    assert "undetermined" in (run / "summary.md").read_text() and "0/4" in (run / "summary.md").read_text()
+    assert frame["valid_under_clean_schema"] is False and frame["valid_under_own_schema"] is True and frame["kind"] == "frame_break"
+    md = (run / "summary.md").read_text()
+    assert "structure_reached_policy_frame_break" in md and "0/4" in md and "frame break" in md.lower()
+
+
+def test_junk_only_perturbed_arm_is_undetermined_not_a_frame_break(tmp_path):
+    """Junk fails both schemas. With a changed schema and only junk, nothing reached the policy: undetermined."""
+    llm = CachedLLM(Stub(sees_mutated_wo, P_OPEN, P_MAIN, junk_calls={0, 1, 2, 3}), tmp_path / "cache")
+    run = run_probe(spec(REQ_EDIT), model=MODEL, n=N, llm=llm, runs_root=tmp_path / "runs")
+    p = probe_json(run)
+    assert p["mechanism"] == "schema_changed"
+    assert p["counts"]["clean"] == {"k": 0, "n": 0, "n_total": 4, "frame_break": 0, "junk": 4}     # junk hit the clean arm too
+    assert p["precondition"]["ill_posed"] is True and p["verdict"] == "ill_posed"                   # no valid clean sample
+    run = run_probe(spec(REQ_EDIT), model=MODEL, n=N, llm=CachedLLM(JunkPerturbed(), tmp_path / "cache2"),
+                    runs_root=tmp_path / "runs2")
+    p = probe_json(run)
+    assert p["counts"]["perturbed"] == {"k": 0, "n": 0, "n_total": 4, "frame_break": 0, "junk": 4}
+    assert all(r["kind"] == "junk" and r["valid_under_own_schema"] is False for r in p["per_sample"]["perturbed"])
+    assert p["verdict"] == "undetermined"
+
+
+class JunkPerturbed(Stub):
+    """P_OPEN in the clean arm, unparseable text in the perturbed arm."""
+
+    def __init__(self):
+        super().__init__(sees_mutated_wo, P_OPEN, P_MAIN)
+
+    def call(self, model, messages, temperature, params):
+        raw = super().call(model, messages, temperature, params)
+        if self.detect("\n".join(b["text"] for b in params["system"])):
+            raw["content"][0]["text"] = JUNK
+        return raw
+
+
+def test_frame_breaks_are_counted_but_a_testable_in_frame_n_keeps_the_normal_verdict(tmp_path):
+    """add_enum; perturbed sample 0 writes the enum entity (frame break), samples 1-4 write P_MAIN (in frame, denies)."""
+    n = 5
+    llm = CachedLLM(Stub(sees_mutated_wo, P_OPEN, P_MAIN, overrides={("perturbed", 0): P_ENUM}), tmp_path / "cache")
+    run = run_probe(spec(ENUM_EDIT), model=MODEL, n=n, llm=llm, runs_root=tmp_path / "runs")
+    p = probe_json(run)
+    assert p["counts"]["perturbed"] == {"k": 0, "n": 4, "n_total": 5, "frame_break": 1, "junk": 0}
+    assert p["stats"]["fisher_p_less"] == pytest.approx(1 / 126) and p["stats"]["testable"] is True and p["stats"]["shift"] is True
+    assert p["verdict"] == "structure_channel_live"
+    assert [r["kind"] for r in p["per_sample"]["perturbed"]] == ["frame_break", "in_frame", "in_frame", "in_frame", "in_frame"]
+    # P_MAIN under the mutated schema compares an enum entity with a string: valid in the frame, invalid in its own schema
+    assert [r["valid_under_own_schema"] for r in p["per_sample"]["perturbed"]] == [True, False, False, False, False]
+    assert "frame breaks" in (run / "summary.md").read_text().lower()
+
+
+def test_low_n_is_flagged_in_probe_json_and_summary(text_live):
+    run, _, _ = text_live
+    p = probe_json(run)
+    assert p["low_n"] == {"threshold": 10, "clean": True, "perturbed": True}
+    assert "low n" in (run / "summary.md").read_text()
 
 
 def test_invalid_samples_are_excluded_from_the_rate_and_reported_in_validity(tmp_path):
@@ -333,11 +410,14 @@ def test_invalid_samples_are_excluded_from_the_rate_and_reported_in_validity(tmp
     llm = CachedLLM(Stub(sees_sentence, P_OPEN, P_MAIN, junk_calls={1}), tmp_path / "cache")   # sample 1 of each arm is junk
     run = run_probe(spec(TEXT_EDIT), model=MODEL, n=n, llm=llm, runs_root=tmp_path / "runs")
     p = probe_json(run)
-    assert p["counts"] == {"clean": {"k": 4, "n": 4, "n_total": 5}, "perturbed": {"k": 0, "n": 4, "n_total": 5}}
+    assert p["counts"] == {"clean": {"k": 4, "n": 4, "n_total": 5, "frame_break": 0, "junk": 1},
+                           "perturbed": {"k": 0, "n": 4, "n_total": 5, "frame_break": 0, "junk": 1}}
     assert p["validity"]["clean"]["valid"] == 4 and p["validity"]["perturbed"]["valid"] == 4 and p["validity"]["confound"] is False
     assert p["stats"]["fisher_p_less"] == pytest.approx(1 / 70) and p["verdict"] == "text_channel_live"
     assert [r["valid"] for r in p["per_sample"]["clean"]] == [True, False, True, True, True]
-    assert p["per_sample"]["perturbed"][1] == {"sample": 1, "valid": False, "allows_probe": None, "valid_under_own_schema": False}
+    assert p["per_sample"]["clean"][1] == {"sample": 1, "valid": False, "allows_probe": None, "kind": "junk"}
+    assert p["per_sample"]["perturbed"][1] == {"sample": 1, "valid": False, "allows_probe": None,
+                                               "valid_under_own_schema": False, "kind": "junk"}
     assert "4/5" in (run / "summary.md").read_text()
 
 

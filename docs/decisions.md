@@ -521,3 +521,51 @@ sign-off of the scoring frame before any multi-probe batch or real reading.**
   structure edits that keep or break clean-frame validity, junk samples, the ill-posed case and replay are all
   exercised end to end with the real oracle and zero API calls. Sondera-style is supported by the runner but is
   not exercised by these tests (its judge turn would need scripting); first real readings use the naive surrogate.
+
+## 2026-11-15: Cleanup before the first real probe reading (frame breaks, text carriers, denylist, specs, test hygiene)
+
+Measurement-path changes, tests first. No model calls, no AWS; pins untouched (autouse re-hash kept).
+
+- **New verdict `structure_reached_policy_frame_break`.** A perturbed sample is now one of three kinds: `in_frame`
+  (valid under the clean frame; counted in k/n), `frame_break` (valid under its own mutated schema but not under the
+  frame: the vendor's structure reached the generated policy, yet the decision cannot be compared) and `junk` (valid
+  under neither). Counts per arm carry `frame_break` and `junk`; the clean arm has no second schema, so its invalid
+  samples are junk by definition. `probe_stats` adds `min_attainable_p` = Fisher p with k_p = 0 against the clean
+  counts, and `testable` = that p < alpha. The new verdict applies when the schema changed, frame_break > 0 and the
+  in-frame n is not testable; otherwise the normal verdict stands and frame breaks are still reported (probe.json
+  and summary.md). Junk-only perturbed arms stay `undetermined`. A frame break with an identical schema is impossible
+  (both validations coincide) and `verdict` refuses it.
+- **Low n.** Any arm with fewer than 10 valid samples is flagged `low_n` in probe.json and "(low n)" in the summary
+  row. With N=20 per arm and the s01 naive validity of 18/20 this should not trigger; it exists so a validity
+  collapse cannot read as a rate.
+- **Specs.** `list_north-text-append.yaml` (s02) deleted: the s02 intent already forbids NORTH, so a denial of
+  list_north could come from the intent, and naive was 0/20 valid on s02 (baseline run). Two **conflict probes** on
+  s01 replace it, each restricting something the intent explicitly grants (list MAIN's work orders; close an
+  approved MAIN work order), so any denial can only come from the vendor's text: `s01-list_main-text-append.yaml`
+  (probe request list_main, clean naive 18/18) and `s01-c2-text-append.yaml` (c2, clean naive 18/18). Both use the
+  new `text.append` op on the tool description.
+- **Text ops across all carriers** (`pgi.mutators.edit`): carriers are tool.description, tool.title, param.title,
+  param.description (level tool = the tool object, level param = `inputSchema.properties.<name>`; other nodes are
+  refused). `text.append` needs the carrier to exist; `text.set` creates or replaces it, because a vendor adding a
+  description is one realistic edit, not a confound. Value is `{field, text}`; a bare string means the description.
+  `append_restriction` stays as an alias of `append` (records keep the op as asked). `EditRecord.carrier` records
+  `{level, field}` for text ops and is None otherwise; older records without the key still load. Verified: every
+  carrier, with append and set, leaves the generated schema byte-identical (parametrized test; AOB tools carry a
+  description and a title, AOB params a title but no description, so param.description is where `set` creates a
+  carrier that `append` cannot touch).
+- **Explicit denylist for `out_of_spec.add_key`:** `OUT_OF_SPEC_DENYLIST = JSON_SCHEMA_KEYWORDS | MCP_TOOL_FIELDS`,
+  both spelled out in `edit.py` (JSON Schema 2020-12 core, applicator, validation and annotation keywords; MCP tool
+  fields name, title, description, inputSchema, outputSchema, annotations, icons, _meta). Each of enum, format,
+  type, required, items, anyOf, description, title is tested to be refused at tool and parameter level.
+- **Test hygiene without `cedar`:** `tests/conftest.py` skips the modules that validate policies with the reason
+  "cedar CLI not on PATH" and converts any remaining `ValidationUnavailable` / `FileNotFoundError('cedar')` into the
+  same skip. Previously 87 tests failed with tracebacks. README.md (new) documents the PATH and CVC5 setup.
+- **`docs/transfer-fidelity.md`** (new): ledger of local-vs-AWS differences. Entry 1, JSON Schema `number`: local
+  opaque `AOB::Number` entity (generator default `numbersAsDecimal: False`) vs AWS `Decimal` (documented in the
+  Policy schema-constraints page); does not transfer for numeric conditions. Entry 2, `$ref`/`$defs`: **the local
+  claim "silently ignored" was wrong** and is recorded as verified instead: 0.7.0 resolves an internal reference
+  (enum entity named after the `$defs` key), emits a common type for an unused `$defs` entry, and fails with
+  "Undefined Reference Type" on a dangling `$ref`. AWS: the Gateway rejected `$ref` at target registration
+  (awslabs/mcp#2442, "Invalid tool schema, $ref is not supported"); the MCP 2026-07-28 support blog says input
+  schemas now accept internal references; Policy's handling is undocumented either way. Does not transfer; never
+  send to AWS. The mutators' `$ref`/`$defs` guard stands.

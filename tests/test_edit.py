@@ -19,7 +19,8 @@ from pathlib import Path
 
 import pytest
 
-from pgi.mutators.edit import CHANNELS, OPS, EditError, EditRecord, EditSpec, apply, replay
+from pgi.mutators.edit import (CHANNELS, JSON_SCHEMA_KEYWORDS, MCP_TOOL_FIELDS, OPS, OUT_OF_SPEC_DENYLIST, EditError,
+                               EditRecord, EditSpec, apply, replay)
 
 ROOT = Path(__file__).resolve().parents[1]
 WO = ROOT / "domains" / "assetopsbench" / "manifests" / "wo.tools.json"
@@ -61,6 +62,12 @@ def wo() -> dict:
 # parametrized contract tests (immutability, single edit, provenance round-trip).
 SPECS = {
     "append_restriction.tool": EditSpec(CLOSE, "", "text", "append_restriction", "Only for work orders at site MAIN."),
+    "append.tool_description": EditSpec(CLOSE, "", "text", "append", {"field": "description", "text": "Only MAIN."}),
+    "append.param_title": EditSpec(CLOSE, f"{PROPS}.site_id", "text", "append", {"field": "title", "text": "(MAIN only)"}),
+    "set.tool_title": EditSpec(CLOSE, "", "text", "set", {"field": "title", "text": "Close (MAIN)"}),
+    "set.tool_description": EditSpec(CLOSE, "", "text", "set", {"field": "description", "text": "Close a MAIN work order."}),
+    "set.param_description": EditSpec(CLOSE, f"{PROPS}.site_id", "text", "set", {"field": "description", "text": "Must be MAIN."}),
+    "set.param_title": EditSpec(CLOSE, f"{PROPS}.site_id", "text", "set", {"field": "title", "text": "Site (MAIN)"}),
     "add_enum": EditSpec(CLOSE, f"{PROPS}.site_id", "structure", "add_enum", ["MAIN", "NORTH"]),
     "rename_param": EditSpec(CLOSE, "inputSchema", "structure", "rename_param", {"old": "site_id", "new": "site"}),
     "rename_param.compound": EditSpec(CLOSE, "inputSchema", "structure", "rename_param",
@@ -77,11 +84,76 @@ SPECS = {
 def test_registry_matches_the_agreed_op_list():
     assert CHANNELS == frozenset({"text", "structure", "out_of_spec"})
     assert {op: ch for op, ch in OPS.items()} == {
-        "append_restriction": "text",
+        "append": "text", "set": "text", "append_restriction": "text",      # append_restriction = alias of append
         "add_enum": "structure", "rename_param": "structure", "change_type": "structure",
         "set_required": "structure", "reorder_anyof": "structure",
         "add_key": "out_of_spec",
     }
+
+
+# --- text channel: four carriers (tool.description, tool.title, param.title, param.description) -------------
+
+SITE = f"{PROPS}.site_id"
+# (level, path, field, present in the pinned wo manifest?)  AOB tools carry a description and a title;
+# AOB params carry a title and no description, so param.description is where `set` creates a carrier.
+CARRIERS = [("tool", "", "description", True), ("tool", "", "title", True),
+            ("param", SITE, "title", True), ("param", SITE, "description", False)]
+
+
+@pytest.mark.parametrize("level,path,field,present", CARRIERS, ids=lambda x: str(x))
+def test_set_creates_or_replaces_any_text_carrier(wo, level, path, field, present):
+    mutated, rec = apply(wo, EditSpec(CLOSE, path, "text", "set", {"field": field, "text": "Only for MAIN."}))
+    node = _node(_tool(mutated, CLOSE), path)
+    assert node[field] == "Only for MAIN."
+    assert (field in rec.before) is present
+    assert {k: v for k, v in rec.after.items() if k != field} == {k: v for k, v in rec.before.items() if k != field}
+    assert rec.carrier == {"level": level, "field": field}
+    assert _changed(rec.before, rec.after) == [field]
+
+
+@pytest.mark.parametrize("level,path,field,present", CARRIERS, ids=lambda x: str(x))
+def test_append_needs_the_carrier_to_exist(wo, level, path, field, present):
+    s = EditSpec(CLOSE, path, "text", "append", {"field": field, "text": "Only for MAIN."})
+    if not present:
+        with pytest.raises(EditError, match="absent|no `"):
+            apply(wo, s)
+        created, _ = apply(wo, EditSpec(CLOSE, path, "text", "set", {"field": field, "text": "Base."}))
+        mutated, rec = apply(created, s)
+        assert _node(_tool(mutated, CLOSE), path)[field] == "Base. Only for MAIN."
+    else:
+        mutated, rec = apply(wo, s)
+        old = _node(_tool(wo, CLOSE), path)[field]
+        assert _node(_tool(mutated, CLOSE), path)[field] == old + " Only for MAIN."
+    assert rec.carrier == {"level": level, "field": field} and rec.op == "append"
+
+
+def test_param_description_can_be_created_where_aob_has_only_a_title(wo):
+    mutated, rec = apply(wo, EditSpec(CLOSE, SITE, "text", "set", {"field": "description", "text": "Only MAIN."}))
+    assert _node(_tool(mutated, CLOSE), SITE) == {"title": "Site Id", "type": "string", "description": "Only MAIN."}
+    assert rec.before == {"title": "Site Id", "type": "string"} and rec.carrier == {"level": "param", "field": "description"}
+
+
+def test_append_restriction_is_an_alias_of_append_on_the_description(wo):
+    a, ra = apply(wo, EditSpec(CLOSE, "", "text", "append_restriction", "Only MAIN."))
+    b, rb = apply(wo, EditSpec(CLOSE, "", "text", "append", {"field": "description", "text": "Only MAIN."}))
+    c, rc = apply(wo, EditSpec(CLOSE, "", "text", "append", "Only MAIN."))            # a bare string means description
+    assert a == b == c and ra.after == rb.after == rc.after
+    assert ra.op == "append_restriction" and rb.op == rc.op == "append"                # the record keeps the op as asked
+    assert ra.carrier == rb.carrier == rc.carrier == {"level": "tool", "field": "description"}
+
+
+def test_text_ops_refuse_other_fields_levels_and_no_ops(wo):
+    with pytest.raises(EditError, match="field"):
+        apply(wo, EditSpec(CLOSE, "", "text", "set", {"field": "name", "text": "x"}))              # not a text carrier
+    with pytest.raises(EditError, match="field"):
+        apply(wo, EditSpec(CLOSE, "", "text", "append", {"field": "description"}))                 # no text
+    with pytest.raises(EditError, match="level|tool or a parameter"):
+        apply(wo, EditSpec(CLOSE, "inputSchema", "text", "set", {"field": "title", "text": "x"}))  # neither tool nor param
+    with pytest.raises(EditError, match="level|tool or a parameter"):
+        apply(wo, EditSpec(CLOSE, f"{PROPS}.failure_code.anyOf.0", "text", "set", {"field": "description", "text": "x"}))
+    with pytest.raises(EditError, match="no-op"):
+        apply(wo, EditSpec(CLOSE, SITE, "text", "set", {"field": "title", "text": "Site Id"}))     # same text
+    assert all(apply(wo, SPECS[k])[1].carrier is None for k in ("add_enum", "set_required.off", "add_key.tool"))
 
 
 # --- contract: immutability, single edit, provenance ---------------------------------------------------------
@@ -277,11 +349,27 @@ def test_add_key_never_introduces_ref_or_defs(wo):
             apply(wo, EditSpec(CLOSE, f"{PROPS}.site_id", "out_of_spec", "add_key", {"key": key, "value": value}))
 
 
-def test_add_key_refuses_in_spec_keys_and_existing_keys(wo):
-    for key, value in (("format", "date-time"), ("enum", ["MAIN"]), ("type", "string"), ("required", []),
-                       ("description", "x"), ("default", "MAIN"), ("pattern", "^M")):
-        with pytest.raises(EditError, match="in-spec"):
-            apply(wo, EditSpec(CLOSE, f"{PROPS}.site_id", "out_of_spec", "add_key", {"key": key, "value": value}))
+@pytest.mark.parametrize("key,value", [("enum", ["MAIN"]), ("format", "date-time"), ("type", "string"), ("required", []),
+                                       ("items", {"type": "string"}), ("anyOf", [{"type": "string"}]),
+                                       ("description", "x"), ("title", "x"), ("default", "MAIN"), ("pattern", "^M"),
+                                       ("name", "x"), ("inputSchema", {}), ("annotations", {})])
+def test_add_key_refuses_each_in_spec_key(wo, key, value):
+    assert key in OUT_OF_SPEC_DENYLIST
+    with pytest.raises(EditError, match="in-spec"):
+        apply(wo, EditSpec(CLOSE, "", "out_of_spec", "add_key", {"key": key, "value": value}))
+    with pytest.raises(EditError, match="in-spec"):
+        apply(wo, EditSpec(CLOSE, f"{PROPS}.site_id", "out_of_spec", "add_key", {"key": key, "value": value}))
+
+
+def test_denylist_is_an_explicit_documented_constant():
+    assert OUT_OF_SPEC_DENYLIST == JSON_SCHEMA_KEYWORDS | MCP_TOOL_FIELDS
+    assert {"$ref", "$defs", "type", "enum", "format", "required", "properties", "items", "anyOf", "oneOf", "allOf",
+            "description", "title", "default"} <= JSON_SCHEMA_KEYWORDS
+    assert {"name", "title", "description", "inputSchema", "outputSchema", "annotations"} <= MCP_TOOL_FIELDS
+    assert "x-pgi-note" not in OUT_OF_SPEC_DENYLIST
+
+
+def test_add_key_refuses_existing_keys(wo):
     once, _ = apply(wo, SPECS["add_key.param"])
     with pytest.raises(EditError, match="exists"):
         apply(once, SPECS["add_key.param"])
