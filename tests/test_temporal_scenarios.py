@@ -74,7 +74,7 @@ def test_every_weakening_in_the_taxonomy_has_a_file():
 
 def test_adequacy_gate(suite):
     report = temporal.require_adequate(GOLD, WEAK, suite, SCHEMA, EVENTS)
-    assert report.gold_allowed == {"t01_valid"}
+    assert report.gold_allowed == {"t01_valid", "t12_second_close_same_session", "t13_other_wo_valid"}
     for name, caught_by in EXPECTED_CAUGHT_BY.items():
         assert caught_by <= report.disagreements[name], (name, sorted(report.disagreements[name]))
 
@@ -101,15 +101,22 @@ def test_no_gold_or_weakening_permits_the_native_approve(suite, tmp_path):
         assert temporal.decision(p, SCHEMA, trace, EVENTS) is False, p.name
 
 
-def test_session_boundary_is_enforced(tmp_path):
-    """Requirement 5: the same evidence in another session does not count."""
+def test_session_boundary_is_enforced(tmp_path, suite):
+    """Requirement 5: the same evidence in another session does not count (t14_other_session is this case, in the suite)."""
     t = (T01 / "traces" / "t01_valid.log").read_text()
     other = tmp_path / "other_session.log"
     other.write_text(t.replace('request_context(sessionId: "s1"', 'request_context(sessionId: "s2"').replace(
-        'sessionId: "s1", requestId: "c1"', 'sessionId: "s2", requestId: "c1"'))
+        'requestId: "c1", sessionId: "s1"', 'requestId: "c1", sessionId: "s2"'))
     assert other.read_text() != t
     assert temporal.decision(GOLD, SCHEMA, T01 / "traces" / "t01_valid.log", EVENTS) is True
     assert temporal.decision(GOLD, SCHEMA, other, EVENTS) is False
+    assert other.read_text() == suite.traces["t14_other_session"].read_text()
+
+
+def test_second_close_in_the_same_session_is_allowed_at_both_decisions(suite):
+    """t12: the first close (@600) and the retry (@1200) are both decision events; gold allows both."""
+    verdicts = temporal.replay(GOLD, SCHEMA, suite.traces["t12_second_close_same_session"], EVENTS)
+    assert [(v.timestamp, v.allowed) for v in verdicts] == [(600, True), (1200, True)]
 
 
 def test_principal_pin_variant_is_same_principal_where_the_reference_is_same_session(tmp_path):

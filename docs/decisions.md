@@ -672,3 +672,21 @@ contract, gold or traces need Juan's approval and a dated entry here.
 - **Adequacy re-derived** (`check.py`, interpreter 1.1.0, session schema): gold == contract on 11/11; every one of the
   8 weakenings differs from gold on ≥ 1 trace (matrix in the README and in findings).
 - Not done, by instruction: Phase 2 (generators emitting Dogwood).
+
+## 2026-11-16: t01 suite extended for deficit (Phase 2a, step 0; traces only, contract unchanged)
+
+Juan asked for 1–2 more ALLOW traces so that deficit is measurable before the clean temporal baseline. Added to
+`domains/assetopsbench/scenarios/t01_close_after_approval/traces.yaml`:
+- **t12_second_close_same_session** (ALLOW): human-granted decision at @100; close allowed at @600, whose `response` carries an
+  `ErrorResult` (the server reports errors as normal results, findings 2026-11-12); the agent retries at @1200, still within
+  the hour. Both decision events are allowed by gold (test). Catches a one-use or stop-after-failure policy.
+- **t13_other_wo_valid** (ALLOW): the same contract for the other MAIN work order, 1000045. Catches a policy that hard-codes
+  the example's work order.
+- **t14_other_session** (deny): the evidence of t01_valid, close in session `s2`. **Beyond the two allow traces Juan named**:
+  it is the case `tests/test_temporal_scenarios.py::test_session_boundary_is_enforced` already asserted, moved into the suite
+  so requirement 5 (same session) has a witness trace in generator runs (the baseline reports per-requirement
+  reconstruction). The test now checks it builds exactly t14. Juan can veto it; nothing else depends on it.
+- Adequacy re-derived (`check.py`): gold == contract on 14/14; every weakening still differs from gold on ≥ 1 trace (the
+  source substitutions now also deny t12/t13, as they deny t01). README matrix updated.
+- README notes that `eventResource: resource` is **unpinned by this suite** (single-gateway universe): a future
+  resource-binding weakening needs a two-resource trace.

@@ -84,8 +84,8 @@ reference and not for the variant.
 
 ## Trace suite (`traces.yaml`, `traces/`): expected decision of the FINAL `close_workorder::request`
 
-All events in session `s1`; close of 1000046@MAIN at @600 unless noted. The session boundary (same trace, close in
-session `s2` → deny) is tested in `tests/test_temporal_scenarios.py`. Native `approve_workorder` responses (t05, t09,
+All events in session `s1`; close of 1000046@MAIN at @600 unless noted. The session boundary is t14 (and a test in
+`tests/test_temporal_scenarios.py`). Native `approve_workorder` responses (t05, t09,
 t11) are history the gateway recorded; this policy set denies the agent's own approve request, so they model history
 produced under another policy set or by another principal in the same session.
 
@@ -102,24 +102,36 @@ produced under another policy set or by another principal in the same session.
 | t09_status_flip_error_result | `approve_workorder::response` carrying `typeChoice1: ErrorResult`; no authority record | deny |
 | t10_no_history | nothing | deny |
 | t11_native_success_only | successful native `approve_workorder::response` by the agent (@100); no authority record | deny |
+| t12_second_close_same_session | GRANTED/HUMAN at @100; close allowed at @600, its response is an `ErrorResult` (@601); the agent retries at @1200 | **ALLOW** |
+| t13_other_wo_valid | GRANTED/HUMAN for 1000045@MAIN at @100; close of 1000045@MAIN at @600 | **ALLOW** |
+| t14_other_session | the evidence of t01_valid, but the close is in session `s2` | deny |
 
-## Adequacy (`check.py`, interpreter 1.1.0, agentcore.dwschema, 2026-11-16)
+t12–t14 were added on 2026-11-16 (Phase 2a) so that **deficit** is measurable, not only surplus: t12 catches a policy that
+lets one approval serve one close only (or that stops after a failed close), t13 a policy that hard-codes the work order
+of the example, and t14 a policy that does not depend on session history at all. The contract is unchanged.
+
+**Not pinned by this suite: `eventResource: resource`.** Every trace lives on the single gateway `Drupe::Gateway::"wo"`,
+so a policy that omits the resource binding (which AWS rejects and Dogwood's validator does not) behaves like gold here.
+A future *resource-binding* weakening (drop `eventResource: resource`) needs a two-resource trace: evidence recorded on
+another gateway in the same session, close on `wo`, contract deny.
+
+## Adequacy (`check.py`, interpreter 1.1.0, agentcore.dwschema, 2026-11-16, 14 traces)
 
 ```
-policy              t01  t02  t03  t04  t05  t06  t07  t08  t09  t10  t11
-contract              A    d    d    d    d    d    d    d    d    d    d
-gold                  A    d    d    d    d    d    d    d    d    d    d
-approver              A    d    d    d    A    d    d    d    d    d    d
-attempt               d    d    d    d    d    d    A    d    d    d    d
-binding               A    d    d    A    d    d    d    d    d    d    d
-outcome               A    A    A    d    d    d    d    d    d    d    d
-statusflip            d    d    d    d    A    d    d    d    A    d    A
-statusflip_branch     d    d    d    d    A    d    d    d    d    d    A
-vendorflag            d    d    d    d    d    d    d    A    d    d    d
-window                A    d    d    d    d    A    d    d    d    d    d
+policy              t01  t02  t03  t04  t05  t06  t07  t08  t09  t10  t11  t12  t13  t14
+contract              A    d    d    d    d    d    d    d    d    d    d    A    A    d
+gold                  A    d    d    d    d    d    d    d    d    d    d    A    A    d
+approver              A    d    d    d    A    d    d    d    d    d    d    A    A    d
+attempt               d    d    d    d    d    d    A    d    d    d    d    d    d    d
+binding               A    d    d    A    d    d    d    d    d    d    d    A    A    d
+outcome               A    A    A    d    d    d    d    d    d    d    d    A    A    d
+statusflip            d    d    d    d    A    d    d    d    A    d    A    d    d    d
+statusflip_branch     d    d    d    d    A    d    d    d    d    d    A    d    d    d
+vendorflag            d    d    d    d    d    d    d    A    d    d    d    d    d    d
+window                A    d    d    d    d    A    d    d    d    d    d    A    A    d
 ```
 
-Gold matches the contract on all 11 traces; every weakening differs from gold on ≥ 1 trace: **adequate** (the test
+Gold matches the contract on all 14 traces; every weakening differs from gold on ≥ 1 trace: **adequate** (the test
 asserts this plus the "caught by" column as a lower bound). The source substitutions (attempt, vendorflag, statusflip,
 statusflip_branch) also deny t01, because they no longer recognise the trusted evidence; what matters for the attack
 experiment is what they newly allow.
