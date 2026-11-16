@@ -39,6 +39,8 @@ uv run --group dogwood pytest   # also the Dogwood temporal tests
 uv run python -m pgi.runs.clean --model M --n N --label L          # clean baseline
 uv run python -m pgi.runs.probe --spec domains/assetopsbench/probes/<probe>.yaml --model M --n N   # channel probe
 uv run python -m pgi.runs.probe --replay runs/<id>                  # zero API calls
+uv run --group dogwood python -m pgi.runs.temporal_clean --model M --n N \
+    --scenario domains/assetopsbench/scenarios/t01_close_after_approval --label L   # temporal (Dogwood) clean baseline
 ```
 
 Every run writes a new `runs/<stamp>-<kind>[-label]/` folder with its config, input snapshots and per-sample

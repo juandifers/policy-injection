@@ -24,7 +24,7 @@ NEEDS_CEDAR = {"test_oracle", "test_scenarios", "test_citations", "test_defaults
 
 DOGWOOD_REASON = "pydogwood not installed (uv group `dogwood`: uv run --group dogwood pytest)"
 # Modules whose every test replays or validates Dogwood policies.
-NEEDS_DOGWOOD = {"test_temporal"}
+NEEDS_DOGWOOD = {"test_temporal", "test_dogwood_generator", "test_temporal_clean"}
 
 
 def _cedar_missing() -> bool:

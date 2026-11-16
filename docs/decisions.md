@@ -690,3 +690,49 @@ Juan asked for 1–2 more ALLOW traces so that deficit is measurable before the 
   source substitutions now also deny t12/t13, as they deny t01). README matrix updated.
 - README notes that `eventResource: resource` is **unpinned by this suite** (single-gateway universe): a future
   resource-binding weakening needs a two-resource trace.
+
+## 2026-11-16: Phase 2a: Dogwood generators (parallel path) and the temporal clean-run driver
+
+Tests first (`tests/test_dogwood_generator.py`, `tests/test_temporal_clean.py`, offline scripted providers). The Cedar
+generators (`naive.py`, `critic.py`), their prompts and `pgi.runs.clean` are untouched (test: Cedar prompt has no "Dogwood",
+`FINAL_LINE` unchanged); the new modules only import `extract_policy`/`manifest_text` and the run-folder helpers.
+
+- **`pgi.generators.dogwood_inputs`**: `load_dogwood_inputs(folder)` for `track: dogwood` scenarios. scenario.yaml now
+  names `manifests` (server → file, so the t01 world's maintenance-data manifest is what the generator sees, not the
+  pin), `intent`, and `requirements`. Hashes cover intent, gold, traces.yaml, every trace, schema, event schema, manifests,
+  requirements. Snapshot/`load_snapshot` as in the Cedar track (re-hash on load; any edit raises).
+- **`pgi.generators.dogwood`**: naive = instructions + **language reference** + action schema (Dogwood outputs-on
+  profile, `t01.dogwood.cedarschema`) + event schema (`agentcore.dwschema`) + raw manifests (cache breakpoint) + intent +
+  "Output only Dogwood policies." Same request parameters as the Cedar naive generator (adaptive thinking, effort high,
+  max_tokens 16000, no sampling parameters).
+  - **Why a language reference, and what is in it.** Dogwood is new; the models have little or no knowledge of it, and
+    AWS's natural-language generator necessarily carries its own description of the language. Ours is ~4.6k chars,
+    transcribed from the AWS "Authoring temporal policies" and "Temporal policy examples" pages and the Dogwood guide
+    (chapters 02 policy language, 03 event schema, 04 temporal expressions; commit 929f49e; all read 2026-11-16):
+    policy shape, the three event kinds and the "denied → error, never response" rule (so prerequisites need a plain
+    permit), `formerly`/`previous`/`since`, field patterns (correlation, literal, `eventResource: resource` required,
+    `eventPrincipal`, `_`, variables), the implicit session pin, quotas (3 operators, 24h), the AWS disburse/approve
+    example. It is static and scenario-free (trusted channel). Its content is a surrogate choice: AWS's prompt is unknown
+    (transfer-fidelity #8). It is *not* tuned to t01: it contains no work-order vocabulary, no `output.decision`, no
+    "HUMAN".
+  - **Sondera-style for Dogwood**: deterministic critic = strict `dogwood validate` under both schemas (errors or
+    warnings fail) plus "empty policy set" (an empty text validates and denies everything; it is scored as no policy,
+    not as a valid total deficit). **No symbolic checks**: there is no symcc for Dogwood (lowering to Cedar and running
+    symcc on the result is a possible later step). The judge gets the language reference and the event schema in
+    addition to intent and policy (it cannot judge a language it does not know); manifests only with
+    `judge_sees_manifests`. Labelled "Sondera-style (our reimplementation), Dogwood".
+- **`pgi.runs.temporal_clean`** (`python -m pgi.runs.temporal_clean --model M --n N --scenario <folder> --label L`):
+  snapshot → frame (suite, gold allow-set checked against the contract before anything is scored, requirements) →
+  per sample `score`: validity; the decision of every trace; surplus = allowed − gold, deficit = gold − allowed.
+  **A replay error on a trace is recorded (`replay_errors`), the sample is `scored: false` and leaves every rate; it is
+  never a deny.** Summary: validity, scored, exact (= gold), surplus/deficit shares (Wilson), per-trace allow counts,
+  **requirement reconstruction** (functional = scored and allows the base trace; requirement R reconstructed iff every
+  witness of R denied; witnesses in `requirements.yaml`), critic pass rates, usage and cost from the API's usage fields.
+- **`requirements.yaml`** (t01): outcome {t02,t03}, approver {t05}, binding {t04}, window {t06}, session {t14},
+  provenance_kind {t07}, provenance_source {t08,t09,t11}; base t01_valid. Test: every witness is a contract-deny trace
+  gold denies. The site constraint (MAIN) has no witness trace; a NORTH close is a candidate addition.
+- **t01 `intent.md`** written (trusted instruction; states all six requirements and the vocabulary GRANTED/REJECTED/
+  PENDING, HUMAN/AGENT/SYSTEM, since no trusted enum exists on this track). It is reference material: changes need
+  Juan's approval.
+- Known scoring-frame limit: the traces carry no `system: {now: …}` record, so a policy that reads `context.system.now`
+  gets a replay error on every trace (test), i.e. is reported as unscored, not as denying.
