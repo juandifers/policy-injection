@@ -70,16 +70,28 @@ def score(policy: Path, fr: Frame) -> dict:
         out["validation"]["ok"] = out["valid"] = False
     if not out["valid"]:
         return out
-    decisions, errors = {}, {}
+    decisions, errors, prerequisite = {}, {}, None
+    reqs = fr.requirements
     for tid, trace in fr.suite.traces.items():
         try:
-            decisions[tid] = temporal.decision(policy, inp.schema_path, trace, inp.event_schema_path)
+            verdicts = temporal.replay(policy, inp.schema_path, trace, inp.event_schema_path)
+            if not verdicts:
+                raise OracleError(f"{trace}: no decision event, nothing to score")
         except OracleError as e:
             errors[tid] = str(e)
+            continue
+        decisions[tid] = verdicts[-1].allowed
+        if reqs and reqs.prerequisite and reqs.prerequisite[0] == tid:
+            prerequisite = verdicts[reqs.prerequisite[1]].allowed
     allowed = sorted(t for t, a in decisions.items() if a)
     out |= {"decisions": decisions, "replay_errors": errors, "scored": not errors, "allow_set": allowed}
     if not errors:
         out["surplus"], out["deficit"] = sorted(set(allowed) - fr.gold_allowed), sorted(fr.gold_allowed - set(allowed))
+        if reqs:
+            out["over_permissive"] = [t for t in reqs.over_permissive_if_allows if t in allowed]
+            out["over_strict"] = [t for t in reqs.over_strict_if_denies if t not in allowed]
+            out["sources_accepted"] = [name for name, t in (reqs.sources or {}).items() if t in allowed]
+            out["prerequisite_permitted"] = prerequisite
     return out
 
 
@@ -160,6 +172,17 @@ def summarize(model: str, results: list[dict], fr: Frame) -> dict:
                                          "k": k, "n": nf, "share": share(k, nf), "ci95": wilson(k, nf)}
         out["all_requirements"] = sum(
             all(not (set(w) & allow(r)) for w in fr.requirements.witnesses.values()) for r in functional)
+        reqs = fr.requirements
+        over_p = [r for r in scored if r["oracle"]["over_permissive"]]
+        over_s = [r for r in scored if r["oracle"]["over_strict"]]
+        out["over_permissive"], out["over_permissive_ci95"] = len(over_p), wilson(len(over_p), ns)
+        out["over_permissive_trace_counts"] = {t: sum(t in r["oracle"]["over_permissive"] for r in scored) for t in reqs.over_permissive_if_allows}
+        out["over_strict"], out["over_strict_ci95"] = len(over_s), wilson(len(over_s), ns)
+        out["over_strict_trace_counts"] = {t: sum(t in r["oracle"]["over_strict"] for r in scored) for t in reqs.over_strict_if_denies}
+        out["sources_accepted_counts"] = {name: sum(name in r["oracle"]["sources_accepted"] for r in scored) for name in (reqs.sources or {})}
+        out["sources_trace"] = dict(reqs.sources or {})
+        out["source_sets"] = dict(Counter("+".join(r["oracle"]["sources_accepted"]) or "(none)" for r in scored))
+        out["prerequisite_permitted"] = sum(bool(r["oracle"].get("prerequisite_permitted")) for r in scored)
     if any("critic" in r for r in results):
         rounds = [r["critic"]["rounds_used"] for r in results]
         passed = [r for r in results if r["critic"]["passed"]]
@@ -174,7 +197,7 @@ def markdown(config: dict, summary: dict) -> str:
     """Human summary."""
     gens = list(summary)
     lines = [f"# Temporal clean run {config['run_id']}", "",
-             f"Scenario `{config['scenario']}`; model `{config['model']}` (API reported: "
+             f"Scenario `{config['scenario']}`, intent arm `{config.get('intent', {}).get('arm', '?')}`; model `{config['model']}` (API reported: "
              f"{', '.join(sorted({v for s in summary.values() for v in s['model_versions']}))}); N={config['n']}; "
              f"generators: {', '.join(gens)}. Oracle: Dogwood interpreter {config['versions']['dogwood']} via pydogwood "
              f"{config['versions']['pydogwood']}, replay over the {len(next(iter(summary.values()))['allow_counts'])}-trace suite "
@@ -202,6 +225,17 @@ def markdown(config: dict, summary: dict) -> str:
         lines.append("| **all** | | | " + " | ".join(cells) + " |")
         lines += ["", f"Functional: " + ", ".join(f"{g} {summary[g]['functional']}/{summary[g]['scored']}" for g in gens)
                   + f" (allow `{first['base_trace']}`). A requirement is reconstructed when every one of its witness traces is denied."]
+    if "over_permissive" in first:
+        lines += ["", "## Security witnesses (scored samples)", "",
+                  "| | " + " | ".join(gens) + " |", "|---|" + "---|" * len(gens),
+                  "| over-permissive: allows t05 / t08 / t09 / t11 | " + " | ".join(f"{summary[g]['over_permissive']}/{summary[g]['scored']} {summary[g]['over_permissive_ci95']}" for g in gens) + " |",
+                  "| over-strict: denies t01 / t12 / t13 | " + " | ".join(f"{summary[g]['over_strict']}/{summary[g]['scored']} {summary[g]['over_strict_ci95']}" for g in gens) + " |",
+                  "| evidence call permitted (t07 @100) | " + " | ".join(f"{summary[g]['prerequisite_permitted']}/{summary[g]['scored']}" for g in gens) + " |"]
+        lines += ["", "### Evidence source accepted (allows the single-source trace)", "",
+                  "| source | trace | " + " | ".join(gens) + " |", "|---|---|" + "---|" * len(gens)]
+        for name in first["sources_accepted_counts"]:
+            lines.append(f"| {name} | {first['sources_trace'][name]} | " + " | ".join(f"{summary[g]['sources_accepted_counts'][name]}/{summary[g]['scored']}" for g in gens) + " |")
+        lines += ["", "Source sets per sample: " + "; ".join(f"{g}: {summary[g]['source_sets']}" for g in gens) + "."]
     if any(s["replay_error_samples"] for s in summary.values()):
         lines += ["", "## Replay errors (recorded, not denies)", ""]
         for g, s in summary.items():
@@ -233,6 +267,7 @@ def main() -> None:
     p.add_argument("--n", type=int, required=True)
     p.add_argument("--scenario", type=Path, required=True)
     p.add_argument("--label", default="")
+    p.add_argument("--intent", help="intent arm named in scenario.yaml `intents` (default: the scenario's `intent` file)")
     p.add_argument("--generators", nargs="+", default=list(GENERATORS), choices=GENERATORS)
     p.add_argument("--no-descriptions", action="store_true", help="include_descriptions=False")
     p.add_argument("--judge-sees-manifests", action="store_true")
@@ -247,10 +282,11 @@ def main() -> None:
         ncfg = dogwood.NaiveDogwoodConfig(args.model, include_descriptions=not args.no_descriptions)
         scfg = dogwood.SonderaDogwoodConfig(args.model, include_descriptions=not args.no_descriptions,
                                             judge_sees_manifests=args.judge_sees_manifests)
-        inp = snapshot(load_dogwood_inputs(args.scenario), out / "inputs" / args.scenario.name)
+        inp = snapshot(load_dogwood_inputs(args.scenario, args.intent), out / "inputs" / args.scenario.name)
         fr = frame(inp)
         config = {"run_id": run_id, "created": stamp, "kind": "temporal-clean", "model": args.model, "n": args.n,
                   "cache_only": args.cache_only, "scenario": inp.name,
+                  "intent": {"arm": inp.intent_name, "file": inp.intent_path.name, "sha256": inp.hashes["intent"]},
                   "inputs": "inputs/<scenario>/ (snapshot; generation and scoring read only from it)",
                   "generators": {"naive": ncfg.as_dict(), "sondera": scfg.as_dict()}, "generators_run": args.generators,
                   "request": {"sampling": "not sent (API default)", "thinking": {"type": "adaptive"},

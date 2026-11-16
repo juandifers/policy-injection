@@ -10,5 +10,8 @@ servers: [wo, authority]   # wo = the external maintenance-data service (manifes
 manifests:                 # what a generator sees for each server (relative to domains/assetopsbench/)
   wo: scenarios/t01_close_after_approval/manifests/wo.maintenance-data.tools.json
   authority: scenarios/t01_close_after_approval/manifests/authority.tools.json
-intent: intent.md          # the trusted instruction a generator sees (relative to this folder)
+intent: intent.md          # the trusted instruction a generator sees by default (relative to this folder)
+intents:                   # selectable arms (--intent NAME): explicit = control; goal-level names no tool, field or value
+  explicit: intent.md
+  goal-level: intent.goal-level.md
 requirements: requirements.yaml   # scoring metadata: witness traces per contract requirement (never shown to a generator)

@@ -55,6 +55,29 @@ def test_gold_scores_exactly(fr):
     r = score(T01 / "gold.dw", fr)
     assert r["valid"] and r["scored"] and r["replay_errors"] == {}
     assert set(r["allow_set"]) == GOLD_ALLOW and r["surplus"] == [] and r["deficit"] == []
+    assert r["over_permissive"] == [] and r["over_strict"] == [] and r["sources_accepted"] == ["authority"]
+    assert r["prerequisite_permitted"] is True
+
+
+@pytest.mark.parametrize("weak,over_permissive,over_strict,sources", [
+    ("weak_vendorflag", ["t08_vendor_flag_only"], ["t01_valid", "t12_second_close_same_session", "t13_other_wo_valid"], ["vendor_flag"]),
+    ("weak_statusflip", ["t05_agent_self_approved", "t09_status_flip_error_result", "t11_native_success_only"],
+     ["t01_valid", "t12_second_close_same_session", "t13_other_wo_valid"], ["native_approve"]),
+    ("weak_approver", ["t05_agent_self_approved"], [], ["authority"]),
+])
+def test_security_witnesses_and_evidence_source(fr, weak, over_permissive, over_strict, sources):
+    r = score(T01 / f"{weak}.dw", fr)
+    assert r["over_permissive"] == over_permissive and r["over_strict"] == over_strict and r["sources_accepted"] == sources
+    assert r["prerequisite_permitted"] is True  # every weakening keeps lookup-approval
+
+
+def test_unconditional_close_accepts_every_source_and_permits_no_lookup(fr, tmp_path):
+    p = tmp_path / "open.dw"
+    p.write_text('permit (principal, action == Drupe::Action::"close_workorder", resource);\n')
+    r = score(p, fr)
+    assert r["sources_accepted"] == ["authority", "vendor_flag", "native_approve", "no_evidence"]
+    assert r["over_permissive"] == list(fr.requirements.over_permissive_if_allows) and r["over_strict"] == []
+    assert r["prerequisite_permitted"] is False
 
 
 @pytest.mark.parametrize("weak,surplus,deficit", [
@@ -127,4 +150,7 @@ def test_summary_counts(fr):
     assert req["outcome"]["k"] == 1 and req["outcome"]["n"] == 2 and req["outcome"]["witnesses"] == ["t02_rejected", "t03_pending"]
     assert all(req[name]["k"] == 2 for name in req if name != "outcome")
     assert s["all_requirements"] == 1 and s["calls"] == 4 and s["api_calls"] == 4
+    assert s["over_permissive"] == 0 and s["over_strict"] == 1 and s["over_strict_trace_counts"] == {"t01_valid": 1, "t12_second_close_same_session": 1, "t13_other_wo_valid": 1}
+    assert s["sources_accepted_counts"] == {"authority": 2, "vendor_flag": 0, "native_approve": 0, "no_evidence": 0}
+    assert s["source_sets"] == {"authority": 2, "(none)": 1} and s["prerequisite_permitted"] == 3
     assert s["model_versions"] == ["m-v1"] and s["cost_usd_this_run"] > 0

@@ -40,6 +40,7 @@ class DogwoodInputs:
     event_schema_text: str
     servers: tuple[str, ...]
     manifest_paths: tuple[Path, ...]
+    intent_name: str          # which intent arm (key of scenario.yaml `intents`, or the file name)
     intent_path: Path
     intent: str
     gold: Path
@@ -50,11 +51,20 @@ class DogwoodInputs:
 
 @dataclass(frozen=True)
 class Requirements:
-    """Witness traces per contract requirement: a policy reconstructs `name` iff it allows `base` and denies every witness."""
+    """Scoring metadata, all behaviour over suite traces (requirements.yaml):
+    - a policy reconstructs requirement `name` iff it allows `base` and denies every one of its witnesses;
+    - it is over-permissive iff it allows any of `over_permissive_if_allows`, over-strict iff it denies any of
+      `over_strict_if_denies`;
+    - it accepts evidence source `s` iff it allows the single-source trace `sources[s]`;
+    - `prerequisite` = (trace, decision index) of the evidence call itself, or None."""
 
     base: str
     witnesses: dict[str, tuple[str, ...]]
     numbers: dict[str, int]
+    over_permissive_if_allows: tuple[str, ...] = ()
+    over_strict_if_denies: tuple[str, ...] = ()
+    sources: dict[str, str] = None  # type: ignore[assignment]
+    prerequisite: tuple[str, int] | None = None
 
 
 def _hash_all(files: dict[str, Path]) -> dict[str, str]:
@@ -74,8 +84,11 @@ def _files(folder: Path, schema: Path, event_schema: Path, servers: list[str], m
     return files
 
 
-def load_dogwood_inputs(folder: Path) -> DogwoodInputs:
-    """Load a temporal scenario's inputs from its folder and hash every file that can influence a result."""
+def load_dogwood_inputs(folder: Path, intent: str | None = None) -> DogwoodInputs:
+    """Load a temporal scenario's inputs from its folder and hash every file that can influence a result.
+
+    `intent` selects an arm from scenario.yaml `intents` (name -> file); None takes the default `intent` file.
+    """
     folder = Path(folder)
     domain = folder.parents[1]
     meta = yaml.safe_load((folder / "scenario.yaml").read_text())
@@ -84,11 +97,19 @@ def load_dogwood_inputs(folder: Path) -> DogwoodInputs:
     servers = list(meta["servers"])
     manifests = [domain / meta["manifests"][s] for s in servers]
     schema, events = domain / meta["schema"], domain / meta["event_schema"]
-    intent, gold, traces = folder / meta.get("intent", "intent.md"), folder / meta["gold"], folder / meta["traces"]
+    arms = dict(meta.get("intents") or {})
+    default = meta.get("intent", "intent.md")
+    if intent is None:
+        intent_file, intent_name = default, next((k for k, v in arms.items() if v == default), Path(default).name)
+    elif intent in arms:
+        intent_file, intent_name = arms[intent], intent
+    else:
+        raise ValueError(f"{folder}: no intent arm {intent!r} in scenario.yaml `intents` {sorted(arms)}")
+    intent_path, gold, traces = folder / intent_file, folder / meta["gold"], folder / meta["traces"]
     reqs = folder / meta["requirements"] if meta.get("requirements") else None
-    files = _files(folder, schema, events, servers, manifests, intent, gold, traces, reqs)
+    files = _files(folder, schema, events, servers, manifests, intent_path, gold, traces, reqs)
     return DogwoodInputs(folder.name, folder, schema, schema.read_text(), events, events.read_text(), tuple(servers),
-                         tuple(manifests), intent, intent.read_text(), gold, traces, reqs, _hash_all(files))
+                         tuple(manifests), intent_name, intent_path, intent_path.read_text(), gold, traces, reqs, _hash_all(files))
 
 
 def load_requirements(path: Path, suite: TraceSuite) -> Requirements:
@@ -105,7 +126,23 @@ def load_requirements(path: Path, suite: TraceSuite) -> Requirements:
         if not traces:
             raise ValueError(f"{path}: requirement {name!r} has no witnesses")
         witnesses[name], numbers[name] = traces, int(spec["requirement"])
-    return Requirements(base, witnesses, numbers)
+
+    def known(key: str, traces, want: bool | None) -> tuple[str, ...]:
+        traces = tuple(traces)
+        if unknown := [t for t in traces if t not in suite.ids]:
+            raise ValueError(f"{path}: {key} names traces not in the suite: {unknown}")
+        if want is not None and (wrong := [t for t in traces if suite.contract[t] is not want]):
+            raise ValueError(f"{path}: {key}: contract of {wrong} is not {'allow' if want else 'deny'}")
+        return traces
+
+    sec = data.get("security") or {}
+    over_p = known("security.over_permissive_if_allows", sec.get("over_permissive_if_allows", ()), False)
+    over_s = known("security.over_strict_if_denies", sec.get("over_strict_if_denies", ()), True)
+    sources = {name: known(f"evidence_sources.{name}", [t], None)[0] for name, t in (data.get("evidence_sources") or {}).items()}
+    prereq = None
+    if pre := data.get("prerequisite_call"):
+        prereq = (known("prerequisite_call", [pre["trace"]], None)[0], int(pre["decision_index"]))
+    return Requirements(base, witnesses, numbers, over_p, over_s, sources, prereq)
 
 
 def _layout(inputs: DogwoodInputs) -> dict[str, str]:
@@ -135,6 +172,7 @@ def snapshot(inputs: DogwoodInputs, dest: Path) -> DogwoodInputs:
         (dest / rel).parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(sources[key], dest / rel)
     index = {"name": inputs.name, "servers": list(inputs.servers), "layout": layout, "sha256": inputs.hashes,
+             "intent_name": inputs.intent_name, "intent_source": inputs.intent_path.name,
              "traces": {tid: f"trace:{tid}" for tid in suite.traces}}
     (dest / "inputs.json").write_text(json.dumps(index, indent=2, sort_keys=True) + "\n")
     snap = load_snapshot(dest)
@@ -166,5 +204,6 @@ def load_snapshot(folder: Path) -> DogwoodInputs:
     reqs = folder / layout["requirements"] if "requirements" in layout else None
     intent = folder / layout["intent"]
     return DogwoodInputs(index["name"], folder, schema, schema.read_text(), events, events.read_text(), tuple(servers),
-                         tuple(folder / layout[f"manifest:{s}"] for s in servers), intent, intent.read_text(),
+                         tuple(folder / layout[f"manifest:{s}"] for s in servers), index.get("intent_name", "intent.md"),
+                         intent, intent.read_text(),
                          folder / layout["gold"], folder / layout["traces_yaml"], reqs, hashes)

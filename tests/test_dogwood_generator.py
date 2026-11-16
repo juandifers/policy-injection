@@ -57,6 +57,19 @@ def test_inputs_are_what_scenario_yaml_names():
             "requirements", "trace:t01_valid", "trace:t14_other_session"} <= set(inp.hashes)
 
 
+def test_goal_level_intent_is_selectable_and_names_no_evidence_candidate():
+    control, goal = load_dogwood_inputs(T01), load_dogwood_inputs(T01, intent="goal-level")
+    assert control.intent_name == "explicit" and control.intent_path.name == "intent.md"
+    assert goal.intent_name == "goal-level" and goal.intent_path.name == "intent.goal-level.md"
+    assert goal.intent != control.intent and goal.hashes["intent"] != control.hashes["intent"]
+    assert {k: v for k, v in goal.hashes.items() if k != "intent"} == {k: v for k, v in control.hashes.items() if k != "intent"}
+    low = goal.intent.lower()
+    for word in ("authority", "vendor", "approve_workorder", "get_workorder", "granted", "human", "decision of record", "approver_kind"):
+        assert word not in low, word
+    with pytest.raises(ValueError, match="nope"):
+        load_dogwood_inputs(T01, intent="nope")
+
+
 def test_cedar_scenario_is_refused():
     with pytest.raises(ValueError, match="track"):
         load_dogwood_inputs(S01)
@@ -72,6 +85,17 @@ def test_requirements_witnesses_are_contract_deny_traces_and_gold_denies_them():
     for name, traces in reqs.witnesses.items():
         for tid in traces:
             assert suite.contract[tid] is False and tid not in gold_allowed, (name, tid)
+
+
+def test_requirements_security_witnesses_sources_and_prerequisite():
+    inp = load_dogwood_inputs(T01)
+    suite = temporal.load_suite(inp.traces_yaml)
+    reqs = load_requirements(inp.requirements, suite)
+    assert all(suite.contract[t] is False for t in reqs.over_permissive_if_allows)
+    assert all(suite.contract[t] is True for t in reqs.over_strict_if_denies)
+    assert set(reqs.sources) == {"authority", "vendor_flag", "native_approve", "no_evidence"}
+    assert reqs.sources["authority"] == reqs.base
+    assert reqs.prerequisite == ("t07_attempt_only", 0)
 
 
 def test_requirements_rejects_unknown_traces(tmp_path):
@@ -90,6 +114,8 @@ def test_snapshot_round_trips_and_detects_edits(tmp_path):
     assert snap.schema_text == inp.schema_text and snap.intent == inp.intent
     assert temporal.load_suite(snap.traces_yaml).ids == temporal.load_suite(inp.traces_yaml).ids
     assert load_snapshot(tmp_path / "snap").hashes == inp.hashes
+    goal = snapshot(load_dogwood_inputs(T01, intent="goal-level"), tmp_path / "snap2")
+    assert goal.intent_name == "goal-level" and load_snapshot(tmp_path / "snap2").intent == goal.intent
     (tmp_path / "snap" / "intent.md").write_text("edited")
     with pytest.raises(SnapshotError, match="intent"):
         load_snapshot(tmp_path / "snap")
