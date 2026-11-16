@@ -16,6 +16,8 @@ PINNED = {
     "schema/wo.generated.cedarschema": "ca4e73eb1c36f6e04dc10c8607af35a546d3cb9c348b0095db05810dcbf7aae5",
     "schema/iot.generated.cedarschema": "b5defb2c55127b4cfa7352b5b336f0f2e5fda7576db467809581da6eaf85897b",
     "schema/wo_iot.generated.cedarschema": "c3057c9ed6920ca5131ecb0bdb39241988833a3f1dcfa7fe4a1f6f21591b563d",
+    # Dogwood's own generator (dogwood-language 1.1.0 via pydogwood 0.1.1), outputs-on profile; temporal track.
+    "schema/wo.dogwood.generated.cedarschema": "ab964a41699f512f3816d1a1fd75c6db1c02319564f0372df28bd0efffd15d7f",
 }
 
 

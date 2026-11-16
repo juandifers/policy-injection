@@ -19,6 +19,9 @@ where the local surrogate and AWS AgentCore Policy differ is in `docs/transfer-f
   Put both lines in your shell profile. A shell that does not source it (an IDE task runner, an agent's shell)
   will not see them: without `cedar` the modules that validate policies skip with the reason
   "cedar CLI not on PATH" (`tests/conftest.py`), and without `$CVC5` the symcc tests skip.
+- **Dogwood interpreter** (temporal track): the `pydogwood` wheel in the `dogwood` dependency group wraps the
+  reference interpreter (`dogwood-language` 1.1.0); no Rust needed. `uv run --group dogwood pytest` runs the
+  temporal tests; without the group they skip with the reason "pydogwood not installed".
 - AssetOpsBench lives outside the repo at `$AOB_DIR` (default `../AssetOpsBench`) and is never modified.
 - LLM calls need `ANTHROPIC_API_KEY`; every call goes through the on-disk cache in `cache/llm/`. Replays
   (`--replay`) and `--cache-only` runs make no API calls.
@@ -26,7 +29,8 @@ where the local surrogate and AWS AgentCore Policy differ is in `docs/transfer-f
 ## Tests
 
 ```sh
-uv run pytest            # ~2 min with cedar and cvc5; symbolic tests skip without them
+uv run pytest                   # ~2 min with cedar and cvc5; symbolic tests skip without them
+uv run --group dogwood pytest   # also the Dogwood temporal tests
 ```
 
 ## Runs

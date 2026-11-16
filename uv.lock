@@ -317,6 +317,9 @@ dependencies = [
 dev = [
     { name = "pytest" },
 ]
+dogwood = [
+    { name = "pydogwood" },
+]
 schemagen = [
     { name = "cedar-policy-mcp-schema-generator" },
 ]
@@ -330,6 +333,7 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [{ name = "pytest", specifier = ">=9.2.0" }]
+dogwood = [{ name = "pydogwood", specifier = "==0.1.1" }]
 schemagen = [{ name = "cedar-policy-mcp-schema-generator", specifier = "==0.7.0" }]
 
 [[package]]
@@ -463,6 +467,29 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/9e/3a/d405a50e02ea81cd95e93fc97f43d351eeaa1707c28aa6fb58a9f1c1efa9/pydantic_core-2.50.4-graalpy313-graalpy253_313_native-macosx_11_0_arm64.whl", hash = "sha256:71e03d2ea1a221d020cfc5b6cc8bbbedef23a06704c70fcf4d0afb42965b22d1", size = 2049324, upload-time = "2026-11-05T09:15:02.379Z" },
     { url = "https://files.pythonhosted.org/packages/8f/3b/03e7992115e17cae4131ecd71aadb8fd5e4a04cc2aead72c3c27e9b453d1/pydantic_core-2.50.4-graalpy313-graalpy253_313_native-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:09450778e3ab58d3f565899fcfbf6c82926e31af29e28e799d1d50941316e0cb", size = 2119802, upload-time = "2026-11-05T09:15:03.901Z" },
     { url = "https://files.pythonhosted.org/packages/e3/d5/b76fc647e473377ca6e693c21549ee3a4a7677e4962c28ae4659337c5114/pydantic_core-2.50.4-graalpy313-graalpy253_313_native-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:4eb15be588407148ef5937dc8d9256a71f6b115e6cddadb7aa20b6ee384680dc", size = 2280639, upload-time = "2026-11-05T09:15:05.374Z" },
+]
+
+[[package]]
+name = "pydogwood"
+version = "0.1.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/bb/76/83600f483bc7543b0bd835d6ccb59efae94e625ea84f7ae8aaa43fc41c41/pydogwood-0.1.1.tar.gz", hash = "sha256:3fd0f52cb97b4d21ab9c0ffb918c1be9f86942558930cfc49d4869d454a46de4", size = 37791, upload-time = "2026-11-08T22:34:26.072Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b4/ef/65ba59c9b85f52455ec8d61877132bb3f8b3a07d8ab60c41b997a3743b08/pydogwood-0.1.1-cp314-cp314t-macosx_10_12_x86_64.whl", hash = "sha256:70769261496e0c272e7e46e0fc9c1f8ec24ce719f64dc0f2c6ea2a0c5a6099e0", size = 6775235, upload-time = "2026-11-08T22:33:49.343Z" },
+    { url = "https://files.pythonhosted.org/packages/c7/bb/c86ceabc9fe910facd7ba95e54347b4f47e7b5ccf93adb736c667f8fff15/pydogwood-0.1.1-cp314-cp314t-macosx_11_0_arm64.whl", hash = "sha256:7e0205e4dee44bdcc4f0d0305d25049c0ead1c1938e0f103c7de752ce9809b1f", size = 6553608, upload-time = "2026-11-08T22:33:51.382Z" },
+    { url = "https://files.pythonhosted.org/packages/e1/e6/3d474d1d7a42c3a32a13f8d7ae45e38186c77a6ae59c09e2ca90fae542e5/pydogwood-0.1.1-cp314-cp314t-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:50b4317f200a92907f19ce51d21cecbbad2f9141f3884b9a35265239c55d04c2", size = 7362596, upload-time = "2026-11-08T22:33:53.082Z" },
+    { url = "https://files.pythonhosted.org/packages/e0/8b/f1c52fef14e42ef30fecc5ddc9917653e7c38b5f99710a046a9af8cfe940/pydogwood-0.1.1-cp314-cp314t-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:311df803528cd4578dda1bb836e73efcf04b590ee12879ff61fd9e174c5d4829", size = 7380175, upload-time = "2026-11-08T22:33:55.067Z" },
+    { url = "https://files.pythonhosted.org/packages/75/fc/b834d5e991ecfaa332956bde91ef7388605fc7390d76f25c698c73cbfec8/pydogwood-0.1.1-cp314-cp314t-win_amd64.whl", hash = "sha256:8d3c5e917a5db8dea343883d0dd761c8f4d2759f1fd84203798af6744607ec23", size = 6541124, upload-time = "2026-11-08T22:33:56.957Z" },
+    { url = "https://files.pythonhosted.org/packages/6f/d4/801bc1a68a660904eaab7ebf8f3d339df56db3e254eb3aa17ed4ee2b6dd8/pydogwood-0.1.1-cp315-cp315t-macosx_10_12_x86_64.whl", hash = "sha256:aa989d1bddd51cc40847fa3b48fc6cff78489c629c45e516bef7c5b8f2c3728b", size = 6775740, upload-time = "2026-11-08T22:33:58.666Z" },
+    { url = "https://files.pythonhosted.org/packages/b5/56/db290b4fc0c6c3e00dbccd5417284b730ebe5258ac85ec0452e9345187c8/pydogwood-0.1.1-cp315-cp315t-macosx_11_0_arm64.whl", hash = "sha256:2d026c65393db31832c6cc7c640b7b28a1047f9240bd6307869aed4f492faf92", size = 6548667, upload-time = "2026-11-08T22:34:00.396Z" },
+    { url = "https://files.pythonhosted.org/packages/8e/b5/9c04d975ea6a0c7bdc5147dcd856f900381e774ab0cc14900bf05d579ffb/pydogwood-0.1.1-cp315-cp315t-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:e679a2397c3d21fd5ec377f5bfb87b41e43cb5900c56c0041b2ebc70d56a89cf", size = 7363651, upload-time = "2026-11-08T22:34:02.294Z" },
+    { url = "https://files.pythonhosted.org/packages/13/c3/6f8cf860e3db7415ecae6d908e3f4a68af084d628c967be2ad412076464d/pydogwood-0.1.1-cp315-cp315t-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:ab74ffe1e24f49f5ea10102989825e6f266c48e6ea88cce30956c63caea68832", size = 7381703, upload-time = "2026-11-08T22:34:03.954Z" },
+    { url = "https://files.pythonhosted.org/packages/b2/19/14bdfb899e61f02320cb2204105982a5f890dd48441156528a541e1dd8d6/pydogwood-0.1.1-cp315-cp315t-win_amd64.whl", hash = "sha256:1ace649d97b891b8c7fb4b2b05a954d76d0ec3a62201cf34102b47478da288f4", size = 6542435, upload-time = "2026-11-08T22:34:06.589Z" },
+    { url = "https://files.pythonhosted.org/packages/a2/d2/2cef347a07c5fd92ce67b3fa2adaa778adf7bec2fad34fac6061cd7fd917/pydogwood-0.1.1-cp39-abi3-macosx_10_12_x86_64.whl", hash = "sha256:b28d269350257dbbccd165f6bab1226e80af8319d70b65141c7c0e576119e39e", size = 6774756, upload-time = "2026-11-08T22:34:08.48Z" },
+    { url = "https://files.pythonhosted.org/packages/fe/b3/7e047ab73c9cb8d2507253937bcb403181838bfc2ce1af92e7ff8023db04/pydogwood-0.1.1-cp39-abi3-macosx_11_0_arm64.whl", hash = "sha256:14a5c70d1328f7dd8544ef086d0b2c6275c8ffab57c50f31146ae2854123697a", size = 6550930, upload-time = "2026-11-08T22:34:10.431Z" },
+    { url = "https://files.pythonhosted.org/packages/8a/51/9fe356f57e518f370cb16241b19c6531ba36cd78990617b40dc6c284ccb9/pydogwood-0.1.1-cp39-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:39068bb1cc8d795c057d1ed2298af190d62b6367157745e7a95366d191b24803", size = 7365383, upload-time = "2026-11-08T22:34:12.169Z" },
+    { url = "https://files.pythonhosted.org/packages/dd/25/5abdb5754321d4f585c87498dc73b166b3bdba66578958228eed3c0233ef/pydogwood-0.1.1-cp39-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:2ae8b39fcbed6ab245d38833cd0bf691c08310fee98284f2fd138011d7049774", size = 7382443, upload-time = "2026-11-08T22:34:14.102Z" },
+    { url = "https://files.pythonhosted.org/packages/23/52/3afcd75a1014ffafde926b024a3b0540a3a84eb73fdce3720904834f056d/pydogwood-0.1.1-cp39-abi3-win_amd64.whl", hash = "sha256:bacf6e8003d557729f5458bbcf9160c32af90417a83ddafedd40a985bdee460f", size = 6542527, upload-time = "2026-11-08T22:34:15.873Z" },
 ]
 
 [[package]]

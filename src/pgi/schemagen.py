@@ -34,21 +34,48 @@ CONFIG = {
 }
 
 
+# Second profile, for the temporal (Dogwood) track: Dogwood's own MCP generator (`dogwood schema mcp`,
+# crate dogwood-language 1.1.0 via pydogwood). These are its fixed defaults, recorded here for the
+# transfer-fidelity ledger; pydogwood.schema_mcp exposes no options, so nothing is passed. The template
+# is Dogwood's embedded Drupe stub (namespace Drupe, principal User, resource Gateway), not ours.
+DOGWOOD_PROFILE = {
+    "include_outputs": True,            # context.output from each tool's outputSchema (temporal predicates read output.*)
+    "encode_numbers_as_decimal": True,  # JSON number -> Cedar decimal (CONFIG above: opaque Number entity)
+    "flatten_namespaces": True,         # Drupe::Action::"<tool>"
+}
+
+
 class SchemaGenError(Exception):
     """Schema generation or linking failed."""
 
 
-def generate(stub: Path, manifests: list[Path]) -> str:
-    """The generated .cedarschema text for the tools of these manifests, in order."""
-    from cedar_mcp_schema_generator import generate_schema_or_raise  # dependency group `schemagen`
-
+def _tools(manifests: list[Path]) -> list[dict]:
+    """The tools of these `{"tools": [...]}` manifests, concatenated in order; tool names must be unique."""
     tools = []
     for path in manifests:
         tools += json.loads(Path(path).read_text())["tools"]
     names = [t["name"] for t in tools]
     if len(names) != len(set(names)):
         raise SchemaGenError(f"tool names collide across manifests: {sorted({n for n in names if names.count(n) > 1})}")
-    return generate_schema_or_raise(Path(stub).read_text(), json.dumps({"result": {"tools": tools}}), config=CONFIG)["schema"]
+    return tools
+
+
+def generate(stub: Path, manifests: list[Path]) -> str:
+    """The generated .cedarschema text for the tools of these manifests, in order (Cedar track, CONFIG)."""
+    from cedar_mcp_schema_generator import generate_schema_or_raise  # dependency group `schemagen`
+
+    return generate_schema_or_raise(Path(stub).read_text(), json.dumps({"result": {"tools": _tools(manifests)}}),
+                                    config=CONFIG)["schema"]
+
+
+def generate_dogwood(manifests: list[Path]) -> str:
+    """The Dogwood-generated .cedarschema text for these manifests' tools (temporal track, DOGWOOD_PROFILE)."""
+    import pydogwood  # dependency group `dogwood`
+
+    try:
+        return pydogwood.schema_mcp(json.dumps({"result": {"tools": _tools(manifests)}}))
+    except pydogwood.DogwoodError as e:
+        raise SchemaGenError(f"dogwood schema mcp failed: {e}") from e
 
 
 def _cedar(*args: str) -> str:

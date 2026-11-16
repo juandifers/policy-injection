@@ -576,3 +576,59 @@ Measurement-path changes, tests first. No model calls, no AWS; pins untouched (a
 - **Model choice:** `claude-sonnet-5-5` because it is the N=20 baseline's model, so the clean arm is the baseline itself via the cache (verified: 40/40 clean-arm cache hits, policies byte-identical).
 - **No multi-probe batch yet.** Each spec was run by hand with its own run folder; a batch runner is still not wired.
 - **Qualitative note in findings.** The prose in `response.json` saying the model noticed and overrode the vendor sentence is reported as an observation, with counts of samples that mention it, not as a scored rate: it is text, and the project compares behavior. Results: `docs/findings.md`, 2026-11-16 entry.
+
+## 2026-11-16: Temporal track, Phase 1: Dogwood toolchain pinned, oracle backend, schema profile
+
+No LLM or API calls; nothing in the Cedar track (scenarios, `pgi.schemagen.CONFIG`, pinned schemas) changed.
+
+- **Interpreter: `pydogwood` 0.1.1 (PyPI wheel), not the `dogwood` CLI built from source.**
+  - The CLI needs a Rust toolchain, which this machine does not have and which was deliberately not installed
+    (2026-11-12). The wheel is the same route taken for the Cedar-track schema generator: a prebuilt binding of
+    the upstream crate, in its own uv group (`dogwood`), no system install.
+  - What it is: an unofficial binding (author skmono, Apache-2.0) whose `src/ops.rs` and `src/error.rs` are copied
+    from `dogwood-cli`; every function mirrors one CLI command and returns the CLI's stdout. Its `Cargo.lock` pins
+    crates.io **`dogwood-language` 1.1.0** (`DOGWOOD_VERSION == "1.1.0"`); sdist sha256
+    `3fd0f52cb97b4d21ab9c0ffb918c1be9f86942558930cfc49d4869d454a46de4`. Verified by running the repository's own
+    `read_after_login_success` bundle through `validate` and `replay` and matching its `expected.out`.
+  - Upstream at the time: github.com/dogwood-policy/dogwood `main` = `929f49e7305534ac61ef06cf8e47269c596dc851`
+    (2026-11-12), workspace version **1.1.2**. CHANGELOG 1.1.0→1.1.2 lists parser/lowering limits (depth 32, node
+    budgets), integer-range and comment-handling fixes, and a `def temporal` macro-hygiene fix; no change to
+    verdict semantics, the replay JSON shape, or `schema mcp` defaults. If a policy near those limits ever matters,
+    build the CLI at `929f49e` and compare.
+  - To switch to the official CLI later: `pgi.oracle.temporal` has one place that calls pydogwood (`_dw()`);
+    the CLI's `--format json` output is byte-compatible with what the module parses.
+- **`pgi.oracle.temporal`** (tests first, `tests/test_temporal.py`, 21 tests): `check`/`require_valid` (dogwood
+  validate), `replay` (verdict per decision event), `decision` (the last decision event's verdict is the scored
+  decision), `load_suite`/`allowed` (`traces.yaml`: id, file, contract allow|deny), `adequacy`/`require_adequate`
+  (gold == contract on every trace, every weakening differs from gold on ≥1 trace). Optional `event_schema` on
+  every entry point (default: Dogwood's request/response/error with the `callerPrincipal` pin).
+  - **Interpreter behaviour verified on scratch inputs, and what the wrapper does:** replaying an *invalid*
+    policy returns all-DENY with no error → every replay validates first; an evaluation error ("record does
+    not have the attribute …") or a decision event without `scope(...)` is a DENY with `errors` → OracleError;
+    non-increasing timestamps are accepted silently → OracleError; a pinned context field missing from
+    `request_context(...)` is a silent DENY; an unknown action or an undeclared logged field in a trace is
+    simply never matched (silent). The last two cannot be caught generically; the adequacy gate (gold must
+    ALLOW the contract's allow traces) is what exposes a dead trace.
+  - The test fixture `tests/fixtures/dogwood/read_after_login_success/` is the upstream bundle, copied verbatim
+    (README has commit and licence).
+- **Schema profile for the temporal track:** `pgi.schemagen.generate_dogwood` = Dogwood's own `schema mcp`
+  generator, fixed defaults recorded as `DOGWOOD_PROFILE` (`include_outputs`, `encode_numbers_as_decimal`,
+  `flatten_namespaces` all true; template = Dogwood's embedded Drupe stub: `namespace Drupe`, principal `User`,
+  resource `Gateway`, every tool `in [Action::"CallTool"]`). It accepts the bare tools array or the RPC form, not
+  our pinned `{"tools": [...]}` object, so the pin is wrapped in memory as before. Output is deterministic (two
+  runs identical) and identical for both input forms.
+  - Pinned: `schema/wo.dogwood.generated.cedarschema`
+    `ab964a41699f512f3816d1a1fd75c6db1c02319564f0372df28bd0efffd15d7f` (`gen_schema.py --profile dogwood wo`;
+    `tests/test_pins.py`, `tests/test_schemagen.py`). The `iot` manifest also generates (not pinned; no temporal
+    scenario needs it yet).
+  - Verified in the output: `close_workorder` context is `{input, output?, system}`; `actual_hours?: decimal`;
+    the mutation tools' output is `result: {typeChoice0?: <…WorkOrderMutationResult entity>, typeChoice1?:
+    <…ErrorResult entity>}`, so a policy can test which branch fired but not read inside it.
+- **AWS's temporal event schema differs from Dogwood's default** (docs read 2026-11-16, entries 5–6 in
+  `docs/transfer-fidelity.md`): AWS pins `sessionId` (`pin sessionId: String = context.sessionId`), names the
+  scope fields `eventPrincipal`/`eventResource` (unpinned), and requires `eventResource: resource` in every
+  predicate. Dogwood's default pins `callerPrincipal`. Reproduced locally: a session-pinned `.dwschema` works
+  through `event_schema=` once every action's context declares `sessionId: String` (test
+  `test_event_schema_switches_the_pin_from_principal_to_session`). **Open for Juan:** which event schema the
+  t01 scenario is scored under (default principal pin, as in the gold policy drafted today, or an AWS-shaped
+  session pin, which needs `sessionId` added to the generated action schema by a link step).

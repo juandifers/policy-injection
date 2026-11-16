@@ -35,3 +35,35 @@ def test_colliding_tool_names_are_refused(tmp_path):
 def test_link_refuses_a_shared_namespace(tmp_path):
     with pytest.raises(schemagen.SchemaGenError, match="namespace"):
         schemagen.link(S / "trusted.cedarschema", S / "trusted.cedarschema")
+
+
+# ---------------------------------------------------------------- Dogwood profile (temporal track)
+
+pydogwood = pytest.importorskip("pydogwood", reason="pydogwood not installed (uv group `dogwood`)")
+
+
+def test_generate_dogwood_reproduces_the_pinned_dogwood_schema():
+    assert schemagen.generate_dogwood([DOMAIN / "manifests" / "wo.tools.json"]) == \
+        (S / "wo.dogwood.generated.cedarschema").read_text()
+
+
+def test_dogwood_profile_differs_from_the_cedar_profile_exactly_as_the_ledger_says():
+    """transfer-fidelity.md entries 3 and 4: outputs emitted, JSON number -> decimal; Cedar profile has neither."""
+    dogwood, cedar = (S / "wo.dogwood.generated.cedarschema").read_text(), (S / "wo.generated.cedarschema").read_text()
+    assert "output?: close_workorderOutput" in dogwood and "actual_hours?: decimal" in dogwood
+    assert "typeChoice0?: Drupe::close_workorder_Output_WorkOrderMutationResult" in dogwood  # opaque union branch
+    assert "output" not in cedar and "actual_hours?: AOB::Number" in cedar
+    assert 'action "close_workorder" in [Action::"CallTool"]' in dogwood and "namespace Drupe" in dogwood
+
+
+def test_cedar_track_config_is_untouched():
+    assert schemagen.CONFIG == {"includeOutputs": False, "objectsAsRecords": False, "eraseAnnotations": True,
+                                "flattenNamespaces": False, "numbersAsDecimal": False, "deduplicateEntityTypes": False}
+    assert schemagen.DOGWOOD_PROFILE == {"include_outputs": True, "encode_numbers_as_decimal": True,
+                                         "flatten_namespaces": True}
+
+
+def test_generate_dogwood_refuses_colliding_tool_names():
+    m = DOMAIN / "manifests" / "wo.tools.json"
+    with pytest.raises(schemagen.SchemaGenError, match="collide"):
+        schemagen.generate_dogwood([m, m])
