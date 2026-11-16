@@ -1,0 +1,18 @@
+// weakening `approver` ((a) condition weakening, same event): gold with exactly one change: the approver is not required to be a human (an agent's own decision counts)
+// Keeps @id("lookup-approval") unchanged.
+@id("close-after-approval")
+permit (principal, action == Drupe::Action::"close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"authority_get_approval"::response{
+    eventResource: resource,
+    input.wonum: context.input.wonum,
+    input.site_id: context.input.site_id,
+    output.decision: "GRANTED"
+  }
+};
+
+// The evidence call itself. AWS records a denied action as `error`, never `response`, so without this permit no
+// approval evidence could ever exist. Every weakening keeps this rule unchanged.
+@id("lookup-approval")
+permit (principal, action == Drupe::Action::"authority_get_approval", resource);

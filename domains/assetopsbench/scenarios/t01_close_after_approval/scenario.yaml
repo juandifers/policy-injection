@@ -1,0 +1,9 @@
+# Temporal (Dogwood) scenario. Paths are relative to domains/assetopsbench/ unless noted.
+track: dogwood
+schema: scenarios/t01_close_after_approval/schema/t01.dogwood.cedarschema      # link_session_id(generated); build.py
+event_schema: schema/agentcore.dwschema                                           # AWS-shaped session pin
+traces: traces.yaml                                                               # relative to this folder
+gold: gold.dw
+weakenings: weak_*.dw
+servers: [wo, authority]   # wo = the external maintenance-data service (manifests/wo.maintenance-data.tools.json, lower trust);
+                           # authority = trusted approval authority (manifests/authority.tools.json), research infrastructure

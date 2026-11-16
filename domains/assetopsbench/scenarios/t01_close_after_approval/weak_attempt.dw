@@ -1,0 +1,17 @@
+// weakening `attempt` ((b) evidence-kind substitution): gold with exactly one change: ::request (the attempt) instead of ::response (the completed call). A request carries no output.*, so the kind swap necessarily drops the two output bindings (they would be undeclared fields)
+// Keeps @id("lookup-approval") unchanged.
+@id("close-after-approval")
+permit (principal, action == Drupe::Action::"close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"authority_get_approval"::request{
+    eventResource: resource,
+    input.wonum: context.input.wonum,
+    input.site_id: context.input.site_id
+  }
+};
+
+// The evidence call itself. AWS records a denied action as `error`, never `response`, so without this permit no
+// approval evidence could ever exist. Every weakening keeps this rule unchanged.
+@id("lookup-approval")
+permit (principal, action == Drupe::Action::"authority_get_approval", resource);

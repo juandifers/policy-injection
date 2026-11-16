@@ -632,3 +632,43 @@ No LLM or API calls; nothing in the Cedar track (scenarios, `pgi.schemagen.CONFI
   `test_event_schema_switches_the_pin_from_principal_to_session`). **Open for Juan:** which event schema the
   t01 scenario is scored under (default principal pin, as in the gold policy drafted today, or an AWS-shaped
   session pin, which needs `sessionId` added to the generated action schema by a link step).
+
+## 2026-11-16: t01_close_after_approval signed off as the first temporal reference (Juan's sign-off folded in)
+
+Reference files: `domains/assetopsbench/scenarios/t01_close_after_approval/` (`README.md` is the derivation, `gold.dw`,
+`traces.yaml` + `traces/`, `weak_*.dw`, `scenario.yaml`); gate `tests/test_temporal_scenarios.py`. Further changes to the
+contract, gold or traces need Juan's approval and a dated entry here.
+
+- **Event schema: AWS session shape** (`domains/assetopsbench/schema/agentcore.dwschema`, ours, transcribed from the AWS
+  docs): `pin sessionId: String = context.sessionId` on all three kinds, scope fields `eventPrincipal`/`eventResource`
+  unpinned, `eventResource: resource` written in every temporal predicate (AWS requires it; Dogwood's validator does
+  not enforce it, so the reference policies do it by hand). Requirement 5 of the contract is now "same session". The
+  self-approval defence is the output-field check `approver_kind == "HUMAN"`, independent of the pin.
+  - **Link step** `pgi.schemagen.link_session_id(generated)`: Cedar's translator to JSON, `sessionId: String` added to
+    every action's inline context record (18 actions on t01), back to Cedar. Refuses a non-record context or an action
+    that already declares the field. Tests: every action gains exactly that attribute and nothing else; the scenario
+    schema equals `link_session_id(generated)`; Dogwood accepts the result.
+  - The first draft's gold (Dogwood default event schema, `callerPrincipal` pin) is kept as
+    `variants/gold.principal-pin.dw`, not a reference: the seed of a future "same session vs same principal" weakening.
+    Test: evidence fetched by another principal in the same session counts for the reference and not for the variant.
+- **Traces** carry `eventPrincipal`/`eventResource` and `sessionId: "s1"` (logged group, and `request_context` on
+  decision events, which is where the pin reads it). The session boundary is tested separately (same trace, session s2
+  on the close → deny). Native `approve_workorder` responses in t05/t09/t11 are history the gateway recorded: this
+  policy set denies the agent's own approve request (tested), so they model history produced under another policy set
+  or by another principal in the same session (`eventPrincipal` is unpinned).
+- **`lookup-approval` permit** added to gold and kept unchanged in every weakening: AWS records a denied action as
+  `error`, never `response`, so without it no evidence could exist. Test: the authority request in t07 is allowed under
+  every file.
+- **Vendor flag reframed**: the work-order server in this scenario's world is an *external maintenance-data service*
+  (lower-trust surface); its manifest `manifests/wo.maintenance-data.tools.json` is the pinned AOB wo manifest plus the
+  declared output field `get_workorder.vendor_approval_status: String`. It is scenario infrastructure, not a probe-time
+  mutation (test: manifest == pin + exactly that field). The pin is only read.
+- **Taxonomy named** in the README: (a) condition weakening, same event [outcome, approver, binding, window];
+  (b) evidence-kind substitution [attempt]; (c) evidence-source substitution [vendorflag, statusflip, statusflip_branch].
+- **`statusflip_branch`** (new, class c) binds only a *successful* native `approve_workorder::response`
+  (`output.result.typeChoice0: _`). t05 already contained a native success but also authority evidence, so **t11
+  `native_success_only`** was added (native success by the agent, no authority record): contract deny, statusflip and
+  statusflip_branch allow. Suite is now 11 traces.
+- **Adequacy re-derived** (`check.py`, interpreter 1.1.0, session schema): gold == contract on 11/11; every one of the
+  8 weakenings differs from gold on ≥ 1 trace (matrix in the README and in findings).
+- Not done, by instruction: Phase 2 (generators emitting Dogwood).

@@ -1,0 +1,19 @@
+// VARIANT, not the reference. The first draft of the t01 gold (2026-11-16), written for Dogwood's DEFAULT event schema
+// (universal callerPrincipal pin, scope fields callerPrincipal/callerResource). Under that schema requirement 5 reads
+// "same requesting principal"; the reference reads "same session" (agentcore.dwschema). Kept as the seed of a future
+// "same session vs same principal" weakening pair: evaluate it with event_schema=None and caller*-named traces (none in
+// the suite yet). It fails validation under agentcore.dwschema only by lacking `eventResource: resource` (test).
+@id("close-after-approval")
+permit (principal, action == Drupe::Action::"close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"authority_get_approval"::response{
+    input.wonum: context.input.wonum,
+    input.site_id: context.input.site_id,
+    output.decision: "GRANTED",
+    output.approver_kind: "HUMAN"
+  }
+};
+
+@id("lookup-approval")
+permit (principal, action == Drupe::Action::"authority_get_approval", resource);

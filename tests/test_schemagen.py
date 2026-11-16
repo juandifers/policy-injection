@@ -67,3 +67,35 @@ def test_generate_dogwood_refuses_colliding_tool_names():
     m = DOMAIN / "manifests" / "wo.tools.json"
     with pytest.raises(schemagen.SchemaGenError, match="collide"):
         schemagen.generate_dogwood([m, m])
+
+
+# ---------------------------------------------------------------- sessionId link (temporal track, AWS session pin)
+
+T01 = DOMAIN / "scenarios" / "t01_close_after_approval" / "schema"
+
+
+@pytest.mark.skipif(shutil.which("cedar") is None, reason="cedar CLI not on PATH")
+def test_link_session_id_declares_session_id_on_every_action_and_nothing_else(tmp_path):
+    import json
+    import subprocess
+    linked = schemagen.link_session_id(T01 / "t01.dogwood.generated.cedarschema")
+    out = tmp_path / "linked.cedarschema"
+    out.write_text(linked)
+    def actions(path):
+        js = json.loads(subprocess.run(["cedar", "translate-schema", "--direction", "cedar-to-json", "--schema", str(path)],
+                                       capture_output=True, text=True, check=True).stdout)
+        return {f"{ns}::{a}": act["appliesTo"]["context"]["attributes"] for ns, b in js.items() for a, act in b["actions"].items()}
+    before, after = actions(T01 / "t01.dogwood.generated.cedarschema"), actions(out)
+    assert set(before) == set(after) and len(after) == 18
+    for name, ctx in after.items():
+        sid = ctx["sessionId"]  # Cedar's JSON form spells the primitive as EntityOrCommon __cedar::String; required by default
+        assert sid.get("name", sid["type"]) in ("String", "__cedar::String") and sid.get("required", True) is True
+        assert {k: v for k, v in ctx.items() if k != "sessionId"} == before[name]
+    assert pydogwood.schema_action(linked, format="json").find('"ok": true') > 0
+
+
+@pytest.mark.skipif(shutil.which("cedar") is None, reason="cedar CLI not on PATH")
+def test_link_session_id_reproduces_the_scenario_schema_and_refuses_a_second_link(tmp_path):
+    assert schemagen.link_session_id(T01 / "t01.dogwood.generated.cedarschema") == (T01 / "t01.dogwood.cedarschema").read_text()
+    with pytest.raises(schemagen.SchemaGenError, match="sessionId"):
+        schemagen.link_session_id(T01 / "t01.dogwood.cedarschema")

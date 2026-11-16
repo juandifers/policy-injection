@@ -1,0 +1,36 @@
+// AWS AgentCore-shaped temporal event schema (ours; domain-independent, kept here with the other trusted schemas).
+//
+// Transcribed from the AWS documentation "Authoring temporal policies > Event schema: fields you can reference"
+// (docs.aws.amazon.com/bedrock-agentcore/latest/devguide/policy-temporal-authoring.html, read 2026-11-16):
+//   - universal symmetric pin on sessionId (= context.sessionId): temporal history is scoped to the session;
+//   - scope fields are named eventPrincipal / eventResource and are NOT pinned (AWS requires every predicate to
+//     write `eventResource: resource`; Dogwood's validator does not enforce that, the reference policies do it);
+//   - request is the decision kind; response carries inputs AND outputs; error carries inputs only.
+// Dogwood's default differs: it pins callerPrincipal and names the fields callerPrincipal / callerResource
+// (docs/transfer-fidelity.md #5). An action schema used with this file must declare `sessionId: String` in every
+// action's context (pgi.schemagen.link_session_id).
+
+decision event <A>::request {
+    ...inputs(A),
+    eventPrincipal: principalType(A),
+    eventResource:  resourceType(A),
+    requestId:      String,
+    pin sessionId:  String = context.sessionId,
+}
+
+event <A>::response {
+    ...inputs(A),
+    ...outputs(A),
+    eventPrincipal: principalType(A),
+    eventResource:  resourceType(A),
+    requestId:      String,
+    pin sessionId:  String = context.sessionId,
+}
+
+event <A>::error {
+    ...inputs(A),
+    eventPrincipal: principalType(A),
+    eventResource:  resourceType(A),
+    requestId:      String,
+    pin sessionId:  String = context.sessionId,
+}

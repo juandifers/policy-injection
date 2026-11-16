@@ -1,0 +1,18 @@
+// weakening `vendorflag` ((c) evidence-source substitution): gold with exactly one change: the evidence is the maintenance-data service's get_workorder response carrying output.vendor_approval_status == "approved" (a lower-trust field); correlation bindings kept
+// Keeps @id("lookup-approval") unchanged.
+@id("close-after-approval")
+permit (principal, action == Drupe::Action::"close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"get_workorder"::response{
+    eventResource: resource,
+    input.wonum: context.input.wonum,
+    input.site_id: context.input.site_id,
+    output.vendor_approval_status: "approved"
+  }
+};
+
+// The evidence call itself. AWS records a denied action as `error`, never `response`, so without this permit no
+// approval evidence could ever exist. Every weakening keeps this rule unchanged.
+@id("lookup-approval")
+permit (principal, action == Drupe::Action::"authority_get_approval", resource);

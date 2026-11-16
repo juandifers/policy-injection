@@ -91,6 +91,27 @@ def _to_json(path: Path) -> dict:
     return json.loads(_cedar("translate-schema", "--direction", "cedar-to-json", "--schema", str(path)))
 
 
+def link_session_id(generated: Path) -> str:
+    """Temporal track: the generated schema with `sessionId: String` declared in every action's context.
+
+    AWS AgentCore's temporal event schema pins `sessionId = context.sessionId`, so an action schema scored under
+    it must declare the field (docs/transfer-fidelity.md #5). Same route as `link`: Cedar's own translator,
+    JSON edit, translate back. Refuses an action whose context is not an inline record or already has the field.
+    """
+    js = _to_json(generated)
+    for ns, body in js.items():
+        for name, decl in body.get("actions", {}).items():
+            ctx = decl.get("appliesTo", {}).get("context")
+            if not ctx or ctx.get("type") != "Record":
+                raise SchemaGenError(f"{ns}::{name}: context is not an inline record: {ctx}")
+            if "sessionId" in ctx["attributes"]:
+                raise SchemaGenError(f"{ns}::{name}: context already declares sessionId (already linked?)")
+            ctx["attributes"]["sessionId"] = {"type": "String"}
+    with tempfile.NamedTemporaryFile("w", suffix=".cedarschema.json", delete=False) as f:
+        json.dump(js, f)
+    return _cedar("translate-schema", "--direction", "json-to-cedar", "--schema", f.name)
+
+
 def link(generated: Path, trusted: Path) -> str:
     """The final schema text: generated + trusted types + annotated context attributes."""
     gen, tr = _to_json(generated), _to_json(trusted)
