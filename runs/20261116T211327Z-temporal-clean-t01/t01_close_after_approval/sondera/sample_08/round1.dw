@@ -1,0 +1,19 @@
+// The agent may always ask the approval authority for a decision of record.
+// This permit is required so the call completes and is recorded as a ::response.
+@id("allow_authority_get_approval")
+permit (principal, action == Drupe::Action::"authority_get_approval", resource);
+
+// Close a work order only at MAIN, and only with a recent, completed approval-authority
+// answer for the same site and work order that is GRANTED and made by a HUMAN.
+@id("close_workorder_requires_human_granted_approval")
+permit (principal, action == Drupe::Action::"close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"authority_get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: "GRANTED",
+    output.approver_kind: "HUMAN"
+  }
+};

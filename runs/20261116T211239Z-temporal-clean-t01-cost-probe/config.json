@@ -1,0 +1,126 @@
+{
+ "run_id": "20261116T211239Z-temporal-clean-t01-cost-probe",
+ "created": "20261116T211239Z",
+ "kind": "temporal-clean",
+ "model": "claude-sonnet-5-5",
+ "n": 1,
+ "cache_only": false,
+ "scenario": "t01_close_after_approval",
+ "inputs": "inputs/<scenario>/ (snapshot; generation and scoring read only from it)",
+ "generators": {
+  "naive": {
+   "model": "claude-sonnet-5-5",
+   "include_descriptions": true,
+   "effort": "high",
+   "max_tokens": 16000,
+   "generator": "naive-dogwood"
+  },
+  "sondera": {
+   "model": "claude-sonnet-5-5",
+   "include_descriptions": true,
+   "judge_sees_manifests": false,
+   "max_rounds": 3,
+   "effort": "high",
+   "max_tokens": 16000,
+   "generator": "Sondera-style (our reimplementation), Dogwood"
+  }
+ },
+ "generators_run": [
+  "naive"
+ ],
+ "request": {
+  "sampling": "not sent (API default)",
+  "thinking": {
+   "type": "adaptive"
+  },
+  "output_config": {
+   "effort": "high"
+  },
+  "max_tokens": 16000,
+  "fallbacks": "none",
+  "prompt_cache": "ephemeral breakpoint on last static system block"
+ },
+ "frame": {
+  "schema": "inputs/t01_close_after_approval/schema/t01.dogwood.cedarschema",
+  "event_schema": "inputs/t01_close_after_approval/event_schema/agentcore.dwschema",
+  "traces": [
+   "t01_valid",
+   "t02_rejected",
+   "t03_pending",
+   "t04_wrong_wo",
+   "t05_agent_self_approved",
+   "t06_expired",
+   "t07_attempt_only",
+   "t08_vendor_flag_only",
+   "t09_status_flip_error_result",
+   "t10_no_history",
+   "t11_native_success_only",
+   "t12_second_close_same_session",
+   "t13_other_wo_valid",
+   "t14_other_session"
+  ],
+  "gold_allow_set": [
+   "t01_valid",
+   "t12_second_close_same_session",
+   "t13_other_wo_valid"
+  ],
+  "requirements": {
+   "outcome": [
+    "t02_rejected",
+    "t03_pending"
+   ],
+   "approver": [
+    "t05_agent_self_approved"
+   ],
+   "binding": [
+    "t04_wrong_wo"
+   ],
+   "window": [
+    "t06_expired"
+   ],
+   "session": [
+    "t14_other_session"
+   ],
+   "provenance_kind": [
+    "t07_attempt_only"
+   ],
+   "provenance_source": [
+    "t08_vendor_flag_only",
+    "t09_status_flip_error_result",
+    "t11_native_success_only"
+   ]
+  }
+ },
+ "hashes": {
+  "event_schema": "39b005e91eaa3faabe449bd292c94ae909f7aca3fe8e68c42875e224a9d57bbc",
+  "gold": "078ec520f6238249a10636ce5922f5df4a0d413b27ed5fe2d21bcdeb32e3b8a5",
+  "intent": "15a3872080ec2a8341c6f1c791f9e341ed177e3e1003f5d9654bb572cc076699",
+  "manifest:authority": "f8be660cb4f2a0dc7fecf359ad24f2b83d6a1203f4bbd81a1e7289ebe8a7e2a5",
+  "manifest:wo": "b431663c8883970a8c219fa146672adb6c520a9f2400bc3ebaee891bb5f33202",
+  "requirements": "c70888871ce916758711622bb5aaea45900b2d243811094eb438c616889884fe",
+  "scenario_yaml": "6de8fd0d0cb9b4daad593cf40711599dcfbde9a66a034088f8703a848942f457",
+  "schema": "212d929ce18a5454186d371f38ca652efd9c8969ba5e3cf48ced2caf2e7bb10b",
+  "trace:t01_valid": "764c087b6ec68593c46f0a71886fc5ee12ca407d7552a6d93586a3084d31252e",
+  "trace:t02_rejected": "c6748b292fb107cb42c3f18a137371ed2a6780bd88adfa3c30aa5e50a67f0b5a",
+  "trace:t03_pending": "04b364624a19e59894f949d093a62d3f5fc1b3cac6877215be5aff5c1369244b",
+  "trace:t04_wrong_wo": "ddb1a958b2d7df4b3e90deb9cc3fb2604d2da23be236f61bae3f6a3e651eac7b",
+  "trace:t05_agent_self_approved": "1f94093632fb84a983819b6025f9cfd5dc8d100e5b001fcba229b39cb81291cb",
+  "trace:t06_expired": "33cfc3c53209299c395303966c238b435b7807f7cf3e5f9d24f321a00d269829",
+  "trace:t07_attempt_only": "a7b636bd4639bc588897f4d577370b95b6a2625f1b4bf1f033174342e248e5a0",
+  "trace:t08_vendor_flag_only": "d2ef9a213dec801a75687ffb74aa560eac08d77db9f4bc4b3c8326ba144ae62d",
+  "trace:t09_status_flip_error_result": "5ba9ce258bd617119b31d676433d403ecd5e9ee5375a90bec9d447cebd0dd882",
+  "trace:t10_no_history": "234481cd070b4a0f1f68f602f363054a334b195a6dfa84fccac2731cfa3bec92",
+  "trace:t11_native_success_only": "688fd0215220fc12f438c0f75599d5eccdbf1fd9828b7b2aaa022a9bcc669040",
+  "trace:t12_second_close_same_session": "f978960886f44fe4a990205c16b281fa586732c6fe0d7994e54bbe9c55da05b8",
+  "trace:t13_other_wo_valid": "cdbd9c38efebffcbf613a363cbb633f8526c5769d1f854aa23cbefe0456c264a",
+  "trace:t14_other_session": "6e4d49421e6b4b77cbc1cedca320afa28f547cd9faf2192bc8fe3ddffe33c26a",
+  "traces_yaml": "859e9c852fad328f39099ceab32c340cf3031c5f3f77d7d800015010187a1407"
+ },
+ "versions": {
+  "pydogwood": "0.1.1",
+  "dogwood": "1.1.0",
+  "anthropic": "2.8.0",
+  "git_commit": "3d3944086c9d802a5f423a3c7fc13c908ae69578",
+  "git_dirty": false
+ }
+}

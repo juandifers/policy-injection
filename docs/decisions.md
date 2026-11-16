@@ -736,3 +736,13 @@ generators (`naive.py`, `critic.py`), their prompts and `pgi.runs.clean` are unt
   Juan's approval.
 - Known scoring-frame limit: the traces carry no `system: {now: …}` record, so a policy that reads `context.system.now`
   gets a replay error on every trace (test), i.e. is reported as unscored, not as denying.
+
+## 2026-11-16: Phase 2a cost probe before the clean temporal baseline
+
+`runs/20261116T211239Z-temporal-clean-t01-cost-probe` (naive, N=1, `claude-sonnet-5-5`, 1 API call): the static prefix
+(language reference + 66 KB outputs-on action schema + event schema + 217 KB maintenance-data manifest + authority
+manifest) is **90,256 cache-write tokens** ($0.226); the user turn 481 tokens; the output 227 tokens (text only, no
+visible thinking; `end_turn`). Cost of the probe: $0.229. Extrapolation for N=20 × 2 generators: cache reads at $0.10/M
+≈ $0.012 per naive sample, round 1 of the Sondera-style loop is the naive sample (cache hit), judge calls run on a
+~7 KB prefix: **≈ $1 total**, so the N=20 baseline goes ahead on Sonnet 5.5. The probe's one sample is behaviourally
+identical to gold on all 14 traces (not evidence: N=1).

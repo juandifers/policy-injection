@@ -1,0 +1,29 @@
+{
+ "key_hash": "2e0d9855c5f4ed5ae90c153b042855dbf96fe057760ab526f8e650dca7d96d67",
+ "cache_hit": false,
+ "model_version": "claude-sonnet-5-5",
+ "request_id": "req_011Ch7JKXSQMNHh1eY4SnnZZ",
+ "stop_reason": "end_turn",
+ "stop_details": null,
+ "usage": {
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 0,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "cache_creation_input_tokens": 0,
+  "cache_read_input_tokens": 90256,
+  "inference_geo": "global",
+  "input_tokens": 481,
+  "output_tokens": 230,
+  "output_tokens_details": {
+   "thinking_tokens": 0
+  },
+  "service_tier": "standard",
+  "speed": "standard"
+ },
+ "text": "```\n@id(\"allow_authority_get_approval\")\npermit (principal, action == Drupe::Action::\"authority_get_approval\", resource);\n\n@id(\"allow_close_workorder_with_human_granted_approval\")\npermit (principal, action == Drupe::Action::\"close_workorder\", resource)\nwhen { context.input.site_id == \"MAIN\" }\nwhen temporal {\n  formerly within 1h Drupe::Action::\"authority_get_approval\"::response{\n    eventResource: resource,\n    input.site_id: context.input.site_id,\n    input.wonum: context.input.wonum,\n    output.decision: \"GRANTED\",\n    output.approver_kind: \"HUMAN\"\n  }\n};\n```",
+ "content_types": [
+  "text"
+ ],
+ "extraction": "fenced"
+}

@@ -1,0 +1,74 @@
+{
+ "round": 1,
+ "extraction": "fenced",
+ "generation": {
+  "key_hash": "4462bce3146e3f0cb2872ab3823e9246b6f8999c7fe435c207638693684817e8",
+  "cache_hit": true,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011Ch7JJqBxxNvEXWniHd7Eg",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 90256,
+   "inference_geo": "global",
+   "input_tokens": 481,
+   "output_tokens": 227,
+   "output_tokens_details": {
+    "thinking_tokens": 0
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "```\n@id(\"allow-authority-get-approval\")\npermit (principal, action == Drupe::Action::\"authority_get_approval\", resource);\n\n@id(\"close-workorder-with-human-granted-approval\")\npermit (principal, action == Drupe::Action::\"close_workorder\", resource)\nwhen { context.input.site_id == \"MAIN\" }\nwhen temporal {\n  formerly within 1h Drupe::Action::\"authority_get_approval\"::response{\n    eventResource: resource,\n    input.site_id: context.input.site_id,\n    input.wonum: context.input.wonum,\n    output.decision: \"GRANTED\",\n    output.approver_kind: \"HUMAN\"\n  }\n};\n```",
+  "content_types": [
+   "text"
+  ]
+ },
+ "deterministic": {
+  "passed": true,
+  "validation": {
+   "policy": "t01_close_after_approval/sondera/sample_17/round1.dw",
+   "schema": "inputs/t01_close_after_approval/schema/t01.dogwood.cedarschema",
+   "ok": true,
+   "errors": [],
+   "warnings": []
+  },
+  "failures": []
+ },
+ "judge": {
+  "key_hash": "aa3c150d294db0a4235dc85b31669f9030942872d08e1de485a0a30e8d38e214",
+  "cache_hit": false,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011Ch7JSJ8AAz4xZxav8C6tv",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 2414,
+   "inference_geo": "global",
+   "input_tokens": 713,
+   "output_tokens": 276,
+   "output_tokens_details": {
+    "thinking_tokens": 265
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "NO MISMATCHES",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "judge_passed": true,
+ "passed": true
+}

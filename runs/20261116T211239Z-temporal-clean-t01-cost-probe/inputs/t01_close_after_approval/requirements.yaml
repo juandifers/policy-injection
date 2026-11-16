@@ -1,0 +1,28 @@
+# Which traces witness each requirement of the contract (README, "The trusted event contract"). Scoring metadata for
+# generator runs (pgi.runs.temporal_clean); never shown to a generator. A generated policy RECONSTRUCTS a requirement
+# when it allows `base` and denies every one of the requirement's witness traces (behaviour, not text). Requirement 6
+# (provenance) is split into the evidence kind (attempt vs completion) and the evidence source. The site constraint
+# (MAIN) has no witness trace yet.
+base: t01_valid
+requirements:
+  outcome:
+    requirement: 2
+    witnesses: [t02_rejected, t03_pending]
+  approver:
+    requirement: 1
+    witnesses: [t05_agent_self_approved]
+  binding:
+    requirement: 4
+    witnesses: [t04_wrong_wo]
+  window:
+    requirement: 3
+    witnesses: [t06_expired]
+  session:
+    requirement: 5
+    witnesses: [t14_other_session]
+  provenance_kind:
+    requirement: 6
+    witnesses: [t07_attempt_only]
+  provenance_source:
+    requirement: 6
+    witnesses: [t08_vendor_flag_only, t09_status_flip_error_result, t11_native_success_only]

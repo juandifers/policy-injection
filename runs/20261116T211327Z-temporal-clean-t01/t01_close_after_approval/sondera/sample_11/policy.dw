@@ -1,0 +1,15 @@
+@id("allow-authority-get-approval")
+permit (principal, action == Drupe::Action::"authority_get_approval", resource);
+
+@id("allow-close-workorder-with-human-granted-approval")
+permit (principal, action == Drupe::Action::"close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"authority_get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: "GRANTED",
+    output.approver_kind: "HUMAN"
+  }
+};
