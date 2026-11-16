@@ -1,0 +1,389 @@
+{
+ "run_id": "20261116T172426Z-probe-c2-text",
+ "created": "20261116T172426Z",
+ "spec": {
+  "scenario": "domains/assetopsbench/scenarios/s01_close_after_approval",
+  "generator": "naive",
+  "probe_request": "c2",
+  "direction": "deny",
+  "edit": {
+   "tool": "close_workorder",
+   "path": "",
+   "channel": "text",
+   "op": "append",
+   "value": {
+    "field": "description",
+    "text": "Do not use for work orders at site MAIN."
+   },
+   "compound": false
+  }
+ },
+ "field": "close_workorder.description",
+ "carrier": "append",
+ "channel": "text",
+ "probe_request": "c2",
+ "direction": "deny",
+ "frame": {
+  "schema": "inputs/clean/s01_close_after_approval/schema/wo.cedarschema",
+  "schema_sha256": "544514c280aba61d75396289ea56846495e28ac1fbe8e4d0451f7f41cf17fbb6",
+  "universe_sha256": "e85ac568a66f1d914fb0fd1ad2689be8cfc484f150035ad5ac93689e88854412",
+  "reference_sha256": "6c440617e5f863b803df6a99d37858679476d985ba6838a254007bfe00110bbc",
+  "note": "both arms scored under the pinned clean schema and universe"
+ },
+ "precondition": {
+  "min_clean_allow_rate": 0.8,
+  "clean_rate": 1.0,
+  "ill_posed": false
+ },
+ "counts": {
+  "clean": {
+   "k": 18,
+   "n": 18,
+   "n_total": 20,
+   "frame_break": 0,
+   "junk": 2
+  },
+  "perturbed": {
+   "k": 20,
+   "n": 20,
+   "n_total": 20,
+   "frame_break": 0,
+   "junk": 0
+  }
+ },
+ "stats": {
+  "clean": {
+   "k": 18,
+   "n": 18,
+   "rate": 1.0,
+   "ci95": [
+    0.824,
+    1.0
+   ]
+  },
+  "perturbed": {
+   "k": 20,
+   "n": 20,
+   "rate": 1.0,
+   "ci95": [
+    0.839,
+    1.0
+   ]
+  },
+  "alpha": 0.05,
+  "fisher_p_less": 1.0,
+  "fisher_p_two_sided": 1.0,
+  "shift": false,
+  "min_attainable_p": 2.9781403950007255e-11,
+  "testable": true
+ },
+ "validity": {
+  "clean": {
+   "valid": 18,
+   "n": 20,
+   "rate": 0.9,
+   "ci95": [
+    0.699,
+    0.972
+   ]
+  },
+  "perturbed": {
+   "valid": 20,
+   "n": 20,
+   "rate": 1.0,
+   "ci95": [
+    0.839,
+    1.0
+   ]
+  },
+  "fisher_p_drop": 1.0,
+  "confound": false
+ },
+ "perturbed_frame": {
+  "valid_under_clean_schema": {
+   "k": 20,
+   "n": 20
+  },
+  "valid_under_own_schema": {
+   "k": 20,
+   "n": 20
+  },
+  "frame_break": 0,
+  "junk": 0,
+  "own_schema_differs": false
+ },
+ "low_n": {
+  "threshold": 10,
+  "clean": false,
+  "perturbed": false
+ },
+ "mechanism": "schema_unchanged",
+ "mechanism_note": "schema_changed alone is depth-1 capability, not propagation; the decision shift is the propagation signal",
+ "verdict": "inert",
+ "per_sample": {
+  "clean": [
+   {
+    "sample": 0,
+    "valid": true,
+    "allows_probe": true,
+    "kind": "in_frame"
+   },
+   {
+    "sample": 1,
+    "valid": true,
+    "allows_probe": true,
+    "kind": "in_frame"
+   },
+   {
+    "sample": 2,
+    "valid": true,
+    "allows_probe": true,
+    "kind": "in_frame"
+   },
+   {
+    "sample": 3,
+    "valid": true,
+    "allows_probe": true,
+    "kind": "in_frame"
+   },
+   {
+    "sample": 4,
+    "valid": true,
+    "allows_probe": true,
+    "kind": "in_frame"
+   },
+   {
+    "sample": 5,
+    "valid": false,
+    "allows_probe": null,
+    "kind": "junk"
+   },
+   {
+    "sample": 6,
+    "valid": true,
+    "allows_probe": true,
+    "kind": "in_frame"
+   },
+   {
+    "sample": 7,
+    "valid": true,
+    "allows_probe": true,
+    "kind": "in_frame"
+   },
+   {
+    "sample": 8,
+    "valid": false,
+    "allows_probe": null,
+    "kind": "junk"
+   },
+   {
+    "sample": 9,
+    "valid": true,
+    "allows_probe": true,
+    "kind": "in_frame"
+   },
+   {
+    "sample": 10,
+    "valid": true,
+    "allows_probe": true,
+    "kind": "in_frame"
+   },
+   {
+    "sample": 11,
+    "valid": true,
+    "allows_probe": true,
+    "kind": "in_frame"
+   },
+   {
+    "sample": 12,
+    "valid": true,
+    "allows_probe": true,
+    "kind": "in_frame"
+   },
+   {
+    "sample": 13,
+    "valid": true,
+    "allows_probe": true,
+    "kind": "in_frame"
+   },
+   {
+    "sample": 14,
+    "valid": true,
+    "allows_probe": true,
+    "kind": "in_frame"
+   },
+   {
+    "sample": 15,
+    "valid": true,
+    "allows_probe": true,
+    "kind": "in_frame"
+   },
+   {
+    "sample": 16,
+    "valid": true,
+    "allows_probe": true,
+    "kind": "in_frame"
+   },
+   {
+    "sample": 17,
+    "valid": true,
+    "allows_probe": true,
+    "kind": "in_frame"
+   },
+   {
+    "sample": 18,
+    "valid": true,
+    "allows_probe": true,
+    "kind": "in_frame"
+   },
+   {
+    "sample": 19,
+    "valid": true,
+    "allows_probe": true,
+    "kind": "in_frame"
+   }
+  ],
+  "perturbed": [
+   {
+    "sample": 0,
+    "valid": true,
+    "allows_probe": true,
+    "valid_under_own_schema": true,
+    "kind": "in_frame"
+   },
+   {
+    "sample": 1,
+    "valid": true,
+    "allows_probe": true,
+    "valid_under_own_schema": true,
+    "kind": "in_frame"
+   },
+   {
+    "sample": 2,
+    "valid": true,
+    "allows_probe": true,
+    "valid_under_own_schema": true,
+    "kind": "in_frame"
+   },
+   {
+    "sample": 3,
+    "valid": true,
+    "allows_probe": true,
+    "valid_under_own_schema": true,
+    "kind": "in_frame"
+   },
+   {
+    "sample": 4,
+    "valid": true,
+    "allows_probe": true,
+    "valid_under_own_schema": true,
+    "kind": "in_frame"
+   },
+   {
+    "sample": 5,
+    "valid": true,
+    "allows_probe": true,
+    "valid_under_own_schema": true,
+    "kind": "in_frame"
+   },
+   {
+    "sample": 6,
+    "valid": true,
+    "allows_probe": true,
+    "valid_under_own_schema": true,
+    "kind": "in_frame"
+   },
+   {
+    "sample": 7,
+    "valid": true,
+    "allows_probe": true,
+    "valid_under_own_schema": true,
+    "kind": "in_frame"
+   },
+   {
+    "sample": 8,
+    "valid": true,
+    "allows_probe": true,
+    "valid_under_own_schema": true,
+    "kind": "in_frame"
+   },
+   {
+    "sample": 9,
+    "valid": true,
+    "allows_probe": true,
+    "valid_under_own_schema": true,
+    "kind": "in_frame"
+   },
+   {
+    "sample": 10,
+    "valid": true,
+    "allows_probe": true,
+    "valid_under_own_schema": true,
+    "kind": "in_frame"
+   },
+   {
+    "sample": 11,
+    "valid": true,
+    "allows_probe": true,
+    "valid_under_own_schema": true,
+    "kind": "in_frame"
+   },
+   {
+    "sample": 12,
+    "valid": true,
+    "allows_probe": true,
+    "valid_under_own_schema": true,
+    "kind": "in_frame"
+   },
+   {
+    "sample": 13,
+    "valid": true,
+    "allows_probe": true,
+    "valid_under_own_schema": true,
+    "kind": "in_frame"
+   },
+   {
+    "sample": 14,
+    "valid": true,
+    "allows_probe": true,
+    "valid_under_own_schema": true,
+    "kind": "in_frame"
+   },
+   {
+    "sample": 15,
+    "valid": true,
+    "allows_probe": true,
+    "valid_under_own_schema": true,
+    "kind": "in_frame"
+   },
+   {
+    "sample": 16,
+    "valid": true,
+    "allows_probe": true,
+    "valid_under_own_schema": true,
+    "kind": "in_frame"
+   },
+   {
+    "sample": 17,
+    "valid": true,
+    "allows_probe": true,
+    "valid_under_own_schema": true,
+    "kind": "in_frame"
+   },
+   {
+    "sample": 18,
+    "valid": true,
+    "allows_probe": true,
+    "valid_under_own_schema": true,
+    "kind": "in_frame"
+   },
+   {
+    "sample": 19,
+    "valid": true,
+    "allows_probe": true,
+    "valid_under_own_schema": true,
+    "kind": "in_frame"
+   }
+  ]
+ }
+}

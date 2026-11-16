@@ -1,0 +1,9 @@
+// Trusted stub for cedar-policy-mcp-schema-generator (one namespace required).
+// Written by us, not derived from any MCP manifest.
+namespace AOB {
+  @mcp_principal("User")
+  entity User;
+
+  @mcp_resource("McpServer")
+  entity McpServer;
+}

@@ -1,0 +1,1411 @@
+{
+ "spec": {
+  "scenario": "domains/assetopsbench/scenarios/s01_close_after_approval",
+  "generator": "naive",
+  "probe_request": "c2",
+  "direction": "deny",
+  "edit": {
+   "tool": "close_workorder",
+   "path": "",
+   "channel": "text",
+   "op": "append",
+   "value": {
+    "field": "description",
+    "text": "Do not use for work orders at site MAIN."
+   },
+   "compound": false
+  }
+ },
+ "record": {
+  "tool": "close_workorder",
+  "path": "",
+  "channel": "text",
+  "op": "append",
+  "before": {
+   "description": "Close a work order (-> COMP) with actuals and resolution.",
+   "inputSchema": {
+    "properties": {
+     "actual_hours": {
+      "default": 0.0,
+      "title": "Actual Hours",
+      "type": "number"
+     },
+     "failure_code": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "default": null,
+      "title": "Failure Code"
+     },
+     "resolution_notes": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "default": null,
+      "title": "Resolution Notes"
+     },
+     "site_id": {
+      "title": "Site Id",
+      "type": "string"
+     },
+     "wonum": {
+      "title": "Wonum",
+      "type": "string"
+     }
+    },
+    "required": [
+     "wonum",
+     "site_id"
+    ],
+    "title": "close_workorderArguments",
+    "type": "object"
+   },
+   "name": "close_workorder",
+   "outputSchema": {
+    "$defs": {
+     "ErrorResult": {
+      "properties": {
+       "error": {
+        "title": "Error",
+        "type": "string"
+       }
+      },
+      "required": [
+       "error"
+      ],
+      "title": "ErrorResult",
+      "type": "object"
+     },
+     "LaborLine": {
+      "additionalProperties": true,
+      "properties": {
+       "craft": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Craft"
+       },
+       "laborcode": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Laborcode"
+       },
+       "laborhrs": {
+        "anyOf": [
+         {
+          "type": "number"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Laborhrs"
+       },
+       "startdate": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Startdate"
+       }
+      },
+      "title": "LaborLine",
+      "type": "object"
+     },
+     "WorkOrderItem": {
+      "additionalProperties": true,
+      "properties": {
+       "actfinish": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Actfinish"
+       },
+       "actlabcost": {
+        "anyOf": [
+         {
+          "type": "number"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Actlabcost"
+       },
+       "actlabhrs": {
+        "anyOf": [
+         {
+          "type": "number"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Actlabhrs"
+       },
+       "actmatcost": {
+        "anyOf": [
+         {
+          "type": "number"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Actmatcost"
+       },
+       "actservcost": {
+        "anyOf": [
+         {
+          "type": "number"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Actservcost"
+       },
+       "actstart": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Actstart"
+       },
+       "acttoolcost": {
+        "anyOf": [
+         {
+          "type": "number"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Acttoolcost"
+       },
+       "acttotalcost": {
+        "anyOf": [
+         {
+          "type": "number"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Acttotalcost"
+       },
+       "aob_asset_class": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Aob Asset Class"
+       },
+       "aob_source": {
+        "anyOf": [
+         {
+          "additionalProperties": true,
+          "type": "object"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Aob Source"
+       },
+       "assetnum": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Assetnum"
+       },
+       "description": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Description"
+       },
+       "description_longdescription": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Description Longdescription"
+       },
+       "estatapprtotalcost": {
+        "anyOf": [
+         {
+          "type": "number"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Estatapprtotalcost"
+       },
+       "estlabcost": {
+        "anyOf": [
+         {
+          "type": "number"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Estlabcost"
+       },
+       "estlabhrs": {
+        "anyOf": [
+         {
+          "type": "number"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Estlabhrs"
+       },
+       "estmatcost": {
+        "anyOf": [
+         {
+          "type": "number"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Estmatcost"
+       },
+       "estservcost": {
+        "anyOf": [
+         {
+          "type": "number"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Estservcost"
+       },
+       "esttoolcost": {
+        "anyOf": [
+         {
+          "type": "number"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Esttoolcost"
+       },
+       "esttotalcost": {
+        "anyOf": [
+         {
+          "type": "number"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Esttotalcost"
+       },
+       "failurecode": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Failurecode"
+       },
+       "jpnum": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Jpnum"
+       },
+       "lead": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Lead"
+       },
+       "location": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Location"
+       },
+       "orgid": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Orgid"
+       },
+       "parent": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Parent"
+       },
+       "reportdate": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Reportdate"
+       },
+       "reportedby": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Reportedby"
+       },
+       "schedfinish": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Schedfinish"
+       },
+       "schedstart": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Schedstart"
+       },
+       "siteid": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Siteid"
+       },
+       "status": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Status"
+       },
+       "status_date": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Status Date"
+       },
+       "targcompdate": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Targcompdate"
+       },
+       "targstartdate": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Targstartdate"
+       },
+       "taskid": {
+        "anyOf": [
+         {
+          "type": "integer"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Taskid"
+       },
+       "wonum": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Wonum"
+       },
+       "wopriority": {
+        "anyOf": [
+         {
+          "type": "integer"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Wopriority"
+       },
+       "worktype": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Worktype"
+       },
+       "wplabor": {
+        "anyOf": [
+         {
+          "items": {
+           "$ref": "#/$defs/LaborLine"
+          },
+          "type": "array"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Wplabor"
+       }
+      },
+      "title": "WorkOrderItem",
+      "type": "object"
+     },
+     "WorkOrderMutationResult": {
+      "properties": {
+       "message": {
+        "title": "Message",
+        "type": "string"
+       },
+       "siteid": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Siteid"
+       },
+       "status": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Status"
+       },
+       "wonum": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Wonum"
+       },
+       "work_order": {
+        "$ref": "#/$defs/WorkOrderItem"
+       }
+      },
+      "required": [
+       "work_order",
+       "message"
+      ],
+      "title": "WorkOrderMutationResult",
+      "type": "object"
+     }
+    },
+    "properties": {
+     "result": {
+      "anyOf": [
+       {
+        "$ref": "#/$defs/WorkOrderMutationResult"
+       },
+       {
+        "$ref": "#/$defs/ErrorResult"
+       }
+      ],
+      "title": "Result"
+     }
+    },
+    "required": [
+     "result"
+    ],
+    "title": "close_workorderOutput",
+    "type": "object"
+   },
+   "title": "Close Work Order"
+  },
+  "after": {
+   "description": "Close a work order (-> COMP) with actuals and resolution. Do not use for work orders at site MAIN.",
+   "inputSchema": {
+    "properties": {
+     "actual_hours": {
+      "default": 0.0,
+      "title": "Actual Hours",
+      "type": "number"
+     },
+     "failure_code": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "default": null,
+      "title": "Failure Code"
+     },
+     "resolution_notes": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "default": null,
+      "title": "Resolution Notes"
+     },
+     "site_id": {
+      "title": "Site Id",
+      "type": "string"
+     },
+     "wonum": {
+      "title": "Wonum",
+      "type": "string"
+     }
+    },
+    "required": [
+     "wonum",
+     "site_id"
+    ],
+    "title": "close_workorderArguments",
+    "type": "object"
+   },
+   "name": "close_workorder",
+   "outputSchema": {
+    "$defs": {
+     "ErrorResult": {
+      "properties": {
+       "error": {
+        "title": "Error",
+        "type": "string"
+       }
+      },
+      "required": [
+       "error"
+      ],
+      "title": "ErrorResult",
+      "type": "object"
+     },
+     "LaborLine": {
+      "additionalProperties": true,
+      "properties": {
+       "craft": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Craft"
+       },
+       "laborcode": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Laborcode"
+       },
+       "laborhrs": {
+        "anyOf": [
+         {
+          "type": "number"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Laborhrs"
+       },
+       "startdate": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Startdate"
+       }
+      },
+      "title": "LaborLine",
+      "type": "object"
+     },
+     "WorkOrderItem": {
+      "additionalProperties": true,
+      "properties": {
+       "actfinish": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Actfinish"
+       },
+       "actlabcost": {
+        "anyOf": [
+         {
+          "type": "number"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Actlabcost"
+       },
+       "actlabhrs": {
+        "anyOf": [
+         {
+          "type": "number"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Actlabhrs"
+       },
+       "actmatcost": {
+        "anyOf": [
+         {
+          "type": "number"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Actmatcost"
+       },
+       "actservcost": {
+        "anyOf": [
+         {
+          "type": "number"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Actservcost"
+       },
+       "actstart": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Actstart"
+       },
+       "acttoolcost": {
+        "anyOf": [
+         {
+          "type": "number"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Acttoolcost"
+       },
+       "acttotalcost": {
+        "anyOf": [
+         {
+          "type": "number"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Acttotalcost"
+       },
+       "aob_asset_class": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Aob Asset Class"
+       },
+       "aob_source": {
+        "anyOf": [
+         {
+          "additionalProperties": true,
+          "type": "object"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Aob Source"
+       },
+       "assetnum": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Assetnum"
+       },
+       "description": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Description"
+       },
+       "description_longdescription": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Description Longdescription"
+       },
+       "estatapprtotalcost": {
+        "anyOf": [
+         {
+          "type": "number"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Estatapprtotalcost"
+       },
+       "estlabcost": {
+        "anyOf": [
+         {
+          "type": "number"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Estlabcost"
+       },
+       "estlabhrs": {
+        "anyOf": [
+         {
+          "type": "number"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Estlabhrs"
+       },
+       "estmatcost": {
+        "anyOf": [
+         {
+          "type": "number"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Estmatcost"
+       },
+       "estservcost": {
+        "anyOf": [
+         {
+          "type": "number"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Estservcost"
+       },
+       "esttoolcost": {
+        "anyOf": [
+         {
+          "type": "number"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Esttoolcost"
+       },
+       "esttotalcost": {
+        "anyOf": [
+         {
+          "type": "number"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Esttotalcost"
+       },
+       "failurecode": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Failurecode"
+       },
+       "jpnum": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Jpnum"
+       },
+       "lead": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Lead"
+       },
+       "location": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Location"
+       },
+       "orgid": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Orgid"
+       },
+       "parent": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Parent"
+       },
+       "reportdate": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Reportdate"
+       },
+       "reportedby": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Reportedby"
+       },
+       "schedfinish": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Schedfinish"
+       },
+       "schedstart": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Schedstart"
+       },
+       "siteid": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Siteid"
+       },
+       "status": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Status"
+       },
+       "status_date": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Status Date"
+       },
+       "targcompdate": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Targcompdate"
+       },
+       "targstartdate": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Targstartdate"
+       },
+       "taskid": {
+        "anyOf": [
+         {
+          "type": "integer"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Taskid"
+       },
+       "wonum": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Wonum"
+       },
+       "wopriority": {
+        "anyOf": [
+         {
+          "type": "integer"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Wopriority"
+       },
+       "worktype": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Worktype"
+       },
+       "wplabor": {
+        "anyOf": [
+         {
+          "items": {
+           "$ref": "#/$defs/LaborLine"
+          },
+          "type": "array"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Wplabor"
+       }
+      },
+      "title": "WorkOrderItem",
+      "type": "object"
+     },
+     "WorkOrderMutationResult": {
+      "properties": {
+       "message": {
+        "title": "Message",
+        "type": "string"
+       },
+       "siteid": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Siteid"
+       },
+       "status": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Status"
+       },
+       "wonum": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null,
+        "title": "Wonum"
+       },
+       "work_order": {
+        "$ref": "#/$defs/WorkOrderItem"
+       }
+      },
+      "required": [
+       "work_order",
+       "message"
+      ],
+      "title": "WorkOrderMutationResult",
+      "type": "object"
+     }
+    },
+    "properties": {
+     "result": {
+      "anyOf": [
+       {
+        "$ref": "#/$defs/WorkOrderMutationResult"
+       },
+       {
+        "$ref": "#/$defs/ErrorResult"
+       }
+      ],
+      "title": "Result"
+     }
+    },
+    "required": [
+     "result"
+    ],
+    "title": "close_workorderOutput",
+    "type": "object"
+   },
+   "title": "Close Work Order"
+  },
+  "compound": false,
+  "carrier": {
+   "level": "tool",
+   "field": "description"
+  }
+ },
+ "effect": {
+  "classification": "schema_unchanged",
+  "clean_sha256": "ca4e73eb1c36f6e04dc10c8607af35a546d3cb9c348b0095db05810dcbf7aae5",
+  "mutated_sha256": "ca4e73eb1c36f6e04dc10c8607af35a546d3cb9c348b0095db05810dcbf7aae5",
+  "diff": []
+ },
+ "expected": "schema_unchanged",
+ "agrees": true,
+ "stub_sha256": "de23717da3b833787c69094078075852e9057fbfe179f13846267f709caab515"
+}

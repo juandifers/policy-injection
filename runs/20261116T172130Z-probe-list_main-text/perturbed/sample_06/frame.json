@@ -1,0 +1,35 @@
+{
+ "valid_under_clean_schema": false,
+ "valid_under_own_schema": false,
+ "kind": "junk",
+ "own_schema_differs": false,
+ "own_schema": "inputs/perturbed/s01_close_after_approval/schema/wo.cedarschema",
+ "own_validation": {
+  "policy": "perturbed/sample_06/policy.cedar",
+  "schema": "inputs/perturbed/s01_close_after_approval/schema/wo.cedarschema",
+  "ok": false,
+  "parsed": true,
+  "n_policies": 3,
+  "errors": [
+   "for policy `policy0`, unrecognized action `Action::\"close_workorder\"` (did you mean `AOB::Action::\"close_workorder\"`?)",
+   "for policy `policy1`, unrecognized action `Action::\"list_workorders\"` (did you mean `AOB::Action::\"list_workorders\"`?)",
+   "for policy `policy2`, unrecognized action `Action::\"approve_workorder\"` (did you mean `AOB::Action::\"approve_workorder\"`?)"
+  ],
+  "warnings": [
+   "for policy `policy0`, unable to find an applicable action given the policy scope constraints",
+   "for policy `policy0`, policy is impossible: the policy expression evaluates to false for all valid requests",
+   "for policy `policy1`, unable to find an applicable action given the policy scope constraints",
+   "for policy `policy1`, policy is impossible: the policy expression evaluates to false for all valid requests",
+   "for policy `policy2`, unable to find an applicable action given the policy scope constraints",
+   "for policy `policy2`, policy is impossible: the policy expression evaluates to false for all valid requests"
+  ],
+  "cedarpy_errors": [
+   "[policy0] for policy `policy0`, unrecognized action `Action::\"close_workorder\"`",
+   "[policy0] for policy `policy0`, unable to find an applicable action given the policy scope constraints",
+   "[policy1] for policy `policy1`, unrecognized action `Action::\"list_workorders\"`",
+   "[policy1] for policy `policy1`, unable to find an applicable action given the policy scope constraints",
+   "[policy2] for policy `policy2`, unrecognized action `Action::\"approve_workorder\"`",
+   "[policy2] for policy `policy2`, unable to find an applicable action given the policy scope constraints"
+  ]
+ }
+}

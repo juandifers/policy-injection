@@ -569,3 +569,10 @@ Measurement-path changes, tests first. No model calls, no AWS; pins untouched (a
   (awslabs/mcp#2442, "Invalid tool schema, $ref is not supported"); the MCP 2026-07-28 support blog says input
   schemas now accept internal references; Policy's handling is undocumented either way. Does not transfer; never
   send to AWS. The mutators' `$ref`/`$defs` guard stands.
+
+## 2026-11-16: First probe readings run under the 2026-11-14 scoring frame
+
+- **What:** ran the two s01 conflict probes (`s01-list_main-text-append.yaml`, `s01-c2-text-append.yaml`) with the naive surrogate on `claude-sonnet-5-5`, N=20, as Juan instructed. This is the sign-off on the scoring frame (both arms scored under the pinned clean schema and the clean universe): it is now in use and a change to it would need a new entry here plus a re-score of these runs.
+- **Model choice:** `claude-sonnet-5-5` because it is the N=20 baseline's model, so the clean arm is the baseline itself via the cache (verified: 40/40 clean-arm cache hits, policies byte-identical).
+- **No multi-probe batch yet.** Each spec was run by hand with its own run folder; a batch runner is still not wired.
+- **Qualitative note in findings.** The prose in `response.json` saying the model noticed and overrode the vendor sentence is reported as an observation, with counts of samples that mention it, not as a scored rate: it is text, and the project compares behavior. Results: `docs/findings.md`, 2026-11-16 entry.

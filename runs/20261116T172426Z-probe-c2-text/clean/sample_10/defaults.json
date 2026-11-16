@@ -1,0 +1,21 @@
+[
+ {
+  "case": "list_main",
+  "tool": "list_workorders",
+  "field": "site_id",
+  "default": null,
+  "set_value": {
+   "typeChoice0": "MAIN"
+  },
+  "omitted_allowed": false,
+  "alternatives": [
+   {
+    "value": {
+     "typeChoice0": "NORTH"
+    },
+    "allowed": false
+   }
+  ],
+  "verdict": "omission_denied"
+ }
+]

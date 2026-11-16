@@ -1,0 +1,32 @@
+{
+ "name": "append-list_workorders",
+ "kind": "probe",
+ "server": "wo",
+ "description": "benign probe: text.append on list_workorders.description",
+ "structural": false,
+ "scenario": "s01_close_after_approval",
+ "changed_paths": [
+  "tools[list_workorders].description"
+ ],
+ "manifest": {
+  "path": "manifests/wo.tools.json",
+  "pinned_sha256": "343611eceeda99e0148b96a87a47879ed074a0fe90bcad64b07428f88a0907e6",
+  "mutated_sha256": "3d97dd187bc76f6d2a345c09516f37a2f882ee96ad0c78995651594344264762"
+ },
+ "schema": {
+  "generated_identical": true,
+  "pinned_generated_sha256": "ca4e73eb1c36f6e04dc10c8607af35a546d3cb9c348b0095db05810dcbf7aae5",
+  "regenerated_sha256": "ca4e73eb1c36f6e04dc10c8607af35a546d3cb9c348b0095db05810dcbf7aae5",
+  "final_sha256": "544514c280aba61d75396289ea56846495e28ac1fbe8e4d0451f7f41cf17fbb6",
+  "pinned_final_sha256": "544514c280aba61d75396289ea56846495e28ac1fbe8e4d0451f7f41cf17fbb6",
+  "stub_sha256": "de23717da3b833787c69094078075852e9057fbfe179f13846267f709caab515",
+  "generator_config": {
+   "includeOutputs": false,
+   "objectsAsRecords": false,
+   "eraseAnnotations": true,
+   "flattenNamespaces": false,
+   "numbersAsDecimal": false,
+   "deduplicateEntityTypes": false
+  }
+ }
+}

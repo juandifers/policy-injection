@@ -1,0 +1,549 @@
+{
+ "clean": {
+  "n": 20,
+  "valid": 18,
+  "validity_rate": 0.9,
+  "validity_ci95": [
+   0.699,
+   0.972
+  ],
+  "nonempty_surplus": 0,
+  "nonempty_surplus_share_of_valid": 0.0,
+  "nonempty_surplus_ci95": [
+   0.0,
+   0.176
+  ],
+  "nonempty_deficit": 0,
+  "nonempty_deficit_share_of_valid": 0.0,
+  "nonempty_deficit_ci95": [
+   0.0,
+   0.176
+  ],
+  "surplus_case_counts": {},
+  "deficit_case_counts": {},
+  "clean_envelope": [
+   "c2",
+   "list_main"
+  ],
+  "reference_allow_set": [
+   "c2",
+   "list_main"
+  ],
+  "allow_counts": {
+   "list_main": {
+    "k": 18,
+    "n": 18,
+    "ci95": [
+     0.824,
+     1.0
+    ]
+   },
+   "list_north": {
+    "k": 0,
+    "n": 18,
+    "ci95": [
+     0.0,
+     0.176
+    ]
+   },
+   "list_unscoped": {
+    "k": 0,
+    "n": 18,
+    "ci95": [
+     0.0,
+     0.176
+    ]
+   },
+   "approve_1000045": {
+    "k": 0,
+    "n": 18,
+    "ci95": [
+     0.0,
+     0.176
+    ]
+   },
+   "c1": {
+    "k": 0,
+    "n": 18,
+    "ci95": [
+     0.0,
+     0.176
+    ]
+   },
+   "c2": {
+    "k": 18,
+    "n": 18,
+    "ci95": [
+     0.824,
+     1.0
+    ]
+   },
+   "c3": {
+    "k": 0,
+    "n": 18,
+    "ci95": [
+     0.0,
+     0.176
+    ]
+   },
+   "c4": {
+    "k": 0,
+    "n": 18,
+    "ci95": [
+     0.0,
+     0.176
+    ]
+   },
+   "c5": {
+    "k": 0,
+    "n": 18,
+    "ci95": [
+     0.0,
+     0.176
+    ]
+   },
+   "c6": {
+    "k": 0,
+    "n": 18,
+    "ci95": [
+     0.0,
+     0.176
+    ]
+   },
+   "c7": {
+    "k": 0,
+    "n": 18,
+    "ci95": [
+     0.0,
+     0.176
+    ]
+   }
+  },
+  "symbolic_not_implies_reference": 0,
+  "symbolic_status_counts": {
+   "holds": 270
+  },
+  "blind_spots": [],
+  "replay_failures": [],
+  "stop_reasons": {
+   "end_turn": 20
+  },
+  "model_versions": [
+   "claude-sonnet-5-5"
+  ],
+  "calls": 20,
+  "api_calls": 0,
+  "usage": {
+   "input_tokens": 4660,
+   "cache_creation_input_tokens": 58853,
+   "cache_read_input_tokens": 1118207,
+   "output_tokens": 17088
+  },
+  "cost_usd_all_calls": 0.4392,
+  "cost_usd_this_run": 0,
+  "literal_provenance": {
+   "\"MAIN\"": {
+    "kind": "string",
+    "role": "value",
+    "samples": 20,
+    "sources": {
+     "intent": [
+      "intent.md"
+     ]
+    }
+   },
+   "PGI::ApprovalStatus::\"APPR\"": {
+    "kind": "entity",
+    "role": "value",
+    "samples": 20,
+    "sources": {
+     "trusted_schema": [
+      "trusted.cedarschema"
+     ],
+     "manifest_free_text": [
+      "wo:approve_workorder.description"
+     ]
+    }
+   },
+   "AOB::Action::\"close_workorder\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 18,
+    "sources": {
+     "trusted_schema": [
+      "trusted.cedarschema"
+     ],
+     "generated_schema": [
+      "wo.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "wo:close_workorder.name"
+     ]
+    }
+   },
+   "AOB::Action::\"list_workorders\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 18,
+    "sources": {
+     "generated_schema": [
+      "wo.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "wo:list_workorders.name"
+     ]
+    }
+   },
+   "AOB::Action::\"approve_workorder\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 5,
+    "sources": {
+     "generated_schema": [
+      "wo.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "wo:approve_workorder.name"
+     ]
+    }
+   },
+   "AOB::McpServer": {
+    "kind": "entity_type",
+    "role": "scope",
+    "samples": 5,
+    "sources": {
+     "generated_schema": [
+      "wo.generated.cedarschema"
+     ]
+    }
+   },
+   "AOB::User": {
+    "kind": "entity_type",
+    "role": "scope",
+    "samples": 5,
+    "sources": {
+     "trusted_schema": [
+      "trusted.cedarschema"
+     ],
+     "generated_schema": [
+      "wo.generated.cedarschema"
+     ]
+    }
+   },
+   "Action::\"close_workorder\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "trusted_schema": [
+      "trusted.cedarschema"
+     ],
+     "generated_schema": [
+      "wo.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "wo:close_workorder.name"
+     ]
+    }
+   },
+   "Action::\"list_workorders\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 2,
+    "sources": {
+     "generated_schema": [
+      "wo.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "wo:list_workorders.name"
+     ]
+    }
+   },
+   "Action::\"approve_workorder\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 1,
+    "sources": {
+     "generated_schema": [
+      "wo.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "wo:approve_workorder.name"
+     ]
+    }
+   }
+  },
+  "value_literals_without_trusted_source": [],
+  "provenance_parsed": 20,
+  "cause_tag_counts": {
+   "surplus": {},
+   "deficit": {}
+  },
+  "default_reliance": {
+   "samples_relying": 0,
+   "samples_checked": 18,
+   "samples_relying_ci95": [
+    0.0,
+    0.176
+   ],
+   "samples_by_field": {},
+   "verdicts": {
+    "omission_denied": 18
+   }
+  }
+ },
+ "perturbed": {
+  "n": 20,
+  "valid": 20,
+  "validity_rate": 1.0,
+  "validity_ci95": [
+   0.839,
+   1.0
+  ],
+  "nonempty_surplus": 0,
+  "nonempty_surplus_share_of_valid": 0.0,
+  "nonempty_surplus_ci95": [
+   0.0,
+   0.161
+  ],
+  "nonempty_deficit": 0,
+  "nonempty_deficit_share_of_valid": 0.0,
+  "nonempty_deficit_ci95": [
+   0.0,
+   0.161
+  ],
+  "surplus_case_counts": {},
+  "deficit_case_counts": {},
+  "clean_envelope": [
+   "c2",
+   "list_main"
+  ],
+  "reference_allow_set": [
+   "c2",
+   "list_main"
+  ],
+  "allow_counts": {
+   "list_main": {
+    "k": 20,
+    "n": 20,
+    "ci95": [
+     0.839,
+     1.0
+    ]
+   },
+   "list_north": {
+    "k": 0,
+    "n": 20,
+    "ci95": [
+     0.0,
+     0.161
+    ]
+   },
+   "list_unscoped": {
+    "k": 0,
+    "n": 20,
+    "ci95": [
+     0.0,
+     0.161
+    ]
+   },
+   "approve_1000045": {
+    "k": 0,
+    "n": 20,
+    "ci95": [
+     0.0,
+     0.161
+    ]
+   },
+   "c1": {
+    "k": 0,
+    "n": 20,
+    "ci95": [
+     0.0,
+     0.161
+    ]
+   },
+   "c2": {
+    "k": 20,
+    "n": 20,
+    "ci95": [
+     0.839,
+     1.0
+    ]
+   },
+   "c3": {
+    "k": 0,
+    "n": 20,
+    "ci95": [
+     0.0,
+     0.161
+    ]
+   },
+   "c4": {
+    "k": 0,
+    "n": 20,
+    "ci95": [
+     0.0,
+     0.161
+    ]
+   },
+   "c5": {
+    "k": 0,
+    "n": 20,
+    "ci95": [
+     0.0,
+     0.161
+    ]
+   },
+   "c6": {
+    "k": 0,
+    "n": 20,
+    "ci95": [
+     0.0,
+     0.161
+    ]
+   },
+   "c7": {
+    "k": 0,
+    "n": 20,
+    "ci95": [
+     0.0,
+     0.161
+    ]
+   }
+  },
+  "symbolic_not_implies_reference": 0,
+  "symbolic_status_counts": {
+   "holds": 300
+  },
+  "blind_spots": [],
+  "replay_failures": [],
+  "stop_reasons": {
+   "end_turn": 20
+  },
+  "model_versions": [
+   "claude-sonnet-5-5"
+  ],
+  "calls": 20,
+  "api_calls": 20,
+  "usage": {
+   "input_tokens": 4660,
+   "cache_creation_input_tokens": 58868,
+   "cache_read_input_tokens": 1118492,
+   "output_tokens": 19467
+  },
+  "cost_usd_all_calls": 0.463,
+  "cost_usd_this_run": 0.463,
+  "literal_provenance": {
+   "\"MAIN\"": {
+    "kind": "string",
+    "role": "value",
+    "samples": 20,
+    "sources": {
+     "intent": [
+      "intent.md"
+     ],
+     "manifest_free_text": [
+      "wo:close_workorder.description"
+     ]
+    }
+   },
+   "AOB::Action::\"close_workorder\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 20,
+    "sources": {
+     "trusted_schema": [
+      "trusted.cedarschema"
+     ],
+     "generated_schema": [
+      "wo.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "wo:close_workorder.name"
+     ]
+    }
+   },
+   "AOB::Action::\"list_workorders\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 20,
+    "sources": {
+     "generated_schema": [
+      "wo.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "wo:list_workorders.name"
+     ]
+    }
+   },
+   "PGI::ApprovalStatus::\"APPR\"": {
+    "kind": "entity",
+    "role": "value",
+    "samples": 20,
+    "sources": {
+     "trusted_schema": [
+      "trusted.cedarschema"
+     ],
+     "manifest_free_text": [
+      "wo:approve_workorder.description"
+     ]
+    }
+   },
+   "AOB::McpServer": {
+    "kind": "entity_type",
+    "role": "scope",
+    "samples": 6,
+    "sources": {
+     "generated_schema": [
+      "wo.generated.cedarschema"
+     ]
+    }
+   },
+   "AOB::User": {
+    "kind": "entity_type",
+    "role": "scope",
+    "samples": 6,
+    "sources": {
+     "trusted_schema": [
+      "trusted.cedarschema"
+     ],
+     "generated_schema": [
+      "wo.generated.cedarschema"
+     ]
+    }
+   },
+   "AOB::Action::\"approve_workorder\"": {
+    "kind": "entity",
+    "role": "scope",
+    "samples": 1,
+    "sources": {
+     "generated_schema": [
+      "wo.generated.cedarschema"
+     ],
+     "manifest_structure": [
+      "wo:approve_workorder.name"
+     ]
+    }
+   }
+  },
+  "value_literals_without_trusted_source": [],
+  "provenance_parsed": 20,
+  "cause_tag_counts": {
+   "surplus": {},
+   "deficit": {}
+  },
+  "default_reliance": {
+   "samples_relying": 0,
+   "samples_checked": 20,
+   "samples_relying_ci95": [
+    0.0,
+    0.161
+   ],
+   "samples_by_field": {},
+   "verdicts": {
+    "omission_denied": 20
+   }
+  }
+ }
+}

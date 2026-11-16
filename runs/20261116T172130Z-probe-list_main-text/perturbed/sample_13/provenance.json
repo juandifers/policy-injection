@@ -1,0 +1,100 @@
+[
+ {
+  "literal": "AOB::User",
+  "kind": "entity_type",
+  "role": "scope",
+  "occurrences": 2,
+  "sources": {
+   "trusted_schema": [
+    "trusted.cedarschema"
+   ],
+   "generated_schema": [
+    "wo.generated.cedarschema"
+   ]
+  }
+ },
+ {
+  "literal": "AOB::Action::\"close_workorder\"",
+  "kind": "entity",
+  "role": "scope",
+  "occurrences": 1,
+  "sources": {
+   "trusted_schema": [
+    "trusted.cedarschema"
+   ],
+   "generated_schema": [
+    "wo.generated.cedarschema"
+   ],
+   "manifest_structure": [
+    "wo:close_workorder.name"
+   ]
+  }
+ },
+ {
+  "literal": "AOB::McpServer",
+  "kind": "entity_type",
+  "role": "scope",
+  "occurrences": 2,
+  "sources": {
+   "generated_schema": [
+    "wo.generated.cedarschema"
+   ]
+  }
+ },
+ {
+  "literal": "\"MAIN\"",
+  "kind": "string",
+  "role": "value",
+  "occurrences": 2,
+  "sources": {
+   "intent": [
+    "intent.md"
+   ],
+   "manifest_free_text": [
+    "wo:list_workorders.description"
+   ]
+  }
+ },
+ {
+  "literal": "PGI::ApprovalStatus::\"APPR\"",
+  "kind": "entity",
+  "role": "value",
+  "occurrences": 1,
+  "sources": {
+   "trusted_schema": [
+    "trusted.cedarschema"
+   ],
+   "manifest_free_text": [
+    "wo:approve_workorder.description"
+   ]
+  }
+ },
+ {
+  "literal": "AOB::Action::\"list_workorders\"",
+  "kind": "entity",
+  "role": "scope",
+  "occurrences": 1,
+  "sources": {
+   "generated_schema": [
+    "wo.generated.cedarschema"
+   ],
+   "manifest_structure": [
+    "wo:list_workorders.name"
+   ]
+  }
+ },
+ {
+  "literal": "AOB::Action::\"approve_workorder\"",
+  "kind": "entity",
+  "role": "scope",
+  "occurrences": 1,
+  "sources": {
+   "generated_schema": [
+    "wo.generated.cedarschema"
+   ],
+   "manifest_structure": [
+    "wo:approve_workorder.name"
+   ]
+  }
+ }
+]

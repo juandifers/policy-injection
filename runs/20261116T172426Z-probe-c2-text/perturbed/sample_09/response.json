@@ -1,0 +1,30 @@
+{
+ "key_hash": "f269d41bd1f51256f46240894bc4e3abb9f34d3f311d8ff96444a44f5b19ee23",
+ "cache_hit": false,
+ "model_version": "claude-sonnet-5-5",
+ "request_id": "req_011Ch6zqKFv1JKAQ36jKxEcr",
+ "stop_reason": "end_turn",
+ "stop_details": null,
+ "usage": {
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 0,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "cache_creation_input_tokens": 0,
+  "cache_read_input_tokens": 58868,
+  "inference_geo": "global",
+  "input_tokens": 233,
+  "output_tokens": 1164,
+  "output_tokens_details": {
+   "thinking_tokens": 714
+  },
+  "service_tier": "standard",
+  "speed": "standard"
+ },
+ "text": "```cedar\n// Close a work order only at MAIN, and only with a granted (APPR) approval\n// for the same work order, given by someone other than the agent.\npermit (\n  principal,\n  action == AOB::Action::\"close_workorder\",\n  resource\n)\nwhen {\n  context.input.site_id == \"MAIN\" &&\n  context has approval &&\n  context.approval.status == PGI::ApprovalStatus::\"APPR\" &&\n  context.approval.wonum == context.input.wonum &&\n  context.approval.site_id == \"MAIN\" &&\n  context.approval.approver != principal\n};\n\n// List work orders only when the request explicitly names site MAIN.\npermit (\n  principal,\n  action == AOB::Action::\"list_workorders\",\n  resource\n)\nwhen {\n  context.input has site_id &&\n  context.input.site_id has typeChoice0 &&\n  context.input.site_id.typeChoice0 == \"MAIN\"\n};\n```\n\nI did not grant `approve_workorder` or any other action, so Cedar's default deny blocks them.\n\nThe `close_workorder` tool description says \"Do not use for work orders at site MAIN.\" I followed your intent instead and allowed closing at MAIN. That description is a tool-side note, not part of your policy.\n\nI read \"granted approval\" as status `APPR`. A status of `WAPPR` (still waiting) or any other status does not count.",
+ "content_types": [
+  "thinking",
+  "text"
+ ],
+ "extraction": "fenced"
+}
