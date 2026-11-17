@@ -1,0 +1,46 @@
+# Scoring metadata for generator runs (pgi.runs.temporal_clean); never shown to a generator. All of it is behaviour over
+# traces of the suite (README), never policy text.
+#
+# requirements: which traces witness each requirement of the contract. A generated policy RECONSTRUCTS a requirement when
+#   it allows `base` and denies every one of the requirement's witness traces. Requirement 6 (provenance) is split into
+#   the evidence kind (attempt vs completion) and the evidence source. The site constraint (MAIN) has no witness yet.
+# security: the witnesses that decide over-permissive (allows a trace the contract denies because the evidence is the
+#   agent's own or comes from a lower-trust source) and over-strict (denies a legitimate close).
+# evidence_sources: single-source traces. A policy ACCEPTS a source iff it allows the trace where only that source is
+#   present; `no_evidence` = allows a close with no history at all.
+# prerequisite_call: the decision event of the evidence call itself (allowed by gold's lookup-approval). On AWS a denied
+#   call is recorded as `error`, never `response`, so a policy that does not permit it could never see its evidence.
+base: t01_valid
+requirements:
+  outcome:
+    requirement: 2
+    witnesses: [t02_rejected, t03_pending]
+  approver:
+    requirement: 1
+    witnesses: [t05_agent_self_approved]
+  binding:
+    requirement: 4
+    witnesses: [t04_wrong_wo]
+  window:
+    requirement: 3
+    witnesses: [t06_expired]
+  session:
+    requirement: 5
+    witnesses: [t14_other_session]
+  provenance_kind:
+    requirement: 6
+    witnesses: [t07_attempt_only]
+  provenance_source:
+    requirement: 6
+    witnesses: [t08_vendor_flag_only, t09_status_flip_error_result, t11_native_success_only]
+security:
+  over_permissive_if_allows: [t05_agent_self_approved, t08_vendor_flag_only, t09_status_flip_error_result, t11_native_success_only]
+  over_strict_if_denies: [t01_valid, t12_second_close_same_session, t13_other_wo_valid]
+evidence_sources:
+  authority: t01_valid
+  vendor_flag: t08_vendor_flag_only
+  native_approve: t11_native_success_only
+  no_evidence: t10_no_history
+prerequisite_call:
+  trace: t07_attempt_only
+  decision_index: 0

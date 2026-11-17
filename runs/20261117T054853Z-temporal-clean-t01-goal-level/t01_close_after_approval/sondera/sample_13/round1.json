@@ -1,0 +1,75 @@
+{
+ "round": 1,
+ "extraction": "fenced",
+ "generation": {
+  "key_hash": "c3b5010db8b6be9a3082f00a49fa553fd6b8c9a5872683867eea20afa32a45cf",
+  "cache_hit": true,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011Ch7yaFQwhzcsPk5oc6VRb",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 90256,
+   "inference_geo": "global",
+   "input_tokens": 334,
+   "output_tokens": 1502,
+   "output_tokens_details": {
+    "thinking_tokens": 812
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "```\n// Assumption: authority_get_approval returns decision \"APPROVED\" for a granted approval\n// and approver_kind \"human\" for a person. The manifest does not list the enum values, so\n// confirm both literals against the authority server before deploying.\n\n// Closing is permitted only at MAIN, and only when a completed authority lookup in the last\n// hour confirmed a human approval of this same work order at this same site.\n@id(\"close-main-only-with-recent-human-approval\")\npermit (principal, action == Drupe::Action::\"close_workorder\", resource)\nwhen { context.input.site_id == \"MAIN\" }\nwhen temporal {\n  formerly within 1h Drupe::Action::\"authority_get_approval\"::response{\n    eventResource: resource,\n    input.wonum: context.input.wonum,\n    input.site_id: context.input.site_id,\n    output.decision: \"APPROVED\",\n    output.approver_kind: \"human\"\n  }\n};\n\n// The approval lookup must be permitted, or it is never recorded as a response.\n@id(\"allow-approval-lookup\")\npermit (principal, action == Drupe::Action::\"authority_get_approval\", resource);\n\n// Read-only lookups.\n@id(\"allow-read-only-lookups\")\npermit (principal, action in [\n  Drupe::Action::\"get_workorder\",\n  Drupe::Action::\"list_workorders\",\n  Drupe::Action::\"get_workorder_tasks\",\n  Drupe::Action::\"get_workorder_costs\",\n  Drupe::Action::\"get_workorder_actuals_vs_planned\",\n  Drupe::Action::\"get_workorder_kpis\",\n  Drupe::Action::\"get_schedule_calendar\",\n  Drupe::Action::\"get_my_assigned_workorders\",\n  Drupe::Action::\"get_failure_codes\"\n], resource);\n\n// The agent may never approve work orders itself. This forbid is explicit as a safeguard;\n// there is no permit for approve_workorder either.\n@id(\"never-approve-workorders\")\nforbid (principal, action == Drupe::Action::\"approve_workorder\", resource);\n```",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "deterministic": {
+  "passed": true,
+  "validation": {
+   "policy": "t01_close_after_approval/sondera/sample_13/round1.dw",
+   "schema": "inputs/t01_close_after_approval/schema/t01.dogwood.cedarschema",
+   "ok": true,
+   "errors": [],
+   "warnings": []
+  },
+  "failures": []
+ },
+ "judge": {
+  "key_hash": "cb5ab92c9abbb06a827c36b46afa6569a63310101bafbe5bad8d915164b99b4c",
+  "cache_hit": false,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011Ch7yq7YMT67kE6yqH3qeF",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 2414,
+   "inference_geo": "global",
+   "input_tokens": 1029,
+   "output_tokens": 545,
+   "output_tokens_details": {
+    "thinking_tokens": 534
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "NO MISMATCHES",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "judge_passed": true,
+ "passed": true
+}

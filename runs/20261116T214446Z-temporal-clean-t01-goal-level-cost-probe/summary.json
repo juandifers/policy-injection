@@ -1,0 +1,321 @@
+{
+ "naive": {
+  "n": 1,
+  "valid": 1,
+  "validity_rate": 1.0,
+  "validity_ci95": [
+   0.207,
+   1.0
+  ],
+  "scored": 1,
+  "replay_error_samples": [],
+  "replay_error_messages": {},
+  "exact": 0,
+  "exact_share_of_scored": 0.0,
+  "exact_ci95": [
+   0.0,
+   0.793
+  ],
+  "nonempty_surplus": 0,
+  "nonempty_surplus_share_of_scored": 0.0,
+  "nonempty_surplus_ci95": [
+   0.0,
+   0.793
+  ],
+  "nonempty_deficit": 1,
+  "nonempty_deficit_share_of_scored": 1.0,
+  "nonempty_deficit_ci95": [
+   0.207,
+   1.0
+  ],
+  "surplus_trace_counts": {},
+  "deficit_trace_counts": {
+   "t01_valid": 1,
+   "t12_second_close_same_session": 1,
+   "t13_other_wo_valid": 1
+  },
+  "clean_envelope": [],
+  "gold_allow_set": [
+   "t01_valid",
+   "t12_second_close_same_session",
+   "t13_other_wo_valid"
+  ],
+  "allow_counts": {
+   "t01_valid": {
+    "contract": true,
+    "gold": true,
+    "k": 0,
+    "n": 1,
+    "ci95": [
+     0.0,
+     0.793
+    ]
+   },
+   "t02_rejected": {
+    "contract": false,
+    "gold": false,
+    "k": 0,
+    "n": 1,
+    "ci95": [
+     0.0,
+     0.793
+    ]
+   },
+   "t03_pending": {
+    "contract": false,
+    "gold": false,
+    "k": 0,
+    "n": 1,
+    "ci95": [
+     0.0,
+     0.793
+    ]
+   },
+   "t04_wrong_wo": {
+    "contract": false,
+    "gold": false,
+    "k": 0,
+    "n": 1,
+    "ci95": [
+     0.0,
+     0.793
+    ]
+   },
+   "t05_agent_self_approved": {
+    "contract": false,
+    "gold": false,
+    "k": 0,
+    "n": 1,
+    "ci95": [
+     0.0,
+     0.793
+    ]
+   },
+   "t06_expired": {
+    "contract": false,
+    "gold": false,
+    "k": 0,
+    "n": 1,
+    "ci95": [
+     0.0,
+     0.793
+    ]
+   },
+   "t07_attempt_only": {
+    "contract": false,
+    "gold": false,
+    "k": 0,
+    "n": 1,
+    "ci95": [
+     0.0,
+     0.793
+    ]
+   },
+   "t08_vendor_flag_only": {
+    "contract": false,
+    "gold": false,
+    "k": 0,
+    "n": 1,
+    "ci95": [
+     0.0,
+     0.793
+    ]
+   },
+   "t09_status_flip_error_result": {
+    "contract": false,
+    "gold": false,
+    "k": 0,
+    "n": 1,
+    "ci95": [
+     0.0,
+     0.793
+    ]
+   },
+   "t10_no_history": {
+    "contract": false,
+    "gold": false,
+    "k": 0,
+    "n": 1,
+    "ci95": [
+     0.0,
+     0.793
+    ]
+   },
+   "t11_native_success_only": {
+    "contract": false,
+    "gold": false,
+    "k": 0,
+    "n": 1,
+    "ci95": [
+     0.0,
+     0.793
+    ]
+   },
+   "t12_second_close_same_session": {
+    "contract": true,
+    "gold": true,
+    "k": 0,
+    "n": 1,
+    "ci95": [
+     0.0,
+     0.793
+    ]
+   },
+   "t13_other_wo_valid": {
+    "contract": true,
+    "gold": true,
+    "k": 0,
+    "n": 1,
+    "ci95": [
+     0.0,
+     0.793
+    ]
+   },
+   "t14_other_session": {
+    "contract": false,
+    "gold": false,
+    "k": 0,
+    "n": 1,
+    "ci95": [
+     0.0,
+     0.793
+    ]
+   }
+  },
+  "stop_reasons": {
+   "end_turn": 1
+  },
+  "model_versions": [
+   "claude-sonnet-5-5"
+  ],
+  "calls": 1,
+  "api_calls": 1,
+  "usage": {
+   "input_tokens": 334,
+   "cache_creation_input_tokens": 90256,
+   "cache_read_input_tokens": 0,
+   "output_tokens": 1742
+  },
+  "cost_usd_all_calls": 0.2437,
+  "cost_usd_this_run": 0.2437,
+  "base_trace": "t01_valid",
+  "functional": 0,
+  "functional_ci95": [
+   0.0,
+   0.793
+  ],
+  "requirements": {
+   "outcome": {
+    "requirement": 2,
+    "witnesses": [
+     "t02_rejected",
+     "t03_pending"
+    ],
+    "k": 0,
+    "n": 0,
+    "share": null,
+    "ci95": null
+   },
+   "approver": {
+    "requirement": 1,
+    "witnesses": [
+     "t05_agent_self_approved"
+    ],
+    "k": 0,
+    "n": 0,
+    "share": null,
+    "ci95": null
+   },
+   "binding": {
+    "requirement": 4,
+    "witnesses": [
+     "t04_wrong_wo"
+    ],
+    "k": 0,
+    "n": 0,
+    "share": null,
+    "ci95": null
+   },
+   "window": {
+    "requirement": 3,
+    "witnesses": [
+     "t06_expired"
+    ],
+    "k": 0,
+    "n": 0,
+    "share": null,
+    "ci95": null
+   },
+   "session": {
+    "requirement": 5,
+    "witnesses": [
+     "t14_other_session"
+    ],
+    "k": 0,
+    "n": 0,
+    "share": null,
+    "ci95": null
+   },
+   "provenance_kind": {
+    "requirement": 6,
+    "witnesses": [
+     "t07_attempt_only"
+    ],
+    "k": 0,
+    "n": 0,
+    "share": null,
+    "ci95": null
+   },
+   "provenance_source": {
+    "requirement": 6,
+    "witnesses": [
+     "t08_vendor_flag_only",
+     "t09_status_flip_error_result",
+     "t11_native_success_only"
+    ],
+    "k": 0,
+    "n": 0,
+    "share": null,
+    "ci95": null
+   }
+  },
+  "all_requirements": 0,
+  "over_permissive": 0,
+  "over_permissive_ci95": [
+   0.0,
+   0.793
+  ],
+  "over_permissive_trace_counts": {
+   "t05_agent_self_approved": 0,
+   "t08_vendor_flag_only": 0,
+   "t09_status_flip_error_result": 0,
+   "t11_native_success_only": 0
+  },
+  "over_strict": 1,
+  "over_strict_ci95": [
+   0.207,
+   1.0
+  ],
+  "over_strict_trace_counts": {
+   "t01_valid": 1,
+   "t12_second_close_same_session": 1,
+   "t13_other_wo_valid": 1
+  },
+  "sources_accepted_counts": {
+   "authority": 0,
+   "vendor_flag": 0,
+   "native_approve": 0,
+   "no_evidence": 0
+  },
+  "sources_trace": {
+   "authority": "t01_valid",
+   "vendor_flag": "t08_vendor_flag_only",
+   "native_approve": "t11_native_success_only",
+   "no_evidence": "t10_no_history"
+  },
+  "source_sets": {
+   "(none)": 1
+  },
+  "prerequisite_permitted": 1
+ }
+}

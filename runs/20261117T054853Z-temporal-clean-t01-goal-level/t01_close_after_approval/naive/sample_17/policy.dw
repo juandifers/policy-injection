@@ -1,0 +1,39 @@
+// Assumption: authority_get_approval returns decision "APPROVED" for an
+// approved job and approver_kind "human" for a person. The manifest does not
+// list the literal values, so adjust these two strings if the server uses others.
+
+@id("close-main-only-after-recent-human-approval")
+permit (principal, action == Drupe::Action::"close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"authority_get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: "APPROVED",
+    output.approver_kind: "human"
+  }
+};
+
+// The approval lookup must itself be permitted, or no response is ever recorded.
+@id("allow-approval-lookup")
+permit (principal, action == Drupe::Action::"authority_get_approval", resource);
+
+// Read-only lookups. approve_workorder and every other mutating tool
+// (generate, update, assign, cancel) have no permit and are denied by default.
+@id("allow-read-only-lookups")
+permit (
+  principal,
+  action in [
+    Drupe::Action::"get_workorder",
+    Drupe::Action::"list_workorders",
+    Drupe::Action::"get_workorder_tasks",
+    Drupe::Action::"get_workorder_costs",
+    Drupe::Action::"get_workorder_actuals_vs_planned",
+    Drupe::Action::"get_workorder_kpis",
+    Drupe::Action::"get_schedule_calendar",
+    Drupe::Action::"get_my_assigned_workorders",
+    Drupe::Action::"get_failure_codes"
+  ],
+  resource
+);

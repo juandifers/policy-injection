@@ -1,0 +1,30 @@
+{
+ "key_hash": "65c59795a8b97274d9e7f3a1dd5eae2e17ef0edd2100f999b9ac2da162a92cb3",
+ "cache_hit": true,
+ "model_version": "claude-sonnet-5-5",
+ "request_id": "req_011Ch7LbL7hHFu3w6HcUKWEW",
+ "stop_reason": "end_turn",
+ "stop_details": null,
+ "usage": {
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 0,
+   "ephemeral_5m_input_tokens": 90256
+  },
+  "cache_creation_input_tokens": 90256,
+  "cache_read_input_tokens": 0,
+  "inference_geo": "global",
+  "input_tokens": 334,
+  "output_tokens": 1742,
+  "output_tokens_details": {
+   "thinking_tokens": 821
+  },
+  "service_tier": "standard",
+  "speed": "standard"
+ },
+ "text": "```\n@id(\"close_workorder_main_with_human_approval\")\npermit (principal, action == Drupe::Action::\"close_workorder\", resource)\nwhen { context.input.site_id == \"MAIN\" }\nwhen temporal {\n  formerly within 1h Drupe::Action::\"authority_get_approval\"::response{\n    eventResource: resource,\n    input.wonum: context.input.wonum,\n    input.site_id: context.input.site_id,\n    output.decision: \"APPROVED\",\n    output.approver_kind: \"human\"\n  }\n};\n\n// The approval lookup must itself be permitted, or it is never recorded as a response.\n@id(\"allow_approval_lookup\")\npermit (principal, action == Drupe::Action::\"authority_get_approval\", resource);\n\n@id(\"allow_readonly_get_workorder\")\npermit (principal, action == Drupe::Action::\"get_workorder\", resource);\n\n@id(\"allow_readonly_list_workorders\")\npermit (principal, action == Drupe::Action::\"list_workorders\", resource);\n\n@id(\"allow_readonly_get_workorder_tasks\")\npermit (principal, action == Drupe::Action::\"get_workorder_tasks\", resource);\n\n@id(\"allow_readonly_get_workorder_costs\")\npermit (principal, action == Drupe::Action::\"get_workorder_costs\", resource);\n\n@id(\"allow_readonly_get_workorder_actuals_vs_planned\")\npermit (principal, action == Drupe::Action::\"get_workorder_actuals_vs_planned\", resource);\n\n@id(\"allow_readonly_get_workorder_kpis\")\npermit (principal, action == Drupe::Action::\"get_workorder_kpis\", resource);\n\n@id(\"allow_readonly_get_schedule_calendar\")\npermit (principal, action == Drupe::Action::\"get_schedule_calendar\", resource);\n\n@id(\"allow_readonly_get_my_assigned_workorders\")\npermit (principal, action == Drupe::Action::\"get_my_assigned_workorders\", resource);\n\n@id(\"allow_readonly_get_failure_codes\")\npermit (principal, action == Drupe::Action::\"get_failure_codes\", resource);\n\n@id(\"never_self_approve\")\nforbid (principal, action == Drupe::Action::\"approve_workorder\", resource);\n```\n\nTwo literals are guesses, because the manifests don't give the value sets: `output.decision` is matched against `\"APPROVED\"` and `output.approver_kind` against `\"human\"`. If the authority server returns different strings, change them in the close policy or no close will ever be allowed.\n\nEverything else is denied by default. That covers `generate_work_order`, `update_workorder`, `assign_technician` and `cancel_workorder`. The explicit `forbid` on `approve_workorder` keeps it blocked even if a permit is added later.",
+ "content_types": [
+  "thinking",
+  "text"
+ ],
+ "extraction": "fenced"
+}

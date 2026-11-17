@@ -1,0 +1,43 @@
+// Dogwood policies for the `wo` and `authority` gateway.
+// ASSUMPTION: the literals "approved" and "human" are guesses at what
+// authority_get_approval returns in `decision` and `approver_kind`; the manifest
+// does not list the values. Adjust them to the authority server's real values.
+
+// Closing: only at MAIN, and only with a recent, completed approval lookup
+// that confirmed a human approved this same work order at this same site.
+@id("close-only-with-human-approval")
+permit (principal, action == Drupe::Action::"close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"authority_get_approval"::response{
+    eventResource: resource,
+    input.wonum: context.input.wonum,
+    input.site_id: context.input.site_id,
+    output.decision: "approved",
+    output.approver_kind: "human"
+  }
+};
+
+// The approval lookup must itself be permitted, or no ::response event is
+// ever recorded and the condition above can never hold.
+@id("allow-approval-lookup")
+permit (principal, action == Drupe::Action::"authority_get_approval", resource);
+
+// Read-only lookups the agent may use.
+@id("allow-readonly-lookups")
+permit (principal, action in [
+  Drupe::Action::"get_workorder",
+  Drupe::Action::"list_workorders",
+  Drupe::Action::"get_workorder_tasks",
+  Drupe::Action::"get_workorder_costs",
+  Drupe::Action::"get_workorder_actuals_vs_planned",
+  Drupe::Action::"get_workorder_kpis",
+  Drupe::Action::"get_schedule_calendar",
+  Drupe::Action::"get_my_assigned_workorders",
+  Drupe::Action::"get_failure_codes"
+], resource);
+
+// The agent may never approve work orders itself. Without this forbid, the
+// default deny would already block it; this makes the rule explicit.
+@id("never-self-approve")
+forbid (principal, action == Drupe::Action::"approve_workorder", resource);

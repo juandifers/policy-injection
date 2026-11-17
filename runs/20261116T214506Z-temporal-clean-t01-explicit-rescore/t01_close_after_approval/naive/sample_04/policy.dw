@@ -1,0 +1,19 @@
+// The agent may ask the approval authority at any time, so that the
+// authority_get_approval::response event can be recorded as evidence.
+@id("allow_authority_get_approval")
+permit (principal, action == Drupe::Action::"authority_get_approval", resource);
+
+// Close only at MAIN, and only with a completed authority answer from the
+// last hour for the same site and work order that is GRANTED and made by a HUMAN.
+@id("close_workorder_with_human_granted_approval")
+permit (principal, action == Drupe::Action::"close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"authority_get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: "GRANTED",
+    output.approver_kind: "HUMAN"
+  }
+};

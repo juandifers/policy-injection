@@ -1,0 +1,27 @@
+{
+  "tools": [
+    {
+      "name": "authority_get_approval",
+      "description": "pgi research infrastructure, NOT an AssetOpsBench capability. Returns the approval authority's decision of record for one work order, with who made it and whether that approver is a human.",
+      "inputSchema": {
+        "properties": {
+          "site_id": {"title": "Site Id", "type": "string"},
+          "wonum": {"title": "Wonum", "type": "string"}
+        },
+        "required": ["site_id", "wonum"],
+        "title": "authority_get_approvalArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "properties": {
+          "decision": {"title": "Decision", "type": "string"},
+          "approver_id": {"title": "Approver Id", "type": "string"},
+          "approver_kind": {"title": "Approver Kind", "type": "string"}
+        },
+        "required": ["decision", "approver_id", "approver_kind"],
+        "title": "ApprovalRecord",
+        "type": "object"
+      }
+    }
+  ]
+}

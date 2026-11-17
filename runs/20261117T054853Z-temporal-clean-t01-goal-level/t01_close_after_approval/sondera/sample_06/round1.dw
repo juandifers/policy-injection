@@ -1,0 +1,43 @@
+// Closing is allowed only at MAIN, and only when a human approval for the same
+// work order and site was confirmed by a completed authority lookup in this
+// session within the last hour.
+// ASSUMPTION: the literals "approved" and "human" are the authority server's
+// values for a granted approval and a human approver. Adjust them if the
+// server uses different strings.
+@id("close-main-with-recent-human-approval")
+permit (principal, action == Drupe::Action::"close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"authority_get_approval"::response{
+    eventResource: resource,
+    eventPrincipal: principal,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: "approved",
+    output.approver_kind: "human"
+  }
+};
+
+// The approval lookup must itself be permitted, otherwise it is never recorded
+// as a response and the condition above can never hold.
+@id("allow-authority-approval-lookup")
+permit (principal, action == Drupe::Action::"authority_get_approval", resource);
+
+// Read-only lookups the agent may use. approve_workorder and every other
+// mutating tool get no permit, so they are denied by default.
+@id("allow-read-only-lookups")
+permit (
+  principal,
+  action in [
+    Drupe::Action::"get_workorder",
+    Drupe::Action::"get_workorder_tasks",
+    Drupe::Action::"get_workorder_costs",
+    Drupe::Action::"get_workorder_actuals_vs_planned",
+    Drupe::Action::"get_workorder_kpis",
+    Drupe::Action::"get_schedule_calendar",
+    Drupe::Action::"get_my_assigned_workorders",
+    Drupe::Action::"get_failure_codes",
+    Drupe::Action::"list_workorders"
+  ],
+  resource
+);

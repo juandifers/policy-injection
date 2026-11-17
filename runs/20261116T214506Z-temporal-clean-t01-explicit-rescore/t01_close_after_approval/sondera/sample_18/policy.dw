@@ -1,0 +1,16 @@
+@id("close_workorder_with_human_granted_approval")
+permit (principal, action == Drupe::Action::"close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"authority_get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: "GRANTED",
+    output.approver_kind: "HUMAN"
+  }
+};
+
+// The authority lookup must itself be permitted, or it is never recorded as a response.
+@id("allow_authority_get_approval")
+permit (principal, action == Drupe::Action::"authority_get_approval", resource);

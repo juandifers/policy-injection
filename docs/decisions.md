@@ -770,3 +770,33 @@ identical to gold on all 14 traces (not evidence: N=1).
   weak_statusflip, weak_approver, an unconditional close.
 - Run plan: cost probe N=1 on the goal-level arm, then N=20 × 2 generators; the explicit control is re-scored from the
   cache into a new folder (`--cache-only`, zero API calls) so both arms carry the witness fields.
+
+## 2026-11-17: Goal-level baseline run: two hung attempts, result, config fix
+
+- **Hang.** The first N=20 goal-level attempt (`.tmp-20261116T214532Z…`) produced 11 naive samples at ~15 s each, then its
+  12th API call never returned (process alive, no exception, killed at the 1 h background limit). A restart
+  (`.tmp-20261116T231810Z…`) replayed the 11 cached samples and hung on its first fresh call the same way. A direct
+  Haiku probe afterwards answered in 0.9 s, and the third attempt (`runs/20261117T054853Z-temporal-clean-t01-goal-level`,
+  29 API calls) completed normally. Cause not identified (the SDK's default 600 s timeout did not fire). Both `.tmp`
+  folders were deleted (not runs; their samples are in the LLM cache and were replayed). If it recurs, give
+  `AnthropicProvider` an explicit per-request timeout and record that as a change to the request parameters.
+- **Cost.** Goal-level arm: probe $0.24; final run $0.61 (29 fresh calls); `cost_usd_all_calls` $2.47 across both
+  generators counts every cached entry's usage including three 90k-token prefix writes (probe, attempt 1, final run);
+  whether the two hung calls were billed is unknown. Output per naive sample 1.3–1.7k tokens vs ~230 on the explicit arm.
+- **Result** in findings (2026-11-17): 40/40 valid, 0 over-permissive, 40/40 over-strict; every policy binds the authority
+  response with correct correlation and guessed literals (`"APPROVED"`/`"approved"`, `"human"`). Counterfactual
+  diagnostic (text edit, not a score): substituting the contract literals makes 40/40 exactly gold. Script:
+  ```
+  # over runs/20261117T054853Z-temporal-clean-t01-goal-level/t01_close_after_approval/<gen>/sample_*/policy.dw
+  t2 = re.sub(r'output\.decision:\s*"[^"]*"', 'output.decision: "GRANTED"', t)
+  t2 = re.sub(r'output\.approver_kind:\s*"[^"]*"', 'output.approver_kind: "HUMAN"', t2)
+  pgi.runs.temporal_clean.score(<t2 as file>, frame(load_dogwood_inputs(T01, intent="goal-level")))
+  ```
+- **`pgi.analysis.dogwood_text`** (new, tests): text tally of temporal predicates (action::kind, fields, literals) and of
+  permit/forbid scope actions per run. Explanatory only; never a score.
+- **Config fix:** `config.json["intent"]["file"]` recorded the snapshot's file name (`intent.md`) instead of the source
+  arm's file (`intent.goal-level.md`) in the goal-level run; the `arm` and `sha256` fields were correct. Fixed to record
+  the source name for future runs; the existing run folder is left as written.
+- **Decision for the first metadata condition** (from the two arms): target the outcome/approver *literals* via a manifest
+  that states values (enum or description), not the evidence source, which was bound correctly 40/40 without any
+  description help. Awaiting Juan's go-ahead; no attack condition run.

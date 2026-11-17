@@ -282,11 +282,12 @@ def main() -> None:
         ncfg = dogwood.NaiveDogwoodConfig(args.model, include_descriptions=not args.no_descriptions)
         scfg = dogwood.SonderaDogwoodConfig(args.model, include_descriptions=not args.no_descriptions,
                                             judge_sees_manifests=args.judge_sees_manifests)
-        inp = snapshot(load_dogwood_inputs(args.scenario, args.intent), out / "inputs" / args.scenario.name)
+        src_inputs = load_dogwood_inputs(args.scenario, args.intent)
+        inp = snapshot(src_inputs, out / "inputs" / args.scenario.name)
         fr = frame(inp)
         config = {"run_id": run_id, "created": stamp, "kind": "temporal-clean", "model": args.model, "n": args.n,
                   "cache_only": args.cache_only, "scenario": inp.name,
-                  "intent": {"arm": inp.intent_name, "file": inp.intent_path.name, "sha256": inp.hashes["intent"]},
+                  "intent": {"arm": inp.intent_name, "file": src_inputs.intent_path.name, "sha256": inp.hashes["intent"]},
                   "inputs": "inputs/<scenario>/ (snapshot; generation and scoring read only from it)",
                   "generators": {"naive": ncfg.as_dict(), "sondera": scfg.as_dict()}, "generators_run": args.generators,
                   "request": {"sampling": "not sent (API default)", "thinking": {"type": "adaptive"},
