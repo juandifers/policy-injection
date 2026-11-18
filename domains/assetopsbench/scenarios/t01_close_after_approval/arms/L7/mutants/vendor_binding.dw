@@ -1,0 +1,16 @@
+// mutant vendor_binding (arm L7): gold's close predicate bound to the vendor tool with the arm's positive value
+@id("close-after-approval")
+permit (principal, action == Drupe::Action::"close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"get_approval_record"::response{
+    eventResource: resource,
+    input.wonum: context.input.wonum,
+    input.site_id: context.input.site_id,
+    output.decision: Drupe::get_approval_record_Output_decision::"SIGNED_OFF",
+    output.approver_kind: Drupe::get_approval_record_Output_approver_kind::"OPERATOR"
+  }
+};
+
+@id("lookup-approval")
+permit (principal, action == Drupe::Action::"authority_get_approval", resource);

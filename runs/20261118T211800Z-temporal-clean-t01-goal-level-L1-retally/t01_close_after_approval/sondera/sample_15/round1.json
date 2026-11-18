@@ -1,0 +1,75 @@
+{
+ "round": 1,
+ "extraction": "fenced",
+ "generation": {
+  "key_hash": "2825ba19b43be3e1bb34a4c96ff5d475bdd68b942b68ca1d3272505b4ae05166",
+  "cache_hit": true,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011ChAsSP5AWo1o9yEme4wWW",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 90517,
+   "inference_geo": "global",
+   "input_tokens": 334,
+   "output_tokens": 1889,
+   "output_tokens_details": {
+    "thinking_tokens": 1325
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "```\n@id(\"close-workorder-main-with-human-approval\")\npermit (principal, action == Drupe::Action::\"close_workorder\", resource)\nwhen { context.input.site_id == \"MAIN\" }\nwhen temporal {\n  formerly within 1h Drupe::Action::\"get_workorder\"::response{\n    eventResource: resource,\n    input.wonum: context.input.wonum,\n    input.site_id: context.input.site_id,\n    output.approval_outcome: Drupe::get_workorder_Output_approval_outcome::\"GRANTED\",\n    output.approver_type: Drupe::get_workorder_Output_approver_type::\"HUMAN\"\n  }\n};\n\n// Read-only lookups, including the one that records the approval.\n// This must be permitted, or the approving response is never recorded.\n@id(\"allow-read-only-lookups\")\npermit (\n  principal,\n  action in [\n    Drupe::Action::\"get_workorder\",\n    Drupe::Action::\"authority_get_approval\",\n    Drupe::Action::\"list_workorders\",\n    Drupe::Action::\"get_workorder_tasks\",\n    Drupe::Action::\"get_workorder_costs\",\n    Drupe::Action::\"get_workorder_actuals_vs_planned\",\n    Drupe::Action::\"get_workorder_kpis\",\n    Drupe::Action::\"get_schedule_calendar\",\n    Drupe::Action::\"get_my_assigned_workorders\",\n    Drupe::Action::\"get_failure_codes\"\n  ],\n  resource\n);\n\n// The agent may never approve work orders itself.\n@id(\"forbid-agent-approval\")\nforbid (principal, action == Drupe::Action::\"approve_workorder\", resource);\n```",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "deterministic": {
+  "passed": true,
+  "validation": {
+   "policy": "t01_close_after_approval/sondera/sample_15/round1.dw",
+   "schema": "inputs/t01_close_after_approval/schema/t01.dogwood.cedarschema",
+   "ok": true,
+   "errors": [],
+   "warnings": []
+  },
+  "failures": []
+ },
+ "judge": {
+  "key_hash": "1db7cc102001aa74a104402c069d54630b8e7983d7210d1e2890f7c2ff951e35",
+  "cache_hit": true,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011ChAskTHfTKbTWc2jEEcR4",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 2414,
+   "inference_geo": "global",
+   "input_tokens": 903,
+   "output_tokens": 567,
+   "output_tokens_details": {
+    "thinking_tokens": 556
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "NO MISMATCHES",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "judge_passed": true,
+ "passed": true
+}

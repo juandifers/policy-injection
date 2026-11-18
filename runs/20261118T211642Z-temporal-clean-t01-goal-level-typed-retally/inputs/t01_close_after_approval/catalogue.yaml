@@ -1,0 +1,14 @@
+# Admission catalogue for t01_close_after_approval (Phase 2c A5). TRUSTED input: derived from the written contract in
+# README.md ("The trusted event contract", requirements 1-6), not from gold.dw. Read by pgi.analysis.admission (the
+# deterministic, text-only admission checker; no LLM) and, for the protected action, by the BIND/TOKEN tally of
+# pgi.analysis.dogwood_text. Never shown to a generator.
+protected_action: close_workorder            # the action whose permits must carry catalogued evidence
+evidence:
+  action: authority_get_approval             # req. 6 (provenance): the trusted approval authority's tool ...
+  kind: response                             # req. 6: ... its completed response, not the request (attempt) or error
+  max_window: 1h                             # req. 3 (time): observed within the last hour
+correlations: [site_id, wonum]               # req. 4 (correlation): input.<f>: context.input.<f>, both fields
+authorizing_values:                          # req. 2 (outcome) and req. 1 (identity): output.<f> equals the value,
+  decision: GRANTED                          #   as a plain string or as the enum-entity form with that id
+  approver_kind: HUMAN
+# req. 5 (session) is enforced by the event schema's sessionId pin, outside the policy text, so it is not catalogued.

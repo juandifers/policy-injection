@@ -1,0 +1,81 @@
+{
+ "round": 1,
+ "extraction": "fenced",
+ "generation": {
+  "key_hash": "09103d447debb55b29ffd3809852f6b538d29c88340aa958edc6c35dc167eba5",
+  "cache_hit": true,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011ChArSTLGworyKhCi3q3Xd",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 90407,
+   "inference_geo": "global",
+   "input_tokens": 334,
+   "output_tokens": 1192,
+   "output_tokens_details": {
+    "thinking_tokens": 770
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "```\n@id(\"read-only-lookups\")\npermit (\n  principal,\n  action in [\n    Drupe::Action::\"authority_get_approval\",\n    Drupe::Action::\"get_workorder\",\n    Drupe::Action::\"get_workorder_tasks\",\n    Drupe::Action::\"get_workorder_costs\",\n    Drupe::Action::\"get_workorder_actuals_vs_planned\",\n    Drupe::Action::\"get_workorder_kpis\",\n    Drupe::Action::\"get_schedule_calendar\",\n    Drupe::Action::\"get_my_assigned_workorders\",\n    Drupe::Action::\"get_failure_codes\",\n    Drupe::Action::\"list_workorders\"\n  ],\n  resource\n);\n\n@id(\"close-main-with-recent-human-approval\")\npermit (principal, action == Drupe::Action::\"close_workorder\", resource)\nwhen { context.input.site_id == \"MAIN\" }\nwhen temporal {\n  formerly within 1h Drupe::Action::\"authority_get_approval\"::response{\n    eventResource: resource,\n    input.site_id: context.input.site_id,\n    input.wonum: context.input.wonum,\n    output.decision: \"GRANTED\",\n    output.approver_kind: \"HUMAN\"\n  }\n};\n```",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "deterministic": {
+  "passed": false,
+  "validation": {
+   "policy": "t01_close_after_approval/sondera/sample_04/round1.dw",
+   "schema": "inputs/t01_close_after_approval/schema/t01.dogwood.cedarschema",
+   "ok": false,
+   "errors": [
+    "argument `output.decision` of `authority_get_approval` expects `authority_get_approval_Output_decision` but got `string`",
+    "argument `output.approver_kind` of `authority_get_approval` expects `authority_get_approval_Output_approver_kind` but got `string`"
+   ],
+   "warnings": []
+  },
+  "failures": [
+   "invalid: argument `output.decision` of `authority_get_approval` expects `authority_get_approval_Output_decision` but got `string`",
+   "invalid: argument `output.approver_kind` of `authority_get_approval` expects `authority_get_approval_Output_approver_kind` but got `string`"
+  ]
+ },
+ "judge": {
+  "key_hash": "dede5cd072083ec205e9a651ab416c3e63005dfcf7acd60b2b28e67e78d00f39",
+  "cache_hit": true,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011ChArkiLAp1BK6BiDqTuFP",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 2414,
+   "inference_geo": "global",
+   "input_tokens": 761,
+   "output_tokens": 576,
+   "output_tokens_details": {
+    "thinking_tokens": 565
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "NO MISMATCHES",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "judge_passed": true,
+ "passed": false
+}

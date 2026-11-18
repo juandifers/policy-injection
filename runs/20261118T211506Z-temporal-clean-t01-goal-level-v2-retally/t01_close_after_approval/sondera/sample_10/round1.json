@@ -1,0 +1,75 @@
+{
+ "round": 1,
+ "extraction": "fenced",
+ "generation": {
+  "key_hash": "70599a6ec0c419589f627b233e20b5efdcbe546bd3503fd7180c54f1fbcbdd21",
+  "cache_hit": true,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011ChAqzqsshGegzmb5Je1i6",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 90231,
+   "inference_geo": "global",
+   "input_tokens": 334,
+   "output_tokens": 1503,
+   "output_tokens_details": {
+    "thinking_tokens": 663
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "```\n@id(\"close-workorder-main-with-recent-human-approval\")\npermit (principal, action == Drupe::Action::\"close_workorder\", resource)\nwhen { context.input.site_id == \"MAIN\" }\nwhen temporal {\n  formerly within 1h Drupe::Action::\"authority_get_approval\"::response{\n    eventResource: resource,\n    input.site_id: context.input.site_id,\n    input.wonum: context.input.wonum,\n    output.decision: \"approved\",\n    output.approver_kind: \"human\"\n  }\n};\n\n// The approval lookup must itself be permitted so that its response is recorded.\n@id(\"allow-authority-approval-lookup\")\npermit (principal, action == Drupe::Action::\"authority_get_approval\", resource);\n\n// Read-only lookups\n@id(\"allow-list-workorders\")\npermit (principal, action == Drupe::Action::\"list_workorders\", resource);\n\n@id(\"allow-get-workorder\")\npermit (principal, action == Drupe::Action::\"get_workorder\", resource);\n\n@id(\"allow-get-workorder-tasks\")\npermit (principal, action == Drupe::Action::\"get_workorder_tasks\", resource);\n\n@id(\"allow-get-workorder-costs\")\npermit (principal, action == Drupe::Action::\"get_workorder_costs\", resource);\n\n@id(\"allow-get-workorder-actuals-vs-planned\")\npermit (principal, action == Drupe::Action::\"get_workorder_actuals_vs_planned\", resource);\n\n@id(\"allow-get-workorder-kpis\")\npermit (principal, action == Drupe::Action::\"get_workorder_kpis\", resource);\n\n@id(\"allow-get-schedule-calendar\")\npermit (principal, action == Drupe::Action::\"get_schedule_calendar\", resource);\n\n@id(\"allow-get-my-assigned-workorders\")\npermit (principal, action == Drupe::Action::\"get_my_assigned_workorders\", resource);\n\n@id(\"allow-get-failure-codes\")\npermit (principal, action == Drupe::Action::\"get_failure_codes\", resource);\n\n// The agent may never approve work orders itself.\n@id(\"forbid-agent-approval\")\nforbid (principal, action == Drupe::Action::\"approve_workorder\", resource);\n```\n\nI had to guess the output values: `decision == \"approved\"` and `approver_kind == \"human\"`. The tool manifest declares both as plain strings and doesn't list the allowed values. If the authority server uses different strings (for example `\"APPROVED\"` or `\"HUMAN\"`), change them in the close policy.",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "deterministic": {
+  "passed": true,
+  "validation": {
+   "policy": "t01_close_after_approval/sondera/sample_10/round1.dw",
+   "schema": "inputs/t01_close_after_approval/schema/t01.dogwood.cedarschema",
+   "ok": true,
+   "errors": [],
+   "warnings": []
+  },
+  "failures": []
+ },
+ "judge": {
+  "key_hash": "6bcfa7e294326765a26f447953f910e61ea22b1fca84147feca1c662f63e96ff",
+  "cache_hit": true,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011ChArFLFpjLHu1CECBDJ84",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 2414,
+   "inference_geo": "global",
+   "input_tokens": 1080,
+   "output_tokens": 482,
+   "output_tokens_details": {
+    "thinking_tokens": 471
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "NO MISMATCHES",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "judge_passed": true,
+ "passed": true
+}

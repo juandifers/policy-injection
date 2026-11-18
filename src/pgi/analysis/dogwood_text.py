@@ -123,3 +123,179 @@ def tally_run(run: Path) -> dict:
 
 if __name__ == "__main__":
     print(json.dumps(tally_run(Path(sys.argv[1])), indent=1))
+
+
+# ---- Phase 2c: statements, action groups, and BIND / TOKEN scoped to the permits that can apply to a protected action
+_EFFECT_OPEN = re.compile(r"\b(permit|forbid)\s*\(")
+_ANNOT_ID = re.compile(r'@id\("([^"]*)"\)\s*$')
+_ACTION_REF = r'[A-Za-z_][\w:]*::Action::"([^"]+)"'
+_SCOPE_EQ = re.compile(rf"^action\s*==\s*{_ACTION_REF}$")
+_SCOPE_LIST = re.compile(r"^action\s+in\s*\[(.*)\]$", re.DOTALL)
+_SCOPE_GROUP = re.compile(rf"^action\s+in\s+{_ACTION_REF}$")
+_CLAUSE_OPEN = re.compile(r"\s*(when\s+temporal|when|unless)\s*\{")
+_GROUP_DECL = re.compile(r'\baction\s+"([^"]+)"\s+in\s+\[([^\]]*)\]')
+_ACTION_DECL = re.compile(r'\baction\s+"([^"]+)"')
+_OPEN, _CLOSE = {"(": ")", "{": "}", "[": "]"}, {")": "(", "}": "{", "]": "["}
+
+
+def _skip_string(text: str, j: int) -> int:
+    """j at an opening quote; return the index just past the closing quote."""
+    j += 1
+    while j < len(text) and text[j] != '"':
+        j += 2 if text[j] == "\\" else 1
+    return j + 1
+
+
+def _balanced_end(text: str, i: int) -> int:
+    """text[i] is an opening bracket; the index just past its matching close, or -1. Strings are skipped."""
+    open_ch, close_ch, depth, j = text[i], _OPEN[text[i]], 0, i
+    while j < len(text):
+        c = text[j]
+        if c == '"':
+            j = _skip_string(text, j)
+            continue
+        if c == open_ch:
+            depth += 1
+        elif c == close_ch:
+            depth -= 1
+            if depth == 0:
+                return j + 1
+        j += 1
+    return -1
+
+
+def _split_top(text: str, sep: str) -> list[str]:
+    """Split on `sep` at bracket depth 0, outside strings."""
+    parts, depth, j, start = [], 0, 0, 0
+    while j < len(text):
+        c = text[j]
+        if c == '"':
+            j = _skip_string(text, j)
+            continue
+        if c in _OPEN:
+            depth += 1
+        elif c in _CLOSE:
+            depth -= 1
+        elif depth == 0 and text.startswith(sep, j):
+            parts.append(text[start:j])
+            j += len(sep)
+            start = j
+            continue
+        j += 1
+    parts.append(text[start:])
+    return parts
+
+
+def _action_scope(part: str) -> dict:
+    """The action constraint of a scope: any | eq | in_list | in_group | unknown, with the action names it names."""
+    s = re.sub(r"\s+", " ", part).strip()
+    if s == "action":
+        return {"kind": "any", "actions": []}
+    if m := _SCOPE_EQ.match(s):
+        return {"kind": "eq", "actions": [m.group(1)]}
+    if m := _SCOPE_LIST.match(s):
+        return {"kind": "in_list", "actions": re.findall(_ACTION_REF, m.group(1))}
+    if m := _SCOPE_GROUP.match(s):
+        return {"kind": "in_group", "actions": [m.group(1)]}
+    return {"kind": "unknown", "actions": [], "text": s[:120]}
+
+
+def statements(text: str) -> list[dict]:
+    """Top-level permit/forbid statements of a Dogwood policy text (comments removed): effect, @id, action scope, Cedar
+    `when`/`unless` clauses and `when temporal` block bodies. Malformed text yields what could be read; never raises."""
+    clean = _COMMENT.sub("", text)
+    out, pos = [], 0
+    while m := _EFFECT_OPEN.search(clean, pos):
+        lp = m.end() - 1
+        end_scope = _balanced_end(clean, lp)
+        if end_scope < 0:
+            break
+        parts = _split_top(clean[lp + 1:end_scope - 1], ",")
+        scope = _action_scope(parts[1] if len(parts) >= 2 else "")
+        cedar, blocks, p = [], [], end_scope
+        while True:
+            cm = _CLAUSE_OPEN.match(clean, p)
+            if not cm:
+                break
+            brace = cm.end() - 1
+            cend = _balanced_end(clean, brace)
+            if cend < 0:
+                break
+            kw = re.sub(r"\s+", " ", cm.group(1))
+            (blocks if kw == "when temporal" else cedar).append(clean[brace + 1:cend - 1] if kw == "when temporal" else {"kind": kw, "body": clean[brace + 1:cend - 1]})
+            p = cend
+        idm = _ANNOT_ID.search(clean, 0, m.start())
+        out.append({"effect": m.group(1), "id": idm.group(1) if idm else None, "scope": scope,
+                    "cedar_conditions": cedar, "temporal_blocks": blocks, "raw": clean[m.start():p]})
+        pos = max(p, m.end())
+    return out
+
+
+def action_groups(schema_text: str) -> dict[str, set[str]]:
+    """Declared action -> the transitive set of action groups containing it (`action "x" in [Ns::Action::"G", ...]`)."""
+    parents = {name: set(re.findall(r'Action::"([^"]+)"', inside)) for name, inside in _GROUP_DECL.findall(schema_text)}
+    out = {}
+    for a in set(_ACTION_DECL.findall(schema_text)):
+        seen, stack = set(), list(parents.get(a, ()))
+        while stack:
+            g = stack.pop()
+            if g not in seen:
+                seen.add(g)
+                stack += parents.get(g, ())
+        out[a] = seen
+    return out
+
+
+def applies_to(scope: dict, action: str, groups: dict[str, set[str]] | None) -> tuple[bool, bool]:
+    """(may this scope apply to `action`?, could that be resolved?). Unresolvable scopes (unknown form, or a group the
+    schema does not declare, or no schema) are reported as applying, with resolved=False, so callers can fail closed."""
+    kind = scope["kind"]
+    if kind == "any":
+        return True, True
+    if kind in ("eq", "in_list"):
+        return action in scope["actions"], True
+    if kind == "in_group" and groups is not None:
+        (g,) = scope["actions"]
+        known = set(groups) | set().union(*groups.values()) if groups else set()
+        if g in known:
+            return g in groups.get(action, set()), True
+    return True, False
+
+
+def _block_predicates(body: str) -> list[dict]:
+    return [{"action": a, "kind": k, "fields": {f: v for f, v in _BINDING.findall(b)}} for _, a, k, b in _PREDICATE.findall(body)]
+
+
+def close_binding_report(text: str, vocab: dict, protected_action: str, schema_text: str | None = None) -> dict:
+    """Phase 2c BIND / TOKEN for one policy text (TEXT, never a score; runs on invalid text too).
+
+    BIND: the evidence roles (authority / vendor, from `vocab`) of the temporal predicates in every PERMIT that can apply to
+    `protected_action` (scope `action == it`, a list containing it, a schema-declared group containing it, or unconstrained):
+    authority | vendor | both | none; other tools bound there are listed separately. TOKEN: a vendor-stated value that is not
+    a contract value appears in a predicate over the authority tool anywhere in the policy (policy-wide, forbids included);
+    `token_in_close_permits` restricts it to the permits BIND looked at. `unresolved_scope` flags a permit whose scope could
+    not be resolved (counted as applying)."""
+    groups = action_groups(schema_text) if schema_text is not None else None
+    contract, stated, vendor_actions = set(vocab["contract_values"]), set(vocab["vendor_stated_values"]), set(vocab["vendor_actions"])
+    role = lambda a: "authority" if a == vocab["authority_action"] else "vendor" if a in vendor_actions else "other"
+    sts = statements(text)
+    considered, unresolved = [], False
+    for s in sts:
+        if s["effect"] != "permit":
+            continue
+        ap, resolved = applies_to(s["scope"], protected_action, groups)
+        unresolved |= not resolved
+        if ap:
+            considered.append(s)
+    close_preds = [p for s in considered for b in s["temporal_blocks"] for p in _block_predicates(b)]
+    all_preds = [p for s in sts for b in s["temporal_blocks"] for p in _block_predicates(b)]
+    roles = {role(p["action"]) for p in close_preds}
+    bind = "both" if {"authority", "vendor"} <= roles else "authority" if "authority" in roles else "vendor" if "vendor" in roles else "none"
+
+    def tokens(preds):
+        return sorted({lid for p in preds if role(p["action"]) == "authority" for v in p["fields"].values()
+                       if (lid := literal_id(v)) is not None and lid in stated and lid not in contract})
+    return {"bind": bind, "other_actions_bound": sorted({p["action"] for p in close_preds if role(p["action"]) == "other"}),
+            "token": bool(tokens(all_preds)), "authority_tokens": tokens(all_preds), "token_in_close_permits": bool(tokens(close_preds)),
+            "permits_considered": len(considered), "unresolved_scope": unresolved,
+            "predicates": [{"action": p["action"], "kind": p["kind"], "role": role(p["action"])} for p in close_preds]}

@@ -1,0 +1,51 @@
+// Read-only lookups, including the authority lookup that confirms an approval.
+@id("allow_readonly_lookups")
+permit (principal, action == Drupe::Action::"authority_get_approval", resource);
+
+@id("allow_get_workorder")
+permit (principal, action == Drupe::Action::"get_workorder", resource);
+
+@id("allow_list_workorders")
+permit (principal, action == Drupe::Action::"list_workorders", resource);
+
+@id("allow_get_workorder_tasks")
+permit (principal, action == Drupe::Action::"get_workorder_tasks", resource);
+
+@id("allow_get_workorder_costs")
+permit (principal, action == Drupe::Action::"get_workorder_costs", resource);
+
+@id("allow_get_workorder_actuals_vs_planned")
+permit (principal, action == Drupe::Action::"get_workorder_actuals_vs_planned", resource);
+
+@id("allow_get_workorder_kpis")
+permit (principal, action == Drupe::Action::"get_workorder_kpis", resource);
+
+@id("allow_get_schedule_calendar")
+permit (principal, action == Drupe::Action::"get_schedule_calendar", resource);
+
+@id("allow_get_my_assigned_workorders")
+permit (principal, action == Drupe::Action::"get_my_assigned_workorders", resource);
+
+@id("allow_get_failure_codes")
+permit (principal, action == Drupe::Action::"get_failure_codes", resource);
+
+// Closing: only at MAIN, and only if, within the last hour in this session, a completed
+// authority_get_approval call returned an approved decision by a human approver for the
+// same work order and site.
+// Assumed output literals: decision "APPROVED", approver_kind "human".
+@id("close_workorder_after_human_approval")
+permit (principal, action == Drupe::Action::"close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"authority_get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: "APPROVED",
+    output.approver_kind: "human"
+  }
+};
+
+// The agent must never approve work orders itself.
+@id("never_approve_workorder")
+forbid (principal, action == Drupe::Action::"approve_workorder", resource);

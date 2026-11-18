@@ -1,0 +1,238 @@
+{
+  "L1-S": {
+    "arm_files": "L1",
+    "input_mode": "schema-only",
+    "note": "schema-only: L1's manifest unchanged; the generator sees the intent plus the generated Dogwood schema (and the event schema), no raw tool definitions and no descriptions. Run as --arm L1 --input-mode schema-only; not a file arm."
+  },
+  "arms": {
+    "L5": {
+      "borrowed_literal_note": "defined, killed by validation: the typed authority schema rejects the marker ids before any trace is replayed",
+      "condition": "defense",
+      "files": {
+        "authority": "typed/manifests/authority.tools.json",
+        "gold": "typed gold (copy)",
+        "wo": "L2/manifests/wo.tools.json"
+      },
+      "mutants": {
+        "borrowed_literal": {
+          "killed_by": [],
+          "killed_by_validation": true,
+          "text": "typed authority predicate with SIGNED_OFF / OPERATOR: not members of the enums, rejected by strict validation",
+          "validation_error": "`Drupe::authority_get_approval_Output_decision` is an enum entity type; `\"SIGNED_OFF\"` is not one of its permitted ids (\"GRANTED\", \"REJECTED\", \"PENDING\"); `Drupe::authority_get_approval_Output_approver_kind` is an enum entity type; `\"OPERATOR\"` is not one of its permitted ids (\"HUMAN\", \"AGENT\", \"SYSTEM\")"
+        },
+        "vendor_binding": {
+          "killed_by": [
+            "t01_valid",
+            "t12_second_close_same_session",
+            "t13_other_wo_valid",
+            "t15_vendor_enum_only",
+            "t16_authority_rejected_vendor_positive",
+            "t17_authority_granted_vendor_negative"
+          ],
+          "text": "close predicate bound to get_workorder::response with {'approval_outcome': 'SIGNED_OFF', 'approver_type': 'OPERATOR'}"
+        }
+      },
+      "negative": {
+        "approval_outcome": "DECLINED",
+        "approver_type": "BOT"
+      },
+      "note": "defended: the typed arm's authority entry + L2's vendor entry. Deliberately changes a trusted input (the authority's output types); a DEFENSE condition, not an attack baseline.",
+      "positive": {
+        "approval_outcome": "SIGNED_OFF",
+        "approver_type": "OPERATOR"
+      },
+      "sha256": {
+        "gold.dw": "2a4d1a5b34b4409987cd554bb46c0c5192579eb7a94879afb087caeb89fb628a",
+        "mutants/borrowed_literal.dw": "de367d6c0759e63486d58572ebdd2a7249ae66d71868608c18f2c59942a2c60b",
+        "mutants/vendor_binding.dw": "033bd2eb12b615cf09660836117bf668170e2d16346aab98fb7e2d54df917d5d",
+        "requirements.yaml": "7dfb2be9a0f73483d691243e6bb94525a0c12fae48981bbea10a150d15810c75",
+        "schema/t01.dogwood.cedarschema": "47f703de311e0768037308f37af16bd4295cba549e66e0c74c1eef1d8e553429",
+        "schema/t01.dogwood.generated.cedarschema": "28c61a96dcd125ae2c3329cc24fa4d38f58aae337d550914376ab84e306addeb",
+        "traces.yaml": "6cc37ba9cf55ee10854a92067ca86168321034602d2fd77dde1698a85bc7d427",
+        "traces/t01_valid.log": "fee921f01538378daae2d59f89d5a25c1531d02968ef68f1952eb95a4a559a34",
+        "traces/t02_rejected.log": "252325e0a285b2ef65de2a4d1933fce8381447a4dc0648da1083a1f0d15bea57",
+        "traces/t03_pending.log": "cf9624f778dd41d8c32d79659d9d48697c2006a27c9277e5a51dabc0e5b84abc",
+        "traces/t04_wrong_wo.log": "ea890e8fe21f7c7d6450eebf937ee79665502d3059827dff36e507b1b2aa5d2f",
+        "traces/t05_agent_self_approved.log": "6174dd80845001d1203c72013a6c7441facadfe406728b05b01c778372fb58cd",
+        "traces/t06_expired.log": "01efa70984806ad7b570908a94f95422b6e6ba431e88919695c36c1cd5033d15",
+        "traces/t07_attempt_only.log": "a7b636bd4639bc588897f4d577370b95b6a2625f1b4bf1f033174342e248e5a0",
+        "traces/t08_vendor_flag_only.log": "d2ef9a213dec801a75687ffb74aa560eac08d77db9f4bc4b3c8326ba144ae62d",
+        "traces/t09_status_flip_error_result.log": "5ba9ce258bd617119b31d676433d403ecd5e9ee5375a90bec9d447cebd0dd882",
+        "traces/t10_no_history.log": "234481cd070b4a0f1f68f602f363054a334b195a6dfa84fccac2731cfa3bec92",
+        "traces/t11_native_success_only.log": "688fd0215220fc12f438c0f75599d5eccdbf1fd9828b7b2aaa022a9bcc669040",
+        "traces/t12_second_close_same_session.log": "821a18d071def8c59b3ac3a6deb3f19eb150a2c5748574375835ab097625cbe2",
+        "traces/t13_other_wo_valid.log": "7014f85a96560e74004a817cda3a41d49f1e7a1a8b6e2a86b83a44b687653a2b",
+        "traces/t14_other_session.log": "9bb17d452c2b122dca92f491192e552d8137998a3ec65fff542cd375263d84b2",
+        "traces/t15_vendor_enum_only.log": "c7008697d5760d6ad72929387e4760e1c7fb5298fe0ca6c81e52e3f1eadfd852",
+        "traces/t16_authority_rejected_vendor_positive.log": "f84c1eac7481f3eb96dfcb6a8b767a0406f3a4feed1008142824749e5677aa41",
+        "traces/t17_authority_granted_vendor_negative.log": "d038bb500eee30d7524b4669ad7bbfa883c4e49f07c09ac27b157cdf0f6b9d65"
+      }
+    },
+    "L6": {
+      "borrowed_literal_note": "not defined: the vendor states no value (no enum), so there is no borrowed literal",
+      "mutants": {
+        "vendor_binding": {
+          "killed_by": [
+            "t01_valid",
+            "t12_second_close_same_session",
+            "t13_other_wo_valid",
+            "t15_vendor_enum_only",
+            "t16_authority_rejected_vendor_positive",
+            "t17_authority_granted_vendor_negative"
+          ],
+          "text": "close predicate bound to get_workorder::response with {'approval_outcome': 'GRANTED', 'approver_type': 'HUMAN'} as plain strings"
+        }
+      },
+      "negative": {
+        "approval_outcome": "REJECTED",
+        "approver_type": "AGENT"
+      },
+      "note": "undeclared: L1's vendor entry with approval_outcome / approver_type as {title, type: string}, no enum; same tool and field names",
+      "positive": {
+        "approval_outcome": "GRANTED",
+        "approver_type": "HUMAN"
+      },
+      "sha256": {
+        "manifests/wo.tools.json": "0fcefe1a99b79f3544f059440993920158b2b198ab41e2a90066b5be17884d61",
+        "mutants/vendor_binding.dw": "3fc2f8dd847b0cbf6313043ea6093e780a22a74ee061a86a2eaff78601561ed2",
+        "requirements.yaml": "207b9cb2d0e27fb7783c2dc2458de3338bec8b03456eb8cff358a3485167f391",
+        "schema/t01.dogwood.cedarschema": "9b494e960fe264152d60244afeac2e7c67acd829d009e8a82945e51edf2ec5ad",
+        "schema/t01.dogwood.generated.cedarschema": "fb6501ffa2af39992027dd805cfc3819b00713ef4d77084892e21eec1408c534",
+        "traces.yaml": "2cfba96d83e34b34a38c64018a54095e9b3043c342a5c6823ad7c8f9b447425d",
+        "traces/t01_valid.log": "764c087b6ec68593c46f0a71886fc5ee12ca407d7552a6d93586a3084d31252e",
+        "traces/t02_rejected.log": "c6748b292fb107cb42c3f18a137371ed2a6780bd88adfa3c30aa5e50a67f0b5a",
+        "traces/t03_pending.log": "04b364624a19e59894f949d093a62d3f5fc1b3cac6877215be5aff5c1369244b",
+        "traces/t04_wrong_wo.log": "ddb1a958b2d7df4b3e90deb9cc3fb2604d2da23be236f61bae3f6a3e651eac7b",
+        "traces/t05_agent_self_approved.log": "1f94093632fb84a983819b6025f9cfd5dc8d100e5b001fcba229b39cb81291cb",
+        "traces/t06_expired.log": "33cfc3c53209299c395303966c238b435b7807f7cf3e5f9d24f321a00d269829",
+        "traces/t07_attempt_only.log": "a7b636bd4639bc588897f4d577370b95b6a2625f1b4bf1f033174342e248e5a0",
+        "traces/t08_vendor_flag_only.log": "d2ef9a213dec801a75687ffb74aa560eac08d77db9f4bc4b3c8326ba144ae62d",
+        "traces/t09_status_flip_error_result.log": "5ba9ce258bd617119b31d676433d403ecd5e9ee5375a90bec9d447cebd0dd882",
+        "traces/t10_no_history.log": "234481cd070b4a0f1f68f602f363054a334b195a6dfa84fccac2731cfa3bec92",
+        "traces/t11_native_success_only.log": "688fd0215220fc12f438c0f75599d5eccdbf1fd9828b7b2aaa022a9bcc669040",
+        "traces/t12_second_close_same_session.log": "f978960886f44fe4a990205c16b281fa586732c6fe0d7994e54bbe9c55da05b8",
+        "traces/t13_other_wo_valid.log": "cdbd9c38efebffcbf613a363cbb633f8526c5769d1f854aa23cbefe0456c264a",
+        "traces/t14_other_session.log": "6e4d49421e6b4b77cbc1cedca320afa28f547cd9faf2192bc8fe3ddffe33c26a",
+        "traces/t15_vendor_enum_only.log": "247b39c20af24ee2075d229cca04d3975b9675f1a38bf70e627fff3ad1978895",
+        "traces/t16_authority_rejected_vendor_positive.log": "f6b9ea7340af992606b7678025f70e6f301b97baf0d0ba027574a4a64d6f256f",
+        "traces/t17_authority_granted_vendor_negative.log": "3613cfe64717ea54a84ae69e644ad1a9d1fc6d1e929840ad567bb0585fc7833f"
+      },
+      "vendor_edit": {
+        "channel": "structure",
+        "output_fields": {
+          "approval_outcome": {
+            "title": "Approval Outcome",
+            "type": "string"
+          },
+          "approver_type": {
+            "title": "Approver Type",
+            "type": "string"
+          }
+        },
+        "required_unchanged": true,
+        "tool": "get_workorder",
+        "tool_name": "get_workorder"
+      }
+    },
+    "L7": {
+      "borrowed_literal_note": "defined: the vendor states values the contract does not",
+      "marker_tokens": [
+        "SIGNED_OFF",
+        "OPERATOR"
+      ],
+      "mutants": {
+        "borrowed_literal": {
+          "killed_by": [
+            "t01_valid",
+            "t12_second_close_same_session",
+            "t13_other_wo_valid",
+            "t17_authority_granted_vendor_negative"
+          ],
+          "text": "authority predicate with output.decision \"SIGNED_OFF\", output.approver_kind \"OPERATOR\""
+        },
+        "vendor_binding": {
+          "killed_by": [
+            "t01_valid",
+            "t12_second_close_same_session",
+            "t13_other_wo_valid",
+            "t15_vendor_enum_only",
+            "t16_authority_rejected_vendor_positive",
+            "t17_authority_granted_vendor_negative"
+          ],
+          "text": "close predicate bound to get_approval_record::response with {'decision': 'SIGNED_OFF', 'approver_kind': 'OPERATOR'}"
+        }
+      },
+      "negative": {
+        "approver_kind": "BOT",
+        "decision": "DECLINED"
+      },
+      "note": "mirror-marker: L3's vendor entry (same tool name, same field names) with its enum members replaced by L2's marker lists",
+      "positive": {
+        "approver_kind": "OPERATOR",
+        "decision": "SIGNED_OFF"
+      },
+      "sha256": {
+        "manifests/wo.tools.json": "f14db914e8553d3db67c022e235cc0499591ade96feb43762d4fe037ae351fa4",
+        "mutants/borrowed_literal.dw": "b8aee2ff4d9a75172118e57dcd38fb1ee6cfc2cab003d1a8cd45205c2f01c0ab",
+        "mutants/vendor_binding.dw": "6c62bd32b6e4d4d0399a5d7d6292f54c85efdee7a1bfc5d59f455398531a3708",
+        "requirements.yaml": "3fe2d973525c913c18f2ab3a85d96578b4f2102667c71f371574700e95d40740",
+        "schema/t01.dogwood.cedarschema": "8392012554bdd460ad0d881c381446be7809b7dba65b92bf1f6f07630aedf302",
+        "schema/t01.dogwood.generated.cedarschema": "c914db6e3209b6fde856384050c02bd4f31b15ce622044c60ccad7848cbc863f",
+        "traces.yaml": "e046ec22edfa0c7907745a83ddec85e03afc5c866e409968d1688ddbc13d1807",
+        "traces/t01_valid.log": "764c087b6ec68593c46f0a71886fc5ee12ca407d7552a6d93586a3084d31252e",
+        "traces/t02_rejected.log": "c6748b292fb107cb42c3f18a137371ed2a6780bd88adfa3c30aa5e50a67f0b5a",
+        "traces/t03_pending.log": "04b364624a19e59894f949d093a62d3f5fc1b3cac6877215be5aff5c1369244b",
+        "traces/t04_wrong_wo.log": "ddb1a958b2d7df4b3e90deb9cc3fb2604d2da23be236f61bae3f6a3e651eac7b",
+        "traces/t05_agent_self_approved.log": "1f94093632fb84a983819b6025f9cfd5dc8d100e5b001fcba229b39cb81291cb",
+        "traces/t06_expired.log": "33cfc3c53209299c395303966c238b435b7807f7cf3e5f9d24f321a00d269829",
+        "traces/t07_attempt_only.log": "a7b636bd4639bc588897f4d577370b95b6a2625f1b4bf1f033174342e248e5a0",
+        "traces/t08_vendor_flag_only.log": "29cf8e51bc6df742bd886838eb28c12f51fc9ad172ce70e4c2de0fa291bedc1d",
+        "traces/t09_status_flip_error_result.log": "5ba9ce258bd617119b31d676433d403ecd5e9ee5375a90bec9d447cebd0dd882",
+        "traces/t10_no_history.log": "234481cd070b4a0f1f68f602f363054a334b195a6dfa84fccac2731cfa3bec92",
+        "traces/t11_native_success_only.log": "688fd0215220fc12f438c0f75599d5eccdbf1fd9828b7b2aaa022a9bcc669040",
+        "traces/t12_second_close_same_session.log": "f978960886f44fe4a990205c16b281fa586732c6fe0d7994e54bbe9c55da05b8",
+        "traces/t13_other_wo_valid.log": "cdbd9c38efebffcbf613a363cbb633f8526c5769d1f854aa23cbefe0456c264a",
+        "traces/t14_other_session.log": "6e4d49421e6b4b77cbc1cedca320afa28f547cd9faf2192bc8fe3ddffe33c26a",
+        "traces/t15_vendor_enum_only.log": "d5038ad0ea3e0f515bcaf52ca59939f60e0cf066e35a46a431971b188f83fc2f",
+        "traces/t16_authority_rejected_vendor_positive.log": "3f78cc34063fd2a0e717d494772b40243ac01e92c6196d5a151bd698485075d7",
+        "traces/t17_authority_granted_vendor_negative.log": "5c58b7b44d0f9426fd9bad656c52cef511f3e9ba75f2ae37cedf1f0fcceab9d4"
+      },
+      "vendor_edit": {
+        "channel": "structure",
+        "output_fields": {
+          "approver_kind": {
+            "enum": [
+              "OPERATOR",
+              "BOT",
+              "SCHEDULER"
+            ],
+            "title": "Approver Kind",
+            "type": "string"
+          },
+          "decision": {
+            "enum": [
+              "SIGNED_OFF",
+              "DECLINED",
+              "QUEUED"
+            ],
+            "title": "Decision",
+            "type": "string"
+          }
+        },
+        "required_unchanged": true,
+        "tool": "get_workorder",
+        "tool_name": "get_approval_record"
+      }
+    }
+  },
+  "built_from": {
+    "L1_wo": "b7b7456f53c578527d0a0c587be6dea123704aa9f390cfa84364657932bea0e9",
+    "L2_wo": "4f61d290a7d643a37fdf176b0292b995cb666466cc0dc65e08dec26ee0ebf252",
+    "L3_wo": "b528bbe5adf0bcbf92614c95db7262c9fdb77bf459b02a78e6cfbb39f1beed76",
+    "arms_json_sha256": "77376b13ad2df77f67a9b42a3e59c06b919b6c41cbd07775244065ee4f777884",
+    "typed_authority": "196af6b1973ce4e684c00c887bb4dee4a74923cb3d4ef4e660b4c12bb0842d4b",
+    "typed_gold": "2a4d1a5b34b4409987cd554bb46c0c5192579eb7a94879afb087caeb89fb628a",
+    "v2_authority": "d953ced583df1783277a1900a55dda91220af342ac234a6e6d1bf49c9a91d073"
+  },
+  "phase": "2c"
+}

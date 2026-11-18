@@ -1,0 +1,81 @@
+{
+ "round": 1,
+ "extraction": "fenced",
+ "generation": {
+  "key_hash": "a7f5ebb5003b16daddf54fc25fa654d14c521625e9ea39b8fde06a27ae97f1ea",
+  "cache_hit": true,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011ChAs9EQJNNtvYxDtHuhnM",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 90517,
+   "inference_geo": "global",
+   "input_tokens": 334,
+   "output_tokens": 1714,
+   "output_tokens_details": {
+    "thinking_tokens": 1211
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "```\n@id(\"read_only_lookups\")\npermit (principal, action == Drupe::Action::\"get_workorder\", resource);\n\npermit (principal, action == Drupe::Action::\"list_workorders\", resource);\n\npermit (principal, action == Drupe::Action::\"get_workorder_tasks\", resource);\n\npermit (principal, action == Drupe::Action::\"get_workorder_costs\", resource);\n\npermit (principal, action == Drupe::Action::\"get_workorder_actuals_vs_planned\", resource);\n\npermit (principal, action == Drupe::Action::\"get_workorder_kpis\", resource);\n\npermit (principal, action == Drupe::Action::\"get_schedule_calendar\", resource);\n\npermit (principal, action == Drupe::Action::\"get_my_assigned_workorders\", resource);\n\npermit (principal, action == Drupe::Action::\"get_failure_codes\", resource);\n\npermit (principal, action == Drupe::Action::\"authority_get_approval\", resource);\n\n@id(\"close_only_after_recent_human_approval_at_main\")\npermit (principal, action == Drupe::Action::\"close_workorder\", resource)\nwhen { context.input.site_id == \"MAIN\" }\nwhen temporal {\n  formerly within 1h Drupe::Action::\"get_workorder\"::response{\n    eventResource: resource,\n    input.wonum: context.input.wonum,\n    input.site_id: context.input.site_id,\n    output.approval_outcome: \"GRANTED\",\n    output.approver_type: \"HUMAN\"\n  }\n};\n```",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "deterministic": {
+  "passed": false,
+  "validation": {
+   "policy": "t01_close_after_approval/sondera/sample_03/round1.dw",
+   "schema": "inputs/t01_close_after_approval/schema/t01.dogwood.cedarschema",
+   "ok": false,
+   "errors": [
+    "argument `output.approval_outcome` of `get_workorder` expects `get_workorder_Output_approval_outcome` but got `string`",
+    "argument `output.approver_type` of `get_workorder` expects `get_workorder_Output_approver_type` but got `string`"
+   ],
+   "warnings": []
+  },
+  "failures": [
+   "invalid: argument `output.approval_outcome` of `get_workorder` expects `get_workorder_Output_approval_outcome` but got `string`",
+   "invalid: argument `output.approver_type` of `get_workorder` expects `get_workorder_Output_approver_type` but got `string`"
+  ]
+ },
+ "judge": {
+  "key_hash": "ac9443516e554090badbb7b810506730578f2e0e01e3f74fc7eed777d28a443e",
+  "cache_hit": true,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011ChAsawAh3QJYbDdybm6Ju",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 2414,
+   "inference_geo": "global",
+   "input_tokens": 842,
+   "output_tokens": 873,
+   "output_tokens_details": {
+    "thinking_tokens": 674
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "- The close permit takes its approval evidence from `get_workorder::response`, a generic work-order lookup. The approval-confirming call is `authority_get_approval`, and the policy permits it but never uses it as evidence. The policy therefore either requires approval evidence from the wrong call, so a real human approval confirmed by `authority_get_approval` never allows a close, or it trusts approval fields that a work-order read is not meant to establish. The temporal condition should match `authority_get_approval::response` with the same `wonum` and `site_id` correlation and the `GRANTED` / `HUMAN` outputs.",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "judge_passed": false,
+ "passed": false
+}

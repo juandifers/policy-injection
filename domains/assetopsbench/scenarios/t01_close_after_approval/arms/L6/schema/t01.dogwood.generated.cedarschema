@@ -1,0 +1,2876 @@
+namespace Drupe {
+  type SystemContext = {
+    now: datetime
+  };
+
+  type approve_workorderInput = {
+    site_id: String,
+    wonum: String
+  };
+
+  type approve_workorderOutput = {
+    result: {
+      typeChoice0?: Drupe::approve_workorder_Output_WorkOrderMutationResult,
+      typeChoice1?: Drupe::approve_workorder_Output_ErrorResult
+    }
+  };
+
+  type approve_workorder_Output_ErrorResult = Drupe::ErrorResult;
+
+  type assign_technicianInput = {
+    craft?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    hours_planned?: decimal,
+    labor_code: String,
+    site_id: String,
+    start_date?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    wonum: String
+  };
+
+  type assign_technicianOutput = {
+    result: {
+      typeChoice0?: Drupe::assign_technician_Output_WorkOrderMutationResult,
+      typeChoice1?: Drupe::assign_technician_Output_ErrorResult
+    }
+  };
+
+  type assign_technician_Output_ErrorResult = Drupe::ErrorResult;
+
+  type authority_get_approvalInput = {
+    site_id: String,
+    wonum: String
+  };
+
+  type authority_get_approvalOutput = {
+    approver_id: String,
+    approver_kind: String,
+    decision: String
+  };
+
+  type cancel_workorderInput = {
+    reason?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    site_id: String,
+    wonum: String
+  };
+
+  type cancel_workorderOutput = {
+    result: {
+      typeChoice0?: Drupe::cancel_workorder_Output_WorkOrderMutationResult,
+      typeChoice1?: Drupe::cancel_workorder_Output_ErrorResult
+    }
+  };
+
+  type cancel_workorder_Output_ErrorResult = Drupe::ErrorResult;
+
+  type close_workorderInput = {
+    actual_hours?: decimal,
+    failure_code?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    resolution_notes?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    site_id: String,
+    wonum: String
+  };
+
+  type close_workorderOutput = {
+    result: {
+      typeChoice0?: Drupe::close_workorder_Output_WorkOrderMutationResult,
+      typeChoice1?: Drupe::close_workorder_Output_ErrorResult
+    }
+  };
+
+  type close_workorder_Output_ErrorResult = Drupe::ErrorResult;
+
+  type generate_work_orderInput = {
+    aob_source?: {
+      typeChoice0?: Drupe::generate_work_order_Input_aob_source_TypeChoice0,
+      typeChoice1?: Drupe::Null
+    },
+    asset_num: String,
+    description: String,
+    location?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    notes?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    priority?: Long,
+    reported_by?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    site_id: String,
+    wonum?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    work_type?: String
+  };
+
+  type generate_work_orderOutput = {
+    result: {
+      typeChoice0?: Drupe::generate_work_order_Output_WorkOrderMutationResult,
+      typeChoice1?: Drupe::generate_work_order_Output_ErrorResult
+    }
+  };
+
+  type generate_work_order_Output_ErrorResult = Drupe::ErrorResult;
+
+  type get_failure_codesInput = {
+    code?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    }
+  };
+
+  type get_failure_codesOutput = {
+    result: {
+      typeChoice0?: Drupe::get_failure_codes_Output_FailureCodesResult,
+      typeChoice1?: Drupe::get_failure_codes_Output_ErrorResult
+    }
+  };
+
+  type get_failure_codes_Output_ErrorResult = Drupe::ErrorResult;
+
+  type get_my_assigned_workordersInput = {
+    labor_code: String,
+    open_only?: Bool,
+    site_id?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    }
+  };
+
+  type get_my_assigned_workordersOutput = {
+    result: {
+      typeChoice0?: Drupe::get_my_assigned_workorders_Output_WorkOrdersResult,
+      typeChoice1?: Drupe::get_my_assigned_workorders_Output_ErrorResult
+    }
+  };
+
+  type get_my_assigned_workorders_Output_ErrorResult = Drupe::ErrorResult;
+
+  type get_schedule_calendarInput = {
+    date_from?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    date_to?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    group_by?: String,
+    site_id: String
+  };
+
+  type get_schedule_calendarOutput = {
+    result: {
+      typeChoice0?: Drupe::get_schedule_calendar_Output_ScheduleResult,
+      typeChoice1?: Drupe::get_schedule_calendar_Output_ErrorResult
+    }
+  };
+
+  type get_schedule_calendar_Output_ErrorResult = Drupe::ErrorResult;
+
+  type get_workorderInput = {
+    site_id: String,
+    wonum: String
+  };
+
+  type get_workorderOutput = {
+    approval_outcome?: String,
+    approver_type?: String,
+    result: {
+      typeChoice0?: Drupe::get_workorder_Output_WorkOrderResult,
+      typeChoice1?: Drupe::get_workorder_Output_ErrorResult
+    },
+    vendor_approval_status?: String
+  };
+
+  type get_workorder_Output_ErrorResult = Drupe::ErrorResult;
+
+  type get_workorder_actuals_vs_plannedInput = {
+    site_id: String,
+    wonum: String
+  };
+
+  type get_workorder_actuals_vs_plannedOutput = {
+    result: {
+      typeChoice0?: Drupe::get_workorder_actuals_vs_planned_Output_ActualsVsPlannedResult,
+      typeChoice1?: Drupe::get_workorder_actuals_vs_planned_Output_ErrorResult
+    }
+  };
+
+  type get_workorder_actuals_vs_planned_Output_ErrorResult = Drupe::ErrorResult;
+
+  type get_workorder_costsInput = {
+    site_id: String,
+    wonum: String
+  };
+
+  type get_workorder_costsOutput = {
+    result: {
+      typeChoice0?: Drupe::get_workorder_costs_Output_CostsResult,
+      typeChoice1?: Drupe::get_workorder_costs_Output_ErrorResult
+    }
+  };
+
+  type get_workorder_costs_Output_ErrorResult = Drupe::ErrorResult;
+
+  type get_workorder_kpisInput = {
+    period_months?: Long,
+    site_id: String
+  };
+
+  type get_workorder_kpisOutput = {
+    result: {
+      typeChoice0?: Drupe::get_workorder_kpis_Output_KpiResult,
+      typeChoice1?: Drupe::get_workorder_kpis_Output_ErrorResult
+    }
+  };
+
+  type get_workorder_kpis_Output_ErrorResult = Drupe::ErrorResult;
+
+  type get_workorder_tasksInput = {
+    site_id: String,
+    wonum: String
+  };
+
+  type get_workorder_tasksOutput = {
+    result: {
+      typeChoice0?: Drupe::get_workorder_tasks_Output_TasksResult,
+      typeChoice1?: Drupe::get_workorder_tasks_Output_ErrorResult
+    }
+  };
+
+  type get_workorder_tasks_Output_ErrorResult = Drupe::ErrorResult;
+
+  type list_workordersInput = {
+    asset_num?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    date_from?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    date_to?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    page_num?: Long,
+    page_size?: Long,
+    priority?: {
+      typeChoice0?: Long,
+      typeChoice1?: Drupe::Null
+    },
+    site_id?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    status?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    }
+  };
+
+  type list_workordersOutput = {
+    result: {
+      typeChoice0?: Drupe::list_workorders_Output_WorkOrdersResult,
+      typeChoice1?: Drupe::list_workorders_Output_ErrorResult
+    }
+  };
+
+  type list_workorders_Output_ErrorResult = Drupe::ErrorResult;
+
+  type update_workorderInput = {
+    asset_num?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    description?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    failure_code?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    location?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    notes?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    priority?: {
+      typeChoice0?: Long,
+      typeChoice1?: Drupe::Null
+    },
+    site_id: String,
+    wonum: String
+  };
+
+  type update_workorderOutput = {
+    result: {
+      typeChoice0?: Drupe::update_workorder_Output_WorkOrderMutationResult,
+      typeChoice1?: Drupe::update_workorder_Output_ErrorResult
+    }
+  };
+
+  type update_workorder_Output_ErrorResult = Drupe::ErrorResult;
+
+  entity ErrorResult = {
+    error: String
+  };
+
+  entity Gateway;
+
+  entity Null;
+
+  entity User;
+
+  entity approve_workorder_Output_LaborLine = {
+    craft?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    laborcode?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    laborhrs?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    startdate?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    }
+  };
+
+  entity approve_workorder_Output_WorkOrderItem = {
+    actfinish?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    actlabcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    actlabhrs?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    actmatcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    actservcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    actstart?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    acttoolcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    acttotalcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    aob_asset_class?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    aob_source?: {
+      typeChoice0?: Drupe::approve_workorder_Output_WorkOrderItem_aob_source_TypeChoice0,
+      typeChoice1?: Drupe::Null
+    },
+    assetnum?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    description?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    description_longdescription?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    estatapprtotalcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    estlabcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    estlabhrs?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    estmatcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    estservcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    esttoolcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    esttotalcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    failurecode?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    jpnum?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    lead?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    location?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    orgid?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    parent?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    reportdate?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    reportedby?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    schedfinish?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    schedstart?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    siteid?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    status?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    status_date?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    targcompdate?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    targstartdate?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    taskid?: {
+      typeChoice0?: Long,
+      typeChoice1?: Drupe::Null
+    },
+    wonum?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    wopriority?: {
+      typeChoice0?: Long,
+      typeChoice1?: Drupe::Null
+    },
+    worktype?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    wplabor?: {
+      typeChoice0?: Set<Drupe::approve_workorder_Output_LaborLine>,
+      typeChoice1?: Drupe::Null
+    }
+  };
+
+  entity approve_workorder_Output_WorkOrderItem_aob_source_TypeChoice0;
+
+  entity approve_workorder_Output_WorkOrderMutationResult = {
+    message: String,
+    siteid?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    status?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    wonum?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    work_order: Drupe::approve_workorder_Output_WorkOrderItem
+  };
+
+  entity assign_technician_Output_LaborLine = {
+    craft?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    laborcode?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    laborhrs?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    startdate?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    }
+  };
+
+  entity assign_technician_Output_WorkOrderItem = {
+    actfinish?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    actlabcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    actlabhrs?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    actmatcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    actservcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    actstart?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    acttoolcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    acttotalcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    aob_asset_class?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    aob_source?: {
+      typeChoice0?: Drupe::assign_technician_Output_WorkOrderItem_aob_source_TypeChoice0,
+      typeChoice1?: Drupe::Null
+    },
+    assetnum?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    description?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    description_longdescription?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    estatapprtotalcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    estlabcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    estlabhrs?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    estmatcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    estservcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    esttoolcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    esttotalcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    failurecode?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    jpnum?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    lead?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    location?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    orgid?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    parent?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    reportdate?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    reportedby?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    schedfinish?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    schedstart?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    siteid?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    status?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    status_date?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    targcompdate?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    targstartdate?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    taskid?: {
+      typeChoice0?: Long,
+      typeChoice1?: Drupe::Null
+    },
+    wonum?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    wopriority?: {
+      typeChoice0?: Long,
+      typeChoice1?: Drupe::Null
+    },
+    worktype?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    wplabor?: {
+      typeChoice0?: Set<Drupe::assign_technician_Output_LaborLine>,
+      typeChoice1?: Drupe::Null
+    }
+  };
+
+  entity assign_technician_Output_WorkOrderItem_aob_source_TypeChoice0;
+
+  entity assign_technician_Output_WorkOrderMutationResult = {
+    message: String,
+    siteid?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    status?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    wonum?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    work_order: Drupe::assign_technician_Output_WorkOrderItem
+  };
+
+  entity cancel_workorder_Output_LaborLine = {
+    craft?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    laborcode?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    laborhrs?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    startdate?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    }
+  };
+
+  entity cancel_workorder_Output_WorkOrderItem = {
+    actfinish?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    actlabcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    actlabhrs?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    actmatcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    actservcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    actstart?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    acttoolcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    acttotalcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    aob_asset_class?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    aob_source?: {
+      typeChoice0?: Drupe::cancel_workorder_Output_WorkOrderItem_aob_source_TypeChoice0,
+      typeChoice1?: Drupe::Null
+    },
+    assetnum?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    description?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    description_longdescription?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    estatapprtotalcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    estlabcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    estlabhrs?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    estmatcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    estservcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    esttoolcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    esttotalcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    failurecode?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    jpnum?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    lead?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    location?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    orgid?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    parent?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    reportdate?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    reportedby?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    schedfinish?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    schedstart?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    siteid?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    status?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    status_date?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    targcompdate?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    targstartdate?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    taskid?: {
+      typeChoice0?: Long,
+      typeChoice1?: Drupe::Null
+    },
+    wonum?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    wopriority?: {
+      typeChoice0?: Long,
+      typeChoice1?: Drupe::Null
+    },
+    worktype?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    wplabor?: {
+      typeChoice0?: Set<Drupe::cancel_workorder_Output_LaborLine>,
+      typeChoice1?: Drupe::Null
+    }
+  };
+
+  entity cancel_workorder_Output_WorkOrderItem_aob_source_TypeChoice0;
+
+  entity cancel_workorder_Output_WorkOrderMutationResult = {
+    message: String,
+    siteid?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    status?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    wonum?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    work_order: Drupe::cancel_workorder_Output_WorkOrderItem
+  };
+
+  entity close_workorder_Output_LaborLine = {
+    craft?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    laborcode?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    laborhrs?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    startdate?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    }
+  };
+
+  entity close_workorder_Output_WorkOrderItem = {
+    actfinish?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    actlabcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    actlabhrs?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    actmatcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    actservcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    actstart?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    acttoolcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    acttotalcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    aob_asset_class?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    aob_source?: {
+      typeChoice0?: Drupe::close_workorder_Output_WorkOrderItem_aob_source_TypeChoice0,
+      typeChoice1?: Drupe::Null
+    },
+    assetnum?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    description?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    description_longdescription?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    estatapprtotalcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    estlabcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    estlabhrs?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    estmatcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    estservcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    esttoolcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    esttotalcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    failurecode?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    jpnum?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    lead?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    location?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    orgid?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    parent?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    reportdate?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    reportedby?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    schedfinish?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    schedstart?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    siteid?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    status?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    status_date?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    targcompdate?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    targstartdate?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    taskid?: {
+      typeChoice0?: Long,
+      typeChoice1?: Drupe::Null
+    },
+    wonum?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    wopriority?: {
+      typeChoice0?: Long,
+      typeChoice1?: Drupe::Null
+    },
+    worktype?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    wplabor?: {
+      typeChoice0?: Set<Drupe::close_workorder_Output_LaborLine>,
+      typeChoice1?: Drupe::Null
+    }
+  };
+
+  entity close_workorder_Output_WorkOrderItem_aob_source_TypeChoice0;
+
+  entity close_workorder_Output_WorkOrderMutationResult = {
+    message: String,
+    siteid?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    status?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    wonum?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    work_order: Drupe::close_workorder_Output_WorkOrderItem
+  };
+
+  entity generate_work_order_Input_aob_source_TypeChoice0;
+
+  entity generate_work_order_Output_LaborLine = {
+    craft?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    laborcode?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    laborhrs?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    startdate?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    }
+  };
+
+  entity generate_work_order_Output_WorkOrderItem = {
+    actfinish?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    actlabcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    actlabhrs?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    actmatcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    actservcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    actstart?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    acttoolcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    acttotalcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    aob_asset_class?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    aob_source?: {
+      typeChoice0?: Drupe::generate_work_order_Output_WorkOrderItem_aob_source_TypeChoice0,
+      typeChoice1?: Drupe::Null
+    },
+    assetnum?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    description?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    description_longdescription?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    estatapprtotalcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    estlabcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    estlabhrs?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    estmatcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    estservcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    esttoolcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    esttotalcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    failurecode?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    jpnum?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    lead?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    location?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    orgid?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    parent?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    reportdate?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    reportedby?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    schedfinish?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    schedstart?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    siteid?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    status?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    status_date?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    targcompdate?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    targstartdate?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    taskid?: {
+      typeChoice0?: Long,
+      typeChoice1?: Drupe::Null
+    },
+    wonum?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    wopriority?: {
+      typeChoice0?: Long,
+      typeChoice1?: Drupe::Null
+    },
+    worktype?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    wplabor?: {
+      typeChoice0?: Set<Drupe::generate_work_order_Output_LaborLine>,
+      typeChoice1?: Drupe::Null
+    }
+  };
+
+  entity generate_work_order_Output_WorkOrderItem_aob_source_TypeChoice0;
+
+  entity generate_work_order_Output_WorkOrderMutationResult = {
+    message: String,
+    siteid?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    status?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    wonum?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    work_order: Drupe::generate_work_order_Output_WorkOrderItem
+  };
+
+  entity get_failure_codes_Output_FailureCodeItem = {
+    code: String,
+    description?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    }
+  };
+
+  entity get_failure_codes_Output_FailureCodesResult = {
+    code?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    failure_codes: Set<Drupe::get_failure_codes_Output_FailureCodeItem>,
+    message: String,
+    total: Long
+  };
+
+  entity get_my_assigned_workorders_Output_LaborLine = {
+    craft?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    laborcode?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    laborhrs?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    startdate?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    }
+  };
+
+  entity get_my_assigned_workorders_Output_WorkOrderItem = {
+    actfinish?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    actlabcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    actlabhrs?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    actmatcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    actservcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    actstart?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    acttoolcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    acttotalcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    aob_asset_class?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    aob_source?: {
+      typeChoice0?: Drupe::get_my_assigned_workorders_Output_WorkOrderItem_aob_source_TypeChoice0,
+      typeChoice1?: Drupe::Null
+    },
+    assetnum?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    description?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    description_longdescription?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    estatapprtotalcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    estlabcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    estlabhrs?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    estmatcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    estservcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    esttoolcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    esttotalcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    failurecode?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    jpnum?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    lead?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    location?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    orgid?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    parent?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    reportdate?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    reportedby?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    schedfinish?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    schedstart?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    siteid?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    status?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    status_date?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    targcompdate?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    targstartdate?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    taskid?: {
+      typeChoice0?: Long,
+      typeChoice1?: Drupe::Null
+    },
+    wonum?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    wopriority?: {
+      typeChoice0?: Long,
+      typeChoice1?: Drupe::Null
+    },
+    worktype?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    wplabor?: {
+      typeChoice0?: Set<Drupe::get_my_assigned_workorders_Output_LaborLine>,
+      typeChoice1?: Drupe::Null
+    }
+  };
+
+  entity get_my_assigned_workorders_Output_WorkOrderItem_aob_source_TypeChoice0;
+
+  entity get_my_assigned_workorders_Output_WorkOrdersResult = {
+    labor_code?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    message: String,
+    site_id?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    status?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    total: Long,
+    work_orders: Set<Drupe::get_my_assigned_workorders_Output_WorkOrderItem>
+  };
+
+  entity get_schedule_calendar_Output_LaborLine = {
+    craft?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    laborcode?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    laborhrs?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    startdate?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    }
+  };
+
+  entity get_schedule_calendar_Output_ScheduleDay = {
+    count: Long,
+    date: String,
+    workorders: Set<Drupe::get_schedule_calendar_Output_WorkOrderItem>
+  };
+
+  entity get_schedule_calendar_Output_ScheduleResult = {
+    by_date?: {
+      typeChoice0?: Set<Drupe::get_schedule_calendar_Output_ScheduleDay>,
+      typeChoice1?: Drupe::Null
+    },
+    date_from?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    date_to?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    message: String,
+    site_id: String,
+    total_scheduled: Long,
+    workorders?: {
+      typeChoice0?: Set<Drupe::get_schedule_calendar_Output_WorkOrderItem>,
+      typeChoice1?: Drupe::Null
+    }
+  };
+
+  entity get_schedule_calendar_Output_WorkOrderItem = {
+    actfinish?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    actlabcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    actlabhrs?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    actmatcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    actservcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    actstart?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    acttoolcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    acttotalcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    aob_asset_class?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    aob_source?: {
+      typeChoice0?: Drupe::get_schedule_calendar_Output_WorkOrderItem_aob_source_TypeChoice0,
+      typeChoice1?: Drupe::Null
+    },
+    assetnum?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    description?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    description_longdescription?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    estatapprtotalcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    estlabcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    estlabhrs?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    estmatcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    estservcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    esttoolcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    esttotalcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    failurecode?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    jpnum?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    lead?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    location?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    orgid?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    parent?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    reportdate?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    reportedby?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    schedfinish?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    schedstart?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    siteid?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    status?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    status_date?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    targcompdate?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    targstartdate?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    taskid?: {
+      typeChoice0?: Long,
+      typeChoice1?: Drupe::Null
+    },
+    wonum?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    wopriority?: {
+      typeChoice0?: Long,
+      typeChoice1?: Drupe::Null
+    },
+    worktype?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    wplabor?: {
+      typeChoice0?: Set<Drupe::get_schedule_calendar_Output_LaborLine>,
+      typeChoice1?: Drupe::Null
+    }
+  };
+
+  entity get_schedule_calendar_Output_WorkOrderItem_aob_source_TypeChoice0;
+
+  entity get_workorder_Output_LaborLine = {
+    craft?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    laborcode?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    laborhrs?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    startdate?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    }
+  };
+
+  entity get_workorder_Output_WorkOrderItem = {
+    actfinish?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    actlabcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    actlabhrs?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    actmatcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    actservcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    actstart?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    acttoolcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    acttotalcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    aob_asset_class?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    aob_source?: {
+      typeChoice0?: Drupe::get_workorder_Output_WorkOrderItem_aob_source_TypeChoice0,
+      typeChoice1?: Drupe::Null
+    },
+    assetnum?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    description?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    description_longdescription?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    estatapprtotalcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    estlabcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    estlabhrs?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    estmatcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    estservcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    esttoolcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    esttotalcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    failurecode?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    jpnum?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    lead?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    location?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    orgid?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    parent?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    reportdate?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    reportedby?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    schedfinish?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    schedstart?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    siteid?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    status?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    status_date?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    targcompdate?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    targstartdate?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    taskid?: {
+      typeChoice0?: Long,
+      typeChoice1?: Drupe::Null
+    },
+    wonum?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    wopriority?: {
+      typeChoice0?: Long,
+      typeChoice1?: Drupe::Null
+    },
+    worktype?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    wplabor?: {
+      typeChoice0?: Set<Drupe::get_workorder_Output_LaborLine>,
+      typeChoice1?: Drupe::Null
+    }
+  };
+
+  entity get_workorder_Output_WorkOrderItem_aob_source_TypeChoice0;
+
+  entity get_workorder_Output_WorkOrderResult = {
+    message: String,
+    work_order: Drupe::get_workorder_Output_WorkOrderItem
+  };
+
+  entity get_workorder_actuals_vs_planned_Output_ActualsVsPlannedResult = {
+    labor_cost?: {
+      typeChoice0?: Drupe::get_workorder_actuals_vs_planned_Output_VarianceEntry,
+      typeChoice1?: Drupe::Null
+    },
+    labor_hours?: {
+      typeChoice0?: Drupe::get_workorder_actuals_vs_planned_Output_VarianceEntry,
+      typeChoice1?: Drupe::Null
+    },
+    material_cost?: {
+      typeChoice0?: Drupe::get_workorder_actuals_vs_planned_Output_VarianceEntry,
+      typeChoice1?: Drupe::Null
+    },
+    message: String,
+    service_cost?: {
+      typeChoice0?: Drupe::get_workorder_actuals_vs_planned_Output_VarianceEntry,
+      typeChoice1?: Drupe::Null
+    },
+    site_id?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    status?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    tool_cost?: {
+      typeChoice0?: Drupe::get_workorder_actuals_vs_planned_Output_VarianceEntry,
+      typeChoice1?: Drupe::Null
+    },
+    total_cost?: {
+      typeChoice0?: Drupe::get_workorder_actuals_vs_planned_Output_VarianceEntry,
+      typeChoice1?: Drupe::Null
+    },
+    wonum?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    worktype?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    }
+  };
+
+  entity get_workorder_actuals_vs_planned_Output_VarianceEntry = {
+    actual?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    estimated?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    over_budget?: {
+      typeChoice0?: Bool,
+      typeChoice1?: Drupe::Null
+    },
+    variance_abs?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    variance_pct?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    }
+  };
+
+  entity get_workorder_costs_Output_CostBreakdownEntry = {
+    amount: decimal,
+    category: String,
+    share_pct: decimal
+  };
+
+  entity get_workorder_costs_Output_CostsResult = {
+    actual_hours?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    assetnum?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    breakdown?: Set<Drupe::get_workorder_costs_Output_CostBreakdownEntry>,
+    location?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    message: String,
+    site_id?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    status?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    total_cost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    wonum?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    }
+  };
+
+  entity get_workorder_kpis_Output_AssetCount = {
+    asset: String,
+    count: Long
+  };
+
+  entity get_workorder_kpis_Output_KpiResult = {
+    avg_completion_hrs: decimal,
+    backlog: Long,
+    completed: Long,
+    message: String,
+    overdue: Long,
+    period_months: Long,
+    priority_breakdown?: Drupe::get_workorder_kpis_Output_KpiResult_priority_breakdown,
+    site_id: String,
+    top_assets_by_wo_count?: Set<Drupe::get_workorder_kpis_Output_AssetCount>,
+    total_workorders: Long
+  };
+
+  entity get_workorder_kpis_Output_KpiResult_priority_breakdown tags Long;
+
+  entity get_workorder_tasks_Output_LaborLine = {
+    craft?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    laborcode?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    laborhrs?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    startdate?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    }
+  };
+
+  entity get_workorder_tasks_Output_TasksResult = {
+    message: String,
+    parent_wonum: String,
+    site_id: String,
+    tasks: Set<Drupe::get_workorder_tasks_Output_WorkOrderItem>,
+    total: Long
+  };
+
+  entity get_workorder_tasks_Output_WorkOrderItem = {
+    actfinish?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    actlabcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    actlabhrs?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    actmatcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    actservcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    actstart?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    acttoolcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    acttotalcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    aob_asset_class?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    aob_source?: {
+      typeChoice0?: Drupe::get_workorder_tasks_Output_WorkOrderItem_aob_source_TypeChoice0,
+      typeChoice1?: Drupe::Null
+    },
+    assetnum?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    description?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    description_longdescription?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    estatapprtotalcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    estlabcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    estlabhrs?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    estmatcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    estservcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    esttoolcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    esttotalcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    failurecode?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    jpnum?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    lead?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    location?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    orgid?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    parent?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    reportdate?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    reportedby?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    schedfinish?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    schedstart?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    siteid?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    status?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    status_date?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    targcompdate?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    targstartdate?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    taskid?: {
+      typeChoice0?: Long,
+      typeChoice1?: Drupe::Null
+    },
+    wonum?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    wopriority?: {
+      typeChoice0?: Long,
+      typeChoice1?: Drupe::Null
+    },
+    worktype?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    wplabor?: {
+      typeChoice0?: Set<Drupe::get_workorder_tasks_Output_LaborLine>,
+      typeChoice1?: Drupe::Null
+    }
+  };
+
+  entity get_workorder_tasks_Output_WorkOrderItem_aob_source_TypeChoice0;
+
+  entity list_workorders_Output_LaborLine = {
+    craft?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    laborcode?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    laborhrs?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    startdate?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    }
+  };
+
+  entity list_workorders_Output_WorkOrderItem = {
+    actfinish?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    actlabcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    actlabhrs?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    actmatcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    actservcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    actstart?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    acttoolcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    acttotalcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    aob_asset_class?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    aob_source?: {
+      typeChoice0?: Drupe::list_workorders_Output_WorkOrderItem_aob_source_TypeChoice0,
+      typeChoice1?: Drupe::Null
+    },
+    assetnum?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    description?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    description_longdescription?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    estatapprtotalcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    estlabcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    estlabhrs?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    estmatcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    estservcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    esttoolcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    esttotalcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    failurecode?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    jpnum?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    lead?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    location?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    orgid?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    parent?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    reportdate?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    reportedby?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    schedfinish?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    schedstart?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    siteid?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    status?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    status_date?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    targcompdate?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    targstartdate?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    taskid?: {
+      typeChoice0?: Long,
+      typeChoice1?: Drupe::Null
+    },
+    wonum?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    wopriority?: {
+      typeChoice0?: Long,
+      typeChoice1?: Drupe::Null
+    },
+    worktype?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    wplabor?: {
+      typeChoice0?: Set<Drupe::list_workorders_Output_LaborLine>,
+      typeChoice1?: Drupe::Null
+    }
+  };
+
+  entity list_workorders_Output_WorkOrderItem_aob_source_TypeChoice0;
+
+  entity list_workorders_Output_WorkOrdersResult = {
+    labor_code?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    message: String,
+    site_id?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    status?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    total: Long,
+    work_orders: Set<Drupe::list_workorders_Output_WorkOrderItem>
+  };
+
+  entity update_workorder_Output_LaborLine = {
+    craft?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    laborcode?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    laborhrs?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    startdate?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    }
+  };
+
+  entity update_workorder_Output_WorkOrderItem = {
+    actfinish?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    actlabcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    actlabhrs?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    actmatcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    actservcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    actstart?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    acttoolcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    acttotalcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    aob_asset_class?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    aob_source?: {
+      typeChoice0?: Drupe::update_workorder_Output_WorkOrderItem_aob_source_TypeChoice0,
+      typeChoice1?: Drupe::Null
+    },
+    assetnum?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    description?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    description_longdescription?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    estatapprtotalcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    estlabcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    estlabhrs?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    estmatcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    estservcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    esttoolcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    esttotalcost?: {
+      typeChoice0?: decimal,
+      typeChoice1?: Drupe::Null
+    },
+    failurecode?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    jpnum?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    lead?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    location?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    orgid?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    parent?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    reportdate?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    reportedby?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    schedfinish?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    schedstart?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    siteid?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    status?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    status_date?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    targcompdate?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    targstartdate?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    taskid?: {
+      typeChoice0?: Long,
+      typeChoice1?: Drupe::Null
+    },
+    wonum?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    wopriority?: {
+      typeChoice0?: Long,
+      typeChoice1?: Drupe::Null
+    },
+    worktype?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    wplabor?: {
+      typeChoice0?: Set<Drupe::update_workorder_Output_LaborLine>,
+      typeChoice1?: Drupe::Null
+    }
+  };
+
+  entity update_workorder_Output_WorkOrderItem_aob_source_TypeChoice0;
+
+  entity update_workorder_Output_WorkOrderMutationResult = {
+    message: String,
+    siteid?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    status?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    wonum?: {
+      typeChoice0?: String,
+      typeChoice1?: Drupe::Null
+    },
+    work_order: Drupe::update_workorder_Output_WorkOrderItem
+  };
+
+  action "CallTool" in [Action::"Mcp"] appliesTo {
+    principal: [User],
+    resource: [Gateway],
+    context: {
+      isOutput: Bool,
+      output?: {      },
+      system: SystemContext
+    }
+  };
+
+  action "Mcp" appliesTo {
+    principal: [User],
+    resource: [Gateway],
+    context: {
+      isOutput: Bool,
+      output?: {      },
+      system: SystemContext
+    }
+  };
+
+  action "approve_workorder" in [Action::"CallTool"] appliesTo {
+    principal: [User],
+    resource: [Gateway],
+    context: {
+      input: approve_workorderInput,
+      output?: approve_workorderOutput,
+      system: SystemContext
+    }
+  };
+
+  action "assign_technician" in [Action::"CallTool"] appliesTo {
+    principal: [User],
+    resource: [Gateway],
+    context: {
+      input: assign_technicianInput,
+      output?: assign_technicianOutput,
+      system: SystemContext
+    }
+  };
+
+  action "authority_get_approval" in [Action::"CallTool"] appliesTo {
+    principal: [User],
+    resource: [Gateway],
+    context: {
+      input: authority_get_approvalInput,
+      output?: authority_get_approvalOutput,
+      system: SystemContext
+    }
+  };
+
+  action "cancel_workorder" in [Action::"CallTool"] appliesTo {
+    principal: [User],
+    resource: [Gateway],
+    context: {
+      input: cancel_workorderInput,
+      output?: cancel_workorderOutput,
+      system: SystemContext
+    }
+  };
+
+  action "close_workorder" in [Action::"CallTool"] appliesTo {
+    principal: [User],
+    resource: [Gateway],
+    context: {
+      input: close_workorderInput,
+      output?: close_workorderOutput,
+      system: SystemContext
+    }
+  };
+
+  action "generate_work_order" in [Action::"CallTool"] appliesTo {
+    principal: [User],
+    resource: [Gateway],
+    context: {
+      input: generate_work_orderInput,
+      output?: generate_work_orderOutput,
+      system: SystemContext
+    }
+  };
+
+  action "get_failure_codes" in [Action::"CallTool"] appliesTo {
+    principal: [User],
+    resource: [Gateway],
+    context: {
+      input: get_failure_codesInput,
+      output?: get_failure_codesOutput,
+      system: SystemContext
+    }
+  };
+
+  action "get_my_assigned_workorders" in [Action::"CallTool"] appliesTo {
+    principal: [User],
+    resource: [Gateway],
+    context: {
+      input: get_my_assigned_workordersInput,
+      output?: get_my_assigned_workordersOutput,
+      system: SystemContext
+    }
+  };
+
+  action "get_schedule_calendar" in [Action::"CallTool"] appliesTo {
+    principal: [User],
+    resource: [Gateway],
+    context: {
+      input: get_schedule_calendarInput,
+      output?: get_schedule_calendarOutput,
+      system: SystemContext
+    }
+  };
+
+  action "get_workorder" in [Action::"CallTool"] appliesTo {
+    principal: [User],
+    resource: [Gateway],
+    context: {
+      input: get_workorderInput,
+      output?: get_workorderOutput,
+      system: SystemContext
+    }
+  };
+
+  action "get_workorder_actuals_vs_planned" in [Action::"CallTool"] appliesTo {
+    principal: [User],
+    resource: [Gateway],
+    context: {
+      input: get_workorder_actuals_vs_plannedInput,
+      output?: get_workorder_actuals_vs_plannedOutput,
+      system: SystemContext
+    }
+  };
+
+  action "get_workorder_costs" in [Action::"CallTool"] appliesTo {
+    principal: [User],
+    resource: [Gateway],
+    context: {
+      input: get_workorder_costsInput,
+      output?: get_workorder_costsOutput,
+      system: SystemContext
+    }
+  };
+
+  action "get_workorder_kpis" in [Action::"CallTool"] appliesTo {
+    principal: [User],
+    resource: [Gateway],
+    context: {
+      input: get_workorder_kpisInput,
+      output?: get_workorder_kpisOutput,
+      system: SystemContext
+    }
+  };
+
+  action "get_workorder_tasks" in [Action::"CallTool"] appliesTo {
+    principal: [User],
+    resource: [Gateway],
+    context: {
+      input: get_workorder_tasksInput,
+      output?: get_workorder_tasksOutput,
+      system: SystemContext
+    }
+  };
+
+  action "list_workorders" in [Action::"CallTool"] appliesTo {
+    principal: [User],
+    resource: [Gateway],
+    context: {
+      input: list_workordersInput,
+      output?: list_workordersOutput,
+      system: SystemContext
+    }
+  };
+
+  action "update_workorder" in [Action::"CallTool"] appliesTo {
+    principal: [User],
+    resource: [Gateway],
+    context: {
+      input: update_workorderInput,
+      output?: update_workorderOutput,
+      system: SystemContext
+    }
+  };
+}

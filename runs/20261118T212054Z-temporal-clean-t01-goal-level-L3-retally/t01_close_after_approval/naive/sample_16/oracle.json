@@ -1,0 +1,110 @@
+{
+ "validation": {
+  "policy": "t01_close_after_approval/naive/sample_16/policy.dw",
+  "schema": "inputs/t01_close_after_approval/schema/t01.dogwood.cedarschema",
+  "ok": true,
+  "errors": [],
+  "warnings": []
+ },
+ "valid": true,
+ "bind_token": {
+  "bind": "authority",
+  "other_actions_bound": [],
+  "token": false,
+  "authority_tokens": [],
+  "token_in_close_permits": false,
+  "permits_considered": 1,
+  "unresolved_scope": false,
+  "predicates": [
+   {
+    "action": "authority_get_approval",
+    "kind": "response",
+    "role": "authority"
+   }
+  ],
+  "note": "text classification over permits that can apply to the protected action, not a decision"
+ },
+ "decisions": {
+  "t01_valid": true,
+  "t02_rejected": false,
+  "t03_pending": false,
+  "t04_wrong_wo": false,
+  "t05_agent_self_approved": false,
+  "t06_expired": false,
+  "t07_attempt_only": false,
+  "t08_vendor_flag_only": false,
+  "t09_status_flip_error_result": false,
+  "t10_no_history": false,
+  "t11_native_success_only": false,
+  "t12_second_close_same_session": true,
+  "t13_other_wo_valid": true,
+  "t14_other_session": false,
+  "t15_vendor_enum_only": false,
+  "t16_authority_rejected_vendor_positive": false,
+  "t17_authority_granted_vendor_negative": true
+ },
+ "replay_errors": {},
+ "scored": true,
+ "allow_set": [
+  "t01_valid",
+  "t12_second_close_same_session",
+  "t13_other_wo_valid",
+  "t17_authority_granted_vendor_negative"
+ ],
+ "surplus": [],
+ "deficit": [],
+ "over_permissive": [],
+ "over_strict": [],
+ "sources_accepted": [
+  "authority"
+ ],
+ "prerequisite_permitted": true,
+ "allows_vendor_only": [],
+ "evidence_text": {
+  "predicates": [
+   {
+    "action": "authority_get_approval",
+    "kind": "response",
+    "role": "authority",
+    "literals": {
+     "output.decision": {
+      "value": "GRANTED",
+      "classes": [
+       "contract",
+       "vendor_stated"
+      ]
+     },
+     "output.approver_kind": {
+      "value": "HUMAN",
+      "classes": [
+       "contract",
+       "vendor_stated"
+      ]
+     }
+    },
+    "approver_kind_bound": [
+     "output.approver_kind"
+    ]
+   }
+  ],
+  "actions_bound": [
+   "authority_get_approval"
+  ],
+  "binding": "authority",
+  "authority_literals": {
+   "contract": [
+    "GRANTED",
+    "HUMAN"
+   ],
+   "vendor_stated": [
+    "GRANTED",
+    "HUMAN"
+   ],
+   "neither": []
+  },
+  "vendor_token_in_authority_predicate": false,
+  "invented_in_authority_predicate": false,
+  "approver_kind_present": true,
+  "note": "text classification, not a decision"
+ }
+}

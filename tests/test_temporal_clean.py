@@ -265,3 +265,76 @@ def test_main_with_arm_and_spend_cap_records_arm_files_and_transport(tmp_path, m
     assert s["allows_vendor_only"] == 1 and s["binding_counts"] == {"vendor": 1} and s["first_shot_valid"] == 1
     md = (run / "summary.md").read_text()
     assert "manifest arm `L2`" in md and "allows a vendor-only trace (primary)" in md
+
+
+# ---- Phase 2c: close-scoped BIND / TOKEN on the first shot and on the final policy; schema-only input mode in config
+import hashlib  # noqa: E402
+
+
+def test_score_adds_close_scoped_bind_token_when_the_scenario_has_a_catalogue(fr_l2):
+    g = score(T01 / "gold.dw", fr_l2)["bind_token"]
+    assert g["bind"] == "authority" and g["token"] is False and "note" in g
+    vb = score(ARMS / "L2" / "mutants" / "vendor_binding.dw", fr_l2)["bind_token"]
+    assert vb["bind"] == "vendor" and vb["token"] is False
+    bl = score(ARMS / "L2" / "mutants" / "borrowed_literal.dw", fr_l2)["bind_token"]
+    assert bl["bind"] == "authority" and bl["token"] is True and bl["authority_tokens"] == ["OPERATOR", "SIGNED_OFF"]
+    assert fr_l2.protected_action == "close_workorder"
+
+
+def test_runs_record_the_first_shot_bind_token_and_the_shared_request(tmp_path, fr_l2):
+    text = (ARMS / "L2" / "mutants" / "vendor_binding.dw").read_text()
+    llm = CachedLLM(Fake(text), tmp_path / "cache")
+    ncfg, scfg = dogwood.NaiveDogwoodConfig("claude-haiku-5-5"), dogwood.SonderaDogwoodConfig("claude-haiku-5-5")
+    n = run_naive(llm, fr_l2, ncfg, 3, tmp_path / "n3")
+    s = run_sondera(llm, fr_l2, scfg, 3, tmp_path / "s3")
+    assert n["first_shot"]["bind"] == "vendor" and n["first_shot"]["token"] is False and n["first_shot"]["valid"] is True
+    assert n["first_shot"]["policy_sha256"] == hashlib.sha256((tmp_path / "n3" / "policy.dw").read_bytes()).hexdigest()
+    assert s["first_shot"] == n["first_shot"]                       # same request, same cache entry: one first shot per sample
+    assert s["first_shot"]["key_hash"] == s["calls"][0]["key_hash"] == n["calls"][0]["key_hash"]
+    assert s["oracle"]["bind_token"]["bind"] == "vendor"
+
+
+def test_summary_counts_first_shot_and_final_bind_token(fr_l2):
+    gold = score(T01 / "gold.dw", fr_l2)
+    vb = score(ARMS / "L2" / "mutants" / "vendor_binding.dw", fr_l2)
+    bl = score(ARMS / "L2" / "mutants" / "borrowed_literal.dw", fr_l2)
+    rows = [_row(0, gold), _row(1, vb), _row(2, bl)]
+    for r, fs in zip(rows, ({"bind": "vendor", "token": False}, {"bind": "vendor", "token": False}, {"bind": "authority", "token": True})):
+        r["first_shot"] = {"key_hash": "k", "policy_sha256": "p", "valid": False} | fs
+    s = summarize("claude-haiku-5-5", rows, fr_l2)
+    assert s["first_shot_bind_counts"] == {"authority": 1, "vendor": 2} and s["first_shot_token"] == 1
+    assert s["final_bind_counts"] == {"authority": 2, "vendor": 1} and s["final_token"] == 1
+    md = markdown({"run_id": "x", "scenario": "t01", "model": "m", "n": 3, "versions": {"dogwood": "1.1.0", "pydogwood": "0.1.1"},
+                   "intent": {"arm": "goal-level"}, "arm": {"name": "L2"}, "input_mode": "manifests"}, {"sondera": s})
+    assert "BIND" in md and "TOKEN" in md and "first shot" in md
+
+
+def test_main_schema_only_input_mode_is_recorded_and_the_prompt_carries_no_manifests(tmp_path, monkeypatch):
+    import sys
+    from pgi.runs import temporal_clean as tc
+    from pgi.llm import anthropic_provider as ap
+
+    class FakeProvider(Fake):
+        def __init__(self, *a, **k):
+            super().__init__((T01 / "gold.dw").read_text())
+
+        def request_settings(self):
+            return {"timeout_s": 300.0, "max_retries": 2}
+
+    monkeypatch.setattr(ap, "AnthropicProvider", FakeProvider)
+    monkeypatch.setattr(tc, "ROOT", tmp_path)
+    monkeypatch.setattr(sys, "argv", ["x", "--model", "claude-haiku-5-5", "--n", "1", "--scenario", str(T01), "--label", "smoke",
+                                      "--intent", "goal-level", "--arm", "L1", "--input-mode", "schema-only", "--generators", "naive", "sondera",
+                                      "--cache", str(tmp_path / "cache")])
+    tc.main()
+    (run,) = [p for p in (tmp_path / "runs").iterdir() if not p.name.startswith(".tmp-")]
+    cfg = json.loads((run / "config.json").read_text())
+    assert cfg["input_mode"] == "schema-only" and cfg["generators"]["naive"]["input_mode"] == "schema-only"
+    assert cfg["generators"]["sondera"]["input_mode"] == "schema-only" and cfg["arm"]["name"] == "L1"
+    assert cfg["frame"]["catalogue"].endswith("catalogue.yaml") and cfg["hashes"]["catalogue"]
+    static = json.loads((run / "t01_close_after_approval" / "prompt_static.json").read_text())
+    assert "## MCP tool manifests" not in "".join(b["text"] for b in static)
+    s = json.loads((run / "summary.json").read_text())
+    assert s["naive"]["first_shot_bind_counts"] == {"authority": 1} and s["naive"]["final_bind_counts"] == {"authority": 1}
+    assert s["sondera"]["first_shot_shared_with_naive"] == {"k": 1, "n": 1}
+    assert "input mode `schema-only`" in (run / "summary.md").read_text()

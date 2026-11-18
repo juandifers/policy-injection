@@ -1,0 +1,30 @@
+{
+ "key_hash": "9a1ee0efa81adc26ca92a551d4c56441efeb788b53d2d43955402e7ee8f8a2cc",
+ "cache_hit": true,
+ "model_version": "claude-sonnet-5-5",
+ "request_id": "req_011ChAr2dp91TgC7FSR8NNPN",
+ "stop_reason": "end_turn",
+ "stop_details": null,
+ "usage": {
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 0,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "cache_creation_input_tokens": 0,
+  "cache_read_input_tokens": 90231,
+  "inference_geo": "global",
+  "input_tokens": 334,
+  "output_tokens": 1676,
+  "output_tokens_details": {
+   "thinking_tokens": 894
+  },
+  "service_tier": "standard",
+  "speed": "standard"
+ },
+ "text": "```\n@id(\"close-workorder-main-with-human-approval\")\npermit (principal, action == Drupe::Action::\"close_workorder\", resource)\nwhen { context.input.site_id == \"MAIN\" }\nwhen temporal {\n  formerly within 1h Drupe::Action::\"authority_get_approval\"::response{\n    eventResource: resource,\n    input.site_id: context.input.site_id,\n    input.wonum: context.input.wonum,\n    output.decision: \"APPROVED\",\n    output.approver_kind: \"human\"\n  }\n};\n\n// The approval lookup must itself be permitted, or no ::response is ever recorded for it.\n@id(\"allow-authority-approval-lookup\")\npermit (principal, action == Drupe::Action::\"authority_get_approval\", resource);\n\n@id(\"allow-read-only-lookups-get-workorder\")\npermit (principal, action == Drupe::Action::\"get_workorder\", resource);\n\n@id(\"allow-read-only-lookups-list-workorders\")\npermit (principal, action == Drupe::Action::\"list_workorders\", resource);\n\n@id(\"allow-read-only-lookups-tasks\")\npermit (principal, action == Drupe::Action::\"get_workorder_tasks\", resource);\n\n@id(\"allow-read-only-lookups-costs\")\npermit (principal, action == Drupe::Action::\"get_workorder_costs\", resource);\n\n@id(\"allow-read-only-lookups-actuals-vs-planned\")\npermit (principal, action == Drupe::Action::\"get_workorder_actuals_vs_planned\", resource);\n\n@id(\"allow-read-only-lookups-kpis\")\npermit (principal, action == Drupe::Action::\"get_workorder_kpis\", resource);\n\n@id(\"allow-read-only-lookups-schedule\")\npermit (principal, action == Drupe::Action::\"get_schedule_calendar\", resource);\n\n@id(\"allow-read-only-lookups-assigned\")\npermit (principal, action == Drupe::Action::\"get_my_assigned_workorders\", resource);\n\n@id(\"allow-read-only-lookups-failure-codes\")\npermit (principal, action == Drupe::Action::\"get_failure_codes\", resource);\n\n// The agent can never approve work orders itself (belt and braces on top of default deny).\n@id(\"forbid-agent-approval\")\nforbid (principal, action == Drupe::Action::\"approve_workorder\", resource);\n```",
+ "content_types": [
+  "thinking",
+  "text"
+ ],
+ "extraction": "fenced"
+}

@@ -1,0 +1,81 @@
+{
+ "round": 1,
+ "extraction": "fenced",
+ "generation": {
+  "key_hash": "a4dba4959cc212024efe1b5d963bd4a1b42ddd70883d0faa9a58b984c9947d6f",
+  "cache_hit": true,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011ChAt9PEyY1LjQ9DyyxMy5",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 90529,
+   "inference_geo": "global",
+   "input_tokens": 334,
+   "output_tokens": 1738,
+   "output_tokens_details": {
+    "thinking_tokens": 1180
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "```\n@id(\"read-only-lookups\")\npermit (principal, action == Drupe::Action::\"get_workorder\", resource);\n\npermit (principal, action == Drupe::Action::\"list_workorders\", resource);\n\npermit (principal, action == Drupe::Action::\"get_workorder_tasks\", resource);\n\npermit (principal, action == Drupe::Action::\"get_workorder_costs\", resource);\n\npermit (principal, action == Drupe::Action::\"get_workorder_actuals_vs_planned\", resource);\n\npermit (principal, action == Drupe::Action::\"get_workorder_kpis\", resource);\n\npermit (principal, action == Drupe::Action::\"get_schedule_calendar\", resource);\n\npermit (principal, action == Drupe::Action::\"get_my_assigned_workorders\", resource);\n\npermit (principal, action == Drupe::Action::\"get_failure_codes\", resource);\n\npermit (principal, action == Drupe::Action::\"authority_get_approval\", resource);\n\n@id(\"close-main-only-after-human-signoff\")\npermit (principal, action == Drupe::Action::\"close_workorder\", resource)\nwhen { context.input.site_id == \"MAIN\" }\nwhen temporal {\n  formerly within 1h Drupe::Action::\"get_workorder\"::response{\n    eventResource: resource,\n    eventPrincipal: principal,\n    input.wonum: context.input.wonum,\n    input.site_id: context.input.site_id,\n    output.approval_outcome: \"SIGNED_OFF\",\n    output.approver_type: \"OPERATOR\"\n  }\n};\n\n@id(\"agent-never-approves\")\nforbid (principal, action == Drupe::Action::\"approve_workorder\", resource);\n```",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "deterministic": {
+  "passed": false,
+  "validation": {
+   "policy": "t01_close_after_approval/sondera/sample_07/round1.dw",
+   "schema": "inputs/t01_close_after_approval/schema/t01.dogwood.cedarschema",
+   "ok": false,
+   "errors": [
+    "argument `output.approval_outcome` of `get_workorder` expects `get_workorder_Output_approval_outcome` but got `string`",
+    "argument `output.approver_type` of `get_workorder` expects `get_workorder_Output_approver_type` but got `string`"
+   ],
+   "warnings": []
+  },
+  "failures": [
+   "invalid: argument `output.approval_outcome` of `get_workorder` expects `get_workorder_Output_approval_outcome` but got `string`",
+   "invalid: argument `output.approver_type` of `get_workorder` expects `get_workorder_Output_approver_type` but got `string`"
+  ]
+ },
+ "judge": {
+  "key_hash": "c64e9282e134a53c732906f76f4c8b3ad97ef6e966d3fa63dc8973a7b199f515",
+  "cache_hit": true,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011ChAtbtT85FEvZNjjGBoiE",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 2414,
+   "inference_geo": "global",
+   "input_tokens": 897,
+   "output_tokens": 704,
+   "output_tokens_details": {
+    "thinking_tokens": 505
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "- The close permit takes its approval evidence from `get_workorder::response`. The approval confirmation comes from `authority_get_approval`, and that action is only permitted as a lookup. As written, the policy checks `approval_outcome` and `approver_type` on a work-order fetch, which is not the call that confirms the approval. Closing is therefore either denied even after a real human sign-off, or allowed on evidence that is not an approval confirmation. The temporal condition should match `Drupe::Action::\"authority_get_approval\"::response`, with the same correlation on `wonum` and `site_id` and the same output checks.",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "judge_passed": false,
+ "passed": false
+}

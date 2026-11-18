@@ -4,6 +4,7 @@ scenario's trace suite, written to runs/<id>/.
     uv run --group dogwood python -m pgi.runs.temporal_clean --model claude-sonnet-5-5 --n 20 \
         --scenario domains/assetopsbench/scenarios/t01_close_after_approval --label t01
     ... --intent goal-level --arm L1       # selectable intent arm and manifest arm (scenario.yaml `intents`, `arms`)
+    ... --input-mode schema-only           # Phase 2c L1-S: intent + generated schema only, no manifest text (default: manifests)
     ... --cache-only            # every LLM call must hit the cache (re-score; zero API calls)
     ... --spend-cap-usd 15      # stop (run fails loudly, samples so far stay cached) before a call would exceed the cap
 
@@ -12,6 +13,13 @@ primary outcome of the evidence-vocabulary gate: allows a contract-deny trace wh
 `evidence_text` (pgi.analysis.dogwood_text.vocabulary_report: which action each temporal predicate binds, each literal as
 contract / vendor-stated / neither, approver-kind conjunct present; TEXT, labelled as such, never a decision). For the
 Sondera-style generator `first_shot_valid` (round 1 passed strict validation) is reported next to post-repair validity.
+
+Phase 2c additions (scenario.yaml `catalogue`, the trusted admission catalogue that names the protected action): per sample
+`first_shot` (the round-1 text, which the naive and Sondera-style generators share through the cache: key hash, policy
+sha256, validity, BIND, TOKEN) and `bind_token` on the final policy, both from pgi.analysis.dogwood_text.close_binding_report
+(BIND = evidence roles of the temporal predicates in permits that can apply to the protected action; TOKEN = a
+vendor-stated non-contract value in an authority predicate). TEXT, computed on every sample valid or not. `--input-mode`
+is recorded in config.json and is part of the cache key through the system blocks.
 
 Scoring frame (`frame`): the suite (traces.yaml), gold's allow-set over it (checked against the contract before anything is
 scored), and the requirement witnesses (requirements.yaml). Per sample: validity under the action + event schemas; the
@@ -36,7 +44,10 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
-from pgi.analysis.dogwood_text import vocabulary_report
+import hashlib
+
+from pgi.analysis.admission import load_catalogue
+from pgi.analysis.dogwood_text import close_binding_report, vocabulary_report
 from pgi.generators import dogwood
 from pgi.generators.dogwood_inputs import DogwoodInputs, Requirements, load_dogwood_inputs, load_requirements, snapshot
 from pgi.llm.cache import CachedLLM
@@ -87,16 +98,41 @@ class Frame:
     suite: temporal.TraceSuite
     gold_allowed: frozenset[str]
     requirements: Requirements | None
+    catalogue: dict | None = None
+
+    @property
+    def protected_action(self) -> str | None:
+        return self.catalogue["protected_action"] if self.catalogue else None
 
 
 def frame(inputs: DogwoodInputs) -> Frame:
-    """Load the suite and the requirements; gold must equal the contract on every trace."""
+    """Load the suite, the requirements and the catalogue; gold must equal the contract on every trace."""
     suite = temporal.load_suite(inputs.traces_yaml)
     gold = frozenset(temporal.allowed(inputs.gold, suite, inputs.schema_path, inputs.event_schema_path))
     if mismatch := sorted(t for t, want in suite.contract.items() if (t in gold) != want):
         raise OracleError(f"gold {inputs.gold} disagrees with the contract on {mismatch}; nothing scored")
     reqs = load_requirements(inputs.requirements, suite) if inputs.requirements else None
-    return Frame(inputs, suite, gold, reqs)
+    cat = load_catalogue(inputs.catalogue) if inputs.catalogue else None
+    return Frame(inputs, suite, gold, reqs, cat)
+
+
+def bind_token(text: str, fr: Frame) -> dict | None:
+    """Close-scoped BIND / TOKEN of one policy text, or None when the scenario has no catalogue or no vocabulary. TEXT."""
+    if not (fr.protected_action and fr.requirements and fr.requirements.vocabulary):
+        return None
+    return close_binding_report(text, fr.requirements.vocabulary, fr.protected_action, fr.inputs.schema_text) | {
+        "note": "text classification over permits that can apply to the protected action, not a decision"}
+
+
+def _first_shot(text: str, key_hash: str, valid: bool, fr: Frame) -> dict:
+    """What is recorded about a sample's first shot (round 1 = the naive request): identity, validity, BIND, TOKEN."""
+    bt = bind_token(text, fr)
+    return {"key_hash": key_hash, "policy_sha256": hashlib.sha256(text.encode()).hexdigest(), "valid": valid,
+            "bind": bt["bind"] if bt else None, "token": bt["token"] if bt else None}
+
+
+def _policy_file_text(policy_text: str) -> str:
+    return policy_text + "\n" if policy_text else ""
 
 
 def score(policy: Path, fr: Frame) -> dict:
@@ -107,6 +143,8 @@ def score(policy: Path, fr: Frame) -> dict:
     if report.ok and not dogwood.has_policy(Path(policy).read_text()):
         out["validation"]["errors"] = ["empty policy set: no permit or forbid policy found"]
         out["validation"]["ok"] = out["valid"] = False
+    if (bt := bind_token(Path(policy).read_text(), fr)) is not None:
+        out["bind_token"] = bt           # text; on every sample, valid or not
     if not out["valid"]:
         return out
     decisions, errors, prerequisite = {}, {}, None
@@ -142,11 +180,12 @@ def run_naive(llm: CachedLLM, fr: Frame, cfg: dogwood.NaiveDogwoodConfig, i: int
     """One naive sample: generate, write, score."""
     s = dogwood.generate(llm, fr.inputs, cfg, i)
     d.mkdir(parents=True, exist_ok=True)
-    (d / "policy.dw").write_text(s.policy_text + "\n" if s.policy_text else "")
+    (d / "policy.dw").write_text(_policy_file_text(s.policy_text))
     _dump(d / "response.json", _call_record(s.completion) | {"extraction": s.extraction})
     oracle = score(d / "policy.dw", fr)
     _dump(d / "oracle.json", oracle)
-    return {"sample": i, "calls": [_call_record(s.completion)], "oracle": oracle}
+    return {"sample": i, "calls": [_call_record(s.completion)], "oracle": oracle,
+            "first_shot": _first_shot(_policy_file_text(s.policy_text), s.completion.key_hash, oracle["valid"], fr)}
 
 
 def run_sondera(llm: CachedLLM, fr: Frame, cfg: dogwood.SonderaDogwoodConfig, i: int, d: Path) -> dict:
@@ -159,11 +198,14 @@ def run_sondera(llm: CachedLLM, fr: Frame, cfg: dogwood.SonderaDogwoodConfig, i:
                "judge_passed": r.judge_passed, "passed": r.passed}
         _dump(d / f"round{r.index}.json", rec)
         calls += [rec["generation"], rec["judge"]]
-    (d / "policy.dw").write_text(res.final_policy + "\n" if res.final_policy else "")
+    (d / "policy.dw").write_text(_policy_file_text(res.final_policy))
     oracle = score(d / "policy.dw", fr)
-    crit = {"passed": res.passed, "rounds_used": res.rounds_used, "round1_valid": res.rounds[0].deterministic.passed}
-    _dump(d / "oracle.json", oracle | {"critic": crit})
-    return {"sample": i, "calls": calls, "oracle": oracle, "critic": crit}
+    r1 = res.rounds[0]
+    crit = {"passed": res.passed, "rounds_used": res.rounds_used, "round1_valid": r1.deterministic.passed}
+    first = _first_shot(_policy_file_text(r1.policy_text), r1.completion.key_hash,
+                        r1.deterministic.validation.ok and dogwood.has_policy(r1.policy_text), fr)
+    _dump(d / "oracle.json", oracle | {"critic": crit, "first_shot": first})
+    return {"sample": i, "calls": calls, "oracle": oracle, "critic": crit, "first_shot": first}
 
 
 def summarize(model: str, results: list[dict], fr: Frame) -> dict:
@@ -241,6 +283,13 @@ def summarize(model: str, results: list[dict], fr: Frame) -> dict:
             out["approver_kind_present"] = sum(e["approver_kind_present"] for e in ev)
             out["authority_literal_counts"] = {c: dict(sorted(Counter(v for e in ev for v in e["authority_literals"][c]).items()))
                                                for c in ("contract", "vendor_stated", "neither")}
+    if fs := [r["first_shot"] for r in results if r.get("first_shot") and r["first_shot"].get("bind")]:   # Phase 2c, TEXT, all samples
+        out["first_shot_bind_counts"] = dict(sorted(Counter(f["bind"] for f in fs).items()))
+        out["first_shot_token"] = sum(bool(f["token"]) for f in fs)
+    if bt := [r["oracle"]["bind_token"] for r in results if "bind_token" in r["oracle"]]:
+        out["final_bind_counts"] = dict(sorted(Counter(b["bind"] for b in bt).items()))
+        out["final_token"] = sum(bool(b["token"]) for b in bt)
+        out["final_unresolved_scope"] = sum(bool(b["unresolved_scope"]) for b in bt)
     out["post_repair_valid"] = len(valid)
     if any("critic" in r for r in results):
         rounds = [r["critic"]["rounds_used"] for r in results]
@@ -261,7 +310,7 @@ def markdown(config: dict, summary: dict) -> str:
     gens = list(summary)
     lines = [f"# Temporal clean run {config['run_id']}", "",
              f"Scenario `{config['scenario']}`, intent arm `{config.get('intent', {}).get('arm', '?')}`, manifest arm "
-             f"`{config.get('arm', {}).get('name', 'base')}`; model `{config['model']}` (API reported: "
+             f"`{config.get('arm', {}).get('name', 'base')}`, input mode `{config.get('input_mode', 'manifests')}`; model `{config['model']}` (API reported: "
              f"{', '.join(sorted({v for s in summary.values() for v in s['model_versions']}))}); N={config['n']}; "
              f"generators: {', '.join(gens)}. Oracle: Dogwood interpreter {config['versions']['dogwood']} via pydogwood "
              f"{config['versions']['pydogwood']}, replay over the {len(next(iter(summary.values()))['allow_counts'])}-trace suite "
@@ -314,6 +363,21 @@ def markdown(config: dict, summary: dict) -> str:
                   "| invented literal in an authority predicate (neither) | " + " | ".join(f"{summary[g]['invented_in_authority_predicate']}/{summary[g]['evidence_text_n']}" for g in gens) + " |",
                   "| approver-kind conjunct present | " + " | ".join(f"{summary[g]['approver_kind_present']}/{summary[g]['evidence_text_n']}" for g in gens) + " |",
                   "| authority-predicate literals by class | " + " | ".join(str(summary[g]["authority_literal_counts"]) for g in gens) + " |"]
+    if "final_bind_counts" in first:
+        lines += ["", "## BIND / TOKEN (TEXT; permits that can apply to the protected action; all samples, valid or not)", "",
+                  "| | " + " | ".join(gens) + " |", "|---|" + "---|" * len(gens),
+                  "| first shot BIND (bind → samples) | " + " | ".join(str(summary[g].get("first_shot_bind_counts", "—")) for g in gens) + " |",
+                  "| first shot TOKEN | " + " | ".join(f"{summary[g]['first_shot_token']}/{summary[g]['n']}" if "first_shot_token" in summary[g] else "—" for g in gens) + " |",
+                  "| final BIND | " + " | ".join(str(summary[g]["final_bind_counts"]) for g in gens) + " |",
+                  "| final TOKEN | " + " | ".join(f"{summary[g]['final_token']}/{summary[g]['n']}" for g in gens) + " |",
+                  "| final: permits with unresolved scope | " + " | ".join(str(summary[g]["final_unresolved_scope"]) for g in gens) + " |"]
+        if any("first_shot_shared_with_naive" in summary[g] for g in gens):
+            lines.append("| first shot shared with naive (same cache entry) | " + " | ".join(
+                f"{summary[g]['first_shot_shared_with_naive']['k']}/{summary[g]['first_shot_shared_with_naive']['n']}" if "first_shot_shared_with_naive" in summary[g] else "—" for g in gens) + " |")
+        lines += ["", "BIND: authority / vendor / both / none over the temporal predicates of permits scoped to the protected action "
+                      "(TOKEN: a vendor-stated, non-contract value in an authority predicate anywhere in the policy). The first shot is "
+                      "round 1 of the Sondera-style loop, which is the naive request; the two generators share it, so first-shot and "
+                      "final columns are two views of 20 samples, not 40."]
     lines += ["", "## Validity: first-shot vs post-repair", "", "| generator | first-shot valid | post-repair (final) valid |", "|---|---|---|"]
     for g, s in summary.items():
         lines.append(f"| {g} | {s['first_shot_valid']}/{s['n']} {s['first_shot_valid_ci95']} | {s['post_repair_valid']}/{s['n']} {s['validity_ci95']} |")
@@ -362,6 +426,8 @@ def main() -> None:
     p.add_argument("--spend-cap-usd", type=float, help="refuse any API call once fresh calls of this run have cost this much")
     p.add_argument("--generators", nargs="+", default=list(GENERATORS), choices=GENERATORS)
     p.add_argument("--no-descriptions", action="store_true", help="include_descriptions=False")
+    p.add_argument("--input-mode", default="manifests", choices=dogwood.INPUT_MODES,
+                   help="what the generator sees besides the intent: manifests (default; schema + event schema + raw manifests) or schema-only")
     p.add_argument("--judge-sees-manifests", action="store_true")
     p.add_argument("--cache-only", action="store_true", help="every LLM call must hit the cache; zero API calls")
     p.add_argument("--cache", type=Path, default=ROOT / "cache/llm")
@@ -375,9 +441,9 @@ def main() -> None:
         if args.spend_cap_usd is not None and not args.cache_only:
             provider = _Budget(provider, args.model, args.spend_cap_usd)
         llm = CachedLLM(provider, args.cache, allow_api=not args.cache_only)
-        ncfg = dogwood.NaiveDogwoodConfig(args.model, include_descriptions=not args.no_descriptions)
+        ncfg = dogwood.NaiveDogwoodConfig(args.model, include_descriptions=not args.no_descriptions, input_mode=args.input_mode)
         scfg = dogwood.SonderaDogwoodConfig(args.model, include_descriptions=not args.no_descriptions,
-                                            judge_sees_manifests=args.judge_sees_manifests)
+                                            judge_sees_manifests=args.judge_sees_manifests, input_mode=args.input_mode)
         src_inputs = load_dogwood_inputs(args.scenario, args.intent, args.arm)
         inp = snapshot(src_inputs, out / "inputs" / args.scenario.name)
         fr = frame(inp)
@@ -388,7 +454,7 @@ def main() -> None:
                           "files": {"manifests": {s: _rel(p) for s, p in zip(src_inputs.servers, src_inputs.manifest_paths)},
                                     "schema": _rel(src_inputs.schema_path), "gold": _rel(src_inputs.gold),
                                     "traces": _rel(src_inputs.traces_yaml), "requirements": _rel(src_inputs.requirements)}},
-                  "spend_cap_usd": args.spend_cap_usd,
+                  "spend_cap_usd": args.spend_cap_usd, "input_mode": args.input_mode,
                   "inputs": "inputs/<scenario>/ (snapshot; generation and scoring read only from it)",
                   "generators": {"naive": ncfg.as_dict(), "sondera": scfg.as_dict()}, "generators_run": args.generators,
                   "request": {"sampling": "not sent (API default)", "thinking": {"type": "adaptive"},
@@ -399,7 +465,9 @@ def main() -> None:
                             "traces": sorted(fr.suite.ids), "gold_allow_set": sorted(fr.gold_allowed),
                             "requirements": fr.requirements.witnesses if fr.requirements else None,
                             "vendor_only_traces": list(fr.requirements.vendor_only) if fr.requirements else None,
-                            "evidence_vocabulary": fr.requirements.vocabulary if fr.requirements else None},
+                            "evidence_vocabulary": fr.requirements.vocabulary if fr.requirements else None,
+                            "catalogue": str(inp.catalogue.relative_to(out)) if inp.catalogue else None,
+                            "protected_action": fr.protected_action},
                   "hashes": inp.hashes, "versions": _versions()}
         _dump(out / "config.json", config)
         _dump(out / inp.name / "prompt_static.json", dogwood.build_request(inp, ncfg)[1]["system"])
@@ -415,6 +483,10 @@ def main() -> None:
                       f"deficit={o.get('deficit')} replay_errors={len(o.get('replay_errors', {}))}", flush=True)
             results[gen] = rows
         summary = {g: summarize(args.model, results[g], fr) for g in results}
+        if {"naive", "sondera"} <= set(results):   # A0: the first shot is one generation per sample, shared through the cache
+            shared = sum(a["first_shot"]["key_hash"] == b["first_shot"]["key_hash"] and a["first_shot"]["policy_sha256"] == b["first_shot"]["policy_sha256"]
+                         for a, b in zip(results["naive"], results["sondera"]))
+            summary["sondera"]["first_shot_shared_with_naive"] = {"k": shared, "n": args.n}
         _dump(out / "summary.json", summary)
         (out / "summary.md").write_text(markdown(config, summary))
     spent = f"; spent ${provider.spent_usd:.4f} of cap ${provider.cap_usd:.2f}" if isinstance(provider, _Budget) else ""

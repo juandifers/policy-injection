@@ -6,6 +6,10 @@ Naive prompt = instructions + LANGUAGE_REFERENCE (ours, static) + action schema 
 event schema + raw MCP manifests (static, cached prefix) + intent + "Output only Dogwood policies." (user turn, last).
 The output is extracted, never repaired; validity is measured downstream.
 
+Input modes (Phase 2c, `input_mode`, part of the cache key through the system blocks and recorded in every config):
+`manifests` (the default above, byte-identical to Phases 2a/2b) and `schema-only` (L1-S: the manifest block is dropped
+and the instructions say so; the generated action schema is the only description of the tools the generator sees).
+
 Why a language reference: Dogwood is new and the models under test have little or no knowledge of it; AWS's own
 natural-language generator necessarily carries one. Ours is transcribed from the AWS "Authoring temporal policies" and
 "Temporal policy examples" pages and the Dogwood guide (chapters 02–04), read 2026-11-16. It is trusted, static text
@@ -129,6 +133,17 @@ permit (principal, action == AgentCore::Action::"InsuranceAPI___approve_claim", 
 ```
 """
 
+INPUT_MODES = ("manifests", "schema-only")
+INSTRUCTIONS_SCHEMA_ONLY = (
+    "You write Dogwood authorization policies for an AI agent that calls MCP tools through a gateway whose policy "
+    "engine keeps a per-session history of the tool calls it saw (AWS AgentCore Policy).\n"
+    "Below are: a reference for the Dogwood policy language; the action schema the policies must validate against "
+    "(Cedar schema syntax: use the namespace, action names and field names exactly as declared there); and the temporal "
+    "event schema (which fields each recorded event carries). The action schema is the only description of the tools: "
+    "no MCP tool manifests are included.\n"
+    "The user message is the administrator's intent."
+)
+
 JUDGE_INSTRUCTIONS = (
     "You are a policy reviewer. You compare a Dogwood authorization policy with the administrator's intent it was "
     "written from, and list every mismatch: anything the policy allows that the intent forbids, and anything the "
@@ -150,6 +165,7 @@ class NaiveDogwoodConfig:
     effort: str = "high"
     max_tokens: int = 16000
     generator: str = LABEL_NAIVE
+    input_mode: str = "manifests"
 
     def as_dict(self) -> dict:
         return asdict(self)
@@ -161,15 +177,18 @@ def _manifest_block(inputs: DogwoodInputs, include_descriptions: bool) -> str:
     return f"## MCP tool manifests\n{manifests}"
 
 
-def static_blocks(inputs: DogwoodInputs, include_descriptions: bool) -> list[dict]:
+def static_blocks(inputs: DogwoodInputs, include_descriptions: bool, input_mode: str = "manifests") -> list[dict]:
     """System blocks shared by every sample of a scenario; the last carries the cache breakpoint."""
+    if input_mode not in INPUT_MODES:
+        raise ValueError(f"input_mode must be one of {INPUT_MODES}, got {input_mode!r}")
     blocks = [
-        {"type": "text", "text": INSTRUCTIONS},
+        {"type": "text", "text": INSTRUCTIONS if input_mode == "manifests" else INSTRUCTIONS_SCHEMA_ONLY},
         {"type": "text", "text": LANGUAGE_REFERENCE},
         {"type": "text", "text": f"## Action schema\n```cedarschema\n{inputs.schema_text}```\n"},
         {"type": "text", "text": f"## Temporal event schema\n```dwschema\n{inputs.event_schema_text}```\n"},
-        {"type": "text", "text": _manifest_block(inputs, include_descriptions)},
     ]
+    if input_mode == "manifests":
+        blocks.append({"type": "text", "text": _manifest_block(inputs, include_descriptions)})
     blocks[-1]["cache_control"] = {"type": "ephemeral"}
     return blocks
 
@@ -177,7 +196,7 @@ def static_blocks(inputs: DogwoodInputs, include_descriptions: bool) -> list[dic
 def build_request(inputs: DogwoodInputs, config: NaiveDogwoodConfig) -> tuple[list[dict], dict]:
     """The exact (messages, params) sent for one sample. No sampling parameters: API default."""
     messages = [{"role": "user", "content": f"{inputs.intent.rstrip()}\n\n{FINAL_LINE}"}]
-    params = {"system": static_blocks(inputs, config.include_descriptions), "max_tokens": config.max_tokens,
+    params = {"system": static_blocks(inputs, config.include_descriptions, config.input_mode), "max_tokens": config.max_tokens,
               "thinking": {"type": "adaptive"}, "output_config": {"effort": config.effort}}
     return messages, params
 
@@ -218,12 +237,13 @@ class SonderaDogwoodConfig:
     effort: str = "high"
     max_tokens: int = 16000
     generator: str = LABEL
+    input_mode: str = "manifests"
 
     def as_dict(self) -> dict:
         return asdict(self)
 
     def naive(self) -> NaiveDogwoodConfig:
-        return NaiveDogwoodConfig(self.model, self.include_descriptions, self.effort, self.max_tokens)
+        return NaiveDogwoodConfig(self.model, self.include_descriptions, self.effort, self.max_tokens, input_mode=self.input_mode)
 
 
 @dataclass(frozen=True)
@@ -257,6 +277,8 @@ def judge_request(inputs: DogwoodInputs, policy_text: str, config: SonderaDogwoo
     system = [{"type": "text", "text": JUDGE_INSTRUCTIONS},
               {"type": "text", "text": f"{LANGUAGE_REFERENCE}\n## Temporal event schema\n```dwschema\n{inputs.event_schema_text}```\n"}]
     if config.judge_sees_manifests:
+        if config.input_mode != "manifests":
+            raise ValueError("judge_sees_manifests needs input_mode 'manifests'")
         system.append({"type": "text", "text": _manifest_block(inputs, config.include_descriptions)})
     system[-1]["cache_control"] = {"type": "ephemeral"}
     content = (f"## Administrator's intent\n{inputs.intent.rstrip()}\n\n"

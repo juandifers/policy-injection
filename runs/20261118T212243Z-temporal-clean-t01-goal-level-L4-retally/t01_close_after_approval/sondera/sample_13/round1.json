@@ -1,0 +1,75 @@
+{
+ "round": 1,
+ "extraction": "fenced",
+ "generation": {
+  "key_hash": "3b53347780f73f70925856afc540111bb14f4d96e762794257be1a80c76395ad",
+  "cache_hit": true,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011ChAupvjkzZsMvWVK4hiX9",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 90338,
+   "inference_geo": "global",
+   "input_tokens": 334,
+   "output_tokens": 1311,
+   "output_tokens_details": {
+    "thinking_tokens": 703
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "```\n@id(\"close-workorder-main-with-recent-human-approval\")\npermit (principal, action == Drupe::Action::\"close_workorder\", resource)\nwhen { context.input.site_id == \"MAIN\" }\nwhen temporal {\n  formerly within 1h Drupe::Action::\"authority_get_approval\"::response{\n    eventResource: resource,\n    input.wonum: context.input.wonum,\n    input.site_id: context.input.site_id,\n    output.decision: \"APPROVED\",\n    output.approver_kind: \"HUMAN\"\n  }\n};\n\n// The approval lookup must itself be permitted, otherwise it is never recorded as a response.\n@id(\"allow-authority-approval-lookup\")\npermit (principal, action == Drupe::Action::\"authority_get_approval\", resource);\n\n@id(\"allow-read-only-lookups\")\npermit (principal, action in [\n    Drupe::Action::\"list_workorders\",\n    Drupe::Action::\"get_workorder\",\n    Drupe::Action::\"get_workorder_tasks\",\n    Drupe::Action::\"get_workorder_costs\",\n    Drupe::Action::\"get_workorder_actuals_vs_planned\",\n    Drupe::Action::\"get_workorder_kpis\",\n    Drupe::Action::\"get_schedule_calendar\",\n    Drupe::Action::\"get_my_assigned_workorders\",\n    Drupe::Action::\"get_failure_codes\"\n  ], resource);\n\n@id(\"never-approve-workorders-by-agent\")\nforbid (principal, action == Drupe::Action::\"approve_workorder\", resource);\n```\n\nThe policies assume the authority server returns the literal values `\"APPROVED\"` for `decision` and `\"HUMAN\"` for `approver_kind`. The tool manifest does not list the possible values, so please confirm them and adjust the two literals if they differ.",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "deterministic": {
+  "passed": true,
+  "validation": {
+   "policy": "t01_close_after_approval/sondera/sample_13/round1.dw",
+   "schema": "inputs/t01_close_after_approval/schema/t01.dogwood.cedarschema",
+   "ok": true,
+   "errors": [],
+   "warnings": []
+  },
+  "failures": []
+ },
+ "judge": {
+  "key_hash": "fc42215740f7c75d125c8c8502389593673e1fb2c5e4cb68f7e91b171055eb10",
+  "cache_hit": true,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011ChAv5ChbEPmMhH2xBa4du",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 2414,
+   "inference_geo": "global",
+   "input_tokens": 865,
+   "output_tokens": 434,
+   "output_tokens_details": {
+    "thinking_tokens": 423
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "NO MISMATCHES",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "judge_passed": true,
+ "passed": true
+}

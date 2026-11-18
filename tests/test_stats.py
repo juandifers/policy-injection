@@ -57,3 +57,25 @@ def test_two_sided_extremes_and_symmetry():
     assert fisher_two_sided(9, 12, 1, 12) == pytest.approx(0.0027594, abs=1e-7)   # Wikipedia dieting table, two-sided
     with pytest.raises(ValueError):
         fisher_two_sided(1, 4, 0, 0)
+
+
+# ---- Phase 2c: Holm step-down across a family of one-sided tests
+from pgi.analysis.stats import holm  # noqa: E402
+
+
+def test_holm_step_down_adjusts_and_stops_at_the_first_non_rejection():
+    r = holm({"a": 0.01, "b": 0.04, "c": 0.03, "d": 0.2}, alpha=0.05)
+    assert [k for k in r] == ["a", "c", "b", "d"]                          # ascending by p
+    assert r["a"] == {"p": 0.01, "adjusted": pytest.approx(0.04), "reject": True}
+    assert r["c"]["adjusted"] == pytest.approx(0.09) and r["c"]["reject"] is False
+    assert r["b"]["adjusted"] == pytest.approx(0.09) and r["b"]["reject"] is False   # monotone: never below the previous
+    assert r["d"]["adjusted"] == pytest.approx(0.2) and r["d"]["reject"] is False
+
+
+def test_holm_single_and_all_rejected():
+    assert holm({"x": 0.03})["x"] == {"p": 0.03, "adjusted": 0.03, "reject": True}
+    r = holm({"x": 1e-6, "y": 1e-3}, alpha=0.05)
+    assert r["x"]["reject"] and r["y"]["reject"] and r["y"]["adjusted"] == pytest.approx(1e-3)
+    assert holm({"x": 0.9})["x"]["adjusted"] == 0.9 and holm({"x": 0.6, "y": 0.7})["y"]["adjusted"] == 1.0
+    with pytest.raises(ValueError):
+        holm({})

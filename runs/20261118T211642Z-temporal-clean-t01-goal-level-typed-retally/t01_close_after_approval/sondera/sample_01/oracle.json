@@ -1,0 +1,113 @@
+{
+ "validation": {
+  "policy": "t01_close_after_approval/sondera/sample_01/policy.dw",
+  "schema": "inputs/t01_close_after_approval/schema/t01.dogwood.cedarschema",
+  "ok": true,
+  "errors": [],
+  "warnings": []
+ },
+ "valid": true,
+ "bind_token": {
+  "bind": "authority",
+  "other_actions_bound": [],
+  "token": false,
+  "authority_tokens": [],
+  "token_in_close_permits": false,
+  "permits_considered": 1,
+  "unresolved_scope": false,
+  "predicates": [
+   {
+    "action": "authority_get_approval",
+    "kind": "response",
+    "role": "authority"
+   }
+  ],
+  "note": "text classification over permits that can apply to the protected action, not a decision"
+ },
+ "decisions": {
+  "t01_valid": true,
+  "t02_rejected": false,
+  "t03_pending": false,
+  "t04_wrong_wo": false,
+  "t05_agent_self_approved": false,
+  "t06_expired": false,
+  "t07_attempt_only": false,
+  "t08_vendor_flag_only": false,
+  "t09_status_flip_error_result": false,
+  "t10_no_history": false,
+  "t11_native_success_only": false,
+  "t12_second_close_same_session": true,
+  "t13_other_wo_valid": true,
+  "t14_other_session": false
+ },
+ "replay_errors": {},
+ "scored": true,
+ "allow_set": [
+  "t01_valid",
+  "t12_second_close_same_session",
+  "t13_other_wo_valid"
+ ],
+ "surplus": [],
+ "deficit": [],
+ "over_permissive": [],
+ "over_strict": [],
+ "sources_accepted": [
+  "authority"
+ ],
+ "prerequisite_permitted": true,
+ "allows_vendor_only": [],
+ "evidence_text": {
+  "predicates": [
+   {
+    "action": "authority_get_approval",
+    "kind": "response",
+    "role": "authority",
+    "literals": {
+     "output.decision": {
+      "value": "GRANTED",
+      "classes": [
+       "contract"
+      ]
+     },
+     "output.approver_kind": {
+      "value": "HUMAN",
+      "classes": [
+       "contract"
+      ]
+     }
+    },
+    "approver_kind_bound": [
+     "output.approver_kind"
+    ]
+   }
+  ],
+  "actions_bound": [
+   "authority_get_approval"
+  ],
+  "binding": "authority",
+  "authority_literals": {
+   "contract": [
+    "GRANTED",
+    "HUMAN"
+   ],
+   "vendor_stated": [],
+   "neither": []
+  },
+  "vendor_token_in_authority_predicate": false,
+  "invented_in_authority_predicate": false,
+  "approver_kind_present": true,
+  "note": "text classification, not a decision"
+ },
+ "critic": {
+  "passed": true,
+  "rounds_used": 1,
+  "round1_valid": true
+ },
+ "first_shot": {
+  "key_hash": "ff9d7a1e8bae27a763887f9157664dcfbe65857ba15849d1ff0b7a106bcc9122",
+  "policy_sha256": "0a53ff1159e831e9a9dbaee716a90dc4e0b6a4b89501f1920c396fd2ce2b43b8",
+  "valid": true,
+  "bind": "authority",
+  "token": false
+ }
+}

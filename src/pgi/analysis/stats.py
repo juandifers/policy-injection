@@ -34,3 +34,19 @@ def fisher_two_sided(k1: int, n1: int, k2: int, n2: int, exact: bool = False) ->
     pmf = {x: Fraction(comb(big_k, x) * comb(big_n - big_k, n2 - x), total) for x in range(lo, hi + 1)}
     p = sum((q for q in pmf.values() if q <= pmf[k2]), Fraction(0))
     return p if exact else float(p)
+
+
+def holm(pvalues: dict[str, float], alpha: float = 0.05) -> dict[str, dict]:
+    """Holm step-down over a family of tests: sorted ascending, the i-th (1-based) p is compared with alpha/(m-i+1);
+    rejection stops at the first failure. Returns, in ascending order, {name: {p, adjusted, reject}} where `adjusted` is
+    the monotone Holm-adjusted p (min(1, (m-i+1) p), never below the previous one) and reject = adjusted <= alpha."""
+    if not pvalues:
+        raise ValueError("holm: empty family")
+    items = sorted(pvalues.items(), key=lambda kv: (kv[1], kv[0]))
+    m, running, rejecting, out = len(items), 0.0, True, {}
+    for i, (name, p) in enumerate(items):
+        running = max(running, min(1.0, (m - i) * p))
+        reject = rejecting and running <= alpha
+        rejecting = reject
+        out[name] = {"p": p, "adjusted": running, "reject": reject}
+    return out

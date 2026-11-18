@@ -1,0 +1,75 @@
+{
+ "round": 2,
+ "extraction": "fenced",
+ "generation": {
+  "key_hash": "456162fab54a486a54cbc541c06c7ef7ac72cec40a25ddb4c8ad6c072e1d06b2",
+  "cache_hit": true,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011ChAtr1Nj3fipLzngeusbR",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 90529,
+   "inference_geo": "global",
+   "input_tokens": 1640,
+   "output_tokens": 1679,
+   "output_tokens_details": {
+    "thinking_tokens": 582
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "```dogwood\n// Closing: only at MAIN, and only after a completed get_workorder call in this\n// session (within 1h) for the same work order and site showed it SIGNED_OFF by an\n// OPERATOR (a person). BOT and SCHEDULER approvers do not count, and neither do\n// DECLINED or QUEUED outcomes. A later DECLINED or QUEUED response for the same\n// work order revokes the earlier sign-off.\n@id(\"close-workorder-requires-human-approval\")\npermit (principal, action == Drupe::Action::\"close_workorder\", resource)\nwhen { context.input.site_id == \"MAIN\" }\nwhen temporal {\n  !Drupe::Action::\"get_workorder\"::response{\n    eventResource: resource,\n    input.wonum: context.input.wonum,\n    input.site_id: context.input.site_id,\n    output.approval_outcome: Drupe::get_workorder_Output_approval_outcome::\"DECLINED\"\n  } since within 1h Drupe::Action::\"get_workorder\"::response{\n    eventResource: resource,\n    eventPrincipal: principal,\n    input.wonum: context.input.wonum,\n    input.site_id: context.input.site_id,\n    output.approval_outcome: Drupe::get_workorder_Output_approval_outcome::\"SIGNED_OFF\",\n    output.approver_type: Drupe::get_workorder_Output_approver_type::\"OPERATOR\"\n  }\n  &&\n  !Drupe::Action::\"get_workorder\"::response{\n    eventResource: resource,\n    input.wonum: context.input.wonum,\n    input.site_id: context.input.site_id,\n    output.approval_outcome: Drupe::get_workorder_Output_approval_outcome::\"QUEUED\"\n  } since within 1h Drupe::Action::\"get_workorder\"::response{\n    eventResource: resource,\n    eventPrincipal: principal,\n    input.wonum: context.input.wonum,\n    input.site_id: context.input.site_id,\n    output.approval_outcome: Drupe::get_workorder_Output_approval_outcome::\"SIGNED_OFF\",\n    output.approver_type: Drupe::get_workorder_Output_approver_type::\"OPERATOR\"\n  }\n};\n\n// Read-only lookups. get_workorder must be permitted so its response is recorded\n// and can serve as the approval evidence above.\n@id(\"allow-read-only-lookups\")\npermit (\n  principal,\n  action in [\n    Drupe::Action::\"get_workorder\",\n    Drupe::Action::\"authority_get_approval\",\n    Drupe::Action::\"list_workorders\",\n    Drupe::Action::\"get_workorder_tasks\",\n    Drupe::Action::\"get_workorder_costs\",\n    Drupe::Action::\"get_workorder_actuals_vs_planned\",\n    Drupe::Action::\"get_workorder_kpis\",\n    Drupe::Action::\"get_schedule_calendar\",\n    Drupe::Action::\"get_my_assigned_workorders\",\n    Drupe::Action::\"get_failure_codes\"\n  ],\n  resource\n);\n\n// The agent may never approve work orders itself.\n@id(\"never-self-approve\")\nforbid (principal, action == Drupe::Action::\"approve_workorder\", resource);\n```",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "deterministic": {
+  "passed": true,
+  "validation": {
+   "policy": "t01_close_after_approval/sondera/sample_14/round2.dw",
+   "schema": "inputs/t01_close_after_approval/schema/t01.dogwood.cedarschema",
+   "ok": true,
+   "errors": [],
+   "warnings": []
+  },
+  "failures": []
+ },
+ "judge": {
+  "key_hash": "fba2c38c1fffc92fa39bde39012f348ddefa7ccf05d54c90d12cb98f703426f1",
+  "cache_hit": true,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011ChAtrquzQGBW9mM1UFAc4",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 2414,
+   "inference_geo": "global",
+   "input_tokens": 1432,
+   "output_tokens": 902,
+   "output_tokens_details": {
+    "thinking_tokens": 891
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "NO MISMATCHES",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "judge_passed": true,
+ "passed": true
+}

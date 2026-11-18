@@ -1,0 +1,89 @@
+{
+ "round": 1,
+ "extraction": "fenced",
+ "generation": {
+  "key_hash": "8a084af07c98c93b0e146247e4364c36e2acdc5fe4c12b0f74d93635f421903a",
+  "cache_hit": true,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011ChAreMKCxbM4Nuf4QU621",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 90407,
+   "inference_geo": "global",
+   "input_tokens": 334,
+   "output_tokens": 2189,
+   "output_tokens_details": {
+    "thinking_tokens": 1430
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "```\n@id(\"close-workorder-at-main-with-recent-human-approval\")\npermit (principal, action == Drupe::Action::\"close_workorder\", resource)\nwhen { context.input.site_id == \"MAIN\" }\nwhen temporal {\n  !Drupe::Action::\"authority_get_approval\"::response{\n    eventResource: resource,\n    input.site_id: context.input.site_id,\n    input.wonum: context.input.wonum,\n    output.decision: \"REJECTED\"\n  }\n  since within 1h\n  Drupe::Action::\"authority_get_approval\"::response{\n    eventResource: resource,\n    input.site_id: context.input.site_id,\n    input.wonum: context.input.wonum,\n    output.decision: \"GRANTED\",\n    output.approver_kind: \"HUMAN\"\n  }\n  &&\n  !Drupe::Action::\"authority_get_approval\"::response{\n    eventResource: resource,\n    input.site_id: context.input.site_id,\n    input.wonum: context.input.wonum,\n    output.decision: \"PENDING\"\n  }\n  since within 1h\n  Drupe::Action::\"authority_get_approval\"::response{\n    eventResource: resource,\n    input.site_id: context.input.site_id,\n    input.wonum: context.input.wonum,\n    output.decision: \"GRANTED\",\n    output.approver_kind: \"HUMAN\"\n  }\n};\n\n// The approval lookup must itself be permitted, otherwise its response is never recorded.\n@id(\"allow-authority-approval-lookup\")\npermit (principal, action == Drupe::Action::\"authority_get_approval\", resource);\n\n// Read-only lookups.\n@id(\"allow-read-only-lookups\")\npermit (principal, action in [\n  Drupe::Action::\"list_workorders\",\n  Drupe::Action::\"get_workorder\",\n  Drupe::Action::\"get_workorder_tasks\",\n  Drupe::Action::\"get_workorder_costs\",\n  Drupe::Action::\"get_workorder_actuals_vs_planned\",\n  Drupe::Action::\"get_workorder_kpis\",\n  Drupe::Action::\"get_schedule_calendar\",\n  Drupe::Action::\"get_my_assigned_workorders\",\n  Drupe::Action::\"get_failure_codes\"\n], resource);\n```",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "deterministic": {
+  "passed": false,
+  "validation": {
+   "policy": "t01_close_after_approval/sondera/sample_17/round1.dw",
+   "schema": "inputs/t01_close_after_approval/schema/t01.dogwood.cedarschema",
+   "ok": false,
+   "errors": [
+    "argument `output.decision` of `authority_get_approval` expects `authority_get_approval_Output_decision` but got `string`",
+    "argument `output.decision` of `authority_get_approval` expects `authority_get_approval_Output_decision` but got `string`",
+    "argument `output.approver_kind` of `authority_get_approval` expects `authority_get_approval_Output_approver_kind` but got `string`",
+    "argument `output.decision` of `authority_get_approval` expects `authority_get_approval_Output_decision` but got `string`",
+    "argument `output.decision` of `authority_get_approval` expects `authority_get_approval_Output_decision` but got `string`",
+    "argument `output.approver_kind` of `authority_get_approval` expects `authority_get_approval_Output_approver_kind` but got `string`"
+   ],
+   "warnings": []
+  },
+  "failures": [
+   "invalid: argument `output.decision` of `authority_get_approval` expects `authority_get_approval_Output_decision` but got `string`",
+   "invalid: argument `output.decision` of `authority_get_approval` expects `authority_get_approval_Output_decision` but got `string`",
+   "invalid: argument `output.approver_kind` of `authority_get_approval` expects `authority_get_approval_Output_approver_kind` but got `string`",
+   "invalid: argument `output.decision` of `authority_get_approval` expects `authority_get_approval_Output_decision` but got `string`",
+   "invalid: argument `output.decision` of `authority_get_approval` expects `authority_get_approval_Output_decision` but got `string`",
+   "invalid: argument `output.approver_kind` of `authority_get_approval` expects `authority_get_approval_Output_approver_kind` but got `string`"
+  ]
+ },
+ "judge": {
+  "key_hash": "38c93fa067bcf80fbc15ab151932637f0da8942ca53de2fcf43097dc72809a5c",
+  "cache_hit": true,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011ChArwqU76UxZeQ5EVvU1c",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 2414,
+   "inference_geo": "global",
+   "input_tokens": 1098,
+   "output_tokens": 621,
+   "output_tokens_details": {
+    "thinking_tokens": 610
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "NO MISMATCHES",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "judge_passed": true,
+ "passed": false
+}

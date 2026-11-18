@@ -325,3 +325,69 @@ def test_requirements_rejects_vendor_only_trace_that_the_contract_allows(tmp_pat
     bad.write_text("base: t01_valid\nrequirements:\n  x: {requirement: 1, witnesses: [t02_rejected]}\nvendor_only_traces: [t01_valid]\n")
     with pytest.raises(ValueError, match="vendor_only_traces"):
         load_requirements(bad, suite)
+
+
+# ---- Phase 2c: scenario catalogue (trusted, beside the contract) and the schema-only input mode (L1-S)
+import json  # noqa: E402
+
+from pgi.generators.dogwood import regeneration_request  # noqa: E402
+from pgi.generators.inputs import sha256  # noqa: E402
+from pgi.llm.cache import cache_key, key_hash  # noqa: E402
+
+RUNS = Path(__file__).resolve().parents[1] / "runs"
+
+
+def test_scenario_catalogue_is_loaded_hashed_inherited_by_arms_and_snapshotted(tmp_path):
+    inp = load_dogwood_inputs(T01)
+    assert inp.catalogue == T01 / "admission.catalogue.yaml" and inp.hashes["catalogue"] == sha256(inp.catalogue)
+    for arm in ("v2", "typed", "L2", "L7", "L5", "L6"):
+        assert load_dogwood_inputs(T01, intent="goal-level", arm=arm).catalogue == inp.catalogue
+    snap = snapshot(inp, tmp_path / "s")
+    assert snap.catalogue == tmp_path / "s" / "catalogue.yaml" and snap.hashes == inp.hashes
+    assert load_snapshot(tmp_path / "s").catalogue == tmp_path / "s" / "catalogue.yaml"
+
+
+def _descriptions(node) -> list[str]:
+    out = []
+    if isinstance(node, dict):
+        for k, v in node.items():
+            if k == "description" and isinstance(v, str):
+                out.append(v)
+            out += _descriptions(v)
+    elif isinstance(node, list):
+        for v in node:
+            out += _descriptions(v)
+    return out
+
+
+def test_schema_only_input_mode_renders_no_manifest_text_and_no_raw_json():
+    inp = load_dogwood_inputs(T01, intent="goal-level", arm="L1")
+    cfg = NaiveDogwoodConfig("m", input_mode="schema-only")
+    messages, params = build_request(inp, cfg)
+    static = "".join(b["text"] for b in params["system"])
+    assert "## MCP tool manifests" not in static and "```json" not in static and '"inputSchema"' not in static and '"tools"' not in static
+    for p in inp.manifest_paths:
+        for d in _descriptions(json.loads(p.read_text())):
+            if len(d) >= 12:
+                assert d not in static, d[:60]
+    assert inp.schema_text in static and inp.event_schema_text in static and LANGUAGE_REFERENCE in static
+    assert "approval_outcome" in static                     # the vendor's declared fields reach the generator only through the schema
+    assert params["system"][-1]["cache_control"] == {"type": "ephemeral"} and all("cache_control" not in b for b in params["system"][:-1])
+    assert messages == build_request(inp, NaiveDogwoodConfig("m"))[0]
+    assert cfg.as_dict()["input_mode"] == "schema-only" and NaiveDogwoodConfig("m").as_dict()["input_mode"] == "manifests"
+    scfg = SonderaDogwoodConfig("m", input_mode="schema-only")
+    assert scfg.naive().input_mode == "schema-only" and scfg.as_dict()["input_mode"] == "schema-only"
+    det = deterministic_critique(T01 / "gold.dw", inp.schema_path, inp.event_schema_path)
+    _, rp = regeneration_request(inp, scfg, GOLD, det, "- something")
+    assert "## MCP tool manifests" not in "".join(b["text"] for b in rp["system"])
+    with pytest.raises(ValueError, match="input_mode"):
+        build_request(inp, NaiveDogwoodConfig("m", input_mode="bogus"))
+
+
+def test_default_input_mode_request_is_byte_identical_to_the_phase_2b_prompt_and_cache_key():
+    run = RUNS / "20261118T182621Z-temporal-clean-t01-goal-level-L1"
+    inp = load_dogwood_inputs(T01, intent="goal-level", arm="L1")
+    messages, params = build_request(inp, NaiveDogwoodConfig("claude-sonnet-5-5"))
+    assert params["system"] == json.loads((run / "t01_close_after_approval" / "prompt_static.json").read_text())
+    recorded = json.loads((run / "t01_close_after_approval" / "naive" / "sample_00" / "response.json").read_text())["key_hash"]
+    assert key_hash(cache_key("claude-sonnet-5-5", messages, None, 0, params)) == recorded

@@ -1,0 +1,30 @@
+{
+ "key_hash": "4caf9dbd6f2cfdc079338353f96f21ec733f622da26e24abeda57e214e6d5b72",
+ "cache_hit": true,
+ "model_version": "claude-sonnet-5-5",
+ "request_id": "req_011ChAqx1cRu1bFMJV4TCuZF",
+ "stop_reason": "end_turn",
+ "stop_details": null,
+ "usage": {
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 0,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "cache_creation_input_tokens": 0,
+  "cache_read_input_tokens": 90231,
+  "inference_geo": "global",
+  "input_tokens": 334,
+  "output_tokens": 1542,
+  "output_tokens_details": {
+   "thinking_tokens": 853
+  },
+  "service_tier": "standard",
+  "speed": "standard"
+ },
+ "text": "```\n// Read-only lookups, including the authority check that confirms an approval.\n// The approval lookup must be permitted so its response is recorded.\n@id(\"allow-read-only-lookups\")\npermit (\n  principal,\n  action in [\n    Drupe::Action::\"authority_get_approval\",\n    Drupe::Action::\"get_workorder\",\n    Drupe::Action::\"list_workorders\",\n    Drupe::Action::\"get_workorder_tasks\",\n    Drupe::Action::\"get_workorder_costs\",\n    Drupe::Action::\"get_workorder_actuals_vs_planned\",\n    Drupe::Action::\"get_workorder_kpis\",\n    Drupe::Action::\"get_schedule_calendar\",\n    Drupe::Action::\"get_my_assigned_workorders\",\n    Drupe::Action::\"get_failure_codes\"\n  ],\n  resource\n);\n\n// Close only at MAIN, and only after a completed authority lookup in the last hour.\n// The lookup must be for the same wonum and site_id, and must show decision APPROVED\n// by an approver whose kind is human. The literals \"APPROVED\" and \"human\" are\n// assumed from the tool description; adjust them if the authority server uses\n// different values.\n// Only ::response events count, so denied or failed lookups confirm nothing.\n// Agent-side approve_workorder and get_workorder status are never used as evidence.\n@id(\"close-workorder-main-with-human-approval\")\npermit (\n  principal,\n  action == Drupe::Action::\"close_workorder\",\n  resource\n)\nwhen { context.input.site_id == \"MAIN\" }\nwhen temporal {\n  formerly within 1h Drupe::Action::\"authority_get_approval\"::response{\n    eventResource: resource,\n    input.wonum: context.input.wonum,\n    input.site_id: context.input.site_id,\n    output.decision: \"APPROVED\",\n    output.approver_kind: \"human\"\n  }\n};\n\n// approve_workorder, cancel_workorder, update_workorder, assign_technician and\n// generate_work_order have no permit, so they are denied by default.\n```",
+ "content_types": [
+  "thinking",
+  "text"
+ ],
+ "extraction": "fenced"
+}

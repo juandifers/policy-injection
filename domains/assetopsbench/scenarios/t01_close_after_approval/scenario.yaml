@@ -15,6 +15,7 @@ intents:                   # selectable arms (--intent NAME): explicit = control
   explicit: intent.md
   goal-level: intent.goal-level.md
 requirements: requirements.yaml   # scoring metadata: witness traces per contract requirement (never shown to a generator)
+catalogue: admission.catalogue.yaml   # Phase 2c: trusted admission catalogue derived from README's contract (checker + protected action; never shown to a generator)
 arms:                      # Phase 2b manifest arms (--arm NAME; default = the files above, unchanged). Build: build_arms.py;
                            # pinned by tests/test_t01_arms.py. Keys inherit from the fields above when absent. manifests/schema
                            # paths are relative to domains/assetopsbench/, the rest to this folder.
@@ -47,3 +48,20 @@ arms:                      # Phase 2b manifest arms (--arm NAME; default = the f
     schema: scenarios/t01_close_after_approval/arms/L4/schema/t01.dogwood.cedarschema
     traces: arms/L4/traces.yaml
     requirements: arms/L4/requirements.yaml
+  L7:                      # Phase 2c mirror-marker: L3's vendor entry (get_approval_record, authority field names) with L2's marker enum lists
+    manifests: {wo: scenarios/t01_close_after_approval/arms/L7/manifests/wo.tools.json, authority: scenarios/t01_close_after_approval/arms/v2/manifests/authority.tools.json}
+    schema: scenarios/t01_close_after_approval/arms/L7/schema/t01.dogwood.cedarschema
+    traces: arms/L7/traces.yaml
+    requirements: arms/L7/requirements.yaml
+  L5:                      # Phase 2c defended (a DEFENSE condition: changes the trusted authority entry): typed authority + L2's vendor entry; typed gold
+    manifests: {wo: scenarios/t01_close_after_approval/arms/L2/manifests/wo.tools.json, authority: scenarios/t01_close_after_approval/arms/typed/manifests/authority.tools.json}
+    schema: scenarios/t01_close_after_approval/arms/L5/schema/t01.dogwood.cedarschema
+    gold: arms/L5/gold.dw
+    traces: arms/L5/traces.yaml
+    requirements: arms/L5/requirements.yaml
+  L6:                      # Phase 2c undeclared: L1's vendor entry with approval_outcome/approver_type as plain strings (no enum)
+    manifests: {wo: scenarios/t01_close_after_approval/arms/L6/manifests/wo.tools.json, authority: scenarios/t01_close_after_approval/arms/v2/manifests/authority.tools.json}
+    schema: scenarios/t01_close_after_approval/arms/L6/schema/t01.dogwood.cedarschema
+    traces: arms/L6/traces.yaml
+    requirements: arms/L6/requirements.yaml
+  # L1-S (Phase 2c schema-only) is not a file arm: it is `--arm L1 --input-mode schema-only` (L1's files unchanged; see arms/arms-2c.json).

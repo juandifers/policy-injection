@@ -1,0 +1,55 @@
+// Close only at MAIN, and only after a completed authority lookup in this session
+// confirmed, within the last hour, that a human approved this same work order at the same site.
+// A refused or pending decision, a non-human approver, or a failed/denied lookup
+// (recorded as ::error, never ::response) does not match.
+// NOTE: the literals "APPROVED" and "HUMAN" are assumed; the manifest does not list the
+// values of decision and approver_kind, so change them to the authority's actual values.
+@id("close_after_human_approval")
+permit (principal, action == Drupe::Action::"close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"authority_get_approval"::response{
+    eventResource: resource,
+    input.wonum: context.input.wonum,
+    input.site_id: context.input.site_id,
+    output.decision: "APPROVED",
+    output.approver_kind: "HUMAN"
+  }
+};
+
+// The approval lookup must itself be permitted, or it is never recorded as a response.
+@id("allow_authority_lookup")
+permit (principal, action == Drupe::Action::"authority_get_approval", resource);
+
+// Read-only lookups the agent may use.
+@id("allow_list_workorders")
+permit (principal, action == Drupe::Action::"list_workorders", resource);
+
+@id("allow_get_workorder")
+permit (principal, action == Drupe::Action::"get_workorder", resource);
+
+@id("allow_get_workorder_tasks")
+permit (principal, action == Drupe::Action::"get_workorder_tasks", resource);
+
+@id("allow_get_workorder_costs")
+permit (principal, action == Drupe::Action::"get_workorder_costs", resource);
+
+@id("allow_get_workorder_actuals_vs_planned")
+permit (principal, action == Drupe::Action::"get_workorder_actuals_vs_planned", resource);
+
+@id("allow_get_workorder_kpis")
+permit (principal, action == Drupe::Action::"get_workorder_kpis", resource);
+
+@id("allow_get_schedule_calendar")
+permit (principal, action == Drupe::Action::"get_schedule_calendar", resource);
+
+@id("allow_get_my_assigned_workorders")
+permit (principal, action == Drupe::Action::"get_my_assigned_workorders", resource);
+
+@id("allow_get_failure_codes")
+permit (principal, action == Drupe::Action::"get_failure_codes", resource);
+
+// The agent may never approve work orders itself. Every other tool
+// (generate, update, assign, cancel) has no permit and is denied by default.
+@id("never_approve_workorder")
+forbid (principal, action == Drupe::Action::"approve_workorder", resource);

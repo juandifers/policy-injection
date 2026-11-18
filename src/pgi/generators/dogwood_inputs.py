@@ -2,15 +2,17 @@
 
 scenario.yaml (track: dogwood) names, relative to <domain>: `schema` (action schema), `event_schema`, and `manifests`
 (server -> file); relative to the scenario folder: `intent`, `gold`, `traces` (traces.yaml) and optionally
-`requirements` (witness traces per contract requirement, scoring only). The gold policy, the suite and the
-requirements are hashed for the run record and are never given to a generator.
+`requirements` (witness traces per contract requirement, scoring only) and `catalogue` (Phase 2c: the trusted admission
+catalogue beside the written contract, read by pgi.analysis.admission and by the BIND/TOKEN tally for the protected
+action). The gold policy, the suite, the requirements and the catalogue are hashed for the run record and are never
+given to a generator.
 
 Selectable arms (Phase 2a-bis, 2b): `intents` (name -> intent file, `--intent`) and `arms` (name -> overrides of
 `manifests` (per server), `schema`, `gold`, `traces`, `requirements`; `--arm`). An arm inherits every key it does not
 override. The base inputs are the files named at the top level; "base" is the arm name when none is selected.
 
 Snapshot layout, runs/<id>/inputs/<scenario>/:
-    inputs.json  scenario.yaml  intent.md  gold.dw  traces.yaml  traces/<file>  requirements.yaml?
+    inputs.json  scenario.yaml  intent.md  gold.dw  traces.yaml  traces/<file>  requirements.yaml?  catalogue.yaml?
     schema/<file>  event_schema/<file>  manifests/<server>.tools.json
 `load_snapshot` re-hashes every file and raises SnapshotError on any mismatch.
 """
@@ -52,6 +54,7 @@ class DogwoodInputs:
     requirements: Path | None
     hashes: dict[str, str]
     arm_name: str = "base"    # which manifest arm (key of scenario.yaml `arms`), "base" for the top-level files
+    catalogue: Path | None = None   # trusted admission catalogue (scenario.yaml `catalogue`), scoring/analysis only
 
 
 @dataclass(frozen=True)
@@ -85,7 +88,7 @@ def _hash_all(files: dict[str, Path]) -> dict[str, str]:
 
 
 def _files(folder: Path, schema: Path, event_schema: Path, servers: list[str], manifests: list[Path], intent: Path,
-           gold: Path, traces_yaml: Path, requirements: Path | None) -> dict[str, Path]:
+           gold: Path, traces_yaml: Path, requirements: Path | None, catalogue: Path | None = None) -> dict[str, Path]:
     """Hash key -> file, including every trace of the suite."""
     suite = load_suite(traces_yaml)
     files = {"scenario_yaml": folder / "scenario.yaml", "intent": intent, "gold": gold, "traces_yaml": traces_yaml,
@@ -94,6 +97,8 @@ def _files(folder: Path, schema: Path, event_schema: Path, servers: list[str], m
              **{f"trace:{tid}": p for tid, p in suite.traces.items()}}
     if requirements is not None:
         files["requirements"] = requirements
+    if catalogue is not None:
+        files["catalogue"] = catalogue
     return files
 
 
@@ -116,7 +121,7 @@ def load_dogwood_inputs(folder: Path, intent: str | None = None, arm: str | None
         spec, arm_name = dict(manifest_arms[arm] or {}), arm
     else:
         raise ValueError(f"{folder}: no manifest arm {arm!r} in scenario.yaml `arms` {sorted(manifest_arms)}")
-    if unknown := set(spec) - {"manifests", "schema", "gold", "traces", "requirements"}:
+    if unknown := set(spec) - {"manifests", "schema", "gold", "traces", "requirements", "catalogue"}:
         raise ValueError(f"{folder}: arm {arm!r} overrides unknown keys {sorted(unknown)}")
     servers = list(meta["servers"])
     arm_manifests = dict(spec.get("manifests") or {})
@@ -136,10 +141,12 @@ def load_dogwood_inputs(folder: Path, intent: str | None = None, arm: str | None
     gold, traces = folder / spec.get("gold", meta["gold"]), folder / spec.get("traces", meta["traces"])
     reqs_file = spec.get("requirements", meta.get("requirements"))
     reqs = folder / reqs_file if reqs_file else None
-    files = _files(folder, schema, events, servers, manifests, intent_path, gold, traces, reqs)
+    cat_file = spec.get("catalogue", meta.get("catalogue"))
+    catalogue = folder / cat_file if cat_file else None
+    files = _files(folder, schema, events, servers, manifests, intent_path, gold, traces, reqs, catalogue)
     return DogwoodInputs(folder.name, folder, schema, schema.read_text(), events, events.read_text(), tuple(servers),
                          tuple(manifests), intent_name, intent_path, intent_path.read_text(), gold, traces, reqs, _hash_all(files),
-                         arm_name)
+                         arm_name, catalogue)
 
 
 def load_requirements(path: Path, suite: TraceSuite) -> Requirements:
@@ -191,6 +198,8 @@ def _layout(inputs: DogwoodInputs) -> dict[str, str]:
            **{f"trace:{tid}": str(p.relative_to(inputs.traces_yaml.parent)) for tid, p in suite.traces.items()}}
     if inputs.requirements is not None:
         lay["requirements"] = "requirements.yaml"
+    if inputs.catalogue is not None:
+        lay["catalogue"] = "catalogue.yaml"
     return lay
 
 
@@ -200,7 +209,8 @@ def snapshot(inputs: DogwoodInputs, dest: Path) -> DogwoodInputs:
     dest.mkdir(parents=True, exist_ok=False)
     suite = load_suite(inputs.traces_yaml)
     sources = _files(inputs.folder, inputs.schema_path, inputs.event_schema_path, list(inputs.servers),
-                     list(inputs.manifest_paths), inputs.intent_path, inputs.gold, inputs.traces_yaml, inputs.requirements)
+                     list(inputs.manifest_paths), inputs.intent_path, inputs.gold, inputs.traces_yaml, inputs.requirements,
+                     inputs.catalogue)
     layout = _layout(inputs)
     if set(sources) != set(inputs.hashes) or set(layout) != set(inputs.hashes):
         raise SnapshotError(f"hash keys {sorted(inputs.hashes)} != files {sorted(sources)} / layout {sorted(layout)}")
@@ -238,8 +248,9 @@ def load_snapshot(folder: Path) -> DogwoodInputs:
     servers = list(index["servers"])
     schema, events = folder / layout["schema"], folder / layout["event_schema"]
     reqs = folder / layout["requirements"] if "requirements" in layout else None
+    cat = folder / layout["catalogue"] if "catalogue" in layout else None
     intent = folder / layout["intent"]
     return DogwoodInputs(index["name"], folder, schema, schema.read_text(), events, events.read_text(), tuple(servers),
                          tuple(folder / layout[f"manifest:{s}"] for s in servers), index.get("intent_name", "intent.md"),
                          intent, intent.read_text(),
-                         folder / layout["gold"], folder / layout["traces_yaml"], reqs, hashes, index.get("arm_name", "base"))
+                         folder / layout["gold"], folder / layout["traces_yaml"], reqs, hashes, index.get("arm_name", "base"), cat)

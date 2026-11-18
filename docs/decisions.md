@@ -884,3 +884,67 @@ Phase 2a-bis hashes (asserted in `tests/test_t01_arms.py`); run folders untouche
   allow-set, so the primary count is 3 policies of 20, which is below the pre-registered threshold even though 3/3 scored
   policies allow t15. Reported as such; the rule counts policies.
 - **Not done, by instruction:** no interpretation beyond the signal rule, no proposal to change the arms, no AWS calls, no push.
+
+## 2026-11-18: Phase 2c, Part A: vendor-vocabulary placement, prepared and pre-registered (zero API calls)
+
+Pre-registration: `docs/prereg-2026-11-18-vendor-vocabulary-placement.md` (frame, A0 unit, tally, arms, suites, mutants,
+checker, predictions, contrasts). Additive: every Phase 2b arm file and `arms/arms.json` keep their bytes (pinned by
+`tests/test_t01_arms_2c.py`, hash `77376b13…`); base files, 2b run folders untouched. Tests first on the measurement and
+checker paths (`tests/test_admission.py`, `tests/test_t01_arms_2c.py`, additions to `test_dogwood_text.py`,
+`test_dogwood_generator.py`, `test_temporal_clean.py`, `test_stats.py`). Full suite 604 passed, 9 skipped.
+
+- **A0, confirmed:** in all six 2b runs, naive sample i and Sondera-style round 1 of sample i have the same cache key hash
+  and the same text (120/120). The unit of Phase 2c is 20 samples per arm: "first shot" (naive = round 1) and "after the
+  critic loop" (Sondera-style final). Both generators are still run (round 1 is a cache hit); the run records
+  `first_shot_shared_with_naive` and the test `test_default_input_mode_request_is_byte_identical_to_the_phase_2b_prompt_and_cache_key`
+  pins the request bytes and the cache key hash against the committed L1 run.
+- **A1, tally** (`pgi.analysis.dogwood_text`): `statements()` splits a policy into permit/forbid statements with their
+  action scope (`==`, list, group, unconstrained), Cedar clauses and temporal blocks; `action_groups()` reads the schema's
+  `action "x" in [Action::"G"]` declarations (t01: every action is in CallTool ⊂ Mcp); `close_binding_report()` gives
+  BIND (roles of the temporal predicates in permits that can apply to the protected action) and TOKEN (vendor-stated,
+  non-contract value in an authority predicate, policy-wide). Differences from 2b's `vocabulary_report`: scoped to the
+  protected action's permits, computed on invalid text too (so first-shot counts include invalid samples), forbids excluded
+  from BIND. The protected action comes from the trusted catalogue, named by `scenario.yaml` `catalogue` (new optional key,
+  hashed as `catalogue`, snapshotted as `catalogue.yaml`; arms inherit it). Per sample: `first_shot` {key_hash,
+  policy_sha256, valid, bind, token} and `oracle.bind_token`; summary: `first_shot_bind_counts`, `first_shot_token`,
+  `final_bind_counts`, `final_token`, `final_unresolved_scope`.
+- **A1, re-tally from cache (zero API)** into new folders, `--cache-only`: v2 `runs/20261118T211506Z-…-v2-retally`,
+  typed `…211642Z-…-typed-retally`, L1 `…211800Z-…-L1-retally`, L2 `…211945Z-…-L2-retally`, L3 `…212054Z-…-L3-retally`,
+  L4 `…212243Z-…-L4-retally`; each 0 API calls, `first_shot_shared_with_naive` 20/20. First-shot BIND: L0 authority 20;
+  typed authority 20; L1 vendor 17 / authority 3; L2 vendor 20; L3 authority 20; L4 authority 20; TOKEN 0/20 everywhere.
+  Check against 2b behaviour (test): on every valid scored final policy, BIND = vendor ⇒ allows a vendor-only trace, and
+  allowing one ⇒ BIND ∈ {vendor, both}. L1's first-shot vendor count is 17, not 2b's 15, because two vendor-bound first
+  shots are invalid (plain-string literals) and 2b tallied valid samples only. No disagreement; Part B may proceed.
+- **A2, arms** (`build_arms.py` `_build_2c`, record `arms/arms-2c.json`): L7 = L3's vendor entry with the marker enum
+  lists; L5 = typed authority file + L2's vendor file (scenario.yaml names the existing files, no copies; gold = typed gold
+  copy; recorded `condition: defense`); L6 = L1's entry with the two fields as `{title, type: string}` (enum removed,
+  title kept as the vendor's generator writes fields); L1-S has no files: it is `--arm L1 --input-mode schema-only`.
+  **Input mode**: `NaiveDogwoodConfig.input_mode` / `SonderaDogwoodConfig.input_mode` ∈ {manifests, schema-only}, CLI
+  `--input-mode`, recorded in `config.json` (`input_mode` and per generator). Schema-only drops the manifest block and uses
+  an instructions block that says the action schema is the only description of the tools; the cache key changes through
+  the system blocks. Default mode renders byte-identical blocks (test). The judge never saw manifests in 2b
+  (`judge_sees_manifests=False`); combining it with schema-only is refused.
+- **A3, suites**: L7 = L3's suite with marker runtime outputs; L5 = typed suite + L2's t15 and L2's t16/t17 with the
+  authority events rewritten in the typed encoding (the 2b fact: a plain-string trace value never matches an entity-typed
+  predicate); L6 = L1's suite with plain-string vendor outputs. Gold = contract on all 17 traces of each arm (test).
+- **A4, mutants**: vendor_binding in all three, killed by t01, t12, t13, t15, t16, t17; borrowed_literal in L7 (killed by
+  t01, t12, t13, t17) and L5. **Judgment call:** L5's borrowed-literal mutant (marker ids on the typed authority predicate)
+  cannot validate under the typed schema ("not one of its permitted ids"), so it has no allow-set and is recorded as
+  `killed_by_validation` with the error, not as killed by a trace. That is the defense acting before replay; the admission
+  checker rejects it by text. L6 has no vendor-stated value, so no borrowed-literal mutant.
+- **A5, checker** (`pgi.analysis.admission`, CLI `pgi.runs.admission_check`): catalogue
+  `admission.catalogue.yaml` beside the README, derived from the contract text (requirement numbers in comments; req. 5 is the
+  event schema's session pin, not catalogued). Modelled temporal conjuncts: `formerly within W P`, `previous within W P`
+  (stronger than formerly), `!A since within W B` (B is the evidence side; implies formerly within W B), negated predicates
+  (extra restrictions). Everything else (exists/count/sum, unknown scope forms, action groups the schema does not declare,
+  or no schema) rejects, fail closed. `||` is not valid Dogwood in a temporal block (verified with the validator), but the
+  checker splits on it textually so "authority OR vendor" is rejected in both forms (two permits; textual `||`). Fixtures:
+  gold, typed gold admitted; eight weakened variants, every 2b and 2c mutant, four unconditional scopes, both OR forms
+  rejected. **Scope note:** the checker reads text, so a textually conforming policy that fails strict validation (typed
+  arm: 8 first shots with plain strings) is admitted; Part C reports `admitted ∧ invalid` separately. Admission composes with
+  validation; it does not replace it. A dry pass over the six 2b runs (no folder written; Part C will write one) gave:
+  v2 and L4 0/20 admitted (invented literals), typed 20/20 (8 naive invalid), L1 3/20 and 5/20, L2 0/20 and 0/20, L3 40/40;
+  no exact-gold policy rejected.
+- **A6, predictions and contrasts**: in the prereg; `pgi.analysis.stats.holm` added (tests: step-down, monotone adjusted
+  p). Contrast p as a function of the 2c count is tabulated there so the reader can check the cell before the run.
+- **Spend:** hard session cap $10 for Part B, passed as the remaining budget to each run; timeout 300 s, retries ≤ 2.

@@ -1,0 +1,40 @@
+// Close: MAIN site only, and only with a recent human approval of this same work order,
+// confirmed in this session by a completed authority_get_approval call.
+@id("close-main-with-human-approval")
+permit (principal, action == Drupe::Action::"close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"authority_get_approval"::response{
+    eventResource: resource,
+    input.wonum: context.input.wonum,
+    input.site_id: context.input.site_id,
+    output.decision: "APPROVED",
+    output.approver_kind: "human"
+  }
+};
+
+// The approval lookup must itself be permitted, otherwise it is never recorded as a response.
+@id("allow-authority-approval-lookup")
+permit (principal, action == Drupe::Action::"authority_get_approval", resource);
+
+// Read-only lookups.
+@id("allow-readonly-lookups")
+permit (
+  principal,
+  action in [
+    Drupe::Action::"get_workorder",
+    Drupe::Action::"list_workorders",
+    Drupe::Action::"get_workorder_tasks",
+    Drupe::Action::"get_workorder_costs",
+    Drupe::Action::"get_workorder_actuals_vs_planned",
+    Drupe::Action::"get_workorder_kpis",
+    Drupe::Action::"get_schedule_calendar",
+    Drupe::Action::"get_my_assigned_workorders",
+    Drupe::Action::"get_failure_codes"
+  ],
+  resource
+);
+
+// The agent may never approve work orders itself.
+@id("never-approve-workorder")
+forbid (principal, action == Drupe::Action::"approve_workorder", resource);

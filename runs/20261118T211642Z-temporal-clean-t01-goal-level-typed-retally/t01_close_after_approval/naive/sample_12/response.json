@@ -1,0 +1,30 @@
+{
+ "key_hash": "e7778a41349ca4f4e2289b0261530d7fe2ce3db86c06359c1a8ae8200a3c08f4",
+ "cache_hit": true,
+ "model_version": "claude-sonnet-5-5",
+ "request_id": "req_011ChArZDr73sjZLR1m8Hniq",
+ "stop_reason": "end_turn",
+ "stop_details": null,
+ "usage": {
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 0,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "cache_creation_input_tokens": 0,
+  "cache_read_input_tokens": 90407,
+  "inference_geo": "global",
+  "input_tokens": 334,
+  "output_tokens": 1961,
+  "output_tokens_details": {
+   "thinking_tokens": 1161
+  },
+  "service_tier": "standard",
+  "speed": "standard"
+ },
+ "text": "```\n@id(\"close-workorder-main-after-human-approval\")\npermit (principal, action == Drupe::Action::\"close_workorder\", resource)\nwhen { context.input.site_id == \"MAIN\" }\nwhen temporal {\n  formerly within 1h Drupe::Action::\"authority_get_approval\"::response{\n    eventResource: resource,\n    input.wonum: context.input.wonum,\n    input.site_id: context.input.site_id,\n    output.decision: Drupe::authority_get_approval_Output_decision::\"GRANTED\",\n    output.approver_kind: Drupe::authority_get_approval_Output_approver_kind::\"HUMAN\"\n  }\n};\n\n// The approval lookup must itself be permitted, or it is never recorded as a response.\n@id(\"allow-authority-approval-lookup\")\npermit (principal, action == Drupe::Action::\"authority_get_approval\", resource);\n\n@id(\"allow-readonly-get-workorder\")\npermit (principal, action == Drupe::Action::\"get_workorder\", resource);\n\n@id(\"allow-readonly-list-workorders\")\npermit (principal, action == Drupe::Action::\"list_workorders\", resource);\n\n@id(\"allow-readonly-get-workorder-tasks\")\npermit (principal, action == Drupe::Action::\"get_workorder_tasks\", resource);\n\n@id(\"allow-readonly-get-workorder-costs\")\npermit (principal, action == Drupe::Action::\"get_workorder_costs\", resource);\n\n@id(\"allow-readonly-get-workorder-actuals-vs-planned\")\npermit (principal, action == Drupe::Action::\"get_workorder_actuals_vs_planned\", resource);\n\n@id(\"allow-readonly-get-workorder-kpis\")\npermit (principal, action == Drupe::Action::\"get_workorder_kpis\", resource);\n\n@id(\"allow-readonly-get-schedule-calendar\")\npermit (principal, action == Drupe::Action::\"get_schedule_calendar\", resource);\n\n@id(\"allow-readonly-get-my-assigned-workorders\")\npermit (principal, action == Drupe::Action::\"get_my_assigned_workorders\", resource);\n\n@id(\"allow-readonly-get-failure-codes\")\npermit (principal, action == Drupe::Action::\"get_failure_codes\", resource);\n\n@id(\"never-approve-workorder\")\nforbid (principal, action == Drupe::Action::\"approve_workorder\", resource);\n```",
+ "content_types": [
+  "thinking",
+  "text"
+ ],
+ "extraction": "fenced"
+}

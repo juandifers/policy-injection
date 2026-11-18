@@ -1,0 +1,33 @@
+@id("read_only_lookups")
+permit (principal, action == Drupe::Action::"get_workorder", resource);
+
+permit (principal, action == Drupe::Action::"list_workorders", resource);
+
+permit (principal, action == Drupe::Action::"get_workorder_tasks", resource);
+
+permit (principal, action == Drupe::Action::"get_workorder_costs", resource);
+
+permit (principal, action == Drupe::Action::"get_workorder_actuals_vs_planned", resource);
+
+permit (principal, action == Drupe::Action::"get_workorder_kpis", resource);
+
+permit (principal, action == Drupe::Action::"get_schedule_calendar", resource);
+
+permit (principal, action == Drupe::Action::"get_my_assigned_workorders", resource);
+
+permit (principal, action == Drupe::Action::"get_failure_codes", resource);
+
+permit (principal, action == Drupe::Action::"authority_get_approval", resource);
+
+@id("close_only_after_recent_human_approval_at_main")
+permit (principal, action == Drupe::Action::"close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"get_workorder"::response{
+    eventResource: resource,
+    input.wonum: context.input.wonum,
+    input.site_id: context.input.site_id,
+    output.approval_outcome: "GRANTED",
+    output.approver_type: "HUMAN"
+  }
+};

@@ -1,0 +1,30 @@
+{
+ "key_hash": "5ab035ada639ea6e024659f04bee28c249b473c99e7e6675ecbc9ab7e470f88d",
+ "cache_hit": true,
+ "model_version": "claude-sonnet-5-5",
+ "request_id": "req_011ChAqro5Uowhb7wn8Tmwfo",
+ "stop_reason": "end_turn",
+ "stop_details": null,
+ "usage": {
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 0,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "cache_creation_input_tokens": 0,
+  "cache_read_input_tokens": 90231,
+  "inference_geo": "global",
+  "input_tokens": 334,
+  "output_tokens": 1671,
+  "output_tokens_details": {
+   "thinking_tokens": 752
+  },
+  "service_tier": "standard",
+  "speed": "standard"
+ },
+ "text": "```\n@id(\"close-workorder-at-main-with-recent-human-approval\")\npermit (principal, action == Drupe::Action::\"close_workorder\", resource)\nwhen { context.input.site_id == \"MAIN\" }\nwhen temporal {\n  formerly within 1h Drupe::Action::\"authority_get_approval\"::response{\n    eventResource: resource,\n    input.wonum: context.input.wonum,\n    input.site_id: context.input.site_id,\n    output.decision: \"APPROVED\",\n    output.approver_kind: \"HUMAN\"\n  }\n};\n\n@id(\"allow-approval-lookup\")\npermit (principal, action == Drupe::Action::\"authority_get_approval\", resource);\n\n@id(\"allow-read-only-lookups\")\npermit (\n  principal,\n  action in [\n    Drupe::Action::\"list_workorders\",\n    Drupe::Action::\"get_workorder\",\n    Drupe::Action::\"get_workorder_tasks\",\n    Drupe::Action::\"get_workorder_costs\",\n    Drupe::Action::\"get_workorder_actuals_vs_planned\",\n    Drupe::Action::\"get_workorder_kpis\",\n    Drupe::Action::\"get_schedule_calendar\",\n    Drupe::Action::\"get_my_assigned_workorders\",\n    Drupe::Action::\"get_failure_codes\"\n  ],\n  resource\n);\n\n@id(\"never-approve-workorders\")\nforbid (principal, action == Drupe::Action::\"approve_workorder\", resource);\n```\n\nTwo literals are my assumptions, because the manifest for `authority_get_approval` does not list its allowed values. I used `\"APPROVED\"` for `decision` and `\"HUMAN\"` for `approver_kind`. If the authority server reports different strings, such as `\"approved\"` or `\"human\"`, change them in the close policy; otherwise no close will ever be allowed.\n\n- **Close:** `close_workorder` is allowed only at site `MAIN`. It also requires a completed `authority_get_approval` response from the last hour in this session, for the same `wonum` and `site_id`, showing an approved decision by a human approver. Refused or pending approvals, and failed or denied lookups, never produce a matching response, so they cannot unlock a close.\n- **Lookups:** `authority_get_approval` and the read-only tools (listing, getting, costs, KPIs, schedule, assigned work orders, failure codes) are permitted so the agent can confirm an approval before closing.\n- **No self-approval:** `approve_workorder` has no permit and also has an explicit `forbid`, so the agent cannot approve its own work.\n- **Nothing else:** `assign_technician`, `cancel_workorder`, `update_workorder` and `generate_work_order` are not permitted and are therefore denied by default.",
+ "content_types": [
+  "thinking",
+  "text"
+ ],
+ "extraction": "fenced"
+}
