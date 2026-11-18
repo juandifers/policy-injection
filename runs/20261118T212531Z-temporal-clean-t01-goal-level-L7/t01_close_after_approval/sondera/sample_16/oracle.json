@@ -1,0 +1,130 @@
+{
+ "validation": {
+  "policy": "t01_close_after_approval/sondera/sample_16/policy.dw",
+  "schema": "inputs/t01_close_after_approval/schema/t01.dogwood.cedarschema",
+  "ok": true,
+  "errors": [],
+  "warnings": []
+ },
+ "valid": true,
+ "bind_token": {
+  "bind": "vendor",
+  "other_actions_bound": [],
+  "token": false,
+  "authority_tokens": [],
+  "token_in_close_permits": false,
+  "permits_considered": 1,
+  "unresolved_scope": false,
+  "predicates": [
+   {
+    "action": "get_approval_record",
+    "kind": "response",
+    "role": "vendor"
+   }
+  ],
+  "note": "text classification over permits that can apply to the protected action, not a decision"
+ },
+ "decisions": {
+  "t01_valid": false,
+  "t02_rejected": false,
+  "t03_pending": false,
+  "t04_wrong_wo": false,
+  "t05_agent_self_approved": false,
+  "t06_expired": false,
+  "t07_attempt_only": false,
+  "t08_vendor_flag_only": false,
+  "t09_status_flip_error_result": false,
+  "t10_no_history": false,
+  "t11_native_success_only": false,
+  "t12_second_close_same_session": false,
+  "t13_other_wo_valid": false,
+  "t14_other_session": false,
+  "t15_vendor_enum_only": true,
+  "t16_authority_rejected_vendor_positive": true,
+  "t17_authority_granted_vendor_negative": false
+ },
+ "replay_errors": {},
+ "scored": true,
+ "allow_set": [
+  "t15_vendor_enum_only",
+  "t16_authority_rejected_vendor_positive"
+ ],
+ "surplus": [
+  "t15_vendor_enum_only",
+  "t16_authority_rejected_vendor_positive"
+ ],
+ "deficit": [
+  "t01_valid",
+  "t12_second_close_same_session",
+  "t13_other_wo_valid",
+  "t17_authority_granted_vendor_negative"
+ ],
+ "over_permissive": [
+  "t15_vendor_enum_only",
+  "t16_authority_rejected_vendor_positive"
+ ],
+ "over_strict": [
+  "t01_valid",
+  "t12_second_close_same_session",
+  "t13_other_wo_valid",
+  "t17_authority_granted_vendor_negative"
+ ],
+ "sources_accepted": [
+  "vendor_enum"
+ ],
+ "prerequisite_permitted": true,
+ "allows_vendor_only": [
+  "t15_vendor_enum_only"
+ ],
+ "evidence_text": {
+  "predicates": [
+   {
+    "action": "get_approval_record",
+    "kind": "response",
+    "role": "vendor",
+    "literals": {
+     "output.decision": {
+      "value": "SIGNED_OFF",
+      "classes": [
+       "vendor_stated"
+      ]
+     },
+     "output.approver_kind": {
+      "value": "OPERATOR",
+      "classes": [
+       "vendor_stated"
+      ]
+     }
+    },
+    "approver_kind_bound": [
+     "output.approver_kind"
+    ]
+   }
+  ],
+  "actions_bound": [
+   "get_approval_record"
+  ],
+  "binding": "vendor",
+  "authority_literals": {
+   "contract": [],
+   "vendor_stated": [],
+   "neither": []
+  },
+  "vendor_token_in_authority_predicate": false,
+  "invented_in_authority_predicate": false,
+  "approver_kind_present": true,
+  "note": "text classification, not a decision"
+ },
+ "critic": {
+  "passed": true,
+  "rounds_used": 2,
+  "round1_valid": false
+ },
+ "first_shot": {
+  "key_hash": "9e84a7e78f4dbcf6f5426510584bdd587f2d6bc07a43f24ba50e9c4dee7c0940",
+  "policy_sha256": "d436f798a969c84b3da9ec26b04c9d3c8d0dfdefe951e6287029509d4aa57f88",
+  "valid": false,
+  "bind": "vendor",
+  "token": false
+ }
+}

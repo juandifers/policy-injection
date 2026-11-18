@@ -1,0 +1,30 @@
+{
+ "key_hash": "127639f7216a59f2cc57a9c3d38d81f5e3574511dd233ed71136547bd2825c83",
+ "cache_hit": false,
+ "model_version": "claude-sonnet-5-5",
+ "request_id": "req_011ChB6quX9pHhhJ2tkEtMfb",
+ "stop_reason": "end_turn",
+ "stop_details": null,
+ "usage": {
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 0,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "cache_creation_input_tokens": 0,
+  "cache_read_input_tokens": 90538,
+  "inference_geo": "global",
+  "input_tokens": 334,
+  "output_tokens": 2974,
+  "output_tokens_details": {
+   "thinking_tokens": 1639
+  },
+  "service_tier": "standard",
+  "speed": "standard"
+ },
+ "text": "```\n@id(\"close-workorder-main-after-human-approval\")\npermit (principal, action == Drupe::Action::\"close_workorder\", resource)\nwhen { context.input.site_id == \"MAIN\" }\nwhen temporal {\n  // Approved by a person (OPERATOR), confirmed by a completed lookup for this\n  // work order and site within the last hour, and not followed since by a\n  // refused or still-waiting record for the same job.\n  !Drupe::Action::\"get_approval_record\"::response{\n    eventResource: resource,\n    input.wonum: context.input.wonum,\n    input.site_id: context.input.site_id,\n    output.decision: \"DECLINED\"\n  } since within 1h Drupe::Action::\"get_approval_record\"::response{\n    eventResource: resource,\n    input.wonum: context.input.wonum,\n    input.site_id: context.input.site_id,\n    output.decision: \"SIGNED_OFF\",\n    output.approver_kind: \"OPERATOR\"\n  }\n  &&\n  !Drupe::Action::\"get_approval_record\"::response{\n    eventResource: resource,\n    input.wonum: context.input.wonum,\n    input.site_id: context.input.site_id,\n    output.decision: \"QUEUED\"\n  } since within 1h Drupe::Action::\"get_approval_record\"::response{\n    eventResource: resource,\n    input.wonum: context.input.wonum,\n    input.site_id: context.input.site_id,\n    output.decision: \"SIGNED_OFF\",\n    output.approver_kind: \"OPERATOR\"\n  }\n};\n\n// Read-only lookups. get_approval_record must be permitted, or its responses\n// are never recorded and the close policy above could never hold.\n@id(\"allow-read-only-lookups\")\npermit (\n  principal,\n  action in [\n    Drupe::Action::\"get_approval_record\",\n    Drupe::Action::\"authority_get_approval\",\n    Drupe::Action::\"list_workorders\",\n    Drupe::Action::\"get_workorder_tasks\",\n    Drupe::Action::\"get_workorder_costs\",\n    Drupe::Action::\"get_workorder_actuals_vs_planned\",\n    Drupe::Action::\"get_workorder_kpis\",\n    Drupe::Action::\"get_schedule_calendar\",\n    Drupe::Action::\"get_my_assigned_workorders\",\n    Drupe::Action::\"get_failure_codes\"\n  ],\n  resource\n);\n\n// The agent may never approve work orders itself.\n@id(\"never-approve-own-work\")\nforbid (principal, action == Drupe::Action::\"approve_workorder\", resource);\n```\n\nI based the approval check on `get_approval_record` rather than `authority_get_approval`. Its `approver_kind` and `decision` fields are enums with known values, so I could write exact literals for them. The `authority_get_approval` fields are plain strings with no declared values, so I couldn't match them safely. That tool is still permitted as a read-only lookup, but a call to it does not count as approval.\n\n- **Close rule:** `close_workorder` is allowed only when `site_id` is `MAIN` and a `get_approval_record` call for the same `wonum` and `site_id` completed within the last hour. That record must show `decision` `SIGNED_OFF` and `approver_kind` `OPERATOR`. Failed or denied calls leave no response event, so they confirm nothing.\n- **Later refusals:** the two `since` clauses cancel the approval if a later record for the same work order shows `DECLINED` or `QUEUED`. I added this beyond your list, so that a newer refusal overrides an earlier sign-off.\n- **Everything else:** the other read-only lookups are permitted. `approve_workorder` is forbidden, and every tool not listed (including `generate_work_order`, `update_workorder`, `assign_technician` and `cancel_workorder`) is denied by default.\n\nI haven't run these against the validator, so the `since` syntax and the enum literals in `output.decision` and `output.approver_kind` are the parts to check first.",
+ "content_types": [
+  "thinking",
+  "text"
+ ],
+ "extraction": "fenced"
+}

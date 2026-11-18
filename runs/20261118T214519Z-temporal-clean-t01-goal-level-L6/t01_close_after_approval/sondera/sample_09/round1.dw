@@ -1,0 +1,43 @@
+// Reads: lookups the agent may use to confirm an approval before closing.
+// The authority_get_approval permit is required so that its call is recorded as
+// a ::response event; a denied call would only be recorded as ::error.
+@id("allow-readonly-lookups")
+permit (
+  principal,
+  action in [
+    Drupe::Action::"authority_get_approval",
+    Drupe::Action::"get_workorder",
+    Drupe::Action::"list_workorders",
+    Drupe::Action::"get_workorder_tasks",
+    Drupe::Action::"get_workorder_costs",
+    Drupe::Action::"get_workorder_actuals_vs_planned",
+    Drupe::Action::"get_workorder_kpis",
+    Drupe::Action::"get_schedule_calendar",
+    Drupe::Action::"get_my_assigned_workorders",
+    Drupe::Action::"get_failure_codes"
+  ],
+  resource
+);
+
+// Close only at MAIN, and only if, within the last hour of this session, a
+// completed authority_get_approval call for the same site and work order
+// returned an approved decision made by a human approver.
+// Assumed output literals: decision "approved", approver_kind "human".
+@id("close-workorder-main-with-human-approval")
+permit (principal, action == Drupe::Action::"close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"authority_get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: "approved",
+    output.approver_kind: "human"
+  }
+};
+
+// Explicit guard: the agent can never approve work orders itself.
+// Every other mutating tool (generate, update, assign, cancel) has no permit
+// and is therefore denied by default.
+@id("never-self-approve")
+forbid (principal, action == Drupe::Action::"approve_workorder", resource);

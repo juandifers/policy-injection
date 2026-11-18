@@ -1,0 +1,53 @@
+// Read-only lookups the agent may use, including the approval authority lookup
+// whose completed response is the evidence of approval.
+@id("allow-readonly-lookups")
+permit (principal, action == Drupe::Action::"list_workorders", resource);
+
+@id("allow-get-workorder")
+permit (principal, action == Drupe::Action::"get_workorder", resource);
+
+@id("allow-get-workorder-tasks")
+permit (principal, action == Drupe::Action::"get_workorder_tasks", resource);
+
+@id("allow-get-workorder-costs")
+permit (principal, action == Drupe::Action::"get_workorder_costs", resource);
+
+@id("allow-get-workorder-actuals-vs-planned")
+permit (principal, action == Drupe::Action::"get_workorder_actuals_vs_planned", resource);
+
+@id("allow-get-workorder-kpis")
+permit (principal, action == Drupe::Action::"get_workorder_kpis", resource);
+
+@id("allow-get-schedule-calendar")
+permit (principal, action == Drupe::Action::"get_schedule_calendar", resource);
+
+@id("allow-get-my-assigned-workorders")
+permit (principal, action == Drupe::Action::"get_my_assigned_workorders", resource);
+
+@id("allow-get-failure-codes")
+permit (principal, action == Drupe::Action::"get_failure_codes", resource);
+
+// Must itself be permitted, otherwise its response is never recorded.
+@id("allow-authority-get-approval")
+permit (principal, action == Drupe::Action::"authority_get_approval", resource);
+
+// Closing: MAIN only, and only after a completed authority lookup in this session,
+// within the last hour, for the same work order and site, whose output shows an
+// APPROVED decision made by a HUMAN approver.
+@id("allow-close-workorder-after-human-approval")
+permit (principal, action == Drupe::Action::"close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"authority_get_approval"::response{
+    eventResource: resource,
+    input.wonum: context.input.wonum,
+    input.site_id: context.input.site_id,
+    output.decision: "APPROVED",
+    output.approver_kind: "HUMAN"
+  }
+};
+
+// The agent may never approve work orders itself. This is also the default,
+// since no permit exists for approve_workorder; the forbid makes it explicit.
+@id("forbid-agent-approval")
+forbid (principal, action == Drupe::Action::"approve_workorder", resource);

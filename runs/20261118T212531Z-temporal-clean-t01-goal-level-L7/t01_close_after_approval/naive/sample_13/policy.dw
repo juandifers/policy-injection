@@ -1,0 +1,53 @@
+// Read-only lookups are always allowed. This includes get_approval_record and
+// authority_get_approval, so the agent can look up an approval before closing.
+// get_approval_record must be permitted, otherwise its response is never recorded
+// and the closing condition could never hold.
+@id("allow-read-only-lookups")
+permit (
+  principal,
+  action in [
+    Drupe::Action::"list_workorders",
+    Drupe::Action::"get_approval_record",
+    Drupe::Action::"authority_get_approval",
+    Drupe::Action::"get_workorder_tasks",
+    Drupe::Action::"get_workorder_costs",
+    Drupe::Action::"get_workorder_actuals_vs_planned",
+    Drupe::Action::"get_workorder_kpis",
+    Drupe::Action::"get_schedule_calendar",
+    Drupe::Action::"get_my_assigned_workorders",
+    Drupe::Action::"get_failure_codes"
+  ],
+  resource
+);
+
+// Closing is allowed only at MAIN, and only when a completed get_approval_record
+// call in this session within the last hour confirmed that the same work order at
+// the same site was SIGNED_OFF by an OPERATOR (a person).
+// Refused (DECLINED) or pending (QUEUED) decisions do not match.
+// Approvals by BOT or SCHEDULER do not match.
+// Failed or denied calls are recorded as ::error, not ::response, so they do not match.
+@id("close-main-only-with-recent-human-approval")
+permit (
+  principal,
+  action == Drupe::Action::"close_workorder",
+  resource
+)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"get_approval_record"::response{
+    eventResource: resource,
+    input.wonum: context.input.wonum,
+    input.site_id: context.input.site_id,
+    output.decision: "SIGNED_OFF",
+    output.approver_kind: "OPERATOR"
+  }
+};
+
+// The agent must never approve work orders itself (belt and braces; there is no
+// permit for approve_workorder, so it is already denied by default).
+@id("never-self-approve")
+forbid (
+  principal,
+  action == Drupe::Action::"approve_workorder",
+  resource
+);

@@ -948,3 +948,26 @@ checker paths (`tests/test_admission.py`, `tests/test_t01_arms_2c.py`, additions
 - **A6, predictions and contrasts**: in the prereg; `pgi.analysis.stats.holm` added (tests: step-down, monotone adjusted
   p). Contrast p as a function of the 2c count is tabulated there so the reader can check the cell before the run.
 - **Spend:** hard session cap $10 for Part B, passed as the remaining budget to each run; timeout 300 s, retries ≤ 2.
+
+## 2026-11-19: Phase 2c, Parts B and C run (four generation runs, $4.21 of the $10 cap; one zero-API admission check)
+
+- **Order as pre-registered:** L7, L5, L6, L1-S, each generated once, chained with the remaining cap passed to each run
+  (10.00 → 8.77 → 7.53 → 6.65). Results: findings 2026-11-19. No arm file was edited after its first generation (the arms tree
+  is pinned against commit `0646c1e`).
+- **Incident, transport hang (second occurrence):** the first L1-S attempt stalled on its 19th call (after 18 naive samples
+  in ~5 min); neither the explicit 300 s per-request timeout nor the SDK retries interrupted it, and the chain process was
+  killed at the 2 h background limit (so no `FAILED` file was written). The `.tmp-` folder was deleted as on 2026-11-17 (its
+  samples are in the LLM cache); the restart replayed them (18 cache hits, 26 fresh calls). Not a re-roll: every sample index
+  has exactly one generation. Open question for later work, not changed mid-experiment: the SDK `timeout` evidently does not
+  bound this failure mode; a watchdog around `provider.call` would.
+- **L1-S labelling:** the run is `--arm L1 --input-mode schema-only`, so `config.json["arm"]["name"]` is `L1` and
+  `config.json["input_mode"]` is `schema-only`; the admission report's table shows both columns. The run label and the docs
+  call it L1-S.
+- **Contrasts:** computed with `pgi.analysis.stats.fisher_less` and `holm` from the first-shot counts in the four 2c
+  `summary.json` files and the re-tally folders (comparators); the exact calls are in the findings so the numbers can be
+  re-derived. All four rejected under Holm.
+- **Part C:** `pgi.runs.admission_check` once over the ten runs → `runs/20261118T233901Z-admission-t01-2c`. The only
+  admitted-but-not-exact policies are the 21 textually conforming, schema-invalid first shots of the typed and L5 arms (reported
+  in `admitted ∧ invalid`), as anticipated in the Part A note that admission composes with validation.
+- **Not done, by instruction:** no interpretation beyond the pre-registered cells and contrasts, no proposed new arms, no AWS
+  calls, no push.

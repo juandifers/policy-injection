@@ -1,0 +1,38 @@
+{
+ "validation": {
+  "policy": "t01_close_after_approval/naive/sample_10/policy.dw",
+  "schema": "inputs/t01_close_after_approval/schema/t01.dogwood.cedarschema",
+  "ok": false,
+  "errors": [
+   "argument `output.decision` of `get_approval_record` expects `get_approval_record_Output_decision` but got `string`",
+   "argument `output.approver_kind` of `get_approval_record` expects `get_approval_record_Output_approver_kind` but got `string`"
+  ],
+  "warnings": []
+ },
+ "valid": false,
+ "bind_token": {
+  "bind": "both",
+  "other_actions_bound": [],
+  "token": true,
+  "authority_tokens": [
+   "OPERATOR",
+   "SIGNED_OFF"
+  ],
+  "token_in_close_permits": true,
+  "permits_considered": 2,
+  "unresolved_scope": false,
+  "predicates": [
+   {
+    "action": "get_approval_record",
+    "kind": "response",
+    "role": "vendor"
+   },
+   {
+    "action": "authority_get_approval",
+    "kind": "response",
+    "role": "authority"
+   }
+  ],
+  "note": "text classification over permits that can apply to the protected action, not a decision"
+ }
+}

@@ -1,0 +1,30 @@
+{
+ "key_hash": "18f5b7d57baa933dda0850222e6cc6b949486d24d665a323f9b56ea142e5aa13",
+ "cache_hit": true,
+ "model_version": "claude-sonnet-5-5",
+ "request_id": "req_011ChB99x2T1LxSSZJbyyMmd",
+ "stop_reason": "end_turn",
+ "stop_details": null,
+ "usage": {
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 0,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "cache_creation_input_tokens": 0,
+  "cache_read_input_tokens": 34009,
+  "inference_geo": "global",
+  "input_tokens": 334,
+  "output_tokens": 1780,
+  "output_tokens_details": {
+   "thinking_tokens": 1077
+  },
+  "service_tier": "standard",
+  "speed": "standard"
+ },
+ "text": "```\n// Read-only lookups are always allowed. authority_get_approval must be\n// permitted so that its response is recorded and can serve as evidence.\n@id(\"allow_readonly_lookups\")\npermit (\n  principal,\n  action in [\n    Drupe::Action::\"authority_get_approval\",\n    Drupe::Action::\"get_workorder\",\n    Drupe::Action::\"get_workorder_tasks\",\n    Drupe::Action::\"get_workorder_costs\",\n    Drupe::Action::\"get_workorder_actuals_vs_planned\",\n    Drupe::Action::\"get_workorder_kpis\",\n    Drupe::Action::\"get_failure_codes\",\n    Drupe::Action::\"get_my_assigned_workorders\",\n    Drupe::Action::\"get_schedule_calendar\",\n    Drupe::Action::\"list_workorders\"\n  ],\n  resource\n);\n\n// Closing is allowed only at MAIN, and only if, within the last hour in this\n// session, a completed authority_get_approval call for the same work order and\n// site returned decision GRANTED with a HUMAN approver.\n@id(\"close_workorder_main_with_human_approval\")\npermit (principal, action == Drupe::Action::\"close_workorder\", resource)\nwhen { context.input.site_id == \"MAIN\" }\nwhen temporal {\n  formerly within 1h Drupe::Action::\"authority_get_approval\"::response{\n    eventResource: resource,\n    eventPrincipal: principal,\n    input.wonum: context.input.wonum,\n    input.site_id: context.input.site_id,\n    output.decision: \"GRANTED\",\n    output.approver_kind: \"HUMAN\"\n  }\n};\n```\n\nApproving, generating, assigning, updating and cancelling work orders have no permit, so they are denied by default.\n\nI chose `authority_get_approval` as the source of approval evidence, and its `decision` and `approver_kind` values `\"GRANTED\"` and `\"HUMAN\"` are assumed. The schema declares these two fields only as strings, so check the literals against the real tool output. `get_workorder` offers a similar but separate approval signal that I did not use.",
+ "content_types": [
+  "thinking",
+  "text"
+ ],
+ "extraction": "fenced"
+}

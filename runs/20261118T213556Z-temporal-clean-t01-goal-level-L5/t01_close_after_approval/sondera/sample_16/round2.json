@@ -1,0 +1,75 @@
+{
+ "round": 2,
+ "extraction": "fenced",
+ "generation": {
+  "key_hash": "1a8407f250d7127b840a23a7315e4461100f8607ba4533f021e4d376a9803e90",
+  "cache_hit": false,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011ChB8AGSN38i7FnZGrAwHM",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 90705,
+   "inference_geo": "global",
+   "input_tokens": 1131,
+   "output_tokens": 937,
+   "output_tokens_details": {
+    "thinking_tokens": 211
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "```dogwood\n// Closing is allowed only at MAIN, and only when this session already holds a completed\n// authority_get_approval response from the last hour for the same wonum and site_id. That\n// response must show decision GRANTED by approver_kind HUMAN (both are enum entity types in\n// the schema, so they are matched as entity literals). Refused, pending, agent-made or\n// system-made approvals do not count, and neither do failed or denied lookups, because\n// those are recorded as ::error rather than ::response.\n@id(\"close-workorder-requires-human-approval\")\npermit (principal, action == Drupe::Action::\"close_workorder\", resource)\nwhen { context.input.site_id == \"MAIN\" }\nwhen temporal {\n  formerly within 1h Drupe::Action::\"authority_get_approval\"::response{\n    eventResource: resource,\n    input.site_id: context.input.site_id,\n    input.wonum: context.input.wonum,\n    output.decision: Drupe::authority_get_approval_Output_decision::\"GRANTED\",\n    output.approver_kind: Drupe::authority_get_approval_Output_approver_kind::\"HUMAN\"\n  }\n};\n\n// Read-only lookups, including the authority lookup that establishes the approval.\n// This permit lets authority_get_approval complete, so its response is recorded.\n// approve_workorder, generate_work_order, update_workorder, assign_technician and\n// cancel_workorder have no permit and stay denied.\n@id(\"allow-read-only-lookups\")\npermit (\n  principal,\n  action in [\n    Drupe::Action::\"authority_get_approval\",\n    Drupe::Action::\"get_workorder\",\n    Drupe::Action::\"list_workorders\",\n    Drupe::Action::\"get_workorder_tasks\",\n    Drupe::Action::\"get_workorder_costs\",\n    Drupe::Action::\"get_workorder_actuals_vs_planned\",\n    Drupe::Action::\"get_workorder_kpis\",\n    Drupe::Action::\"get_schedule_calendar\",\n    Drupe::Action::\"get_my_assigned_workorders\",\n    Drupe::Action::\"get_failure_codes\"\n  ],\n  resource\n);\n```",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "deterministic": {
+  "passed": true,
+  "validation": {
+   "policy": "t01_close_after_approval/sondera/sample_16/round2.dw",
+   "schema": "inputs/t01_close_after_approval/schema/t01.dogwood.cedarschema",
+   "ok": true,
+   "errors": [],
+   "warnings": []
+  },
+  "failures": []
+ },
+ "judge": {
+  "key_hash": "67409f0d8061f2e11cd0f292d5aac1ce56199e79e945fd7e198835e4ba6a7bb1",
+  "cache_hit": false,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011ChB8AoCXcpTqiegJbyTps",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 2414,
+   "inference_geo": "global",
+   "input_tokens": 1061,
+   "output_tokens": 678,
+   "output_tokens_details": {
+    "thinking_tokens": 667
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "NO MISMATCHES",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "judge_passed": true,
+ "passed": true
+}

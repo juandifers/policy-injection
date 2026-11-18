@@ -1,0 +1,57 @@
+@id("close-workorder-main-after-human-approval")
+permit (principal, action == Drupe::Action::"close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  // Approved by a person (OPERATOR), confirmed by a completed lookup for this
+  // work order and site within the last hour, and not followed since by a
+  // refused or still-waiting record for the same job.
+  !Drupe::Action::"get_approval_record"::response{
+    eventResource: resource,
+    input.wonum: context.input.wonum,
+    input.site_id: context.input.site_id,
+    output.decision: Drupe::get_approval_record_Output_decision::"DECLINED"
+  } since within 1h Drupe::Action::"get_approval_record"::response{
+    eventResource: resource,
+    input.wonum: context.input.wonum,
+    input.site_id: context.input.site_id,
+    output.decision: Drupe::get_approval_record_Output_decision::"SIGNED_OFF",
+    output.approver_kind: Drupe::get_approval_record_Output_approver_kind::"OPERATOR"
+  }
+  &&
+  !Drupe::Action::"get_approval_record"::response{
+    eventResource: resource,
+    input.wonum: context.input.wonum,
+    input.site_id: context.input.site_id,
+    output.decision: Drupe::get_approval_record_Output_decision::"QUEUED"
+  } since within 1h Drupe::Action::"get_approval_record"::response{
+    eventResource: resource,
+    input.wonum: context.input.wonum,
+    input.site_id: context.input.site_id,
+    output.decision: Drupe::get_approval_record_Output_decision::"SIGNED_OFF",
+    output.approver_kind: Drupe::get_approval_record_Output_approver_kind::"OPERATOR"
+  }
+};
+
+// Read-only lookups. get_approval_record must be permitted, or its responses
+// are never recorded and the close policy above could never hold.
+@id("allow-read-only-lookups")
+permit (
+  principal,
+  action in [
+    Drupe::Action::"get_approval_record",
+    Drupe::Action::"authority_get_approval",
+    Drupe::Action::"list_workorders",
+    Drupe::Action::"get_workorder_tasks",
+    Drupe::Action::"get_workorder_costs",
+    Drupe::Action::"get_workorder_actuals_vs_planned",
+    Drupe::Action::"get_workorder_kpis",
+    Drupe::Action::"get_schedule_calendar",
+    Drupe::Action::"get_my_assigned_workorders",
+    Drupe::Action::"get_failure_codes"
+  ],
+  resource
+);
+
+// The agent may never approve work orders itself.
+@id("never-approve-own-work")
+forbid (principal, action == Drupe::Action::"approve_workorder", resource);

@@ -1,0 +1,81 @@
+{
+ "round": 1,
+ "extraction": "fenced",
+ "generation": {
+  "key_hash": "5762b805e6b0657b74414dc5f7e9cbe7231ae8b181bfb099cc16852f7b5f84e9",
+  "cache_hit": true,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011ChB91QqFcwMVZTgbX21sX",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 34009,
+   "inference_geo": "global",
+   "input_tokens": 334,
+   "output_tokens": 2535,
+   "output_tokens_details": {
+    "thinking_tokens": 1650
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "```\n@id(\"close-workorder-main-with-human-approval\")\npermit (principal, action == Drupe::Action::\"close_workorder\", resource)\nwhen { context.input.site_id == \"MAIN\" }\nwhen temporal {\n  formerly within 1h Drupe::Action::\"get_workorder\"::response{\n    eventResource: resource,\n    input.wonum: context.input.wonum,\n    input.site_id: context.input.site_id,\n    output.approval_outcome: \"GRANTED\",\n    output.approver_type: \"HUMAN\"\n  }\n};\n\n// Read-only lookups. get_workorder must be permitted, or its response is never recorded\n// and the close policy above could never hold.\n@id(\"allow-read-only-lookups\")\npermit (principal, action in [\n  Drupe::Action::\"get_workorder\",\n  Drupe::Action::\"authority_get_approval\",\n  Drupe::Action::\"get_workorder_tasks\",\n  Drupe::Action::\"get_workorder_costs\",\n  Drupe::Action::\"get_workorder_actuals_vs_planned\",\n  Drupe::Action::\"get_workorder_kpis\",\n  Drupe::Action::\"get_schedule_calendar\",\n  Drupe::Action::\"get_my_assigned_workorders\",\n  Drupe::Action::\"get_failure_codes\",\n  Drupe::Action::\"list_workorders\"\n], resource);\n```\n\n`approve_workorder` has no permit, so it is denied by default and the agent cannot approve anything itself. The same goes for `generate_work_order`, `update_workorder`, `assign_technician` and `cancel_workorder`, which the intent doesn't allow.\n\nI used `get_workorder` as the evidence of approval because its output carries `approval_outcome` (`GRANTED`, `REJECTED` or `PENDING`) and `approver_type` (`HUMAN`, `AGENT` or `SYSTEM`). The close policy only accepts a `GRANTED` outcome from a `HUMAN` approver. The lookup must be a completed `::response` in this session within the last hour. It must also match the `wonum` and `site_id` of the close request, and the close itself must be at `MAIN`.\n\nI matched those enum fields with plain string literals, as the reference describes. If your validator insists on entity-typed values for them, they would need to be written as `Drupe::get_workorder_Output_approval_outcome::\"GRANTED\"` and its `approver_type` counterpart.\n\nI did not use `authority_get_approval` as the evidence. Its `decision` and `approver_kind` outputs are free strings with no declared values, so I would have had to guess what to match. It is still permitted as a read-only lookup.",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "deterministic": {
+  "passed": false,
+  "validation": {
+   "policy": "t01_close_after_approval/sondera/sample_10/round1.dw",
+   "schema": "inputs/t01_close_after_approval/schema/t01.dogwood.cedarschema",
+   "ok": false,
+   "errors": [
+    "argument `output.approval_outcome` of `get_workorder` expects `get_workorder_Output_approval_outcome` but got `string`",
+    "argument `output.approver_type` of `get_workorder` expects `get_workorder_Output_approver_type` but got `string`"
+   ],
+   "warnings": []
+  },
+  "failures": [
+   "invalid: argument `output.approval_outcome` of `get_workorder` expects `get_workorder_Output_approval_outcome` but got `string`",
+   "invalid: argument `output.approver_type` of `get_workorder` expects `get_workorder_Output_approver_type` but got `string`"
+  ]
+ },
+ "judge": {
+  "key_hash": "15cf938fa1663865c7a45220e248d3399dac4469ebd661a31b6ba6e98d6cb8a5",
+  "cache_hit": false,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011ChBGixpoT7fiu5nA4XKJQ",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 2414,
+   "inference_geo": "global",
+   "input_tokens": 799,
+   "output_tokens": 865,
+   "output_tokens_details": {
+    "thinking_tokens": 854
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "NO MISMATCHES",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "judge_passed": true,
+ "passed": false
+}

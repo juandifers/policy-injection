@@ -1,0 +1,46 @@
+@id("read-authority-get-approval")
+permit (principal, action == Drupe::Action::"authority_get_approval", resource);
+
+@id("read-list-workorders")
+permit (principal, action == Drupe::Action::"list_workorders", resource);
+
+@id("read-get-workorder")
+permit (principal, action == Drupe::Action::"get_workorder", resource);
+
+@id("read-get-workorder-tasks")
+permit (principal, action == Drupe::Action::"get_workorder_tasks", resource);
+
+@id("read-get-workorder-costs")
+permit (principal, action == Drupe::Action::"get_workorder_costs", resource);
+
+@id("read-get-workorder-actuals-vs-planned")
+permit (principal, action == Drupe::Action::"get_workorder_actuals_vs_planned", resource);
+
+@id("read-get-workorder-kpis")
+permit (principal, action == Drupe::Action::"get_workorder_kpis", resource);
+
+@id("read-get-schedule-calendar")
+permit (principal, action == Drupe::Action::"get_schedule_calendar", resource);
+
+@id("read-get-my-assigned-workorders")
+permit (principal, action == Drupe::Action::"get_my_assigned_workorders", resource);
+
+@id("read-get-failure-codes")
+permit (principal, action == Drupe::Action::"get_failure_codes", resource);
+
+@id("close-only-at-main-after-recent-human-approval")
+permit (principal, action == Drupe::Action::"close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"authority_get_approval"::response{
+    eventResource: resource,
+    eventPrincipal: principal,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::authority_get_approval_Output_decision::"GRANTED",
+    output.approver_kind: Drupe::authority_get_approval_Output_approver_kind::"HUMAN"
+  }
+};
+
+@id("agent-never-approves")
+forbid (principal, action == Drupe::Action::"approve_workorder", resource);

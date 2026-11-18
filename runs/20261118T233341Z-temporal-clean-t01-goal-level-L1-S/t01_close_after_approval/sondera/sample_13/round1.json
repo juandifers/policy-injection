@@ -1,0 +1,75 @@
+{
+ "round": 1,
+ "extraction": "fenced",
+ "generation": {
+  "key_hash": "2679bdeb76640b0b98c379c32144b45d29d91d3ad117b71ba56d896c6f39cd62",
+  "cache_hit": true,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011ChB95bkBqdMvjMkcfjVLc",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 34009,
+   "inference_geo": "global",
+   "input_tokens": 334,
+   "output_tokens": 1923,
+   "output_tokens_details": {
+    "thinking_tokens": 1073
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "```\n// Close is allowed only at MAIN, and only after a completed get_workorder lookup\n// in this session, within the last hour, showing a GRANTED approval by a HUMAN\n// for the same work order at the same site.\n@id(\"close-main-after-human-approval\")\npermit (principal, action == Drupe::Action::\"close_workorder\", resource)\nwhen { context.input.site_id == \"MAIN\" }\nwhen temporal {\n  formerly within 1h Drupe::Action::\"get_workorder\"::response{\n    eventResource: resource,\n    input.site_id: context.input.site_id,\n    input.wonum: context.input.wonum,\n    output.approval_outcome: Drupe::get_workorder_Output_approval_outcome::\"GRANTED\",\n    output.approver_type: Drupe::get_workorder_Output_approver_type::\"HUMAN\"\n  }\n};\n\n// Read-only lookups are permitted. get_workorder must be permitted so that its\n// response is recorded and can serve as the approval confirmation.\n@id(\"allow-read-only-lookups\")\npermit (\n  principal,\n  action in [\n    Drupe::Action::\"get_workorder\",\n    Drupe::Action::\"authority_get_approval\",\n    Drupe::Action::\"list_workorders\",\n    Drupe::Action::\"get_my_assigned_workorders\",\n    Drupe::Action::\"get_workorder_tasks\",\n    Drupe::Action::\"get_workorder_costs\",\n    Drupe::Action::\"get_workorder_actuals_vs_planned\",\n    Drupe::Action::\"get_workorder_kpis\",\n    Drupe::Action::\"get_schedule_calendar\",\n    Drupe::Action::\"get_failure_codes\"\n  ],\n  resource\n);\n\n// The agent must never approve work orders itself, even if another policy is\n// added later that would permit it.\n@id(\"never-approve-workorders\")\nforbid (principal, action == Drupe::Action::\"approve_workorder\", resource);\n```\n\nI used `get_workorder` as the approval check because its output has enum fields (`approval_outcome`, `approver_type`) with known values (GRANTED, HUMAN). `authority_get_approval` returns free-text strings whose accepted values are not in the schema. If your system uses specific strings there, the close policy would need a second policy for that path.\n\nThe close policy matches the enum values through their entity form, `Drupe::get_workorder_Output_approval_outcome::\"GRANTED\"`. I could not confirm that the engine accepts this form in a temporal pattern. If it expects plain string literals, swap them in.",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "deterministic": {
+  "passed": true,
+  "validation": {
+   "policy": "t01_close_after_approval/sondera/sample_13/round1.dw",
+   "schema": "inputs/t01_close_after_approval/schema/t01.dogwood.cedarschema",
+   "ok": true,
+   "errors": [],
+   "warnings": []
+  },
+  "failures": []
+ },
+ "judge": {
+  "key_hash": "49557517cc4f1957812be7aa70f12e25815e71c9b4546a22b408d12b0b228ac6",
+  "cache_hit": false,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011ChBGn6ZDPmvHAL6BqSvKC",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 2414,
+   "inference_geo": "global",
+   "input_tokens": 992,
+   "output_tokens": 643,
+   "output_tokens_details": {
+    "thinking_tokens": 632
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "NO MISMATCHES",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "judge_passed": true,
+ "passed": true
+}
