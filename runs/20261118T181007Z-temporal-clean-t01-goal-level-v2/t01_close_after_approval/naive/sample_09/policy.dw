@@ -1,0 +1,48 @@
+@id("close_workorder_main_with_recent_human_approval")
+permit (principal, action == Drupe::Action::"close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"authority_get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: "APPROVED",
+    output.approver_kind: "HUMAN"
+  }
+};
+
+// The approval lookup must itself be permitted, or its response is never recorded.
+@id("allow_authority_approval_lookup")
+permit (principal, action == Drupe::Action::"authority_get_approval", resource);
+
+// Read-only lookups.
+@id("allow_list_workorders")
+permit (principal, action == Drupe::Action::"list_workorders", resource);
+
+@id("allow_get_workorder")
+permit (principal, action == Drupe::Action::"get_workorder", resource);
+
+@id("allow_get_workorder_tasks")
+permit (principal, action == Drupe::Action::"get_workorder_tasks", resource);
+
+@id("allow_get_workorder_costs")
+permit (principal, action == Drupe::Action::"get_workorder_costs", resource);
+
+@id("allow_get_workorder_actuals_vs_planned")
+permit (principal, action == Drupe::Action::"get_workorder_actuals_vs_planned", resource);
+
+@id("allow_get_workorder_kpis")
+permit (principal, action == Drupe::Action::"get_workorder_kpis", resource);
+
+@id("allow_get_schedule_calendar")
+permit (principal, action == Drupe::Action::"get_schedule_calendar", resource);
+
+@id("allow_get_my_assigned_workorders")
+permit (principal, action == Drupe::Action::"get_my_assigned_workorders", resource);
+
+@id("allow_get_failure_codes")
+permit (principal, action == Drupe::Action::"get_failure_codes", resource);
+
+// The agent may never approve work orders itself.
+@id("forbid_agent_approval")
+forbid (principal, action == Drupe::Action::"approve_workorder", resource);

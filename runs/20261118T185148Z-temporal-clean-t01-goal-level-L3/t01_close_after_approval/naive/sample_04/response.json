@@ -1,0 +1,30 @@
+{
+ "key_hash": "b716be79dc11d841c1a920e0a3b1215e06eca5457be29fda1347c9ae1feb6811",
+ "cache_hit": false,
+ "model_version": "claude-sonnet-5-5",
+ "request_id": "req_011ChAu6CiVEwJ6sQw8ug4DV",
+ "stop_reason": "end_turn",
+ "stop_details": null,
+ "usage": {
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 0,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "cache_creation_input_tokens": 0,
+  "cache_read_input_tokens": 90526,
+  "inference_geo": "global",
+  "input_tokens": 334,
+  "output_tokens": 2211,
+  "output_tokens_details": {
+   "thinking_tokens": 1407
+  },
+  "service_tier": "standard",
+  "speed": "standard"
+ },
+ "text": "```\n@id(\"close-workorder-main-human-approved\")\npermit (principal, action == Drupe::Action::\"close_workorder\", resource)\nwhen { context.input.site_id == \"MAIN\" }\nwhen temporal {\n  !Drupe::Action::\"authority_get_approval\"::response{\n      eventResource: resource,\n      input.wonum: context.input.wonum,\n      input.site_id: context.input.site_id,\n      output.decision: \"REJECTED\"\n    }\n    since within 1h\n    Drupe::Action::\"authority_get_approval\"::response{\n      eventResource: resource,\n      input.wonum: context.input.wonum,\n      input.site_id: context.input.site_id,\n      output.decision: \"GRANTED\",\n      output.approver_kind: \"HUMAN\"\n    }\n  &&\n  !Drupe::Action::\"authority_get_approval\"::response{\n      eventResource: resource,\n      input.wonum: context.input.wonum,\n      input.site_id: context.input.site_id,\n      output.decision: \"PENDING\"\n    }\n    since within 1h\n    Drupe::Action::\"authority_get_approval\"::response{\n      eventResource: resource,\n      input.wonum: context.input.wonum,\n      input.site_id: context.input.site_id,\n      output.decision: \"GRANTED\",\n      output.approver_kind: \"HUMAN\"\n    }\n};\n\n// The approval lookup must itself be permitted, or it is never recorded as a response.\n@id(\"allow-approval-authority-lookup\")\npermit (principal, action == Drupe::Action::\"authority_get_approval\", resource);\n\n// Other read-only lookups.\n@id(\"allow-readonly-lookups\")\npermit (\n  principal,\n  action in [\n    Drupe::Action::\"get_approval_record\",\n    Drupe::Action::\"list_workorders\",\n    Drupe::Action::\"get_workorder_tasks\",\n    Drupe::Action::\"get_workorder_costs\",\n    Drupe::Action::\"get_workorder_actuals_vs_planned\",\n    Drupe::Action::\"get_workorder_kpis\",\n    Drupe::Action::\"get_schedule_calendar\",\n    Drupe::Action::\"get_my_assigned_workorders\",\n    Drupe::Action::\"get_failure_codes\"\n  ],\n  resource\n);\n\n@id(\"never-approve-workorders\")\nforbid (principal, action == Drupe::Action::\"approve_workorder\", resource);\n```",
+ "content_types": [
+  "thinking",
+  "text"
+ ],
+ "extraction": "fenced"
+}

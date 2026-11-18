@@ -1,0 +1,17 @@
+{
+ "validation": {
+  "policy": "t01_close_after_approval/naive/sample_14/policy.dw",
+  "schema": "inputs/t01_close_after_approval/schema/t01.dogwood.cedarschema",
+  "ok": false,
+  "errors": [
+   "argument `output.approval_outcome` of `get_workorder` expects `get_workorder_Output_approval_outcome` but got `string`",
+   "argument `output.approval_outcome` of `get_workorder` expects `get_workorder_Output_approval_outcome` but got `string`",
+   "argument `output.approver_type` of `get_workorder` expects `get_workorder_Output_approver_type` but got `string`",
+   "argument `output.approval_outcome` of `get_workorder` expects `get_workorder_Output_approval_outcome` but got `string`",
+   "argument `output.approval_outcome` of `get_workorder` expects `get_workorder_Output_approval_outcome` but got `string`",
+   "argument `output.approver_type` of `get_workorder` expects `get_workorder_Output_approver_type` but got `string`"
+  ],
+  "warnings": []
+ },
+ "valid": false
+}

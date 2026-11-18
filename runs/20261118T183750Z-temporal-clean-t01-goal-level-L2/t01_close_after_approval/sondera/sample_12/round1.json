@@ -1,0 +1,75 @@
+{
+ "round": 1,
+ "extraction": "fenced",
+ "generation": {
+  "key_hash": "40129d3ddf5f830acdfa006e08dbd8c8c5353619c2b55b52a149784f546c2f41",
+  "cache_hit": true,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011ChAtEr2S1hsZVErMHeMDs",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 90529,
+   "inference_geo": "global",
+   "input_tokens": 334,
+   "output_tokens": 2161,
+   "output_tokens_details": {
+    "thinking_tokens": 1686
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "```\n@id(\"allow_readonly_lookups\")\npermit (\n  principal,\n  action in [\n    Drupe::Action::\"get_workorder\",\n    Drupe::Action::\"authority_get_approval\",\n    Drupe::Action::\"list_workorders\",\n    Drupe::Action::\"get_workorder_tasks\",\n    Drupe::Action::\"get_workorder_costs\",\n    Drupe::Action::\"get_workorder_actuals_vs_planned\",\n    Drupe::Action::\"get_workorder_kpis\",\n    Drupe::Action::\"get_schedule_calendar\",\n    Drupe::Action::\"get_my_assigned_workorders\",\n    Drupe::Action::\"get_failure_codes\"\n  ],\n  resource\n);\n\n@id(\"close_workorder_main_only_after_human_signoff\")\npermit (principal, action == Drupe::Action::\"close_workorder\", resource)\nwhen { context.input.site_id == \"MAIN\" }\nwhen temporal {\n  formerly within 1h Drupe::Action::\"get_workorder\"::response{\n    eventResource: resource,\n    input.wonum: context.input.wonum,\n    input.site_id: context.input.site_id,\n    output.approval_outcome: Drupe::get_workorder_Output_approval_outcome::\"SIGNED_OFF\",\n    output.approver_type: Drupe::get_workorder_Output_approver_type::\"OPERATOR\"\n  }\n};\n```",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "deterministic": {
+  "passed": true,
+  "validation": {
+   "policy": "t01_close_after_approval/sondera/sample_12/round1.dw",
+   "schema": "inputs/t01_close_after_approval/schema/t01.dogwood.cedarschema",
+   "ok": true,
+   "errors": [],
+   "warnings": []
+  },
+  "failures": []
+ },
+ "judge": {
+  "key_hash": "633115d402bceca94222201d16abb516ffc5f0ee2d510f7cdaf9ff11ee4db269",
+  "cache_hit": false,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011ChAtmLeTYcfjsruAnR7Bg",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 2414,
+   "inference_geo": "global",
+   "input_tokens": 814,
+   "output_tokens": 886,
+   "output_tokens_details": {
+    "thinking_tokens": 733
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "- The close permit relies on a `get_workorder::response` to establish approval. The intent asks for a completed call that actually confirmed the approval. The schema isn't shown, but the dedicated approval lookup, `authority_get_approval`, looks like the call meant for that. As written, the policy never requires an `authority_get_approval::response`, so approval is accepted from a general work-order read. The agent could therefore close a work order without the authoritative confirmation the intent calls for.",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "judge_passed": false,
+ "passed": false
+}

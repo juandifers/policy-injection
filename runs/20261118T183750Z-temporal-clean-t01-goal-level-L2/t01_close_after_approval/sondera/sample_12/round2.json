@@ -1,0 +1,75 @@
+{
+ "round": 2,
+ "extraction": "fenced",
+ "generation": {
+  "key_hash": "8ca3a65470ce2a06f9c8b2e1d5c13bea7f5cece28b743556e34026671ee8aa7d",
+  "cache_hit": false,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011ChAtmz3Vgxr4RxP8oThwr",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 90529,
+   "inference_geo": "global",
+   "input_tokens": 1003,
+   "output_tokens": 1231,
+   "output_tokens_details": {
+    "thinking_tokens": 578
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "```dogwood\n@id(\"allow_readonly_lookups\")\npermit (\n  principal,\n  action in [\n    Drupe::Action::\"get_workorder\",\n    Drupe::Action::\"authority_get_approval\",\n    Drupe::Action::\"list_workorders\",\n    Drupe::Action::\"get_workorder_tasks\",\n    Drupe::Action::\"get_workorder_costs\",\n    Drupe::Action::\"get_workorder_actuals_vs_planned\",\n    Drupe::Action::\"get_workorder_kpis\",\n    Drupe::Action::\"get_schedule_calendar\",\n    Drupe::Action::\"get_my_assigned_workorders\",\n    Drupe::Action::\"get_failure_codes\"\n  ],\n  resource\n);\n\n@id(\"close_workorder_main_only_after_confirmed_human_approval\")\npermit (principal, action == Drupe::Action::\"close_workorder\", resource)\nwhen { context.input.site_id == \"MAIN\" }\nwhen temporal {\n  formerly within 1h Drupe::Action::\"authority_get_approval\"::response{\n    eventResource: resource,\n    input.wonum: context.input.wonum,\n    input.site_id: context.input.site_id,\n    output.decision: \"APPROVED\",\n    output.approver_kind: \"HUMAN\"\n  }\n};\n```\n\nThe schema doesn't say which strings `authority_get_approval` returns, so `\"APPROVED\"` and `\"HUMAN\"` are my guesses. Please check them against the real tool before deploying.\n\nThe close permit now relies only on a completed `authority_get_approval` response. The response must be for the same `wonum` and `site_id`, be less than an hour old, and carry an approved decision from a human approver.\n\n`approve_workorder` has no permit, so the agent cannot approve anything itself. Every other mutating tool is also denied by default.\n\nI did not tie the approver to the agent's own identity. `approver_id` is a plain string, so the policy can't compare it to the principal.",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "deterministic": {
+  "passed": true,
+  "validation": {
+   "policy": "t01_close_after_approval/sondera/sample_12/round2.dw",
+   "schema": "inputs/t01_close_after_approval/schema/t01.dogwood.cedarschema",
+   "ok": true,
+   "errors": [],
+   "warnings": []
+  },
+  "failures": []
+ },
+ "judge": {
+  "key_hash": "78259a1bc565ebbe8452e80e1f9627ed78e409b816dada8e6ae2e5b0ed22aaf0",
+  "cache_hit": false,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011ChAtnmna63qnSDYhVJPPM",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 2414,
+   "inference_geo": "global",
+   "input_tokens": 772,
+   "output_tokens": 593,
+   "output_tokens_details": {
+    "thinking_tokens": 582
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "NO MISMATCHES",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "judge_passed": true,
+ "passed": true
+}

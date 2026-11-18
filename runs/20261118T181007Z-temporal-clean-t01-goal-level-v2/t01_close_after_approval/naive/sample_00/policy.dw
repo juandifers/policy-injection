@@ -1,0 +1,54 @@
+// Close: MAIN only, and only after a human approval of this exact work order
+// (same wonum and site) was confirmed by a completed authority lookup in the last hour.
+// NOTE: the "APPROVED" and "HUMAN" literals are my assumption about the authority
+// server's output values; adjust them if the server uses different strings.
+@id("close-main-with-human-approval")
+permit (principal, action == Drupe::Action::"close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"authority_get_approval"::response{
+    eventResource: resource,
+    eventPrincipal: principal,
+    input.wonum: context.input.wonum,
+    input.site_id: context.input.site_id,
+    output.decision: "APPROVED",
+    output.approver_kind: "HUMAN"
+  }
+};
+
+// The approval lookup must itself be permitted, otherwise it is never recorded as a response.
+@id("allow-authority-lookup")
+permit (principal, action == Drupe::Action::"authority_get_approval", resource);
+
+// Read-only lookups.
+@id("allow-read-list-workorders")
+permit (principal, action == Drupe::Action::"list_workorders", resource);
+
+@id("allow-read-get-workorder")
+permit (principal, action == Drupe::Action::"get_workorder", resource);
+
+@id("allow-read-get-workorder-tasks")
+permit (principal, action == Drupe::Action::"get_workorder_tasks", resource);
+
+@id("allow-read-get-workorder-costs")
+permit (principal, action == Drupe::Action::"get_workorder_costs", resource);
+
+@id("allow-read-actuals-vs-planned")
+permit (principal, action == Drupe::Action::"get_workorder_actuals_vs_planned", resource);
+
+@id("allow-read-kpis")
+permit (principal, action == Drupe::Action::"get_workorder_kpis", resource);
+
+@id("allow-read-schedule-calendar")
+permit (principal, action == Drupe::Action::"get_schedule_calendar", resource);
+
+@id("allow-read-my-assigned")
+permit (principal, action == Drupe::Action::"get_my_assigned_workorders", resource);
+
+@id("allow-read-failure-codes")
+permit (principal, action == Drupe::Action::"get_failure_codes", resource);
+
+// The agent may never approve work orders itself. Deny by default already covers this;
+// the explicit forbid guards against any future permit.
+@id("never-self-approve")
+forbid (principal, action == Drupe::Action::"approve_workorder", resource);

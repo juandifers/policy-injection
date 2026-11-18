@@ -1,0 +1,41 @@
+// Read-only lookups are always allowed. get_workorder is included here so its
+// response is recorded and can serve as the approval evidence below.
+@id("allow_read_only_lookups")
+permit (
+  principal,
+  action in [
+    Drupe::Action::"get_workorder",
+    Drupe::Action::"get_workorder_tasks",
+    Drupe::Action::"get_workorder_costs",
+    Drupe::Action::"get_workorder_actuals_vs_planned",
+    Drupe::Action::"get_workorder_kpis",
+    Drupe::Action::"get_schedule_calendar",
+    Drupe::Action::"get_my_assigned_workorders",
+    Drupe::Action::"list_workorders",
+    Drupe::Action::"get_failure_codes",
+    Drupe::Action::"authority_get_approval"
+  ],
+  resource
+);
+
+// Close only at MAIN, and only if a completed get_workorder call in the last
+// hour, for this same work order and site, confirmed that the job was signed
+// off by an operator (a person). Declined or queued outcomes do not match, and
+// neither do BOT or SCHEDULER approvers. Only ::response events count, so
+// failed or denied calls are ignored.
+@id("close_workorder_only_after_human_approval_at_main")
+permit (
+  principal,
+  action == Drupe::Action::"close_workorder",
+  resource
+)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"get_workorder"::response{
+    eventResource: resource,
+    input.wonum: context.input.wonum,
+    input.site_id: context.input.site_id,
+    output.approval_outcome: "SIGNED_OFF",
+    output.approver_type: "OPERATOR"
+  }
+};

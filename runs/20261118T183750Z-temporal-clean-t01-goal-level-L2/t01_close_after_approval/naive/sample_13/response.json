@@ -1,0 +1,30 @@
+{
+ "key_hash": "bf95c584f77f5de0c40468e1786efb52f62f989dae8142d80ec8111c9bf0d4e8",
+ "cache_hit": false,
+ "model_version": "claude-sonnet-5-5",
+ "request_id": "req_011ChAtGM7vEKZsMbyp8LQSZ",
+ "stop_reason": "end_turn",
+ "stop_details": null,
+ "usage": {
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 0,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "cache_creation_input_tokens": 0,
+  "cache_read_input_tokens": 90529,
+  "inference_geo": "global",
+  "input_tokens": 334,
+  "output_tokens": 2628,
+  "output_tokens_details": {
+   "thinking_tokens": 1433
+  },
+  "service_tier": "standard",
+  "speed": "standard"
+ },
+ "text": "```\n@id(\"read-only-lookups\")\npermit (principal, action == Drupe::Action::\"get_workorder\", resource);\n\n@id(\"read-only-list-workorders\")\npermit (principal, action == Drupe::Action::\"list_workorders\", resource);\n\n@id(\"read-only-workorder-tasks\")\npermit (principal, action == Drupe::Action::\"get_workorder_tasks\", resource);\n\n@id(\"read-only-workorder-costs\")\npermit (principal, action == Drupe::Action::\"get_workorder_costs\", resource);\n\n@id(\"read-only-actuals-vs-planned\")\npermit (principal, action == Drupe::Action::\"get_workorder_actuals_vs_planned\", resource);\n\n@id(\"read-only-kpis\")\npermit (principal, action == Drupe::Action::\"get_workorder_kpis\", resource);\n\n@id(\"read-only-schedule-calendar\")\npermit (principal, action == Drupe::Action::\"get_schedule_calendar\", resource);\n\n@id(\"read-only-my-assigned\")\npermit (principal, action == Drupe::Action::\"get_my_assigned_workorders\", resource);\n\n@id(\"read-only-failure-codes\")\npermit (principal, action == Drupe::Action::\"get_failure_codes\", resource);\n\n@id(\"read-only-authority-approval\")\npermit (principal, action == Drupe::Action::\"authority_get_approval\", resource);\n\n@id(\"close-at-main-after-human-signoff\")\npermit (principal, action == Drupe::Action::\"close_workorder\", resource)\nwhen { context.input.site_id == \"MAIN\" }\nwhen temporal {\n  formerly within 1h Drupe::Action::\"get_workorder\"::response{\n    eventResource: resource,\n    eventPrincipal: principal,\n    input.wonum: context.input.wonum,\n    input.site_id: context.input.site_id,\n    output.approval_outcome: \"SIGNED_OFF\",\n    output.approver_type: \"OPERATOR\"\n  }\n};\n\n@id(\"never-approve-workorders\")\nforbid (principal, action == Drupe::Action::\"approve_workorder\", resource);\n```\n\n- **Confirmation source:** `get_workorder` is the only tool whose output uses fixed enum values (`approval_outcome`, `approver_type`). `authority_get_approval` returns free-form strings, so I could not write a reliable \"human\" test against it. It is still allowed as a read-only lookup, but it does not satisfy the close condition.\n- **What counts as approval:** the close needs a completed `get_workorder` response from the last hour for the same `wonum` and `site_id`, with `approval_outcome` of `SIGNED_OFF` and `approver_type` of `OPERATOR`. A `DECLINED` or `QUEUED` outcome, or a `BOT` or `SCHEDULER` approver, never matches. Because the condition matches on `::response` events only, a denied or failed call confirms nothing.\n- **Later refusals not covered:** a later `get_workorder` response showing `DECLINED` or `QUEUED` does not cancel an earlier `SIGNED_OFF` within the hour. Your brief did not ask for that, and a temporal condition cannot negate \"any outcome other than `SIGNED_OFF`\".\n- **Agent approvals:** `approve_workorder` is never permitted, and the explicit `forbid` backs up the default deny. An approval the agent triggered would not show up as an `OPERATOR` approval anyway.\n- **Mutations:** `generate_work_order`, `update_workorder`, `assign_technician` and `cancel_workorder` have no permit, so they stay denied.",
+ "content_types": [
+  "thinking",
+  "text"
+ ],
+ "extraction": "fenced"
+}

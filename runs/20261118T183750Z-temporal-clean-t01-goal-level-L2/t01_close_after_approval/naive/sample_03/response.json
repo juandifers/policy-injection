@@ -1,0 +1,30 @@
+{
+ "key_hash": "8b18927926a45caec16ede8a94987ba1031edb57c835bf9b1fbd43b6b0a7ff13",
+ "cache_hit": false,
+ "model_version": "claude-sonnet-5-5",
+ "request_id": "req_011ChAt4mkRN5Sgs3fyrkJvR",
+ "stop_reason": "end_turn",
+ "stop_details": null,
+ "usage": {
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 0,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "cache_creation_input_tokens": 0,
+  "cache_read_input_tokens": 90529,
+  "inference_geo": "global",
+  "input_tokens": 334,
+  "output_tokens": 1860,
+  "output_tokens_details": {
+   "thinking_tokens": 1160
+  },
+  "service_tier": "standard",
+  "speed": "standard"
+ },
+ "text": "```\n@id(\"read-only-lookups\")\npermit (principal, action in [\n    Drupe::Action::\"get_workorder\",\n    Drupe::Action::\"authority_get_approval\",\n    Drupe::Action::\"list_workorders\",\n    Drupe::Action::\"get_workorder_tasks\",\n    Drupe::Action::\"get_workorder_costs\",\n    Drupe::Action::\"get_workorder_actuals_vs_planned\",\n    Drupe::Action::\"get_workorder_kpis\",\n    Drupe::Action::\"get_schedule_calendar\",\n    Drupe::Action::\"get_my_assigned_workorders\",\n    Drupe::Action::\"get_failure_codes\"\n  ], resource);\n\n@id(\"close-main-only-after-human-signoff\")\npermit (principal, action == Drupe::Action::\"close_workorder\", resource)\nwhen { context.input.site_id == \"MAIN\" }\nwhen temporal {\n  formerly within 1h Drupe::Action::\"get_workorder\"::response{\n    eventResource: resource,\n    input.wonum: context.input.wonum,\n    input.site_id: context.input.site_id,\n    output.approval_outcome: \"SIGNED_OFF\",\n    output.approver_type: \"OPERATOR\"\n  }\n};\n```\n\nI used the `get_workorder` response as the approval evidence, because it is the only source whose approver values are declared enums: `SIGNED_OFF` for an approval, and `OPERATOR` for a person. Declined or queued approvals, and approvals by `BOT` or `SCHEDULER`, do not match. The `authority_get_approval` output has free-form string fields (`decision`, `approver_kind`), so I could not safely match on its values. It is still allowed as a read-only lookup, but a call to it does not satisfy the close condition.\n\nThe close permit also requires the same `wonum` and `site_id`, an event within the last hour, and a completed `get_workorder` response in this session. A denied or failed call is recorded only as an error event and cannot satisfy it.\n\nThere is no permit for `approve_workorder` or for any other mutating tool, so those stay denied.",
+ "content_types": [
+  "thinking",
+  "text"
+ ],
+ "extraction": "fenced"
+}

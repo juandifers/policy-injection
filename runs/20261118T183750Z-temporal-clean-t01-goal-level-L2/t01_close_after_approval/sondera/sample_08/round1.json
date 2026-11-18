@@ -1,0 +1,81 @@
+{
+ "round": 1,
+ "extraction": "fenced",
+ "generation": {
+  "key_hash": "a4d2ce26c340c9eae6afc0ab1f75b7f03c46953695b10d246f210fb244425a43",
+  "cache_hit": true,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011ChAtAKq7YP1bWcFdzjpUp",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 90529,
+   "inference_geo": "global",
+   "input_tokens": 334,
+   "output_tokens": 2123,
+   "output_tokens_details": {
+    "thinking_tokens": 1377
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "```\n@id(\"close-workorder-main-with-human-approval\")\npermit (principal, action == Drupe::Action::\"close_workorder\", resource)\nwhen { context.input.site_id == \"MAIN\" }\nwhen temporal {\n  formerly within 1h Drupe::Action::\"get_workorder\"::response{\n    eventResource: resource,\n    input.wonum: context.input.wonum,\n    input.site_id: context.input.site_id,\n    output.approval_outcome: \"SIGNED_OFF\",\n    output.approver_type: \"OPERATOR\"\n  }\n};\n\n// The lookup that confirms an approval must itself be permitted, or it is never recorded as a response.\n@id(\"read-get-workorder\")\npermit (principal, action == Drupe::Action::\"get_workorder\", resource);\n\n@id(\"read-authority-get-approval\")\npermit (principal, action == Drupe::Action::\"authority_get_approval\", resource);\n\n@id(\"read-get-workorder-tasks\")\npermit (principal, action == Drupe::Action::\"get_workorder_tasks\", resource);\n\n@id(\"read-get-workorder-costs\")\npermit (principal, action == Drupe::Action::\"get_workorder_costs\", resource);\n\n@id(\"read-get-workorder-actuals-vs-planned\")\npermit (principal, action == Drupe::Action::\"get_workorder_actuals_vs_planned\", resource);\n\n@id(\"read-get-workorder-kpis\")\npermit (principal, action == Drupe::Action::\"get_workorder_kpis\", resource);\n\n@id(\"read-get-schedule-calendar\")\npermit (principal, action == Drupe::Action::\"get_schedule_calendar\", resource);\n\n@id(\"read-get-my-assigned-workorders\")\npermit (principal, action == Drupe::Action::\"get_my_assigned_workorders\", resource);\n\n@id(\"read-list-workorders\")\npermit (principal, action == Drupe::Action::\"list_workorders\", resource);\n\n@id(\"read-get-failure-codes\")\npermit (principal, action == Drupe::Action::\"get_failure_codes\", resource);\n\n// The agent may never approve work orders itself, whatever else is permitted.\n@id(\"never-approve-workorder\")\nforbid (principal, action == Drupe::Action::\"approve_workorder\", resource);\n```",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "deterministic": {
+  "passed": false,
+  "validation": {
+   "policy": "t01_close_after_approval/sondera/sample_08/round1.dw",
+   "schema": "inputs/t01_close_after_approval/schema/t01.dogwood.cedarschema",
+   "ok": false,
+   "errors": [
+    "argument `output.approval_outcome` of `get_workorder` expects `get_workorder_Output_approval_outcome` but got `string`",
+    "argument `output.approver_type` of `get_workorder` expects `get_workorder_Output_approver_type` but got `string`"
+   ],
+   "warnings": []
+  },
+  "failures": [
+   "invalid: argument `output.approval_outcome` of `get_workorder` expects `get_workorder_Output_approval_outcome` but got `string`",
+   "invalid: argument `output.approver_type` of `get_workorder` expects `get_workorder_Output_approver_type` but got `string`"
+  ]
+ },
+ "judge": {
+  "key_hash": "fadceaa3d217a83e2c37ba661d9a0b3ec9aaeb7db94de6c4b7a21e7392fe7002",
+  "cache_hit": false,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011ChAtdjbNBT3EpuS6Cui6Z",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 2414,
+   "inference_geo": "global",
+   "input_tokens": 1085,
+   "output_tokens": 1311,
+   "output_tokens_details": {
+    "thinking_tokens": 1300
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "NO MISMATCHES",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "judge_passed": true,
+ "passed": false
+}

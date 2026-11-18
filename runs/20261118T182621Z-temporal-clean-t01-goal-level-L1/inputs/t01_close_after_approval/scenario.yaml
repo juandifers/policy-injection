@@ -1,0 +1,49 @@
+# Temporal (Dogwood) scenario. Paths are relative to domains/assetopsbench/ unless noted.
+track: dogwood
+schema: scenarios/t01_close_after_approval/schema/t01.dogwood.cedarschema      # link_session_id(generated); build.py
+event_schema: schema/agentcore.dwschema                                           # AWS-shaped session pin
+traces: traces.yaml                                                               # relative to this folder
+gold: gold.dw
+weakenings: weak_*.dw
+servers: [wo, authority]   # wo = the external maintenance-data service (manifests/wo.maintenance-data.tools.json, lower trust);
+                           # authority = trusted approval authority (manifests/authority.tools.json), research infrastructure
+manifests:                 # what a generator sees for each server (relative to domains/assetopsbench/)
+  wo: scenarios/t01_close_after_approval/manifests/wo.maintenance-data.tools.json
+  authority: scenarios/t01_close_after_approval/manifests/authority.tools.json
+intent: intent.md          # the trusted instruction a generator sees by default (relative to this folder)
+intents:                   # selectable arms (--intent NAME): explicit = control; goal-level names no tool, field or value
+  explicit: intent.md
+  goal-level: intent.goal-level.md
+requirements: requirements.yaml   # scoring metadata: witness traces per contract requirement (never shown to a generator)
+arms:                      # Phase 2b manifest arms (--arm NAME; default = the files above, unchanged). Build: build_arms.py;
+                           # pinned by tests/test_t01_arms.py. Keys inherit from the fields above when absent. manifests/schema
+                           # paths are relative to domains/assetopsbench/, the rest to this folder.
+  v2:                      # A1: authority description without the researcher's note (sidecar arms/v2/authority.note.md); L0 of the gate
+    manifests: {authority: scenarios/t01_close_after_approval/arms/v2/manifests/authority.tools.json}
+    requirements: arms/v2/requirements.yaml
+  typed:                   # A3: v2 with the authority's decision/approver_kind as enums over the contract's closed sets; typed gold + typed suite copy
+    manifests: {authority: scenarios/t01_close_after_approval/arms/typed/manifests/authority.tools.json}
+    schema: scenarios/t01_close_after_approval/arms/typed/schema/t01.dogwood.cedarschema
+    gold: arms/typed/gold.dw
+    traces: arms/typed/traces.yaml
+    requirements: arms/typed/requirements.yaml
+  L1:                      # A4 accurate: vendor get_workorder output gains approval_outcome/approver_type enums with the true values
+    manifests: {wo: scenarios/t01_close_after_approval/arms/L1/manifests/wo.tools.json, authority: scenarios/t01_close_after_approval/arms/v2/manifests/authority.tools.json}
+    schema: scenarios/t01_close_after_approval/arms/L1/schema/t01.dogwood.cedarschema
+    traces: arms/L1/traces.yaml
+    requirements: arms/L1/requirements.yaml
+  L2:                      # A4 marker: same shape as L1, false distinctive values (SIGNED_OFF…, OPERATOR…)
+    manifests: {wo: scenarios/t01_close_after_approval/arms/L2/manifests/wo.tools.json, authority: scenarios/t01_close_after_approval/arms/v2/manifests/authority.tools.json}
+    schema: scenarios/t01_close_after_approval/arms/L2/schema/t01.dogwood.cedarschema
+    traces: arms/L2/traces.yaml
+    requirements: arms/L2/requirements.yaml
+  L3:                      # A4 mirror: vendor tool renamed get_approval_record with the authority's exact output field names, true values
+    manifests: {wo: scenarios/t01_close_after_approval/arms/L3/manifests/wo.tools.json, authority: scenarios/t01_close_after_approval/arms/v2/manifests/authority.tools.json}
+    schema: scenarios/t01_close_after_approval/arms/L3/schema/t01.dogwood.cedarschema
+    traces: arms/L3/traces.yaml
+    requirements: arms/L3/requirements.yaml
+  L4:                      # A4 control: vendor output gains priority ∈ {LOW, HIGH}
+    manifests: {wo: scenarios/t01_close_after_approval/arms/L4/manifests/wo.tools.json, authority: scenarios/t01_close_after_approval/arms/v2/manifests/authority.tools.json}
+    schema: scenarios/t01_close_after_approval/arms/L4/schema/t01.dogwood.cedarschema
+    traces: arms/L4/traces.yaml
+    requirements: arms/L4/requirements.yaml

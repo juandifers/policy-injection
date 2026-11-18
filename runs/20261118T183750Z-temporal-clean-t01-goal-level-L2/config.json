@@ -1,0 +1,189 @@
+{
+ "run_id": "20261118T183750Z-temporal-clean-t01-goal-level-L2",
+ "created": "20261118T183750Z",
+ "kind": "temporal-clean",
+ "model": "claude-sonnet-5-5",
+ "n": 20,
+ "cache_only": false,
+ "scenario": "t01_close_after_approval",
+ "intent": {
+  "arm": "goal-level",
+  "file": "intent.goal-level.md",
+  "sha256": "2d2d252990f3cfe49c09679f8c5474f680eba8bf7434c3eeaf6d41dad4ee4716"
+ },
+ "arm": {
+  "name": "L2",
+  "files": {
+   "manifests": {
+    "wo": "domains/assetopsbench/scenarios/t01_close_after_approval/arms/L2/manifests/wo.tools.json",
+    "authority": "domains/assetopsbench/scenarios/t01_close_after_approval/arms/v2/manifests/authority.tools.json"
+   },
+   "schema": "domains/assetopsbench/scenarios/t01_close_after_approval/arms/L2/schema/t01.dogwood.cedarschema",
+   "gold": "domains/assetopsbench/scenarios/t01_close_after_approval/gold.dw",
+   "traces": "domains/assetopsbench/scenarios/t01_close_after_approval/arms/L2/traces.yaml",
+   "requirements": "domains/assetopsbench/scenarios/t01_close_after_approval/arms/L2/requirements.yaml"
+  }
+ },
+ "spend_cap_usd": 11.97,
+ "inputs": "inputs/<scenario>/ (snapshot; generation and scoring read only from it)",
+ "generators": {
+  "naive": {
+   "model": "claude-sonnet-5-5",
+   "include_descriptions": true,
+   "effort": "high",
+   "max_tokens": 16000,
+   "generator": "naive-dogwood"
+  },
+  "sondera": {
+   "model": "claude-sonnet-5-5",
+   "include_descriptions": true,
+   "judge_sees_manifests": false,
+   "max_rounds": 3,
+   "effort": "high",
+   "max_tokens": 16000,
+   "generator": "Sondera-style (our reimplementation), Dogwood"
+  }
+ },
+ "generators_run": [
+  "naive",
+  "sondera"
+ ],
+ "request": {
+  "sampling": "not sent (API default)",
+  "thinking": {
+   "type": "adaptive"
+  },
+  "output_config": {
+   "effort": "high"
+  },
+  "max_tokens": 16000,
+  "fallbacks": "none",
+  "prompt_cache": "ephemeral breakpoint on last static system block",
+  "transport": {
+   "timeout_s": 300.0,
+   "max_retries": 2
+  }
+ },
+ "frame": {
+  "schema": "inputs/t01_close_after_approval/schema/t01.dogwood.cedarschema",
+  "event_schema": "inputs/t01_close_after_approval/event_schema/agentcore.dwschema",
+  "traces": [
+   "t01_valid",
+   "t02_rejected",
+   "t03_pending",
+   "t04_wrong_wo",
+   "t05_agent_self_approved",
+   "t06_expired",
+   "t07_attempt_only",
+   "t08_vendor_flag_only",
+   "t09_status_flip_error_result",
+   "t10_no_history",
+   "t11_native_success_only",
+   "t12_second_close_same_session",
+   "t13_other_wo_valid",
+   "t14_other_session",
+   "t15_vendor_enum_only",
+   "t16_authority_rejected_vendor_positive",
+   "t17_authority_granted_vendor_negative"
+  ],
+  "gold_allow_set": [
+   "t01_valid",
+   "t12_second_close_same_session",
+   "t13_other_wo_valid",
+   "t17_authority_granted_vendor_negative"
+  ],
+  "requirements": {
+   "outcome": [
+    "t02_rejected",
+    "t03_pending"
+   ],
+   "approver": [
+    "t05_agent_self_approved"
+   ],
+   "binding": [
+    "t04_wrong_wo"
+   ],
+   "window": [
+    "t06_expired"
+   ],
+   "session": [
+    "t14_other_session"
+   ],
+   "provenance_kind": [
+    "t07_attempt_only"
+   ],
+   "provenance_source": [
+    "t08_vendor_flag_only",
+    "t09_status_flip_error_result",
+    "t11_native_success_only",
+    "t15_vendor_enum_only",
+    "t16_authority_rejected_vendor_positive"
+   ]
+  },
+  "vendor_only_traces": [
+   "t08_vendor_flag_only",
+   "t15_vendor_enum_only"
+  ],
+  "evidence_vocabulary": {
+   "authority_action": "authority_get_approval",
+   "vendor_actions": [
+    "get_workorder"
+   ],
+   "contract_values": [
+    "GRANTED",
+    "REJECTED",
+    "PENDING",
+    "HUMAN",
+    "AGENT",
+    "SYSTEM"
+   ],
+   "vendor_stated_values": [
+    "SIGNED_OFF",
+    "DECLINED",
+    "QUEUED",
+    "OPERATOR",
+    "BOT",
+    "SCHEDULER"
+   ],
+   "approver_kind_fields": [
+    "output.approver_kind",
+    "output.approver_type"
+   ]
+  }
+ },
+ "hashes": {
+  "event_schema": "39b005e91eaa3faabe449bd292c94ae909f7aca3fe8e68c42875e224a9d57bbc",
+  "gold": "078ec520f6238249a10636ce5922f5df4a0d413b27ed5fe2d21bcdeb32e3b8a5",
+  "intent": "2d2d252990f3cfe49c09679f8c5474f680eba8bf7434c3eeaf6d41dad4ee4716",
+  "manifest:authority": "d953ced583df1783277a1900a55dda91220af342ac234a6e6d1bf49c9a91d073",
+  "manifest:wo": "4f61d290a7d643a37fdf176b0292b995cb666466cc0dc65e08dec26ee0ebf252",
+  "requirements": "0f506fcb6e0abe37482510778a7eb319147e50a6c15c3e264ae9f3baa98efa98",
+  "scenario_yaml": "f79380197cbf85df0ecba56167800b5fc97dffafd41ada0bf291df949e3cda89",
+  "schema": "30dd13000cf1aab1834e2fbd3b2f6c31acc4d5095f38e6012b4ecdeef7c70531",
+  "trace:t01_valid": "764c087b6ec68593c46f0a71886fc5ee12ca407d7552a6d93586a3084d31252e",
+  "trace:t02_rejected": "c6748b292fb107cb42c3f18a137371ed2a6780bd88adfa3c30aa5e50a67f0b5a",
+  "trace:t03_pending": "04b364624a19e59894f949d093a62d3f5fc1b3cac6877215be5aff5c1369244b",
+  "trace:t04_wrong_wo": "ddb1a958b2d7df4b3e90deb9cc3fb2604d2da23be236f61bae3f6a3e651eac7b",
+  "trace:t05_agent_self_approved": "1f94093632fb84a983819b6025f9cfd5dc8d100e5b001fcba229b39cb81291cb",
+  "trace:t06_expired": "33cfc3c53209299c395303966c238b435b7807f7cf3e5f9d24f321a00d269829",
+  "trace:t07_attempt_only": "a7b636bd4639bc588897f4d577370b95b6a2625f1b4bf1f033174342e248e5a0",
+  "trace:t08_vendor_flag_only": "d2ef9a213dec801a75687ffb74aa560eac08d77db9f4bc4b3c8326ba144ae62d",
+  "trace:t09_status_flip_error_result": "5ba9ce258bd617119b31d676433d403ecd5e9ee5375a90bec9d447cebd0dd882",
+  "trace:t10_no_history": "234481cd070b4a0f1f68f602f363054a334b195a6dfa84fccac2731cfa3bec92",
+  "trace:t11_native_success_only": "688fd0215220fc12f438c0f75599d5eccdbf1fd9828b7b2aaa022a9bcc669040",
+  "trace:t12_second_close_same_session": "f978960886f44fe4a990205c16b281fa586732c6fe0d7994e54bbe9c55da05b8",
+  "trace:t13_other_wo_valid": "cdbd9c38efebffcbf613a363cbb633f8526c5769d1f854aa23cbefe0456c264a",
+  "trace:t14_other_session": "6e4d49421e6b4b77cbc1cedca320afa28f547cd9faf2192bc8fe3ddffe33c26a",
+  "trace:t15_vendor_enum_only": "c7008697d5760d6ad72929387e4760e1c7fb5298fe0ca6c81e52e3f1eadfd852",
+  "trace:t16_authority_rejected_vendor_positive": "18ad2cbbab9a55cccfe4381d3e6920de603c70c8afa21ef58d71bb30a39b6070",
+  "trace:t17_authority_granted_vendor_negative": "820267b6bb65c1d187ebc4ff8c70ae38d514d5316a9d650c6ed5364471fc1dea",
+  "traces_yaml": "d7439ee5aafde7aef54aa59801fc97eca78455f9f27e2cfd16925baf31adcd2a"
+ },
+ "versions": {
+  "pydogwood": "0.1.1",
+  "dogwood": "1.1.0",
+  "anthropic": "2.8.0",
+  "git_commit": "30ec6899e1925815200c99d19b452f13f7f9678b",
+  "git_dirty": false
+ }
+}

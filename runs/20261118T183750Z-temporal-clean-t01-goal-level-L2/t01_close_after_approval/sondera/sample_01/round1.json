@@ -1,0 +1,81 @@
+{
+ "round": 1,
+ "extraction": "fenced",
+ "generation": {
+  "key_hash": "ba309efe0b94cce2e4636a3cac4cee7747f8141dd5d87518decfc8350b7c4c78",
+  "cache_hit": true,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011ChAt33TBJcM9sFWc3Kgv4",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 90529,
+   "inference_geo": "global",
+   "input_tokens": 334,
+   "output_tokens": 1400,
+   "output_tokens_details": {
+    "thinking_tokens": 921
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "```\n@id(\"close-workorder-at-main-after-human-signoff\")\npermit (principal, action == Drupe::Action::\"close_workorder\", resource)\nwhen { context.input.site_id == \"MAIN\" }\nwhen temporal {\n  formerly within 1h Drupe::Action::\"get_workorder\"::response{\n    eventResource: resource,\n    input.wonum: context.input.wonum,\n    input.site_id: context.input.site_id,\n    output.approval_outcome: \"SIGNED_OFF\",\n    output.approver_type: \"OPERATOR\"\n  }\n};\n\n// Read-only lookups. get_workorder must itself be permitted, otherwise its\n// response is never recorded and the close condition above can never hold.\n@id(\"read-only-lookups\")\npermit (\n  principal,\n  action in [\n    Drupe::Action::\"get_workorder\",\n    Drupe::Action::\"get_workorder_tasks\",\n    Drupe::Action::\"get_workorder_costs\",\n    Drupe::Action::\"get_workorder_actuals_vs_planned\",\n    Drupe::Action::\"get_workorder_kpis\",\n    Drupe::Action::\"get_schedule_calendar\",\n    Drupe::Action::\"get_my_assigned_workorders\",\n    Drupe::Action::\"list_workorders\",\n    Drupe::Action::\"get_failure_codes\",\n    Drupe::Action::\"authority_get_approval\"\n  ],\n  resource\n);\n```",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "deterministic": {
+  "passed": false,
+  "validation": {
+   "policy": "t01_close_after_approval/sondera/sample_01/round1.dw",
+   "schema": "inputs/t01_close_after_approval/schema/t01.dogwood.cedarschema",
+   "ok": false,
+   "errors": [
+    "argument `output.approval_outcome` of `get_workorder` expects `get_workorder_Output_approval_outcome` but got `string`",
+    "argument `output.approver_type` of `get_workorder` expects `get_workorder_Output_approver_type` but got `string`"
+   ],
+   "warnings": []
+  },
+  "failures": [
+   "invalid: argument `output.approval_outcome` of `get_workorder` expects `get_workorder_Output_approval_outcome` but got `string`",
+   "invalid: argument `output.approver_type` of `get_workorder` expects `get_workorder_Output_approver_type` but got `string`"
+  ]
+ },
+ "judge": {
+  "key_hash": "b08bbbeb09565b8fe9bdbcc108bc2ecbcbd0d23f8300ae13159ded8a711d73a7",
+  "cache_hit": false,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011ChAtQxZcLHkWG1yXDaiex",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 2414,
+   "inference_geo": "global",
+   "input_tokens": 818,
+   "output_tokens": 910,
+   "output_tokens_details": {
+    "thinking_tokens": 899
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "NO MISMATCHES",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "judge_passed": true,
+ "passed": false
+}

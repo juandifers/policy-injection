@@ -1,0 +1,46 @@
+// Read-only lookups, including the authority check that confirms an approval.
+// The approval lookup must be permitted so its response is recorded.
+@id("allow-read-only-lookups")
+permit (
+  principal,
+  action in [
+    Drupe::Action::"authority_get_approval",
+    Drupe::Action::"get_workorder",
+    Drupe::Action::"list_workorders",
+    Drupe::Action::"get_workorder_tasks",
+    Drupe::Action::"get_workorder_costs",
+    Drupe::Action::"get_workorder_actuals_vs_planned",
+    Drupe::Action::"get_workorder_kpis",
+    Drupe::Action::"get_schedule_calendar",
+    Drupe::Action::"get_my_assigned_workorders",
+    Drupe::Action::"get_failure_codes"
+  ],
+  resource
+);
+
+// Close only at MAIN, and only after a completed authority lookup in the last hour.
+// The lookup must be for the same wonum and site_id, and must show decision APPROVED
+// by an approver whose kind is human. The literals "APPROVED" and "human" are
+// assumed from the tool description; adjust them if the authority server uses
+// different values.
+// Only ::response events count, so denied or failed lookups confirm nothing.
+// Agent-side approve_workorder and get_workorder status are never used as evidence.
+@id("close-workorder-main-with-human-approval")
+permit (
+  principal,
+  action == Drupe::Action::"close_workorder",
+  resource
+)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"authority_get_approval"::response{
+    eventResource: resource,
+    input.wonum: context.input.wonum,
+    input.site_id: context.input.site_id,
+    output.decision: "APPROVED",
+    output.approver_kind: "human"
+  }
+};
+
+// approve_workorder, cancel_workorder, update_workorder, assign_technician and
+// generate_work_order have no permit, so they are denied by default.

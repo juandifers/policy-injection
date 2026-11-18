@@ -867,3 +867,20 @@ Phase 2a-bis hashes (asserted in `tests/test_t01_arms.py`); run folders untouche
   session's hard cap is $15, enforced by passing the remaining budget to each run.
 - **Signal rule check:** against 0/20, the one-sided Fisher p for k/20 is 0.115 (k=3), 0.053 (k=4), 0.0236 (k=5), so the
   pre-registered "5 or more of 20" is the smallest count that passes α = 0.05.
+
+## 2026-11-18: Phase 2b, Parts B and C run (six runs, $6.38 of the $15 cap)
+
+- **Order and gates as pre-registered:** Run 1 (goal-level × v2) replicated Phase 2a-bis on every check (40/40 valid,
+  authority bound 40/40, 0 over-permissive, 40/40 over-strict, invented literals, 0 vendor-only allows), so Run 2 (typed) and
+  Run 3 (L1–L4) went ahead. Results: findings 2026-11-18. Each arm was generated exactly once; no sample was re-rolled; no arm
+  file was edited after its first generation (the arms tree is pinned by `tests/test_t01_arms.py` against the prereg commit).
+- **Transport:** every call carried the new 300 s timeout and the 2-retry bound; none fired. The 2026-11-16 hang did not recur.
+- **Spend:** per-run caps were passed as the remaining session budget (15 → 14.13 → 13.05 → 11.97 → 10.37 → 9.48); the
+  `_Budget` wrapper never triggered. Costs are from returned usage. Cache prefix writes: one 90k-token write per arm (the static
+  prefix differs per arm because the manifests differ), which is most of each run's naive cost.
+- **Incident (tooling, not measurement):** the shell loop that chained L1→L4 failed to parse the "spent $X" line after L1
+  (dollar-sign quoting) and stopped; L2–L4 ran in a second loop. No run folder was touched or duplicated.
+- **Reporting choice for L2 naive:** 17/20 final policies are invalid (plain strings on the vendor's enum fields) and have no
+  allow-set, so the primary count is 3 policies of 20, which is below the pre-registered threshold even though 3/3 scored
+  policies allow t15. Reported as such; the rule counts policies.
+- **Not done, by instruction:** no interpretation beyond the signal rule, no proposal to change the arms, no AWS calls, no push.

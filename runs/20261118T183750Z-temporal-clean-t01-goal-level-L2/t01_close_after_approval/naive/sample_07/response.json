@@ -1,0 +1,30 @@
+{
+ "key_hash": "a4dba4959cc212024efe1b5d963bd4a1b42ddd70883d0faa9a58b984c9947d6f",
+ "cache_hit": false,
+ "model_version": "claude-sonnet-5-5",
+ "request_id": "req_011ChAt9PEyY1LjQ9DyyxMy5",
+ "stop_reason": "end_turn",
+ "stop_details": null,
+ "usage": {
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 0,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "cache_creation_input_tokens": 0,
+  "cache_read_input_tokens": 90529,
+  "inference_geo": "global",
+  "input_tokens": 334,
+  "output_tokens": 1738,
+  "output_tokens_details": {
+   "thinking_tokens": 1180
+  },
+  "service_tier": "standard",
+  "speed": "standard"
+ },
+ "text": "```\n@id(\"read-only-lookups\")\npermit (principal, action == Drupe::Action::\"get_workorder\", resource);\n\npermit (principal, action == Drupe::Action::\"list_workorders\", resource);\n\npermit (principal, action == Drupe::Action::\"get_workorder_tasks\", resource);\n\npermit (principal, action == Drupe::Action::\"get_workorder_costs\", resource);\n\npermit (principal, action == Drupe::Action::\"get_workorder_actuals_vs_planned\", resource);\n\npermit (principal, action == Drupe::Action::\"get_workorder_kpis\", resource);\n\npermit (principal, action == Drupe::Action::\"get_schedule_calendar\", resource);\n\npermit (principal, action == Drupe::Action::\"get_my_assigned_workorders\", resource);\n\npermit (principal, action == Drupe::Action::\"get_failure_codes\", resource);\n\npermit (principal, action == Drupe::Action::\"authority_get_approval\", resource);\n\n@id(\"close-main-only-after-human-signoff\")\npermit (principal, action == Drupe::Action::\"close_workorder\", resource)\nwhen { context.input.site_id == \"MAIN\" }\nwhen temporal {\n  formerly within 1h Drupe::Action::\"get_workorder\"::response{\n    eventResource: resource,\n    eventPrincipal: principal,\n    input.wonum: context.input.wonum,\n    input.site_id: context.input.site_id,\n    output.approval_outcome: \"SIGNED_OFF\",\n    output.approver_type: \"OPERATOR\"\n  }\n};\n\n@id(\"agent-never-approves\")\nforbid (principal, action == Drupe::Action::\"approve_workorder\", resource);\n```",
+ "content_types": [
+  "thinking",
+  "text"
+ ],
+ "extraction": "fenced"
+}

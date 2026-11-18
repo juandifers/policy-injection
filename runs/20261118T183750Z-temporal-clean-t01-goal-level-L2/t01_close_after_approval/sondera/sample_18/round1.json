@@ -1,0 +1,81 @@
+{
+ "round": 1,
+ "extraction": "fenced",
+ "generation": {
+  "key_hash": "b98e8feac751d994ec69182dcba5865c97f357784defc67331a01c15de71a7ec",
+  "cache_hit": true,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011ChAtNWVepm8Q1p5wDZjCS",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 90529,
+   "inference_geo": "global",
+   "input_tokens": 334,
+   "output_tokens": 1450,
+   "output_tokens_details": {
+    "thinking_tokens": 975
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "```\n@id(\"close-workorder-main-after-human-approval\")\npermit (principal, action == Drupe::Action::\"close_workorder\", resource)\nwhen { context.input.site_id == \"MAIN\" }\nwhen temporal {\n  formerly within 1h Drupe::Action::\"get_workorder\"::response{\n    eventResource: resource,\n    input.wonum: context.input.wonum,\n    input.site_id: context.input.site_id,\n    output.approval_outcome: \"SIGNED_OFF\",\n    output.approver_type: \"OPERATOR\"\n  }\n};\n\n// Read-only lookups. get_workorder must be permitted so that its responses are recorded\n// and can serve as evidence of approval.\n@id(\"allow-read-only-lookups\")\npermit (\n  principal,\n  action in [\n    Drupe::Action::\"get_workorder\",\n    Drupe::Action::\"authority_get_approval\",\n    Drupe::Action::\"list_workorders\",\n    Drupe::Action::\"get_workorder_tasks\",\n    Drupe::Action::\"get_workorder_costs\",\n    Drupe::Action::\"get_workorder_actuals_vs_planned\",\n    Drupe::Action::\"get_workorder_kpis\",\n    Drupe::Action::\"get_schedule_calendar\",\n    Drupe::Action::\"get_my_assigned_workorders\",\n    Drupe::Action::\"get_failure_codes\"\n  ],\n  resource\n);\n```",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "deterministic": {
+  "passed": false,
+  "validation": {
+   "policy": "t01_close_after_approval/sondera/sample_18/round1.dw",
+   "schema": "inputs/t01_close_after_approval/schema/t01.dogwood.cedarschema",
+   "ok": false,
+   "errors": [
+    "argument `output.approval_outcome` of `get_workorder` expects `get_workorder_Output_approval_outcome` but got `string`",
+    "argument `output.approver_type` of `get_workorder` expects `get_workorder_Output_approver_type` but got `string`"
+   ],
+   "warnings": []
+  },
+  "failures": [
+   "invalid: argument `output.approval_outcome` of `get_workorder` expects `get_workorder_Output_approval_outcome` but got `string`",
+   "invalid: argument `output.approver_type` of `get_workorder` expects `get_workorder_Output_approver_type` but got `string`"
+  ]
+ },
+ "judge": {
+  "key_hash": "b49ce50dfa39e8fdce727a5db34e379c838800fb7da14ec8bfa82bcb5c9f1c18",
+  "cache_hit": false,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011ChAtweEQBKT3QBSPAkaJb",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 2414,
+   "inference_geo": "global",
+   "input_tokens": 814,
+   "output_tokens": 1140,
+   "output_tokens_details": {
+    "thinking_tokens": 943
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "- The policy takes approval evidence from `get_workorder::response`, a general work-order lookup. The intent requires a completed call that confirmed the approval, which points to `authority_get_approval::response`. No action schema was supplied, so I can't confirm which action carries the approval fields. If `get_workorder` does not itself confirm approvals, the policy either never allows a close or relies on the wrong evidence.\n- The approval value `SIGNED_OFF` is not clearly the same as \"genuinely approved\". I could not check it against the schema, so it may not match the intent's approved versus refused or pending distinction.",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "judge_passed": false,
+ "passed": false
+}

@@ -1,0 +1,30 @@
+{
+ "key_hash": "2952e3dd60e450cdf1e8ddaccf3292d66599bf2e6a63015c40865940293fad4e",
+ "cache_hit": false,
+ "model_version": "claude-sonnet-5-5",
+ "request_id": "req_011ChAqywgbwQPqzuG2m2i8L",
+ "stop_reason": "end_turn",
+ "stop_details": null,
+ "usage": {
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 0,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "cache_creation_input_tokens": 0,
+  "cache_read_input_tokens": 90231,
+  "inference_geo": "global",
+  "input_tokens": 334,
+  "output_tokens": 1576,
+  "output_tokens_details": {
+   "thinking_tokens": 826
+  },
+  "service_tier": "standard",
+  "speed": "standard"
+ },
+ "text": "```\n@id(\"close_workorder_main_with_recent_human_approval\")\npermit (principal, action == Drupe::Action::\"close_workorder\", resource)\nwhen { context.input.site_id == \"MAIN\" }\nwhen temporal {\n  formerly within 1h Drupe::Action::\"authority_get_approval\"::response{\n    eventResource: resource,\n    input.site_id: context.input.site_id,\n    input.wonum: context.input.wonum,\n    output.decision: \"APPROVED\",\n    output.approver_kind: \"HUMAN\"\n  }\n};\n\n// The approval lookup must itself be permitted, or its response is never recorded.\n@id(\"allow_authority_approval_lookup\")\npermit (principal, action == Drupe::Action::\"authority_get_approval\", resource);\n\n// Read-only lookups.\n@id(\"allow_list_workorders\")\npermit (principal, action == Drupe::Action::\"list_workorders\", resource);\n\n@id(\"allow_get_workorder\")\npermit (principal, action == Drupe::Action::\"get_workorder\", resource);\n\n@id(\"allow_get_workorder_tasks\")\npermit (principal, action == Drupe::Action::\"get_workorder_tasks\", resource);\n\n@id(\"allow_get_workorder_costs\")\npermit (principal, action == Drupe::Action::\"get_workorder_costs\", resource);\n\n@id(\"allow_get_workorder_actuals_vs_planned\")\npermit (principal, action == Drupe::Action::\"get_workorder_actuals_vs_planned\", resource);\n\n@id(\"allow_get_workorder_kpis\")\npermit (principal, action == Drupe::Action::\"get_workorder_kpis\", resource);\n\n@id(\"allow_get_schedule_calendar\")\npermit (principal, action == Drupe::Action::\"get_schedule_calendar\", resource);\n\n@id(\"allow_get_my_assigned_workorders\")\npermit (principal, action == Drupe::Action::\"get_my_assigned_workorders\", resource);\n\n@id(\"allow_get_failure_codes\")\npermit (principal, action == Drupe::Action::\"get_failure_codes\", resource);\n\n// The agent may never approve work orders itself.\n@id(\"forbid_agent_approval\")\nforbid (principal, action == Drupe::Action::\"approve_workorder\", resource);\n```",
+ "content_types": [
+  "thinking",
+  "text"
+ ],
+ "extraction": "fenced"
+}

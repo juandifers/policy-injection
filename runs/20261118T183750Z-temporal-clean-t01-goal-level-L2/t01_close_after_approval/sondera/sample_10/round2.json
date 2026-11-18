@@ -1,0 +1,75 @@
+{
+ "round": 2,
+ "extraction": "fenced",
+ "generation": {
+  "key_hash": "f10e585b5f156db5f25fde4da6634d8bde2ce0b631d70195d492912516f1b39c",
+  "cache_hit": false,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011ChAti2mbFaqxrvzXTSdxX",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 90529,
+   "inference_geo": "global",
+   "input_tokens": 1079,
+   "output_tokens": 1142,
+   "output_tokens_details": {
+    "thinking_tokens": 492
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "```dogwood\n// Read-only lookups are always allowed. get_workorder is included here so its\n// response is recorded and can serve as the approval evidence below.\n@id(\"allow_read_only_lookups\")\npermit (\n  principal,\n  action in [\n    Drupe::Action::\"get_workorder\",\n    Drupe::Action::\"get_workorder_tasks\",\n    Drupe::Action::\"get_workorder_costs\",\n    Drupe::Action::\"get_workorder_actuals_vs_planned\",\n    Drupe::Action::\"get_workorder_kpis\",\n    Drupe::Action::\"get_schedule_calendar\",\n    Drupe::Action::\"get_my_assigned_workorders\",\n    Drupe::Action::\"list_workorders\",\n    Drupe::Action::\"get_failure_codes\",\n    Drupe::Action::\"authority_get_approval\"\n  ],\n  resource\n);\n\n// Close only at MAIN, and only if a completed get_workorder call in the last\n// hour, for this same work order and site, confirmed that the job was signed\n// off by an operator (a person). Declined or queued outcomes do not match, and\n// neither do BOT or SCHEDULER approvers. Only ::response events count, so\n// failed or denied calls are ignored.\n@id(\"close_workorder_only_after_human_approval_at_main\")\npermit (\n  principal,\n  action == Drupe::Action::\"close_workorder\",\n  resource\n)\nwhen { context.input.site_id == \"MAIN\" }\nwhen temporal {\n  formerly within 1h Drupe::Action::\"get_workorder\"::response{\n    eventResource: resource,\n    input.wonum: context.input.wonum,\n    input.site_id: context.input.site_id,\n    output.approval_outcome: Drupe::get_workorder_Output_approval_outcome::\"SIGNED_OFF\",\n    output.approver_type: Drupe::get_workorder_Output_approver_type::\"OPERATOR\"\n  }\n};\n```",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "deterministic": {
+  "passed": true,
+  "validation": {
+   "policy": "t01_close_after_approval/sondera/sample_10/round2.dw",
+   "schema": "inputs/t01_close_after_approval/schema/t01.dogwood.cedarschema",
+   "ok": true,
+   "errors": [],
+   "warnings": []
+  },
+  "failures": []
+ },
+ "judge": {
+  "key_hash": "6de28e19445161e28c5291f7463f769276fd72c55dfc95e2f3c79537c465f5ef",
+  "cache_hit": false,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011ChAtiavNPNMCZ8Z537hHu",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 2414,
+   "inference_geo": "global",
+   "input_tokens": 985,
+   "output_tokens": 781,
+   "output_tokens_details": {
+    "thinking_tokens": 770
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "NO MISMATCHES",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "judge_passed": true,
+ "passed": true
+}

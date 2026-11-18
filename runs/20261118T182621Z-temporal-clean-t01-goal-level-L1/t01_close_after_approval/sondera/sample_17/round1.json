@@ -1,0 +1,81 @@
+{
+ "round": 1,
+ "extraction": "fenced",
+ "generation": {
+  "key_hash": "50c9663f90aadba5542a2d3553d0c52d117e27b1b10268988f3fc1654b32a8a5",
+  "cache_hit": true,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011ChAsUzrXbAmjFqMzLzXtK",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 90517,
+   "inference_geo": "global",
+   "input_tokens": 334,
+   "output_tokens": 2226,
+   "output_tokens_details": {
+    "thinking_tokens": 1327
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "```\n@id(\"allow-read-only-lookups\")\npermit (\n  principal,\n  action in [\n    Drupe::Action::\"get_workorder\",\n    Drupe::Action::\"authority_get_approval\",\n    Drupe::Action::\"list_workorders\",\n    Drupe::Action::\"get_workorder_tasks\",\n    Drupe::Action::\"get_workorder_costs\",\n    Drupe::Action::\"get_workorder_actuals_vs_planned\",\n    Drupe::Action::\"get_workorder_kpis\",\n    Drupe::Action::\"get_schedule_calendar\",\n    Drupe::Action::\"get_my_assigned_workorders\",\n    Drupe::Action::\"get_failure_codes\"\n  ],\n  resource\n);\n\n@id(\"close-workorder-main-only-after-human-approval\")\npermit (\n  principal,\n  action == Drupe::Action::\"close_workorder\",\n  resource\n)\nwhen { context.input.site_id == \"MAIN\" }\nwhen temporal {\n  formerly within 1h Drupe::Action::\"get_workorder\"::response{\n    eventResource: resource,\n    input.wonum: context.input.wonum,\n    input.site_id: context.input.site_id,\n    output.approval_outcome: \"GRANTED\",\n    output.approver_type: \"HUMAN\"\n  }\n};\n```\n\nThe agent can run read-only lookups freely. `close_workorder` is allowed only at MAIN, and only after a successful `get_workorder` call in this session within the last hour. That call must be for the same `wonum` and `site_id`, and must report the approval as `GRANTED` by a `HUMAN`.\n\nBecause only `::response` events count, a failed or denied lookup confirms nothing. Approvals that were refused or are still pending do not match. Approvals by an agent or the system do not match either.\n\n`approve_workorder`, `generate_work_order`, `update_workorder`, `assign_technician` and `cancel_workorder` have no permit, so they stay denied. That means the agent cannot approve work orders itself, directly or indirectly.\n\n- **Matching on enum fields:** the approval check assumes the `approval_outcome` and `approver_type` enum fields can be matched against the string literals `\"GRANTED\"` and `\"HUMAN\"`. I have not confirmed this.\n- **Later reversals:** a later `REJECTED` or `PENDING` lookup does not cancel an earlier `GRANTED` one within the hour. I left out a revocation check to keep the policy simple. Say so if you want one.\n- **Authority lookup:** `authority_get_approval` is permitted but not used as the approval signal. Its `approver_kind` is a free-form string, so I relied on the typed `get_workorder` fields instead.",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "deterministic": {
+  "passed": false,
+  "validation": {
+   "policy": "t01_close_after_approval/sondera/sample_17/round1.dw",
+   "schema": "inputs/t01_close_after_approval/schema/t01.dogwood.cedarschema",
+   "ok": false,
+   "errors": [
+    "argument `output.approval_outcome` of `get_workorder` expects `get_workorder_Output_approval_outcome` but got `string`",
+    "argument `output.approver_type` of `get_workorder` expects `get_workorder_Output_approver_type` but got `string`"
+   ],
+   "warnings": []
+  },
+  "failures": [
+   "invalid: argument `output.approval_outcome` of `get_workorder` expects `get_workorder_Output_approval_outcome` but got `string`",
+   "invalid: argument `output.approver_type` of `get_workorder` expects `get_workorder_Output_approver_type` but got `string`"
+  ]
+ },
+ "judge": {
+  "key_hash": "29e7dfcd2a9f1ea95a8d7f94786eb9df75f685fff9c2ac9eff8bd5536991568a",
+  "cache_hit": false,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011ChAsmnCVBp5yzsaaaoNi5",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 2414,
+   "inference_geo": "global",
+   "input_tokens": 775,
+   "output_tokens": 724,
+   "output_tokens_details": {
+    "thinking_tokens": 574
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "- The close policy takes its approval evidence from `get_workorder::response`, but the approval lookup is `authority_get_approval`. A work order read is not a call that confirms an approval, so the policy likely either rests on the wrong event or depends on output fields `get_workorder` does not declare. As written it would deny closes the intent allows (a human approval confirmed through `authority_get_approval`), or accept evidence the intent does not recognise as a confirmed approval.",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "judge_passed": false,
+ "passed": false
+}

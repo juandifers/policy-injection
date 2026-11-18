@@ -1,0 +1,30 @@
+{
+ "key_hash": "cffab7807d8b975963696df06fe459cd527b7fded3382b935dcfb19fe1179df2",
+ "cache_hit": false,
+ "model_version": "claude-sonnet-5-5",
+ "request_id": "req_011ChAqqkEJZya5mhLLzLTam",
+ "stop_reason": "end_turn",
+ "stop_details": null,
+ "usage": {
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 0,
+   "ephemeral_5m_input_tokens": 90231
+  },
+  "cache_creation_input_tokens": 90231,
+  "cache_read_input_tokens": 0,
+  "inference_geo": "global",
+  "input_tokens": 334,
+  "output_tokens": 1709,
+  "output_tokens_details": {
+   "thinking_tokens": 823
+  },
+  "service_tier": "standard",
+  "speed": "standard"
+ },
+ "text": "```\n// Close: MAIN only, and only after a human approval of this exact work order\n// (same wonum and site) was confirmed by a completed authority lookup in the last hour.\n// NOTE: the \"APPROVED\" and \"HUMAN\" literals are my assumption about the authority\n// server's output values; adjust them if the server uses different strings.\n@id(\"close-main-with-human-approval\")\npermit (principal, action == Drupe::Action::\"close_workorder\", resource)\nwhen { context.input.site_id == \"MAIN\" }\nwhen temporal {\n  formerly within 1h Drupe::Action::\"authority_get_approval\"::response{\n    eventResource: resource,\n    eventPrincipal: principal,\n    input.wonum: context.input.wonum,\n    input.site_id: context.input.site_id,\n    output.decision: \"APPROVED\",\n    output.approver_kind: \"HUMAN\"\n  }\n};\n\n// The approval lookup must itself be permitted, otherwise it is never recorded as a response.\n@id(\"allow-authority-lookup\")\npermit (principal, action == Drupe::Action::\"authority_get_approval\", resource);\n\n// Read-only lookups.\n@id(\"allow-read-list-workorders\")\npermit (principal, action == Drupe::Action::\"list_workorders\", resource);\n\n@id(\"allow-read-get-workorder\")\npermit (principal, action == Drupe::Action::\"get_workorder\", resource);\n\n@id(\"allow-read-get-workorder-tasks\")\npermit (principal, action == Drupe::Action::\"get_workorder_tasks\", resource);\n\n@id(\"allow-read-get-workorder-costs\")\npermit (principal, action == Drupe::Action::\"get_workorder_costs\", resource);\n\n@id(\"allow-read-actuals-vs-planned\")\npermit (principal, action == Drupe::Action::\"get_workorder_actuals_vs_planned\", resource);\n\n@id(\"allow-read-kpis\")\npermit (principal, action == Drupe::Action::\"get_workorder_kpis\", resource);\n\n@id(\"allow-read-schedule-calendar\")\npermit (principal, action == Drupe::Action::\"get_schedule_calendar\", resource);\n\n@id(\"allow-read-my-assigned\")\npermit (principal, action == Drupe::Action::\"get_my_assigned_workorders\", resource);\n\n@id(\"allow-read-failure-codes\")\npermit (principal, action == Drupe::Action::\"get_failure_codes\", resource);\n\n// The agent may never approve work orders itself. Deny by default already covers this;\n// the explicit forbid guards against any future permit.\n@id(\"never-self-approve\")\nforbid (principal, action == Drupe::Action::\"approve_workorder\", resource);\n```",
+ "content_types": [
+  "thinking",
+  "text"
+ ],
+ "extraction": "fenced"
+}
