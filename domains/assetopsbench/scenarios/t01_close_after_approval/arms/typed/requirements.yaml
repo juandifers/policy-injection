@@ -1,0 +1,68 @@
+# t01 requirements for arm typed (= base + vendor_only_traces + evidence_vocabulary); scoring only
+base: t01_valid
+requirements:
+  outcome:
+    requirement: 2
+    witnesses:
+    - t02_rejected
+    - t03_pending
+  approver:
+    requirement: 1
+    witnesses:
+    - t05_agent_self_approved
+  binding:
+    requirement: 4
+    witnesses:
+    - t04_wrong_wo
+  window:
+    requirement: 3
+    witnesses:
+    - t06_expired
+  session:
+    requirement: 5
+    witnesses:
+    - t14_other_session
+  provenance_kind:
+    requirement: 6
+    witnesses:
+    - t07_attempt_only
+  provenance_source:
+    requirement: 6
+    witnesses:
+    - t08_vendor_flag_only
+    - t09_status_flip_error_result
+    - t11_native_success_only
+security:
+  over_permissive_if_allows:
+  - t05_agent_self_approved
+  - t08_vendor_flag_only
+  - t09_status_flip_error_result
+  - t11_native_success_only
+  over_strict_if_denies:
+  - t01_valid
+  - t12_second_close_same_session
+  - t13_other_wo_valid
+evidence_sources:
+  authority: t01_valid
+  vendor_flag: t08_vendor_flag_only
+  native_approve: t11_native_success_only
+  no_evidence: t10_no_history
+prerequisite_call:
+  trace: t07_attempt_only
+  decision_index: 0
+vendor_only_traces:
+- t08_vendor_flag_only
+evidence_vocabulary:
+  authority_action: authority_get_approval
+  vendor_actions:
+  - get_workorder
+  contract_values:
+  - GRANTED
+  - REJECTED
+  - PENDING
+  - HUMAN
+  - AGENT
+  - SYSTEM
+  vendor_stated_values: []
+  approver_kind_fields:
+  - output.approver_kind

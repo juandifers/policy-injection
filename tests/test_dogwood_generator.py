@@ -248,3 +248,80 @@ def test_gives_up_after_max_rounds_and_keeps_the_last_attempt(tmp_path):
     res = run(CachedLLM(provider, tmp_path / "cache"), load_dogwood_inputs(T01), SonderaDogwoodConfig(model="m"), 0, tmp_path / "work")
     assert not res.passed and res.rounds_used == 3 and res.final_policy == "bad 3"
     assert sorted(p.name for p in (tmp_path / "work").glob("round*.dw")) == ["round1.dw", "round2.dw", "round3.dw"]
+
+
+# ---- Phase 2b: manifest arms (scenario.yaml `arms`, CLI --arm). Base inputs unchanged; each arm overrides named files.
+ARMS = T01 / "arms"
+
+
+def test_base_inputs_are_unchanged_by_the_arms_mechanism():
+    base = load_dogwood_inputs(T01, intent="goal-level")
+    assert base.arm_name == "base"
+    assert base.manifest_paths == (T01 / "manifests" / "wo.maintenance-data.tools.json", T01 / "manifests" / "authority.tools.json")
+    assert base.schema_path == T01 / "schema" / "t01.dogwood.cedarschema" and base.gold == T01 / "gold.dw"
+    assert base.traces_yaml == T01 / "traces.yaml" and base.requirements == T01 / "requirements.yaml"
+    assert base.hashes["manifest:authority"] == "f8be660cb4f2a0dc7fecf359ad24f2b83d6a1203f4bbd81a1e7289ebe8a7e2a5"  # Phase 2a-bis
+
+
+def test_v2_arm_differs_from_base_in_exactly_the_authority_manifest_and_requirements():
+    base, v2 = load_dogwood_inputs(T01, intent="goal-level"), load_dogwood_inputs(T01, intent="goal-level", arm="v2")
+    assert v2.arm_name == "v2" and v2.intent_name == "goal-level" and v2.intent == base.intent
+    changed = {k for k in base.hashes if base.hashes[k] != v2.hashes[k]}
+    assert changed == {"manifest:authority", "requirements"}
+    assert set(v2.hashes) == set(base.hashes)
+    assert v2.manifest_paths[1] == ARMS / "v2" / "manifests" / "authority.tools.json"
+    assert v2.schema_path == base.schema_path and v2.gold == base.gold and v2.traces_yaml == base.traces_yaml
+
+
+def test_vendor_arms_share_the_v2_authority_file_and_override_wo_schema_traces_requirements():
+    v2 = load_dogwood_inputs(T01, intent="goal-level", arm="v2")
+    for arm in ("L1", "L2", "L3", "L4"):
+        a = load_dogwood_inputs(T01, intent="goal-level", arm=arm)
+        assert a.manifest_paths[1] == v2.manifest_paths[1] and a.hashes["manifest:authority"] == v2.hashes["manifest:authority"]
+        assert a.manifest_paths[0] == ARMS / arm / "manifests" / "wo.tools.json"
+        assert a.schema_path == ARMS / arm / "schema" / "t01.dogwood.cedarschema"
+        assert a.traces_yaml == ARMS / arm / "traces.yaml" and a.requirements == ARMS / arm / "requirements.yaml"
+        assert a.gold == v2.gold and a.hashes["gold"] == v2.hashes["gold"] and a.hashes["intent"] == v2.hashes["intent"]
+        assert {"trace:t15_vendor_enum_only", "trace:t16_authority_rejected_vendor_positive", "trace:t17_authority_granted_vendor_negative"} <= set(a.hashes)
+
+
+def test_typed_arm_overrides_authority_schema_gold_traces_requirements():
+    v2, t = load_dogwood_inputs(T01, intent="goal-level", arm="v2"), load_dogwood_inputs(T01, intent="goal-level", arm="typed")
+    assert t.manifest_paths[0] == v2.manifest_paths[0] and t.manifest_paths[1] == ARMS / "typed" / "manifests" / "authority.tools.json"
+    assert t.schema_path == ARMS / "typed" / "schema" / "t01.dogwood.cedarschema" and t.gold == ARMS / "typed" / "gold.dw"
+    assert t.traces_yaml == ARMS / "typed" / "traces.yaml"
+    assert set(k for k in t.hashes if k.startswith("trace:")) == set(k for k in v2.hashes if k.startswith("trace:"))  # same 14 ids
+
+
+def test_unknown_arm_is_refused():
+    with pytest.raises(ValueError, match="arm"):
+        load_dogwood_inputs(T01, intent="goal-level", arm="L9")
+
+
+def test_snapshot_records_the_arm_and_round_trips(tmp_path):
+    a = load_dogwood_inputs(T01, intent="goal-level", arm="L2")
+    snap = snapshot(a, tmp_path / "s")
+    assert snap.arm_name == "L2" and snap.hashes == a.hashes
+    assert load_snapshot(tmp_path / "s").arm_name == "L2"
+    assert (tmp_path / "s" / "traces" / "t15_vendor_enum_only.log").is_file()
+
+
+def test_arm_requirements_carry_vendor_only_traces_and_vocabulary():
+    a = load_dogwood_inputs(T01, intent="goal-level", arm="L2")
+    suite = temporal.load_suite(a.traces_yaml)
+    reqs = load_requirements(a.requirements, suite)
+    assert reqs.vendor_only == ("t08_vendor_flag_only", "t15_vendor_enum_only")
+    assert all(suite.contract[t] is False for t in reqs.vendor_only)
+    assert reqs.vocabulary["authority_action"] == "authority_get_approval" and reqs.vocabulary["vendor_actions"] == ["get_workorder"]
+    assert set(reqs.vocabulary["vendor_stated_values"]) >= {"SIGNED_OFF", "OPERATOR"}
+    base = load_requirements(load_dogwood_inputs(T01).requirements, suite)
+    assert base.vendor_only == () and base.vocabulary is None
+
+
+def test_requirements_rejects_vendor_only_trace_that_the_contract_allows(tmp_path):
+    inp = load_dogwood_inputs(T01)
+    suite = temporal.load_suite(inp.traces_yaml)
+    bad = tmp_path / "r.yaml"
+    bad.write_text("base: t01_valid\nrequirements:\n  x: {requirement: 1, witnesses: [t02_rejected]}\nvendor_only_traces: [t01_valid]\n")
+    with pytest.raises(ValueError, match="vendor_only_traces"):
+        load_requirements(bad, suite)

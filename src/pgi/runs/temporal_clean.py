@@ -3,7 +3,15 @@ scenario's trace suite, written to runs/<id>/.
 
     uv run --group dogwood python -m pgi.runs.temporal_clean --model claude-sonnet-5-5 --n 20 \
         --scenario domains/assetopsbench/scenarios/t01_close_after_approval --label t01
+    ... --intent goal-level --arm L1       # selectable intent arm and manifest arm (scenario.yaml `intents`, `arms`)
     ... --cache-only            # every LLM call must hit the cache (re-score; zero API calls)
+    ... --spend-cap-usd 15      # stop (run fails loudly, samples so far stay cached) before a call would exceed the cap
+
+Phase 2b additions (requirements.yaml `vendor_only_traces`, `evidence_vocabulary`): per sample `allows_vendor_only` (the
+primary outcome of the evidence-vocabulary gate: allows a contract-deny trace whose only evidence is the vendor's) and
+`evidence_text` (pgi.analysis.dogwood_text.vocabulary_report: which action each temporal predicate binds, each literal as
+contract / vendor-stated / neither, approver-kind conjunct present; TEXT, labelled as such, never a decision). For the
+Sondera-style generator `first_shot_valid` (round 1 passed strict validation) is reported next to post-repair validity.
 
 Scoring frame (`frame`): the suite (traces.yaml), gold's allow-set over it (checked against the contract before anything is
 scored), and the requirement witnesses (requirements.yaml). Per sample: validity under the action + event schemas; the
@@ -28,6 +36,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
+from pgi.analysis.dogwood_text import vocabulary_report
 from pgi.generators import dogwood
 from pgi.generators.dogwood_inputs import DogwoodInputs, Requirements, load_dogwood_inputs, load_requirements, snapshot
 from pgi.llm.cache import CachedLLM
@@ -38,6 +47,36 @@ from pgi.runs.clean import _call_record, _dump, _NoProvider, atomic_run_dir, wil
 
 ROOT = Path(__file__).resolve().parents[3]
 GENERATORS = ("naive", "sondera")
+
+
+class SpendCapExceeded(RuntimeError):
+    """The next API call would be made after the spend cap was reached; the run stops (samples so far are cached)."""
+
+
+class _Budget:
+    """Provider wrapper: adds up the cost of every fresh call from the API's usage fields and refuses a call once the cap
+    is reached. Cached hits never reach it. The first call always goes through (the cap is checked before each call)."""
+
+    def __init__(self, provider, model: str, cap_usd: float) -> None:
+        self.provider, self.model, self.cap_usd, self.spent_usd, self.calls = provider, model, cap_usd, 0.0, 0
+        self.name = provider.name
+
+    def call(self, model, messages, temperature, params):
+        if self.spent_usd >= self.cap_usd:
+            raise SpendCapExceeded(f"spend cap ${self.cap_usd:.2f} reached (${self.spent_usd:.4f} over {self.calls} calls); refusing call {self.calls + 1}")
+        raw = self.provider.call(model, messages, temperature, params)
+        self.calls += 1
+        self.spent_usd += cost(model, self.provider.usage(raw) or {})
+        return raw
+
+    def text(self, raw):
+        return self.provider.text(raw)
+
+    def model_version(self, raw):
+        return self.provider.model_version(raw)
+
+    def usage(self, raw):
+        return self.provider.usage(raw)
 
 
 @dataclass(frozen=True)
@@ -92,6 +131,10 @@ def score(policy: Path, fr: Frame) -> dict:
             out["over_strict"] = [t for t in reqs.over_strict_if_denies if t not in allowed]
             out["sources_accepted"] = [name for name, t in (reqs.sources or {}).items() if t in allowed]
             out["prerequisite_permitted"] = prerequisite
+            if reqs.vendor_only:
+                out["allows_vendor_only"] = [t for t in reqs.vendor_only if t in allowed]
+    if reqs and reqs.vocabulary:
+        out["evidence_text"] = vocabulary_report(Path(policy).read_text(), reqs.vocabulary) | {"note": "text classification, not a decision"}
     return out
 
 
@@ -118,7 +161,7 @@ def run_sondera(llm: CachedLLM, fr: Frame, cfg: dogwood.SonderaDogwoodConfig, i:
         calls += [rec["generation"], rec["judge"]]
     (d / "policy.dw").write_text(res.final_policy + "\n" if res.final_policy else "")
     oracle = score(d / "policy.dw", fr)
-    crit = {"passed": res.passed, "rounds_used": res.rounds_used}
+    crit = {"passed": res.passed, "rounds_used": res.rounds_used, "round1_valid": res.rounds[0].deterministic.passed}
     _dump(d / "oracle.json", oracle | {"critic": crit})
     return {"sample": i, "calls": calls, "oracle": oracle, "critic": crit}
 
@@ -183,6 +226,22 @@ def summarize(model: str, results: list[dict], fr: Frame) -> dict:
         out["sources_trace"] = dict(reqs.sources or {})
         out["source_sets"] = dict(Counter("+".join(r["oracle"]["sources_accepted"]) or "(none)" for r in scored))
         out["prerequisite_permitted"] = sum(bool(r["oracle"].get("prerequisite_permitted")) for r in scored)
+        if reqs.vendor_only:  # Phase 2b primary outcome
+            k = sum(bool(r["oracle"]["allows_vendor_only"]) for r in scored)
+            out["allows_vendor_only"], out["allows_vendor_only_ci95"] = k, wilson(k, ns)
+            out["vendor_only_traces"] = list(reqs.vendor_only)
+            out["vendor_only_trace_counts"] = {t: sum(t in r["oracle"]["allows_vendor_only"] for r in scored) for t in reqs.vendor_only}
+        if reqs.vocabulary:   # Phase 2b secondary outcomes (text)
+            ev = [r["oracle"]["evidence_text"] for r in valid]
+            out["evidence_text_n"] = len(ev)
+            out["binding_counts"] = dict(sorted(Counter(e["binding"] for e in ev).items()))
+            out["actions_bound_counts"] = dict(sorted(Counter(a for e in ev for a in e["actions_bound"]).items()))
+            out["vendor_token_in_authority_predicate"] = sum(e["vendor_token_in_authority_predicate"] for e in ev)
+            out["invented_in_authority_predicate"] = sum(e["invented_in_authority_predicate"] for e in ev)
+            out["approver_kind_present"] = sum(e["approver_kind_present"] for e in ev)
+            out["authority_literal_counts"] = {c: dict(sorted(Counter(v for e in ev for v in e["authority_literals"][c]).items()))
+                                               for c in ("contract", "vendor_stated", "neither")}
+    out["post_repair_valid"] = len(valid)
     if any("critic" in r for r in results):
         rounds = [r["critic"]["rounds_used"] for r in results]
         passed = [r for r in results if r["critic"]["passed"]]
@@ -190,6 +249,10 @@ def summarize(model: str, results: list[dict], fr: Frame) -> dict:
         out["critic_pass_ci95"] = wilson(len(passed), n)
         out["critic_passed_round1"] = sum(r["critic"]["rounds_used"] == 1 for r in passed)
         out["rounds_used_counts"] = {k: rounds.count(k) for k in sorted(set(rounds))}
+        out["first_shot_valid"] = sum(bool(r["critic"].get("round1_valid")) for r in results)
+        out["first_shot_valid_ci95"] = wilson(out["first_shot_valid"], n)
+    else:
+        out["first_shot_valid"], out["first_shot_valid_ci95"] = len(valid), wilson(len(valid), n)
     return out
 
 
@@ -197,7 +260,8 @@ def markdown(config: dict, summary: dict) -> str:
     """Human summary."""
     gens = list(summary)
     lines = [f"# Temporal clean run {config['run_id']}", "",
-             f"Scenario `{config['scenario']}`, intent arm `{config.get('intent', {}).get('arm', '?')}`; model `{config['model']}` (API reported: "
+             f"Scenario `{config['scenario']}`, intent arm `{config.get('intent', {}).get('arm', '?')}`, manifest arm "
+             f"`{config.get('arm', {}).get('name', 'base')}`; model `{config['model']}` (API reported: "
              f"{', '.join(sorted({v for s in summary.values() for v in s['model_versions']}))}); N={config['n']}; "
              f"generators: {', '.join(gens)}. Oracle: Dogwood interpreter {config['versions']['dogwood']} via pydogwood "
              f"{config['versions']['pydogwood']}, replay over the {len(next(iter(summary.values()))['allow_counts'])}-trace suite "
@@ -226,16 +290,34 @@ def markdown(config: dict, summary: dict) -> str:
         lines += ["", f"Functional: " + ", ".join(f"{g} {summary[g]['functional']}/{summary[g]['scored']}" for g in gens)
                   + f" (allow `{first['base_trace']}`). A requirement is reconstructed when every one of its witness traces is denied."]
     if "over_permissive" in first:
+        op = "allows " + " / ".join(t.split("_")[0] for t in first["over_permissive_trace_counts"])
+        os_ = "denies " + " / ".join(t.split("_")[0] for t in first["over_strict_trace_counts"])
         lines += ["", "## Security witnesses (scored samples)", "",
                   "| | " + " | ".join(gens) + " |", "|---|" + "---|" * len(gens),
-                  "| over-permissive: allows t05 / t08 / t09 / t11 | " + " | ".join(f"{summary[g]['over_permissive']}/{summary[g]['scored']} {summary[g]['over_permissive_ci95']}" for g in gens) + " |",
-                  "| over-strict: denies t01 / t12 / t13 | " + " | ".join(f"{summary[g]['over_strict']}/{summary[g]['scored']} {summary[g]['over_strict_ci95']}" for g in gens) + " |",
+                  f"| over-permissive: {op} | " + " | ".join(f"{summary[g]['over_permissive']}/{summary[g]['scored']} {summary[g]['over_permissive_ci95']}" for g in gens) + " |",
+                  f"| over-strict: {os_} | " + " | ".join(f"{summary[g]['over_strict']}/{summary[g]['scored']} {summary[g]['over_strict_ci95']}" for g in gens) + " |",
                   "| evidence call permitted (t07 @100) | " + " | ".join(f"{summary[g]['prerequisite_permitted']}/{summary[g]['scored']}" for g in gens) + " |"]
+        if "allows_vendor_only" in first:
+            lines.append(f"| **allows a vendor-only trace (primary): {' / '.join(first['vendor_only_traces'])}** | "
+                         + " | ".join(f"{summary[g]['allows_vendor_only']}/{summary[g]['scored']} {summary[g]['allows_vendor_only_ci95']}" for g in gens) + " |")
+            lines.append("| per vendor-only trace | " + " | ".join(", ".join(f"{t.split('_')[0]} {k}" for t, k in summary[g]["vendor_only_trace_counts"].items()) for g in gens) + " |")
         lines += ["", "### Evidence source accepted (allows the single-source trace)", "",
                   "| source | trace | " + " | ".join(gens) + " |", "|---|---|" + "---|" * len(gens)]
         for name in first["sources_accepted_counts"]:
             lines.append(f"| {name} | {first['sources_trace'][name]} | " + " | ".join(f"{summary[g]['sources_accepted_counts'][name]}/{summary[g]['scored']}" for g in gens) + " |")
         lines += ["", "Source sets per sample: " + "; ".join(f"{g}: {summary[g]['source_sets']}" for g in gens) + "."]
+    if "binding_counts" in first:
+        lines += ["", "## Evidence vocabulary (TEXT tally of temporal predicates over valid samples; explanatory, not a decision)", "",
+                  "| | " + " | ".join(gens) + " |", "|---|" + "---|" * len(gens),
+                  "| evidence action bound (binding → samples) | " + " | ".join(str(summary[g]["binding_counts"]) for g in gens) + " |",
+                  "| vendor token in an authority predicate (vendor-stated, not contract) | " + " | ".join(f"{summary[g]['vendor_token_in_authority_predicate']}/{summary[g]['evidence_text_n']}" for g in gens) + " |",
+                  "| invented literal in an authority predicate (neither) | " + " | ".join(f"{summary[g]['invented_in_authority_predicate']}/{summary[g]['evidence_text_n']}" for g in gens) + " |",
+                  "| approver-kind conjunct present | " + " | ".join(f"{summary[g]['approver_kind_present']}/{summary[g]['evidence_text_n']}" for g in gens) + " |",
+                  "| authority-predicate literals by class | " + " | ".join(str(summary[g]["authority_literal_counts"]) for g in gens) + " |"]
+    lines += ["", "## Validity: first-shot vs post-repair", "", "| generator | first-shot valid | post-repair (final) valid |", "|---|---|---|"]
+    for g, s in summary.items():
+        lines.append(f"| {g} | {s['first_shot_valid']}/{s['n']} {s['first_shot_valid_ci95']} | {s['post_repair_valid']}/{s['n']} {s['validity_ci95']} |")
+    lines += ["", "first-shot = round 1 passed strict validation (naive has no repair loop, so both columns coincide)."]
     if any(s["replay_error_samples"] for s in summary.values()):
         lines += ["", "## Replay errors (recorded, not denies)", ""]
         for g, s in summary.items():
@@ -247,6 +329,14 @@ def markdown(config: dict, summary: dict) -> str:
         for g, s in crit.items():
             lines.append(f"| {g} | {s['critic_passed']}/{s['n']} {s['critic_pass_ci95']} | {s['critic_passed_round1']}/{s['n']} | {s['rounds_used_counts']} |")
     return "\n".join(lines) + "\n"
+
+
+def _rel(p: Path | None) -> str | None:
+    """A path relative to the repo root when it is under it (the normal case), else as given."""
+    if p is None:
+        return None
+    p = Path(p)
+    return str(p.relative_to(ROOT)) if p.is_relative_to(ROOT) else str(p)
 
 
 def _versions() -> dict:
@@ -268,6 +358,8 @@ def main() -> None:
     p.add_argument("--scenario", type=Path, required=True)
     p.add_argument("--label", default="")
     p.add_argument("--intent", help="intent arm named in scenario.yaml `intents` (default: the scenario's `intent` file)")
+    p.add_argument("--arm", help="manifest arm named in scenario.yaml `arms` (default: the scenario's top-level files)")
+    p.add_argument("--spend-cap-usd", type=float, help="refuse any API call once fresh calls of this run have cost this much")
     p.add_argument("--generators", nargs="+", default=list(GENERATORS), choices=GENERATORS)
     p.add_argument("--no-descriptions", action="store_true", help="include_descriptions=False")
     p.add_argument("--judge-sees-manifests", action="store_true")
@@ -278,24 +370,36 @@ def main() -> None:
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     run_id = "-".join(x for x in (stamp, "temporal-clean", args.label) if x)
     with atomic_run_dir(ROOT / "runs", run_id) as out:
-        llm = CachedLLM(_NoProvider() if args.cache_only else AnthropicProvider(), args.cache, allow_api=not args.cache_only)
+        provider = _NoProvider() if args.cache_only else AnthropicProvider()
+        transport = provider.request_settings() if not args.cache_only else None
+        if args.spend_cap_usd is not None and not args.cache_only:
+            provider = _Budget(provider, args.model, args.spend_cap_usd)
+        llm = CachedLLM(provider, args.cache, allow_api=not args.cache_only)
         ncfg = dogwood.NaiveDogwoodConfig(args.model, include_descriptions=not args.no_descriptions)
         scfg = dogwood.SonderaDogwoodConfig(args.model, include_descriptions=not args.no_descriptions,
                                             judge_sees_manifests=args.judge_sees_manifests)
-        src_inputs = load_dogwood_inputs(args.scenario, args.intent)
+        src_inputs = load_dogwood_inputs(args.scenario, args.intent, args.arm)
         inp = snapshot(src_inputs, out / "inputs" / args.scenario.name)
         fr = frame(inp)
         config = {"run_id": run_id, "created": stamp, "kind": "temporal-clean", "model": args.model, "n": args.n,
                   "cache_only": args.cache_only, "scenario": inp.name,
                   "intent": {"arm": inp.intent_name, "file": src_inputs.intent_path.name, "sha256": inp.hashes["intent"]},
+                  "arm": {"name": inp.arm_name,
+                          "files": {"manifests": {s: _rel(p) for s, p in zip(src_inputs.servers, src_inputs.manifest_paths)},
+                                    "schema": _rel(src_inputs.schema_path), "gold": _rel(src_inputs.gold),
+                                    "traces": _rel(src_inputs.traces_yaml), "requirements": _rel(src_inputs.requirements)}},
+                  "spend_cap_usd": args.spend_cap_usd,
                   "inputs": "inputs/<scenario>/ (snapshot; generation and scoring read only from it)",
                   "generators": {"naive": ncfg.as_dict(), "sondera": scfg.as_dict()}, "generators_run": args.generators,
                   "request": {"sampling": "not sent (API default)", "thinking": {"type": "adaptive"},
                               "output_config": {"effort": ncfg.effort}, "max_tokens": ncfg.max_tokens,
-                              "fallbacks": "none", "prompt_cache": "ephemeral breakpoint on last static system block"},
+                              "fallbacks": "none", "prompt_cache": "ephemeral breakpoint on last static system block",
+                              "transport": transport},
                   "frame": {"schema": str(inp.schema_path.relative_to(out)), "event_schema": str(inp.event_schema_path.relative_to(out)),
                             "traces": sorted(fr.suite.ids), "gold_allow_set": sorted(fr.gold_allowed),
-                            "requirements": fr.requirements.witnesses if fr.requirements else None},
+                            "requirements": fr.requirements.witnesses if fr.requirements else None,
+                            "vendor_only_traces": list(fr.requirements.vendor_only) if fr.requirements else None,
+                            "evidence_vocabulary": fr.requirements.vocabulary if fr.requirements else None},
                   "hashes": inp.hashes, "versions": _versions()}
         _dump(out / "config.json", config)
         _dump(out / inp.name / "prompt_static.json", dogwood.build_request(inp, ncfg)[1]["system"])
@@ -313,7 +417,8 @@ def main() -> None:
         summary = {g: summarize(args.model, results[g], fr) for g in results}
         _dump(out / "summary.json", summary)
         (out / "summary.md").write_text(markdown(config, summary))
-    print(f"\nwrote {ROOT / 'runs' / run_id}\napi calls this run: {llm.api_calls}")
+    spent = f"; spent ${provider.spent_usd:.4f} of cap ${provider.cap_usd:.2f}" if isinstance(provider, _Budget) else ""
+    print(f"\nwrote {ROOT / 'runs' / run_id}\napi calls this run: {llm.api_calls}{spent}")
 
 
 if __name__ == "__main__":

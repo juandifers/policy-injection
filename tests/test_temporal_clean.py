@@ -9,7 +9,7 @@ import pytest
 from pgi.generators import dogwood
 from pgi.generators.dogwood_inputs import load_dogwood_inputs
 from pgi.llm.cache import CachedLLM
-from pgi.runs.temporal_clean import frame, run_naive, run_sondera, score, summarize
+from pgi.runs.temporal_clean import frame, markdown, run_naive, run_sondera, score, summarize, wilson
 
 DOMAIN = Path(__file__).resolve().parents[1] / "domains" / "assetopsbench"
 T01 = DOMAIN / "scenarios" / "t01_close_after_approval"
@@ -125,7 +125,7 @@ def test_replay_makes_zero_api_calls_and_reproduces_records(fr, tmp_path):
     assert strip(rows1, tmp_path / "a") == strip(rows2, tmp_path / "b")
     assert (tmp_path / "a/n0/policy.dw").read_text() == (tmp_path / "b/n0/policy.dw").read_text()
     assert json.loads((tmp_path / "a/n0/oracle.json").read_text())["surplus"] == ["t02_rejected", "t03_pending"]
-    assert rows1[1]["critic"] == {"passed": True, "rounds_used": 1}
+    assert rows1[1]["critic"] == {"passed": True, "rounds_used": 1, "round1_valid": True}
 
 
 def _row(i, oracle, calls=1):
@@ -154,3 +154,114 @@ def test_summary_counts(fr):
     assert s["sources_accepted_counts"] == {"authority": 2, "vendor_flag": 0, "native_approve": 0, "no_evidence": 0}
     assert s["source_sets"] == {"authority": 2, "(none)": 1} and s["prerequisite_permitted"] == 3
     assert s["model_versions"] == ["m-v1"] and s["cost_usd_this_run"] > 0
+
+
+# ---- Phase 2b: primary outcome (allows a vendor-only trace), evidence-vocabulary text fields, first-shot validity, spend cap
+from pgi.runs.temporal_clean import SpendCapExceeded, _Budget  # noqa: E402
+
+ARMS = T01 / "arms"
+
+
+@pytest.fixture(scope="module")
+def fr_l2():
+    return frame(load_dogwood_inputs(T01, intent="goal-level", arm="L2"))
+
+
+def test_score_gold_under_L2_allows_no_vendor_only_trace_and_is_authority_bound(fr_l2):
+    r = score(T01 / "gold.dw", fr_l2)
+    assert r["valid"] and r["scored"] and r["surplus"] == [] and r["deficit"] == []
+    assert r["allows_vendor_only"] == [] and r["over_permissive"] == [] and r["over_strict"] == []
+    e = r["evidence_text"]
+    assert e["binding"] == "authority" and e["approver_kind_present"] is True
+    assert e["authority_literals"] == {"contract": ["GRANTED", "HUMAN"], "vendor_stated": [], "neither": []}
+    assert e["vendor_token_in_authority_predicate"] is False
+
+
+def test_score_vendor_binding_mutant_under_L2_allows_vendor_only_traces(fr_l2):
+    r = score(ARMS / "L2" / "mutants" / "vendor_binding.dw", fr_l2)
+    assert r["allows_vendor_only"] == ["t15_vendor_enum_only"]
+    assert "t15_vendor_enum_only" in r["over_permissive"] and "t16_authority_rejected_vendor_positive" in r["over_permissive"]
+    assert r["over_strict"] == ["t01_valid", "t12_second_close_same_session", "t13_other_wo_valid", "t17_authority_granted_vendor_negative"]
+    assert r["evidence_text"]["binding"] == "vendor" and r["sources_accepted"] == ["vendor_enum"]
+
+
+def test_score_borrowed_literal_mutant_under_L2_is_over_strict_with_a_vendor_token(fr_l2):
+    r = score(ARMS / "L2" / "mutants" / "borrowed_literal.dw", fr_l2)
+    assert r["allows_vendor_only"] == [] and r["over_permissive"] == []
+    assert set(r["over_strict"]) >= {"t01_valid", "t17_authority_granted_vendor_negative"}
+    assert r["evidence_text"]["vendor_token_in_authority_predicate"] is True
+    assert r["evidence_text"]["authority_literals"]["vendor_stated"] == ["OPERATOR", "SIGNED_OFF"]
+
+
+def test_score_without_arm_fields_has_no_vendor_only_or_evidence_text(fr):
+    r = score(T01 / "gold.dw", fr)
+    assert "allows_vendor_only" not in r and "evidence_text" not in r
+
+
+def test_summary_counts_vendor_only_binding_and_first_shot_validity(fr_l2):
+    gold = score(T01 / "gold.dw", fr_l2)
+    vb = score(ARMS / "L2" / "mutants" / "vendor_binding.dw", fr_l2)
+    bl = score(ARMS / "L2" / "mutants" / "borrowed_literal.dw", fr_l2)
+    rows = [_row(0, gold), _row(1, vb), _row(2, bl)]
+    rows[0]["critic"] = {"passed": True, "rounds_used": 1, "round1_valid": True}
+    rows[1]["critic"] = {"passed": True, "rounds_used": 2, "round1_valid": False}
+    rows[2]["critic"] = {"passed": True, "rounds_used": 1, "round1_valid": True}
+    s = summarize("claude-haiku-5-5", rows, fr_l2)
+    assert s["allows_vendor_only"] == 1 and s["allows_vendor_only_ci95"] == wilson(1, 3)
+    assert s["vendor_only_trace_counts"] == {"t08_vendor_flag_only": 0, "t15_vendor_enum_only": 1}
+    assert s["binding_counts"] == {"authority": 2, "vendor": 1}
+    assert s["vendor_token_in_authority_predicate"] == 1 and s["approver_kind_present"] == 3
+    assert s["invented_in_authority_predicate"] == 0
+    assert s["first_shot_valid"] == 2 and s["post_repair_valid"] == 3
+    md = markdown({"run_id": "x", "scenario": "t01", "model": "m", "n": 3, "versions": {"dogwood": "1.1.0", "pydogwood": "0.1.1"},
+                   "intent": {"arm": "goal-level"}, "arm": {"name": "L2"}}, {"sondera": s})
+    assert "allows a vendor-only trace" in md and "t15_vendor_enum_only" in md and "first-shot" in md
+
+
+def test_summary_naive_first_shot_equals_final_validity(fr_l2):
+    s = summarize("claude-haiku-5-5", [_row(0, score(T01 / "gold.dw", fr_l2)), _row(1, {"validation": {"ok": False}, "valid": False})], fr_l2)
+    assert s["first_shot_valid"] == 1 and s["post_repair_valid"] == 1 and s["valid"] == 1
+
+
+def test_budget_stops_before_the_call_that_would_exceed_the_cap():
+    inner = Fake((T01 / "gold.dw").read_text())
+    b = _Budget(inner, model="claude-haiku-5-5", cap_usd=0.00001)
+    b.call("claude-haiku-5-5", [], None, {"system": [{"text": ""}]})   # first call always goes through
+    assert b.spent_usd > 0 and inner.calls == 1
+    with pytest.raises(SpendCapExceeded):
+        b.call("claude-haiku-5-5", [], None, {"system": [{"text": ""}]})
+    assert inner.calls == 1
+
+
+def test_main_with_arm_and_spend_cap_records_arm_files_and_transport(tmp_path, monkeypatch):
+    """End to end offline: --arm L2 --spend-cap-usd, N=1, naive only, Fake provider; config records the arm's files, the
+    transport settings and the cap; summary.md carries the primary-outcome row; the run folder is final (renamed)."""
+    import sys
+    from pgi.runs import temporal_clean as tc
+    from pgi.llm import anthropic_provider as ap
+
+    class FakeProvider(Fake):
+        def __init__(self, *a, **k):
+            super().__init__((T01 / "arms" / "L2" / "mutants" / "vendor_binding.dw").read_text())
+
+        def request_settings(self):
+            return {"timeout_s": 300.0, "max_retries": 2}
+
+    monkeypatch.setattr(ap, "AnthropicProvider", FakeProvider)
+    monkeypatch.setattr(tc, "ROOT", tmp_path)
+    monkeypatch.setattr(sys, "argv", ["x", "--model", "claude-haiku-5-5", "--n", "1", "--scenario", str(T01), "--label", "smoke",
+                                      "--intent", "goal-level", "--arm", "L2", "--generators", "naive", "--spend-cap-usd", "1",
+                                      "--cache", str(tmp_path / "cache")])
+    tc.main()
+    (run,) = [p for p in (tmp_path / "runs").iterdir() if not p.name.startswith(".tmp-")]
+    cfg = json.loads((run / "config.json").read_text())
+    assert cfg["arm"]["name"] == "L2" and cfg["intent"]["arm"] == "goal-level" and cfg["spend_cap_usd"] == 1.0
+    assert cfg["arm"]["files"]["manifests"]["wo"].endswith("arms/L2/manifests/wo.tools.json")
+    assert cfg["arm"]["files"]["manifests"]["authority"].endswith("arms/v2/manifests/authority.tools.json")
+    assert cfg["request"]["transport"] == {"timeout_s": 300.0, "max_retries": 2}
+    assert cfg["frame"]["vendor_only_traces"] == ["t08_vendor_flag_only", "t15_vendor_enum_only"]
+    assert json.loads((run / "inputs" / "t01_close_after_approval" / "inputs.json").read_text())["arm_name"] == "L2"
+    s = json.loads((run / "summary.json").read_text())["naive"]
+    assert s["allows_vendor_only"] == 1 and s["binding_counts"] == {"vendor": 1} and s["first_shot_valid"] == 1
+    md = (run / "summary.md").read_text()
+    assert "manifest arm `L2`" in md and "allows a vendor-only trace (primary)" in md

@@ -5,6 +5,10 @@ scenario.yaml (track: dogwood) names, relative to <domain>: `schema` (action sch
 `requirements` (witness traces per contract requirement, scoring only). The gold policy, the suite and the
 requirements are hashed for the run record and are never given to a generator.
 
+Selectable arms (Phase 2a-bis, 2b): `intents` (name -> intent file, `--intent`) and `arms` (name -> overrides of
+`manifests` (per server), `schema`, `gold`, `traces`, `requirements`; `--arm`). An arm inherits every key it does not
+override. The base inputs are the files named at the top level; "base" is the arm name when none is selected.
+
 Snapshot layout, runs/<id>/inputs/<scenario>/:
     inputs.json  scenario.yaml  intent.md  gold.dw  traces.yaml  traces/<file>  requirements.yaml?
     schema/<file>  event_schema/<file>  manifests/<server>.tools.json
@@ -47,6 +51,7 @@ class DogwoodInputs:
     traces_yaml: Path
     requirements: Path | None
     hashes: dict[str, str]
+    arm_name: str = "base"    # which manifest arm (key of scenario.yaml `arms`), "base" for the top-level files
 
 
 @dataclass(frozen=True)
@@ -56,7 +61,10 @@ class Requirements:
     - it is over-permissive iff it allows any of `over_permissive_if_allows`, over-strict iff it denies any of
       `over_strict_if_denies`;
     - it accepts evidence source `s` iff it allows the single-source trace `sources[s]`;
-    - `prerequisite` = (trace, decision index) of the evidence call itself, or None."""
+    - `prerequisite` = (trace, decision index) of the evidence call itself, or None;
+    - Phase 2b: `vendor_only` = contract-deny traces whose only evidence is the vendor's (primary outcome: allows any);
+      `vocabulary` = the evidence-vocabulary classification inputs for pgi.analysis.dogwood_text.vocabulary_report
+      (authority_action, vendor_actions, contract_values, vendor_stated_values, approver_kind_fields), text-level, or None."""
 
     base: str
     witnesses: dict[str, tuple[str, ...]]
@@ -65,6 +73,11 @@ class Requirements:
     over_strict_if_denies: tuple[str, ...] = ()
     sources: dict[str, str] = None  # type: ignore[assignment]
     prerequisite: tuple[str, int] | None = None
+    vendor_only: tuple[str, ...] = ()
+    vocabulary: dict | None = None
+
+
+VOCABULARY_KEYS = ("authority_action", "vendor_actions", "contract_values", "vendor_stated_values", "approver_kind_fields")
 
 
 def _hash_all(files: dict[str, Path]) -> dict[str, str]:
@@ -84,19 +97,33 @@ def _files(folder: Path, schema: Path, event_schema: Path, servers: list[str], m
     return files
 
 
-def load_dogwood_inputs(folder: Path, intent: str | None = None) -> DogwoodInputs:
+def load_dogwood_inputs(folder: Path, intent: str | None = None, arm: str | None = None) -> DogwoodInputs:
     """Load a temporal scenario's inputs from its folder and hash every file that can influence a result.
 
     `intent` selects an arm from scenario.yaml `intents` (name -> file); None takes the default `intent` file.
+    `arm` selects a manifest arm from scenario.yaml `arms` (overrides of manifests/schema/gold/traces/requirements);
+    None takes the top-level files ("base").
     """
     folder = Path(folder)
     domain = folder.parents[1]
     meta = yaml.safe_load((folder / "scenario.yaml").read_text())
     if meta.get("track") != "dogwood":
         raise ValueError(f"{folder}: scenario.yaml must declare `track: dogwood` (got {meta.get('track')!r})")
+    manifest_arms = dict(meta.get("arms") or {})
+    if arm is None:
+        spec, arm_name = {}, "base"
+    elif arm in manifest_arms:
+        spec, arm_name = dict(manifest_arms[arm] or {}), arm
+    else:
+        raise ValueError(f"{folder}: no manifest arm {arm!r} in scenario.yaml `arms` {sorted(manifest_arms)}")
+    if unknown := set(spec) - {"manifests", "schema", "gold", "traces", "requirements"}:
+        raise ValueError(f"{folder}: arm {arm!r} overrides unknown keys {sorted(unknown)}")
     servers = list(meta["servers"])
-    manifests = [domain / meta["manifests"][s] for s in servers]
-    schema, events = domain / meta["schema"], domain / meta["event_schema"]
+    arm_manifests = dict(spec.get("manifests") or {})
+    if unknown := set(arm_manifests) - set(servers):
+        raise ValueError(f"{folder}: arm {arm!r} names servers not in the scenario: {sorted(unknown)}")
+    manifests = [domain / arm_manifests.get(s, meta["manifests"][s]) for s in servers]
+    schema, events = domain / spec.get("schema", meta["schema"]), domain / meta["event_schema"]
     arms = dict(meta.get("intents") or {})
     default = meta.get("intent", "intent.md")
     if intent is None:
@@ -105,11 +132,14 @@ def load_dogwood_inputs(folder: Path, intent: str | None = None) -> DogwoodInput
         intent_file, intent_name = arms[intent], intent
     else:
         raise ValueError(f"{folder}: no intent arm {intent!r} in scenario.yaml `intents` {sorted(arms)}")
-    intent_path, gold, traces = folder / intent_file, folder / meta["gold"], folder / meta["traces"]
-    reqs = folder / meta["requirements"] if meta.get("requirements") else None
+    intent_path = folder / intent_file
+    gold, traces = folder / spec.get("gold", meta["gold"]), folder / spec.get("traces", meta["traces"])
+    reqs_file = spec.get("requirements", meta.get("requirements"))
+    reqs = folder / reqs_file if reqs_file else None
     files = _files(folder, schema, events, servers, manifests, intent_path, gold, traces, reqs)
     return DogwoodInputs(folder.name, folder, schema, schema.read_text(), events, events.read_text(), tuple(servers),
-                         tuple(manifests), intent_name, intent_path, intent_path.read_text(), gold, traces, reqs, _hash_all(files))
+                         tuple(manifests), intent_name, intent_path, intent_path.read_text(), gold, traces, reqs, _hash_all(files),
+                         arm_name)
 
 
 def load_requirements(path: Path, suite: TraceSuite) -> Requirements:
@@ -142,7 +172,13 @@ def load_requirements(path: Path, suite: TraceSuite) -> Requirements:
     prereq = None
     if pre := data.get("prerequisite_call"):
         prereq = (known("prerequisite_call", [pre["trace"]], None)[0], int(pre["decision_index"]))
-    return Requirements(base, witnesses, numbers, over_p, over_s, sources, prereq)
+    vendor_only = known("vendor_only_traces", data.get("vendor_only_traces", ()), False)
+    vocab = data.get("evidence_vocabulary")
+    if vocab is not None:
+        if set(vocab) != set(VOCABULARY_KEYS):
+            raise ValueError(f"{path}: evidence_vocabulary must have exactly the keys {VOCABULARY_KEYS}, got {sorted(vocab)}")
+        vocab = {k: (list(v) if isinstance(v, list) else v) for k, v in vocab.items()}
+    return Requirements(base, witnesses, numbers, over_p, over_s, sources, prereq, vendor_only, vocab)
 
 
 def _layout(inputs: DogwoodInputs) -> dict[str, str]:
@@ -172,7 +208,7 @@ def snapshot(inputs: DogwoodInputs, dest: Path) -> DogwoodInputs:
         (dest / rel).parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(sources[key], dest / rel)
     index = {"name": inputs.name, "servers": list(inputs.servers), "layout": layout, "sha256": inputs.hashes,
-             "intent_name": inputs.intent_name, "intent_source": inputs.intent_path.name,
+             "intent_name": inputs.intent_name, "intent_source": inputs.intent_path.name, "arm_name": inputs.arm_name,
              "traces": {tid: f"trace:{tid}" for tid in suite.traces}}
     (dest / "inputs.json").write_text(json.dumps(index, indent=2, sort_keys=True) + "\n")
     snap = load_snapshot(dest)
@@ -206,4 +242,4 @@ def load_snapshot(folder: Path) -> DogwoodInputs:
     return DogwoodInputs(index["name"], folder, schema, schema.read_text(), events, events.read_text(), tuple(servers),
                          tuple(folder / layout[f"manifest:{s}"] for s in servers), index.get("intent_name", "intent.md"),
                          intent, intent.read_text(),
-                         folder / layout["gold"], folder / layout["traces_yaml"], reqs, hashes)
+                         folder / layout["gold"], folder / layout["traces_yaml"], reqs, hashes, index.get("arm_name", "base"))
