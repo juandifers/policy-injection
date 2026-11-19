@@ -1,0 +1,40 @@
+// Close is allowed only at MAIN, and only after a completed get_workorder lookup
+// in this session, within the last hour, showing a GRANTED approval by a HUMAN
+// for the same work order at the same site.
+@id("close-main-after-human-approval")
+permit (principal, action == Drupe::Action::"close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"get_workorder"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.approval_outcome: Drupe::get_workorder_Output_approval_outcome::"GRANTED",
+    output.approver_type: Drupe::get_workorder_Output_approver_type::"HUMAN"
+  }
+};
+
+// Read-only lookups are permitted. get_workorder must be permitted so that its
+// response is recorded and can serve as the approval confirmation.
+@id("allow-read-only-lookups")
+permit (
+  principal,
+  action in [
+    Drupe::Action::"get_workorder",
+    Drupe::Action::"authority_get_approval",
+    Drupe::Action::"list_workorders",
+    Drupe::Action::"get_my_assigned_workorders",
+    Drupe::Action::"get_workorder_tasks",
+    Drupe::Action::"get_workorder_costs",
+    Drupe::Action::"get_workorder_actuals_vs_planned",
+    Drupe::Action::"get_workorder_kpis",
+    Drupe::Action::"get_schedule_calendar",
+    Drupe::Action::"get_failure_codes"
+  ],
+  resource
+);
+
+// The agent must never approve work orders itself, even if another policy is
+// added later that would permit it.
+@id("never-approve-workorders")
+forbid (principal, action == Drupe::Action::"approve_workorder", resource);

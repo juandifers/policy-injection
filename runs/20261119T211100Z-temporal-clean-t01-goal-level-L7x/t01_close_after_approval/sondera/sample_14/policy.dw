@@ -1,0 +1,51 @@
+// Reads the agent may use (including the lookups that confirm an approval).
+// authority_get_approval needs its own permit, otherwise it is denied, recorded
+// as ::error, and no ::response ever exists for the close policy to rely on.
+@id("allow-readonly-lookups")
+permit (
+  principal,
+  action in [
+    Drupe::Action::"authority_get_approval",
+    Drupe::Action::"get_approval_record",
+    Drupe::Action::"list_workorders",
+    Drupe::Action::"get_workorder_tasks",
+    Drupe::Action::"get_workorder_costs",
+    Drupe::Action::"get_workorder_actuals_vs_planned",
+    Drupe::Action::"get_workorder_kpis",
+    Drupe::Action::"get_schedule_calendar",
+    Drupe::Action::"get_my_assigned_workorders",
+    Drupe::Action::"get_failure_codes"
+  ],
+  resource
+);
+
+// Closing: only at MAIN, and only if, in this session within the last hour,
+// the approval authority's completed lookup (a ::response, not a failed or
+// denied call) for this same work order and site returned a SIGNED_OFF
+// decision made by a human OPERATOR (not a BOT or SCHEDULER).
+// Assumption: authority_get_approval uses the same vocabulary as
+// get_approval_record's enums ("SIGNED_OFF" and "OPERATOR").
+@id("close-workorder-main-with-human-approval")
+permit (
+  principal,
+  action == Drupe::Action::"close_workorder",
+  resource
+)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"authority_get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: "SIGNED_OFF",
+    output.approver_kind: "OPERATOR"
+  }
+};
+
+// Defense in depth: the agent must never approve work orders itself.
+@id("never-approve-workorder")
+forbid (
+  principal,
+  action == Drupe::Action::"approve_workorder",
+  resource
+);

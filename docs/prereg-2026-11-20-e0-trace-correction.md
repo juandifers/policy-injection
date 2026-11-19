@@ -127,7 +127,11 @@ t21_authority_other_wo_vendor_this_wo --direct direct --reads-vendor reads_vendo
 Expected identities (checked after the replays, reported if violated): the first 17 traces of every sample keep the
 decisions recorded in the Phase 2c (and 2c re-tally) folders, since the policies and the parent traces are byte-identical.
 
-## Runs (filled in by the runs commit)
+## Runs (filled in by the runs commit; 0 API calls each)
 
-- L1x, L2x, L3x, L5x, L6x, L7x, L1x-S replay folders: `runs/<stamp>-temporal-clean-t01-goal-level-<arm>`.
-- Class report: `runs/<stamp>-workflow-classes-t01-e0`.
+- L1x `runs/20261119T210114Z-temporal-clean-t01-goal-level-L1x`, L2x `runs/20261119T210336Z-…-L2x`, L3x `runs/20261119T210459Z-…-L3x`,
+  L5x `runs/20261119T210712Z-…-L5x`, L6x `runs/20261119T210846Z-…-L6x`, L7x `runs/20261119T211100Z-…-L7x`,
+  L1x-S `runs/20261119T211254Z-temporal-clean-t01-goal-level-L1x-S`.
+- Class report: `runs/20261119T211522Z-workflow-classes-t01-e0`.
+- Expected identities held: 280/280 policies byte-identical to their source folders, decisions on the 17 parent traces identical,
+  `first_shot_shared_with_naive` 20/20 in every run, no replay error.

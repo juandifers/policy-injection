@@ -21,6 +21,10 @@ sha256, validity, BIND, TOKEN) and `bind_token` on the final policy, both from p
 vendor-stated non-contract value in an authority predicate). TEXT, computed on every sample valid or not. `--input-mode`
 is recorded in config.json and is part of the cache key through the system blocks.
 
+E0 additions (requirements.yaml `workflows`, 2026-11-20): per scored sample `workflows_allowed` (the workflows whose every
+trace the policy allows, i.e. whose positive tests it passes); summary `workflow_counts`. The class report that crosses
+surplus with workflows is pgi.runs.workflow_classes (zero API, over run folders).
+
 Scoring frame (`frame`): the suite (traces.yaml), gold's allow-set over it (checked against the contract before anything is
 scored), and the requirement witnesses (requirements.yaml). Per sample: validity under the action + event schemas; the
 decision of every trace; surplus = allowed minus gold, deficit = gold minus allowed. A replay error on a trace is recorded,
@@ -171,6 +175,8 @@ def score(policy: Path, fr: Frame) -> dict:
             out["prerequisite_permitted"] = prerequisite
             if reqs.vendor_only:
                 out["allows_vendor_only"] = [t for t in reqs.vendor_only if t in allowed]
+            if reqs.workflows:
+                out["workflows_allowed"] = [w for w, ts in reqs.workflows.items() if set(ts) <= set(allowed)]
     if reqs and reqs.vocabulary:
         out["evidence_text"] = vocabulary_report(Path(policy).read_text(), reqs.vocabulary) | {"note": "text classification, not a decision"}
     return out
@@ -273,6 +279,9 @@ def summarize(model: str, results: list[dict], fr: Frame) -> dict:
             out["allows_vendor_only"], out["allows_vendor_only_ci95"] = k, wilson(k, ns)
             out["vendor_only_traces"] = list(reqs.vendor_only)
             out["vendor_only_trace_counts"] = {t: sum(t in r["oracle"]["allows_vendor_only"] for r in scored) for t in reqs.vendor_only}
+        if reqs.workflows:    # E0: positive tests per workflow
+            out["workflow_counts"] = {w: {"traces": list(ts), "k": sum(w in r["oracle"]["workflows_allowed"] for r in scored), "n": ns}
+                                      for w, ts in reqs.workflows.items()}
         if reqs.vocabulary:   # Phase 2b secondary outcomes (text)
             ev = [r["oracle"]["evidence_text"] for r in valid]
             out["evidence_text_n"] = len(ev)
@@ -355,6 +364,11 @@ def markdown(config: dict, summary: dict) -> str:
         for name in first["sources_accepted_counts"]:
             lines.append(f"| {name} | {first['sources_trace'][name]} | " + " | ".join(f"{summary[g]['sources_accepted_counts'][name]}/{summary[g]['scored']}" for g in gens) + " |")
         lines += ["", "Source sets per sample: " + "; ".join(f"{g}: {summary[g]['source_sets']}" for g in gens) + "."]
+    if "workflow_counts" in first:
+        lines += ["", "## Workflows (scored samples passing every positive test of the workflow)", "",
+                  "| workflow | traces | " + " | ".join(gens) + " |", "|---|---|" + "---|" * len(gens)]
+        for w, row in first["workflow_counts"].items():
+            lines.append(f"| {w} | {', '.join(row['traces'])} | " + " | ".join(f"{summary[g]['workflow_counts'][w]['k']}/{summary[g]['workflow_counts'][w]['n']}" for g in gens) + " |")
     if "binding_counts" in first:
         lines += ["", "## Evidence vocabulary (TEXT tally of temporal predicates over valid samples; explanatory, not a decision)", "",
                   "| | " + " | ".join(gens) + " |", "|---|" + "---|" * len(gens),

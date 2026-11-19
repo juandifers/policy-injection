@@ -48,6 +48,20 @@ not touched, `tests/test_t01_arms_2c.py` pins their bytes):
        so no borrowed-literal mutant.
   L1-S schema-only: L1's files unchanged; the generator input mode `schema-only` (no manifest text) is a run flag, recorded
        in config.json and in `arms-2c.json`, not a file arm.
+
+E0 (trace-suite correction, pre-registered 2026-11-20; `arms/arms-e0.json`; nothing above is touched, `tests/test_t01_arms_e0.py`
+pins the x-arms and re-asserts the 2b and 2c bytes): trace-only arms L1x, L2x, L3x, L5x, L6x, L7x. Each names its parent's
+manifests, schema and gold in scenario.yaml (the same files) and overrides only `traces` and `requirements`: the parent's suite
+(byte copies) + four traces rendered with the helpers above in the parent's vendor encoding (the vendor positive is t15's event;
+the authority lines are the parent suite's t01 / t04 lines, so L5x's are typed):
+  t18_both_positive                      authority GRANTED/HUMAN @100, vendor positive @200:                     ALLOW
+  t19_both_positive_vendor_first         vendor positive @100, authority GRANTED/HUMAN @200:                     ALLOW
+  t20_authority_expired_vendor_fresh     authority GRANTED/HUMAN @-3400 (4000 s before the close), vendor @500:  DENY
+  t21_authority_other_wo_vendor_this_wo  authority GRANTED/HUMAN for 1000045 @100, vendor positive for 1000046:  DENY
+requirements = the parent's + t18/t19 in over_strict_if_denies, t20/t21 in over_permissive_if_allows and provenance_source, and
+the `workflows` map {direct: [t01, t12, t13], reads_vendor: [t18, t19], vendor_negative: [t17]}. Mutants are the parent's files
+(not copied); their kill sets grow by t20, t21 (vendor_binding) and t18, t19 (borrowed_literal). L1x-S = `--arm L1x
+--input-mode schema-only`, not a file arm.
 """
 from __future__ import annotations
 
@@ -300,6 +314,7 @@ def build(dest: Path) -> dict:
         record["arms"][arm] = entry
     _dump_json(dest / "arms.json", record)
     _dump_json(dest / "arms-2c.json", _build_2c(dest, base_entries, t01_auth, t02_auth, close))
+    _dump_json(dest / "arms-e0.json", _build_e0(dest))
     return record
 
 
@@ -438,6 +453,90 @@ def _build_2c(dest: Path, base_entries: list[dict], t01_auth: str, t02_auth: str
                          "positive": pos6, "negative": neg6,
                          "mutants": {"vendor_binding": {"killed_by": KILLED_VENDOR_BINDING, "text": f"close predicate bound to get_workorder::response with {pos6} as plain strings"}},
                          "borrowed_literal_note": "not defined: the vendor states no value (no enum), so there is no borrowed literal", "sha256": _hashes(d)}
+    return rec
+
+
+# ---- E0 trace-only arms
+E0_PARENTS = {"L1x": "L1", "L2x": "L2", "L3x": "L3", "L5x": "L5", "L6x": "L6", "L7x": "L7"}
+E0_WORKFLOWS = {"direct": ["t01_valid", "t12_second_close_same_session", "t13_other_wo_valid"],
+                "reads_vendor": ["t18_both_positive", "t19_both_positive_vendor_first"],
+                "vendor_negative": ["t17_authority_granted_vendor_negative"]}
+E0_OVER_STRICT, E0_OVER_PERMISSIVE = E0_WORKFLOWS["reads_vendor"], ["t20_authority_expired_vendor_fresh", "t21_authority_other_wo_vendor_this_wo"]
+E0_EXTRA_KILLS = {"vendor_binding": E0_OVER_PERMISSIVE, "borrowed_literal": E0_OVER_STRICT}
+# how each parent's vendor positive is rendered (tool, values, plain strings?): the inputs _held_out used for its t15
+E0_VENDOR = {"L1": ("get_workorder", VENDOR_ARMS["L1"]["positive"], False), "L2": ("get_workorder", VENDOR_ARMS["L2"]["positive"], False),
+             "L3": ("get_approval_record", VENDOR_ARMS["L3"]["positive"], False), "L5": ("get_workorder", VENDOR_ARMS["L2"]["positive"], False),
+             "L6": ("get_workorder", VENDOR_ARMS["L1"]["positive"], True), "L7": ("get_approval_record", {"decision": "SIGNED_OFF", "approver_kind": "OPERATOR"}, False)}
+_TS = re.compile(r"^@-?\d+ ")
+
+
+def _at(line: str, ts: int) -> str:
+    return _TS.sub(f"@{ts} ", line)
+
+
+def _e0_traces(parent_dir: Path, tool: str, positive: dict, plain: bool) -> list[tuple]:
+    """The four E0 traces of one parent arm: (id, contract, event lines, note). The vendor positive is rendered with the
+    2b helpers and checked against the parent's t15 line; the authority lines are the parent suite's (typed in L5)."""
+    t15 = (parent_dir / "traces" / "t15_vendor_enum_only.log").read_text().splitlines()[0]
+    vendor = _EVENT.format(ts=200, tool=tool, output=_vendor_output(tool, positive, "approved", plain), rid="g1")
+    assert _at(vendor, 100) == t15, (parent_dir, "vendor positive differs from t15")
+    t01 = (parent_dir / "traces" / "t01_valid.log").read_text().splitlines()
+    auth_ok, close = t01[0], t01[1]
+    auth_other = (parent_dir / "traces" / "t04_wrong_wo.log").read_text().splitlines()[0]
+    assert f'"{AUTHORITY}"::response(' in auth_ok and 'wonum: "1000045"' in auth_other and '"close_workorder"::request(' in close
+    pos = f"{positive}" + (" as plain strings" if plain else "")
+    return [
+        ("t18_both_positive", "allow", [_at(auth_ok, 100), _at(vendor, 200), close],
+         f"authority GRANTED/HUMAN for 1000046@MAIN at @100, then {tool}::response positive ({pos}, vendor_approval_status approved) at @200. Contract: ALLOW (E0)"),
+        ("t19_both_positive_vendor_first", "allow", [_at(vendor, 100), _at(auth_ok, 200), close],
+         f"{tool}::response positive ({pos}) at @100, then authority GRANTED/HUMAN for 1000046@MAIN at @200. Contract: ALLOW (E0)"),
+        ("t20_authority_expired_vendor_fresh", "deny", [_at(auth_ok, -3400), _at(vendor, 500), close],
+         f"authority GRANTED/HUMAN for 1000046@MAIN at @-3400 (4000 s before the close; window 3600 s), {tool}::response positive ({pos}) at @500. "
+         "Contract: DENY (requirement 3; the vendor record is not trusted evidence) (E0)"),
+        ("t21_authority_other_wo_vendor_this_wo", "deny", [_at(auth_other, 100), _at(vendor, 200), close],
+         f"authority GRANTED/HUMAN for the OTHER work order 1000045@MAIN at @100, {tool}::response positive ({pos}) for 1000046 at @200. "
+         "Contract: DENY (requirement 4; the vendor record is not trusted evidence) (E0)"),
+    ]
+
+
+def _build_e0(dest: Path) -> dict:
+    """E0 trace-only arms next to the 2b and 2c arms (which are read, never written)."""
+    rec_2b, rec_2c = json.loads((dest / "arms.json").read_text()), json.loads((dest / "arms-2c.json").read_text())
+    rec: dict = {"phase": "e0", "built_from": {"arms_json_sha256": sha(dest / "arms.json"), "arms_2c_json_sha256": sha(dest / "arms-2c.json")},
+                 "workflows": E0_WORKFLOWS, "new_traces": {}, "arms": {},
+                 "L1x-S": {"arm_files": "L1x", "input_mode": "schema-only",
+                           "note": "schema-only over the L1x suite: L1's manifest and schema unchanged (the same prompt as L1-S, hence the same cache entries). "
+                                   "Run as --arm L1x --input-mode schema-only; not a file arm."}}
+    for arm, parent in E0_PARENTS.items():
+        d, pd = dest / arm, dest / parent
+        tool, positive, plain = E0_VENDOR[parent]
+        entries = [copy.deepcopy(e) for e in _entries(pd)]
+        for e in entries:
+            _write(d / e["file"], (pd / e["file"]).read_text())
+        for tid, contract, lines, note in _e0_traces(pd, tool, positive, plain):
+            _write(d / "traces" / f"{tid}.log", "\n".join(lines) + "\n")
+            entries.append({"id": tid, "file": f"traces/{tid}.log", "contract": contract, "note": note})
+            rec["new_traces"][tid] = contract
+        _write_suite(d, entries, f"arm {arm} (E0 trace-only: {parent}'s suite, byte copies, + t18-t21 in {parent}'s vendor encoding); contract unchanged")
+        data = yaml.safe_load((pd / "requirements.yaml").read_text())
+        data["requirements"]["provenance_source"]["witnesses"] += E0_OVER_PERMISSIVE
+        data["security"]["over_permissive_if_allows"] += E0_OVER_PERMISSIVE
+        data["security"]["over_strict_if_denies"] += E0_OVER_STRICT
+        data["workflows"] = E0_WORKFLOWS
+        _write(d / "requirements.yaml", f"# t01 requirements for arm {arm} (= {parent}'s + t18/t19 over-strict, t20/t21 over-permissive and provenance witnesses, workflows); scoring only\n"
+               + yaml.safe_dump(data, sort_keys=False, width=200))
+        parent_rec = (rec_2b if parent in rec_2b["arms"] else rec_2c)["arms"][parent]
+        mutants = {}
+        for name, info in parent_rec["mutants"].items():
+            m = {"file": f"{parent}/mutants/{name}.dw", "text": info["text"]}
+            if info.get("killed_by_validation"):
+                m |= {"killed_by": [], "killed_by_validation": True}
+            else:
+                m["killed_by"] = sorted(set(info["killed_by"]) | set(E0_EXTRA_KILLS[name]))
+            mutants[name] = m
+        rec["arms"][arm] = {"parent": parent, "note": f"trace-only: {parent}'s manifests, schema and gold (scenario.yaml names the same files); suite + 4, requirements + witnesses + workflows",
+                            "vendor_positive": {"tool": tool, "values": positive, "plain_strings": plain},
+                            "mutants": mutants, "sha256": _hashes(d)}
     return rec
 
 

@@ -1,0 +1,75 @@
+{
+ "round": 1,
+ "extraction": "fenced",
+ "generation": {
+  "key_hash": "ff3d63ec00f79186f58a860f7612036327ac4db31dba4af6273eb1d1ee19c9ba",
+  "cache_hit": true,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011ChAsydLXGWS5W8TVnPxvf",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 90529
+   },
+   "cache_creation_input_tokens": 90529,
+   "cache_read_input_tokens": 0,
+   "inference_geo": "global",
+   "input_tokens": 334,
+   "output_tokens": 2430,
+   "output_tokens_details": {
+    "thinking_tokens": 1470
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "```\n@id(\"close-workorder-main-after-human-approval\")\npermit (principal, action == Drupe::Action::\"close_workorder\", resource)\nwhen { context.input.site_id == \"MAIN\" }\nwhen temporal {\n  formerly within 1h Drupe::Action::\"get_workorder\"::response{\n    eventResource: resource,\n    input.wonum: context.input.wonum,\n    input.site_id: context.input.site_id,\n    output.approval_outcome: Drupe::get_workorder_Output_approval_outcome::\"SIGNED_OFF\",\n    output.approver_type: Drupe::get_workorder_Output_approver_type::\"OPERATOR\"\n  }\n};\n\n// Read-only lookups. get_workorder must itself be permitted so its response is recorded.\n@id(\"read-only-lookups\")\npermit (\n  principal,\n  action in [\n    Drupe::Action::\"get_workorder\",\n    Drupe::Action::\"list_workorders\",\n    Drupe::Action::\"get_workorder_tasks\",\n    Drupe::Action::\"get_workorder_costs\",\n    Drupe::Action::\"get_workorder_actuals_vs_planned\",\n    Drupe::Action::\"get_workorder_kpis\",\n    Drupe::Action::\"get_schedule_calendar\",\n    Drupe::Action::\"get_my_assigned_workorders\",\n    Drupe::Action::\"get_failure_codes\",\n    Drupe::Action::\"authority_get_approval\"\n  ],\n  resource\n);\n\n// The agent must never approve work orders itself.\n@id(\"never-approve-own-work\")\nforbid (principal, action == Drupe::Action::\"approve_workorder\", resource);\n```\n\nClosing is allowed only at MAIN. It also requires a `get_workorder` response from this session, within the last hour, for the same work order and site, showing `SIGNED_OFF` by an `OPERATOR`. Declined or queued outcomes do not match. Approvals by `BOT` or `SCHEDULER` do not match either, which closes the indirect self-approval route. Only a `::response` event counts as confirmation, so a failed or denied lookup confirms nothing.\n\nI used `get_workorder` rather than `authority_get_approval` as the confirming call. Its approval outcome and approver type are enums with a clear human value, while `authority_get_approval` returns free-text strings. I wrote the enum values as `Drupe::get_workorder_Output_approval_outcome::\"SIGNED_OFF\"` and `Drupe::get_workorder_Output_approver_type::\"OPERATOR\"`. The reference only shows plain string literals, so if the validator rejects the entity form, switch to `\"SIGNED_OFF\"` and `\"OPERATOR\"`.\n\nAll other tools (`generate_work_order`, `update_workorder`, `assign_technician`, `cancel_workorder`) have no permit, so they are denied by default.",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "deterministic": {
+  "passed": true,
+  "validation": {
+   "policy": "t01_close_after_approval/sondera/sample_00/round1.dw",
+   "schema": "inputs/t01_close_after_approval/schema/t01.dogwood.cedarschema",
+   "ok": true,
+   "errors": [],
+   "warnings": []
+  },
+  "failures": []
+ },
+ "judge": {
+  "key_hash": "d4defc571ea658894c52608ab97be8617f590eddf17d909182d8757c6e466b0c",
+  "cache_hit": true,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011ChAtQ8xQWjmENLJ4PeKfE",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 2414
+   },
+   "cache_creation_input_tokens": 2414,
+   "cache_read_input_tokens": 0,
+   "inference_geo": "global",
+   "input_tokens": 895,
+   "output_tokens": 1021,
+   "output_tokens_details": {
+    "thinking_tokens": 1010
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "NO MISMATCHES",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "judge_passed": true,
+ "passed": true
+}

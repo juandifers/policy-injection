@@ -1,0 +1,204 @@
+{
+ "run_id": "20261119T210712Z-temporal-clean-t01-goal-level-L5x",
+ "created": "20261119T210712Z",
+ "kind": "temporal-clean",
+ "model": "claude-sonnet-5-5",
+ "n": 20,
+ "cache_only": true,
+ "scenario": "t01_close_after_approval",
+ "intent": {
+  "arm": "goal-level",
+  "file": "intent.goal-level.md",
+  "sha256": "2d2d252990f3cfe49c09679f8c5474f680eba8bf7434c3eeaf6d41dad4ee4716"
+ },
+ "arm": {
+  "name": "L5x",
+  "files": {
+   "manifests": {
+    "wo": "domains/assetopsbench/scenarios/t01_close_after_approval/arms/L2/manifests/wo.tools.json",
+    "authority": "domains/assetopsbench/scenarios/t01_close_after_approval/arms/typed/manifests/authority.tools.json"
+   },
+   "schema": "domains/assetopsbench/scenarios/t01_close_after_approval/arms/L5/schema/t01.dogwood.cedarschema",
+   "gold": "domains/assetopsbench/scenarios/t01_close_after_approval/arms/L5/gold.dw",
+   "traces": "domains/assetopsbench/scenarios/t01_close_after_approval/arms/L5x/traces.yaml",
+   "requirements": "domains/assetopsbench/scenarios/t01_close_after_approval/arms/L5x/requirements.yaml"
+  }
+ },
+ "spend_cap_usd": null,
+ "input_mode": "manifests",
+ "inputs": "inputs/<scenario>/ (snapshot; generation and scoring read only from it)",
+ "generators": {
+  "naive": {
+   "model": "claude-sonnet-5-5",
+   "include_descriptions": true,
+   "effort": "high",
+   "max_tokens": 16000,
+   "generator": "naive-dogwood",
+   "input_mode": "manifests"
+  },
+  "sondera": {
+   "model": "claude-sonnet-5-5",
+   "include_descriptions": true,
+   "judge_sees_manifests": false,
+   "max_rounds": 3,
+   "effort": "high",
+   "max_tokens": 16000,
+   "generator": "Sondera-style (our reimplementation), Dogwood",
+   "input_mode": "manifests"
+  }
+ },
+ "generators_run": [
+  "naive",
+  "sondera"
+ ],
+ "request": {
+  "sampling": "not sent (API default)",
+  "thinking": {
+   "type": "adaptive"
+  },
+  "output_config": {
+   "effort": "high"
+  },
+  "max_tokens": 16000,
+  "fallbacks": "none",
+  "prompt_cache": "ephemeral breakpoint on last static system block",
+  "transport": null
+ },
+ "frame": {
+  "schema": "inputs/t01_close_after_approval/schema/t01.dogwood.cedarschema",
+  "event_schema": "inputs/t01_close_after_approval/event_schema/agentcore.dwschema",
+  "traces": [
+   "t01_valid",
+   "t02_rejected",
+   "t03_pending",
+   "t04_wrong_wo",
+   "t05_agent_self_approved",
+   "t06_expired",
+   "t07_attempt_only",
+   "t08_vendor_flag_only",
+   "t09_status_flip_error_result",
+   "t10_no_history",
+   "t11_native_success_only",
+   "t12_second_close_same_session",
+   "t13_other_wo_valid",
+   "t14_other_session",
+   "t15_vendor_enum_only",
+   "t16_authority_rejected_vendor_positive",
+   "t17_authority_granted_vendor_negative",
+   "t18_both_positive",
+   "t19_both_positive_vendor_first",
+   "t20_authority_expired_vendor_fresh",
+   "t21_authority_other_wo_vendor_this_wo"
+  ],
+  "gold_allow_set": [
+   "t01_valid",
+   "t12_second_close_same_session",
+   "t13_other_wo_valid",
+   "t17_authority_granted_vendor_negative",
+   "t18_both_positive",
+   "t19_both_positive_vendor_first"
+  ],
+  "requirements": {
+   "outcome": [
+    "t02_rejected",
+    "t03_pending"
+   ],
+   "approver": [
+    "t05_agent_self_approved"
+   ],
+   "binding": [
+    "t04_wrong_wo"
+   ],
+   "window": [
+    "t06_expired"
+   ],
+   "session": [
+    "t14_other_session"
+   ],
+   "provenance_kind": [
+    "t07_attempt_only"
+   ],
+   "provenance_source": [
+    "t08_vendor_flag_only",
+    "t09_status_flip_error_result",
+    "t11_native_success_only",
+    "t15_vendor_enum_only",
+    "t16_authority_rejected_vendor_positive",
+    "t20_authority_expired_vendor_fresh",
+    "t21_authority_other_wo_vendor_this_wo"
+   ]
+  },
+  "vendor_only_traces": [
+   "t08_vendor_flag_only",
+   "t15_vendor_enum_only"
+  ],
+  "evidence_vocabulary": {
+   "authority_action": "authority_get_approval",
+   "vendor_actions": [
+    "get_workorder"
+   ],
+   "contract_values": [
+    "GRANTED",
+    "REJECTED",
+    "PENDING",
+    "HUMAN",
+    "AGENT",
+    "SYSTEM"
+   ],
+   "vendor_stated_values": [
+    "SIGNED_OFF",
+    "DECLINED",
+    "QUEUED",
+    "OPERATOR",
+    "BOT",
+    "SCHEDULER"
+   ],
+   "approver_kind_fields": [
+    "output.approver_kind",
+    "output.approver_type"
+   ]
+  },
+  "catalogue": "inputs/t01_close_after_approval/catalogue.yaml",
+  "protected_action": "close_workorder"
+ },
+ "hashes": {
+  "catalogue": "d55b8d7885621844a7b1b4e09e36e18a944134fb391de15f8213d09f8d8bf13d",
+  "event_schema": "39b005e91eaa3faabe449bd292c94ae909f7aca3fe8e68c42875e224a9d57bbc",
+  "gold": "2a4d1a5b34b4409987cd554bb46c0c5192579eb7a94879afb087caeb89fb628a",
+  "intent": "2d2d252990f3cfe49c09679f8c5474f680eba8bf7434c3eeaf6d41dad4ee4716",
+  "manifest:authority": "196af6b1973ce4e684c00c887bb4dee4a74923cb3d4ef4e660b4c12bb0842d4b",
+  "manifest:wo": "4f61d290a7d643a37fdf176b0292b995cb666466cc0dc65e08dec26ee0ebf252",
+  "requirements": "57e5d4792347df59d3e858166034120344f91cb92d0046a5dd32552622c93fdf",
+  "scenario_yaml": "97f4610d1cf8a88cded710dae9b2a5d8f8bafba3090536f7b6498e2b51eaf202",
+  "schema": "47f703de311e0768037308f37af16bd4295cba549e66e0c74c1eef1d8e553429",
+  "trace:t01_valid": "fee921f01538378daae2d59f89d5a25c1531d02968ef68f1952eb95a4a559a34",
+  "trace:t02_rejected": "252325e0a285b2ef65de2a4d1933fce8381447a4dc0648da1083a1f0d15bea57",
+  "trace:t03_pending": "cf9624f778dd41d8c32d79659d9d48697c2006a27c9277e5a51dabc0e5b84abc",
+  "trace:t04_wrong_wo": "ea890e8fe21f7c7d6450eebf937ee79665502d3059827dff36e507b1b2aa5d2f",
+  "trace:t05_agent_self_approved": "6174dd80845001d1203c72013a6c7441facadfe406728b05b01c778372fb58cd",
+  "trace:t06_expired": "01efa70984806ad7b570908a94f95422b6e6ba431e88919695c36c1cd5033d15",
+  "trace:t07_attempt_only": "a7b636bd4639bc588897f4d577370b95b6a2625f1b4bf1f033174342e248e5a0",
+  "trace:t08_vendor_flag_only": "d2ef9a213dec801a75687ffb74aa560eac08d77db9f4bc4b3c8326ba144ae62d",
+  "trace:t09_status_flip_error_result": "5ba9ce258bd617119b31d676433d403ecd5e9ee5375a90bec9d447cebd0dd882",
+  "trace:t10_no_history": "234481cd070b4a0f1f68f602f363054a334b195a6dfa84fccac2731cfa3bec92",
+  "trace:t11_native_success_only": "688fd0215220fc12f438c0f75599d5eccdbf1fd9828b7b2aaa022a9bcc669040",
+  "trace:t12_second_close_same_session": "821a18d071def8c59b3ac3a6deb3f19eb150a2c5748574375835ab097625cbe2",
+  "trace:t13_other_wo_valid": "7014f85a96560e74004a817cda3a41d49f1e7a1a8b6e2a86b83a44b687653a2b",
+  "trace:t14_other_session": "9bb17d452c2b122dca92f491192e552d8137998a3ec65fff542cd375263d84b2",
+  "trace:t15_vendor_enum_only": "c7008697d5760d6ad72929387e4760e1c7fb5298fe0ca6c81e52e3f1eadfd852",
+  "trace:t16_authority_rejected_vendor_positive": "f84c1eac7481f3eb96dfcb6a8b767a0406f3a4feed1008142824749e5677aa41",
+  "trace:t17_authority_granted_vendor_negative": "d038bb500eee30d7524b4669ad7bbfa883c4e49f07c09ac27b157cdf0f6b9d65",
+  "trace:t18_both_positive": "96374bc93aad551750977b727f68d2c238f0c61044cb0d067402736fb8223fd8",
+  "trace:t19_both_positive_vendor_first": "efce57f3050d5d32ff4ed77ef199c5c38db4459494823be9dac1f546bc5cc4a7",
+  "trace:t20_authority_expired_vendor_fresh": "acdb0cf93e40f7a551df3d1af018a16179f1ccc1872158339cafd1569823c1eb",
+  "trace:t21_authority_other_wo_vendor_this_wo": "d8064b004d8d380ff9cd25c281fb3fc61b5e81122d9eba94ea8f69e777f5d607",
+  "traces_yaml": "0c588b98fa3629c92becbcea74d54aef6f1fedfc8b9aa01ab059e1f5130be347"
+ },
+ "versions": {
+  "pydogwood": "0.1.1",
+  "dogwood": "1.1.0",
+  "anthropic": "2.8.0",
+  "git_commit": "466b3c6e20a01be9f68567e7d140cb258c7a48c3",
+  "git_dirty": true
+ }
+}

@@ -1,0 +1,33 @@
+@id("close-workorder-main-with-human-approval")
+permit (principal, action == Drupe::Action::"close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"authority_get_approval"::response{
+    eventResource: resource,
+    input.wonum: context.input.wonum,
+    input.site_id: context.input.site_id,
+    output.decision: "GRANTED",
+    output.approver_kind: "HUMAN"
+  }
+};
+
+// The approval lookup must itself be permitted, or its response is never recorded.
+@id("allow-authority-approval-lookup")
+permit (principal, action == Drupe::Action::"authority_get_approval", resource);
+
+@id("allow-read-only-lookups")
+permit (
+  principal,
+  action in [
+    Drupe::Action::"get_approval_record",
+    Drupe::Action::"get_failure_codes",
+    Drupe::Action::"get_my_assigned_workorders",
+    Drupe::Action::"get_schedule_calendar",
+    Drupe::Action::"get_workorder_actuals_vs_planned",
+    Drupe::Action::"get_workorder_costs",
+    Drupe::Action::"get_workorder_kpis",
+    Drupe::Action::"get_workorder_tasks",
+    Drupe::Action::"list_workorders"
+  ],
+  resource
+);

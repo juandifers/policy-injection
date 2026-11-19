@@ -1,0 +1,30 @@
+{
+ "key_hash": "a7f5ebb5003b16daddf54fc25fa654d14c521625e9ea39b8fde06a27ae97f1ea",
+ "cache_hit": true,
+ "model_version": "claude-sonnet-5-5",
+ "request_id": "req_011ChAs9EQJNNtvYxDtHuhnM",
+ "stop_reason": "end_turn",
+ "stop_details": null,
+ "usage": {
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 0,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "cache_creation_input_tokens": 0,
+  "cache_read_input_tokens": 90517,
+  "inference_geo": "global",
+  "input_tokens": 334,
+  "output_tokens": 1714,
+  "output_tokens_details": {
+   "thinking_tokens": 1211
+  },
+  "service_tier": "standard",
+  "speed": "standard"
+ },
+ "text": "```\n@id(\"read_only_lookups\")\npermit (principal, action == Drupe::Action::\"get_workorder\", resource);\n\npermit (principal, action == Drupe::Action::\"list_workorders\", resource);\n\npermit (principal, action == Drupe::Action::\"get_workorder_tasks\", resource);\n\npermit (principal, action == Drupe::Action::\"get_workorder_costs\", resource);\n\npermit (principal, action == Drupe::Action::\"get_workorder_actuals_vs_planned\", resource);\n\npermit (principal, action == Drupe::Action::\"get_workorder_kpis\", resource);\n\npermit (principal, action == Drupe::Action::\"get_schedule_calendar\", resource);\n\npermit (principal, action == Drupe::Action::\"get_my_assigned_workorders\", resource);\n\npermit (principal, action == Drupe::Action::\"get_failure_codes\", resource);\n\npermit (principal, action == Drupe::Action::\"authority_get_approval\", resource);\n\n@id(\"close_only_after_recent_human_approval_at_main\")\npermit (principal, action == Drupe::Action::\"close_workorder\", resource)\nwhen { context.input.site_id == \"MAIN\" }\nwhen temporal {\n  formerly within 1h Drupe::Action::\"get_workorder\"::response{\n    eventResource: resource,\n    input.wonum: context.input.wonum,\n    input.site_id: context.input.site_id,\n    output.approval_outcome: \"GRANTED\",\n    output.approver_type: \"HUMAN\"\n  }\n};\n```",
+ "content_types": [
+  "thinking",
+  "text"
+ ],
+ "extraction": "fenced"
+}

@@ -338,3 +338,111 @@ def test_main_schema_only_input_mode_is_recorded_and_the_prompt_carries_no_manif
     assert s["naive"]["first_shot_bind_counts"] == {"authority": 1} and s["naive"]["final_bind_counts"] == {"authority": 1}
     assert s["sondera"]["first_shot_shared_with_naive"] == {"k": 1, "n": 1}
     assert "input mode `schema-only`" in (run / "summary.md").read_text()
+
+
+# ---- E0 (2026-11-20): `workflows` map in requirements.yaml, per-sample workflows_allowed, class report (zero API)
+from pgi.generators.dogwood_inputs import load_requirements  # noqa: E402
+from pgi.oracle import temporal  # noqa: E402
+from pgi.runs import workflow_classes  # noqa: E402
+
+E0_WORKFLOWS = {"direct": ("t01_valid", "t12_second_close_same_session", "t13_other_wo_valid"),
+                "reads_vendor": ("t18_both_positive", "t19_both_positive_vendor_first"),
+                "vendor_negative": ("t17_authority_granted_vendor_negative",)}
+E0_SURPLUS = ["t15_vendor_enum_only", "t16_authority_rejected_vendor_positive", "t20_authority_expired_vendor_fresh", "t21_authority_other_wo_vendor_this_wo"]
+LOUD_IN_BOTH = '''@id("close-after-approval")
+permit (principal, action == Drupe::Action::"close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 2m Drupe::Action::"get_workorder"::response{
+    eventResource: resource, input.wonum: context.input.wonum, input.site_id: context.input.site_id,
+    output.approval_outcome: Drupe::get_workorder_Output_approval_outcome::"GRANTED" } };
+@id("lookup-approval")
+permit (principal, action == Drupe::Action::"authority_get_approval", resource);
+'''
+
+
+@pytest.fixture(scope="module")
+def fr_l1x():
+    return frame(load_dogwood_inputs(T01, intent="goal-level", arm="L1x"))
+
+
+def test_load_requirements_accepts_files_without_workflows_and_validates_the_map(tmp_path, fr, fr_l1x):
+    assert fr.requirements.workflows is None and fr_l1x.requirements.workflows == E0_WORKFLOWS
+    base = (T01 / "requirements.yaml").read_text()
+    suite = temporal.load_suite(T01 / "traces.yaml")
+    ok = tmp_path / "ok.yaml"
+    ok.write_text(base + "workflows:\n  direct: [t01_valid, t13_other_wo_valid]\n")
+    assert load_requirements(ok, suite).workflows == {"direct": ("t01_valid", "t13_other_wo_valid")}
+    for bad, msg in (("workflows:\n  direct: [t02_rejected]\n", "contract"), ("workflows:\n  direct: [t99_missing]\n", "not in the suite"),
+                     ("workflows:\n  direct: []\n", "no traces")):
+        p = tmp_path / "bad.yaml"
+        p.write_text(base + bad)
+        with pytest.raises(ValueError, match=msg):
+            load_requirements(p, suite)
+
+
+def test_score_records_which_workflows_pass(fr, fr_l1x):
+    assert "workflows_allowed" not in score(T01 / "gold.dw", fr)
+    gold = score(T01 / "gold.dw", fr_l1x)
+    assert gold["workflows_allowed"] == ["direct", "reads_vendor", "vendor_negative"] and gold["surplus"] == [] and gold["deficit"] == []
+    vb = score(ARMS / "L1" / "mutants" / "vendor_binding.dw", fr_l1x)
+    assert vb["workflows_allowed"] == ["reads_vendor"]
+    assert set(vb["surplus"]) == {"t15_vendor_enum_only", "t16_authority_rejected_vendor_positive", "t20_authority_expired_vendor_fresh", "t21_authority_other_wo_vendor_this_wo"}
+    assert set(vb["over_strict"]) == {"t01_valid", "t12_second_close_same_session", "t13_other_wo_valid", "t17_authority_granted_vendor_negative"}
+    window = score(T01 / "weak_window.dw", fr_l1x)
+    assert window["workflows_allowed"] == ["direct", "reads_vendor", "vendor_negative"] and "t20_authority_expired_vendor_fresh" in window["surplus"]
+    invalid = score(ARMS / "L5" / "mutants" / "borrowed_literal.dw", fr_l1x)   # typed ids under an untyped schema: invalid
+    assert invalid["valid"] is False and "workflows_allowed" not in invalid
+
+
+def test_summary_counts_workflows(fr_l1x):
+    gold = score(T01 / "gold.dw", fr_l1x)
+    vb = score(ARMS / "L1" / "mutants" / "vendor_binding.dw", fr_l1x)
+    s = summarize("claude-haiku-5-5", [_row(0, gold), _row(1, vb), _row(2, {"validation": {"ok": False}, "valid": False})], fr_l1x)
+    assert s["workflow_counts"] == {"direct": {"traces": list(E0_WORKFLOWS["direct"]), "k": 1, "n": 2},
+                                    "reads_vendor": {"traces": list(E0_WORKFLOWS["reads_vendor"]), "k": 2, "n": 2},
+                                    "vendor_negative": {"traces": list(E0_WORKFLOWS["vendor_negative"]), "k": 1, "n": 2}}
+    md = markdown({"run_id": "x", "scenario": "t01", "model": "m", "n": 3, "versions": {"dogwood": "1.1.0", "pydogwood": "0.1.1"},
+                   "intent": {"arm": "goal-level"}, "arm": {"name": "L1x"}}, {"naive": s})
+    assert "reads_vendor" in md and "## Workflows" in md
+
+
+def test_classify_one_sample(fr_l1x, tmp_path):
+    cls = lambda o: workflow_classes.classify(o, E0_SURPLUS, "direct", "reads_vendor")
+    assert cls(score(T01 / "gold.dw", fr_l1x)) is None                                      # no surplus: not classified
+    assert cls(score(ARMS / "L1" / "mutants" / "vendor_binding.dw", fr_l1x)) == "silent_when_vendor_read"
+    assert cls(score(T01 / "weak_window.dw", fr_l1x)) == "silent_in_both"
+    p = tmp_path / "loud.dw"
+    p.write_text(LOUD_IN_BOTH)
+    loud = score(p, fr_l1x)
+    assert loud["valid"] and loud["scored"] and loud["allow_set"] == ["t20_authority_expired_vendor_fresh"]
+    assert cls(loud) == "loud_in_both"
+    assert cls({"valid": False}) is None and cls({"valid": True, "scored": False}) is None   # unscored samples are never classified
+    assert cls({"valid": True, "scored": True, "allow_set": ["t15_vendor_enum_only", "t01_valid", "t12_second_close_same_session", "t13_other_wo_valid"],
+                "workflows_allowed": ["direct"]}) == "silent_direct_only"
+
+
+def test_tally_a_run_folder(fr_l1x, tmp_path):
+    run = tmp_path / "runs" / "20260101T000000Z-temporal-clean-x"
+    (run / "inputs" / "t01").mkdir(parents=True)
+    (run / "inputs" / "t01" / "requirements.yaml").write_bytes((ARMS / "L1x" / "requirements.yaml").read_bytes())
+    (run / "config.json").write_text(json.dumps({"run_id": run.name, "scenario": "t01", "arm": {"name": "L1x"}, "input_mode": "manifests",
+                                                 "cache_only": True, "model": "m"}))
+    oracles = {"naive": [score(T01 / "gold.dw", fr_l1x), score(ARMS / "L1" / "mutants" / "vendor_binding.dw", fr_l1x), {"validation": {"ok": False}, "valid": False}],
+               "sondera": [score(T01 / "weak_window.dw", fr_l1x), score(ARMS / "L1" / "mutants" / "vendor_binding.dw", fr_l1x), score(T01 / "gold.dw", fr_l1x)]}
+    for gen, rows in oracles.items():
+        for i, o in enumerate(rows):
+            d = run / "t01" / gen / f"sample_{i:02d}"
+            d.mkdir(parents=True)
+            (d / "oracle.json").write_text(json.dumps(o))
+    rep = workflow_classes.tally(run, E0_SURPLUS, "direct", "reads_vendor")
+    assert rep["arm"] == "L1x" and rep["input_mode"] == "manifests" and rep["source_run"] == run.name
+    assert rep["views"]["first_shot"]["generator"] == "naive" and rep["views"]["final"]["generator"] == "sondera"
+    fs, fi = rep["views"]["first_shot"], rep["views"]["final"]
+    assert (fs["n"], fs["scored"], fs["surplus"]) == (3, 2, 1) and fs["classes"] == {"loud_in_both": 0, "silent_when_vendor_read": 1, "silent_in_both": 0, "silent_direct_only": 0}
+    assert (fi["n"], fi["scored"], fi["surplus"]) == (3, 3, 2) and fi["classes"] == {"loud_in_both": 0, "silent_when_vendor_read": 1, "silent_in_both": 1, "silent_direct_only": 0}
+    assert fs["surplus_samples"] == [1] and fi["class_samples"]["silent_in_both"] == [0]
+    assert fi["allow_counts"]["t20_authority_expired_vendor_fresh"] == 2 and fi["allow_counts"]["t18_both_positive"] == 3 and fs["allow_counts"]["t01_valid"] == 1
+    assert rep["workflows"] == {k: list(v) for k, v in E0_WORKFLOWS.items()} and rep["surplus_traces"] == E0_SURPLUS
+    md = workflow_classes.markdown({"run_id": "r", "surplus_traces": E0_SURPLUS, "direct": "direct", "reads_vendor": "reads_vendor", "runs": [rep]})
+    assert "| L1x | manifests | first shot | 2 | 1 | 0 | 1 | 0 |" in md and "silent in both" in md

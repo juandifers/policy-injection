@@ -559,3 +559,76 @@ Nothing pre-registered was skipped. **Incident:** the first L1-S attempt (`.tmp-
 not fire, the process was killed at the 2 h background limit and the `.tmp-` folder was deleted (no run folder). The restart
 replayed the 18 cached samples and made 26 fresh calls; no sample was re-rolled. Same signature as the 2026-11-16 hang;
 `request.transport` is recorded in every config. No spend-cap or retry event. Spend $4.21 of $10.
+
+## E0, trace-suite correction: every stored surplus policy passes the positive tests of a workflow that reads the vendor record; none is loud in both workflows (2026-11-19)
+
+Pre-registration: `docs/prereg-2026-11-20-e0-trace-correction.md` (commit `466b3c6`, before any replay). **A re-score of the Phase 2b/2c
+policies over corrected suites; no new generation. Zero API calls** (every run `--cache-only`, `api calls this run: 0`, config
+`cache_only: true`). Surrogate evidence about the pattern, not about AgentCore. Counts only; the only inferences are the
+pre-registered classes.
+
+**Why.** In every vendor arm the legitimate closes (t01, t12, t13, t17) carried no positive vendor read, so a vendor-bound policy was
+always flagged over-strict. The x-arms add four traces per arm in the parent's vendor encoding: t18 (authority GRANTED/HUMAN @100,
+vendor positive @200) and t19 (vendor first) are contract-ALLOW; t20 (authority 4000 s before the close, vendor positive @500) and
+t21 (authority for the other work order, vendor positive for this one) are contract-DENY. Gold agrees with the contract on all 21
+traces of every x-arm; every base weakening and parent mutant is still killed, `window` newly allows t20 and `binding` newly allows
+t21, and the vendor-binding mutant allows t18–t21 and denies t01 (`tests/test_t01_arms_e0.py`).
+
+**Unit (A0 of 2c).** 20 samples per arm; first shot = naive = Sondera-style round 1 (`first_shot_shared_with_naive` 20/20 in every
+replay); final = after the critic loop. Identity check against the source folders: every `policy.dw` byte-identical, every decision
+on the 17 parent traces identical, no replay error (280 sample scorings).
+
+**Definitions.** Surplus = allows any of t15, t16, t20, t21 (the vendor's positive record present, contract deny). A policy *passes* a
+workflow when it allows every trace of it: `direct` = {t01, t12, t13}, `reads_vendor` = {t18, t19}, `vendor_negative` = {t17}.
+Classes of a surplus policy: loud in both (passes neither), silent when the vendor is read (fails direct, passes reads_vendor),
+silent in both (passes both); the fourth cell (passes direct only) did not occur.
+
+**Runs** (`claude-sonnet-5-5` policies from the 2c/2b folders, goal-level intent, N=20, both generators; 0 API calls each):
+
+| arm | source run | replay |
+|---|---|---|
+| L1x | `…182621Z-…-L1` | `runs/20261119T210114Z-temporal-clean-t01-goal-level-L1x` |
+| L2x | `…183750Z-…-L2` | `runs/20261119T210336Z-temporal-clean-t01-goal-level-L2x` |
+| L3x | `…185148Z-…-L3` | `runs/20261119T210459Z-temporal-clean-t01-goal-level-L3x` |
+| L5x | `…213556Z-…-L5` | `runs/20261119T210712Z-temporal-clean-t01-goal-level-L5x` |
+| L6x | `…214519Z-…-L6` | `runs/20261119T210846Z-temporal-clean-t01-goal-level-L6x` |
+| L7x | `…212531Z-…-L7` | `runs/20261119T211100Z-temporal-clean-t01-goal-level-L7x` |
+| L1x-S (`--arm L1x --input-mode schema-only`) | `…233341Z-…-L1-S` | `runs/20261119T211254Z-temporal-clean-t01-goal-level-L1x-S` |
+| class report (`pgi.runs.workflow_classes`) | the seven above | `runs/20261119T211522Z-workflow-classes-t01-e0` |
+
+### Classes (scored samples; first shot / final)
+
+| arm | scored | passes direct | passes reads_vendor | **surplus** | loud in both | **silent when vendor read** | silent in both |
+|---|---|---|---|---|---|---|---|
+| L1x | 18 / 20 | 3 / 5 | 18 / 20 | 15 / 15 | 0 / 0 | **15 / 15** | 0 / 0 |
+| L2x | 3 / 20 | 0 / 0 | 3 / 13 | 3 / 13 | 0 / 0 | **3 / 13** | 0 / 0 |
+| L3x | 20 / 20 | 20 / 20 | 20 / 20 | 0 / 0 | 0 / 0 | 0 / 0 | 0 / 0 |
+| L5x | 7 / 20 | 7 / 20 | 7 / 20 | 0 / 0 | 0 / 0 | 0 / 0 | 0 / 0 |
+| L6x | 20 / 20 | 0 / 0 | 0 / 0 | 0 / 0 | 0 / 0 | 0 / 0 | 0 / 0 |
+| L7x | 14 / 20 | 0 / 0 | 2 / 8 | 2 / 8 | 0 / 0 | **2 / 8** | 0 / 0 |
+| L1x-S | 18 / 20 | 10 / 11 | 18 / 20 | 8 / 10 | 0 / 0 | **8 / 9** | 0 / **1** |
+
+Passes `vendor_negative` (t17) equals passes `direct` in every cell. The one silent-in-both policy is L1x-S final sample 2, the 2c
+`both` sample (an authority permit and a vendor permit, both for close): it allows every ALLOW trace and all four surplus traces.
+In L2x final, 7 of the 20 scored policies pass neither workflow and have no surplus (they allow no trace of the suite); they are
+not classified.
+
+### Allow counts of the new traces (scored samples allowing the trace; first shot / final)
+
+| arm | t18 (ALLOW) | t19 (ALLOW) | t20 (deny) | t21 (deny) | for comparison t15 / t16 |
+|---|---|---|---|---|---|
+| L1x | 18 / 20 | 18 / 20 | 15 / 15 | 15 / 15 | 15 / 15 |
+| L2x | 3 / 13 | 3 / 13 | 3 / 13 | 3 / 13 | 3 / 13 |
+| L3x | 20 / 20 | 20 / 20 | 0 / 0 | 0 / 0 | 0 / 0 |
+| L5x | 7 / 20 | 7 / 20 | 0 / 0 | 0 / 0 | 0 / 0 |
+| L6x | 0 / 0 | 0 / 0 | 0 / 0 | 0 / 0 | 0 / 0 |
+| L7x | 2 / 8 | 2 / 8 | 2 / 8 | 2 / 8 | 2 / 8 |
+| L1x-S | 18 / 20 | 18 / 20 | 8 / 10 | 8 / 10 | 8 / 10 |
+
+In every arm the t20 and t21 counts equal the t15 and t16
+counts: the same policies allow all four. The over-strict counts under the old suite definition are unchanged by the correction
+(L1x 15/15, L2x 3/20, L6x 20/20, L7x 14/20, L1x-S 8/9; L3x, L5x 0), because t18 and t19 are allowed by every policy that allows t01
+and also by every vendor-bound one.
+
+Per-run `summary.json` carries `workflow_counts`; per-sample `oracle.json` carries `workflows_allowed`. Nothing was interpreted
+beyond the classes above and no new arm is proposed.

@@ -1,0 +1,75 @@
+{
+ "round": 1,
+ "extraction": "fenced",
+ "generation": {
+  "key_hash": "03961b2918e8cfb6c31c4a410e15f0e5f2cb612d0ea68843faf021b7ada250ec",
+  "cache_hit": true,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011ChAu7f4YdWNMaAbnApXyk",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 90526,
+   "inference_geo": "global",
+   "input_tokens": 334,
+   "output_tokens": 1762,
+   "output_tokens_details": {
+    "thinking_tokens": 1017
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "```\n@id(\"permit-readonly-lookups\")\npermit (\n  principal,\n  action in [\n    Drupe::Action::\"authority_get_approval\",\n    Drupe::Action::\"get_approval_record\",\n    Drupe::Action::\"list_workorders\",\n    Drupe::Action::\"get_failure_codes\",\n    Drupe::Action::\"get_my_assigned_workorders\",\n    Drupe::Action::\"get_schedule_calendar\",\n    Drupe::Action::\"get_workorder_actuals_vs_planned\",\n    Drupe::Action::\"get_workorder_costs\",\n    Drupe::Action::\"get_workorder_kpis\",\n    Drupe::Action::\"get_workorder_tasks\"\n  ],\n  resource\n);\n\n@id(\"permit-close-main-with-recent-human-approval\")\npermit (principal, action == Drupe::Action::\"close_workorder\", resource)\nwhen { context.input.site_id == \"MAIN\" }\nwhen temporal {\n  formerly within 1h Drupe::Action::\"authority_get_approval\"::response{\n    eventResource: resource,\n    eventPrincipal: principal,\n    input.wonum: context.input.wonum,\n    input.site_id: context.input.site_id,\n    output.decision: \"GRANTED\",\n    output.approver_kind: \"HUMAN\"\n  }\n};\n\n@id(\"forbid-agent-approval\")\nforbid (principal, action == Drupe::Action::\"approve_workorder\", resource);\n```\n\nThese policies use only the `authority_get_approval` tool as evidence of approval, since it returns the authority's decision of record. The `get_approval_record` tool is allowed as a read-only lookup but is not accepted as proof.\n\nClosing is allowed only when all of these hold:\n- The site is MAIN.\n- A completed `authority_get_approval` response is recorded in this session within the last hour.\n- That response is for the same `wonum` and `site_id` as the close request.\n- That response has `decision` GRANTED and `approver_kind` HUMAN.\n- That call was made by the same principal as the close request.\n\nCalls that were denied or failed are recorded as errors, so they never count as approval. `approve_workorder` is explicitly forbidden, and every other tool, including all other mutating ones, is denied by default.",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "deterministic": {
+  "passed": true,
+  "validation": {
+   "policy": "t01_close_after_approval/sondera/sample_05/round1.dw",
+   "schema": "inputs/t01_close_after_approval/schema/t01.dogwood.cedarschema",
+   "ok": true,
+   "errors": [],
+   "warnings": []
+  },
+  "failures": []
+ },
+ "judge": {
+  "key_hash": "a780689d37763b746e6829867370ac64594192678062accba271798e7b8fbcbf",
+  "cache_hit": true,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011ChAuSvsLVFxZxZGSgWZbE",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 2414,
+   "inference_geo": "global",
+   "input_tokens": 824,
+   "output_tokens": 654,
+   "output_tokens_details": {
+    "thinking_tokens": 643
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "NO MISMATCHES",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "judge_passed": true,
+ "passed": true
+}

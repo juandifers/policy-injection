@@ -1,0 +1,75 @@
+{
+ "round": 1,
+ "extraction": "fenced",
+ "generation": {
+  "key_hash": "759e7779cf5770ce08ac0a7db7e0a3ffb3c9c2cbd8a040ab055a46fba3b1dfc8",
+  "cache_hit": true,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011ChB8ur48GrbPTpbkBk3Mw",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 34009,
+   "inference_geo": "global",
+   "input_tokens": 334,
+   "output_tokens": 2090,
+   "output_tokens_details": {
+    "thinking_tokens": 1425
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "```\n// Read-only lookups. authority_get_approval must be permitted, or its\n// response is never recorded and no approval could ever be confirmed.\n@id(\"allow-readonly-lookups\")\npermit (\n  principal,\n  action in [\n    Drupe::Action::\"authority_get_approval\",\n    Drupe::Action::\"get_workorder\",\n    Drupe::Action::\"get_workorder_tasks\",\n    Drupe::Action::\"get_workorder_costs\",\n    Drupe::Action::\"get_workorder_actuals_vs_planned\",\n    Drupe::Action::\"get_workorder_kpis\",\n    Drupe::Action::\"get_failure_codes\",\n    Drupe::Action::\"get_my_assigned_workorders\",\n    Drupe::Action::\"get_schedule_calendar\",\n    Drupe::Action::\"list_workorders\"\n  ],\n  resource\n);\n\n// Close only at MAIN, and only if, within the last hour of this session, a\n// completed authority_get_approval call for the same work order and site\n// confirmed a GRANTED decision made by a HUMAN approver.\n@id(\"close-workorder-with-recent-human-approval\")\npermit (principal, action == Drupe::Action::\"close_workorder\", resource)\nwhen { context.input.site_id == \"MAIN\" }\nwhen temporal {\n  formerly within 1h Drupe::Action::\"authority_get_approval\"::response{\n    eventResource: resource,\n    input.wonum: context.input.wonum,\n    input.site_id: context.input.site_id,\n    output.decision: \"GRANTED\",\n    output.approver_kind: \"HUMAN\"\n  }\n};\n```\n\n`approve_workorder` has no permit, so the agent can never call it. The same goes for every other tool not listed above.\n\nI confirm approval through `authority_get_approval` and match its string outputs as `\"GRANTED\"` and `\"HUMAN\"`. That schema declares them as plain strings, so those literals are my assumption. If the gateway uses different strings, update the two output patterns.",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "deterministic": {
+  "passed": true,
+  "validation": {
+   "policy": "t01_close_after_approval/sondera/sample_05/round1.dw",
+   "schema": "inputs/t01_close_after_approval/schema/t01.dogwood.cedarschema",
+   "ok": true,
+   "errors": [],
+   "warnings": []
+  },
+  "failures": []
+ },
+ "judge": {
+  "key_hash": "c1551b8cb7cbed76207a45956b0b86f0914a3e700681ca5472e05873952a93f7",
+  "cache_hit": true,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011ChBGgBXSwU3npbXq1DsvU",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 2414,
+   "inference_geo": "global",
+   "input_tokens": 881,
+   "output_tokens": 571,
+   "output_tokens_details": {
+    "thinking_tokens": 560
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "NO MISMATCHES",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "judge_passed": true,
+ "passed": true
+}

@@ -1,0 +1,895 @@
+{
+ "run_id": "20261119T211522Z-workflow-classes-t01-e0",
+ "created": "20261119T211522Z",
+ "kind": "workflow-classes",
+ "surplus_traces": [
+  "t15_vendor_enum_only",
+  "t16_authority_rejected_vendor_positive",
+  "t20_authority_expired_vendor_fresh",
+  "t21_authority_other_wo_vendor_this_wo"
+ ],
+ "direct": "direct",
+ "reads_vendor": "reads_vendor",
+ "git_commit": "466b3c6e20a01be9f68567e7d140cb258c7a48c3",
+ "runs": [
+  {
+   "arm": "L1x",
+   "input_mode": "manifests",
+   "scenario": "t01_close_after_approval",
+   "source_run": "20261119T210114Z-temporal-clean-t01-goal-level-L1x",
+   "source_config_sha256": "67c42e0305960415676e7a94f2a4fb4e5029425fbfe49f581e60592c71545b97",
+   "cache_only": true,
+   "workflows": {
+    "direct": [
+     "t01_valid",
+     "t12_second_close_same_session",
+     "t13_other_wo_valid"
+    ],
+    "reads_vendor": [
+     "t18_both_positive",
+     "t19_both_positive_vendor_first"
+    ],
+    "vendor_negative": [
+     "t17_authority_granted_vendor_negative"
+    ]
+   },
+   "surplus_traces": [
+    "t15_vendor_enum_only",
+    "t16_authority_rejected_vendor_positive",
+    "t20_authority_expired_vendor_fresh",
+    "t21_authority_other_wo_vendor_this_wo"
+   ],
+   "views": {
+    "first_shot": {
+     "generator": "naive",
+     "n": 20,
+     "scored": 18,
+     "surplus": 15,
+     "surplus_samples": [
+      0,
+      2,
+      4,
+      5,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      18
+     ],
+     "classes": {
+      "loud_in_both": 0,
+      "silent_when_vendor_read": 15,
+      "silent_in_both": 0,
+      "silent_direct_only": 0
+     },
+     "class_samples": {
+      "loud_in_both": [],
+      "silent_when_vendor_read": [
+       0,
+       2,
+       4,
+       5,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14,
+       15,
+       16,
+       18
+      ],
+      "silent_in_both": [],
+      "silent_direct_only": []
+     },
+     "workflow_pass_counts": {
+      "direct": 3,
+      "reads_vendor": 18,
+      "vendor_negative": 3
+     },
+     "allow_counts": {
+      "t01_valid": 3,
+      "t12_second_close_same_session": 3,
+      "t13_other_wo_valid": 3,
+      "t15_vendor_enum_only": 15,
+      "t16_authority_rejected_vendor_positive": 15,
+      "t17_authority_granted_vendor_negative": 3,
+      "t18_both_positive": 18,
+      "t19_both_positive_vendor_first": 18,
+      "t20_authority_expired_vendor_fresh": 15,
+      "t21_authority_other_wo_vendor_this_wo": 15
+     }
+    },
+    "final": {
+     "generator": "sondera",
+     "n": 20,
+     "scored": 20,
+     "surplus": 15,
+     "surplus_samples": [
+      0,
+      2,
+      4,
+      5,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      18
+     ],
+     "classes": {
+      "loud_in_both": 0,
+      "silent_when_vendor_read": 15,
+      "silent_in_both": 0,
+      "silent_direct_only": 0
+     },
+     "class_samples": {
+      "loud_in_both": [],
+      "silent_when_vendor_read": [
+       0,
+       2,
+       4,
+       5,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14,
+       15,
+       16,
+       18
+      ],
+      "silent_in_both": [],
+      "silent_direct_only": []
+     },
+     "workflow_pass_counts": {
+      "direct": 5,
+      "reads_vendor": 20,
+      "vendor_negative": 5
+     },
+     "allow_counts": {
+      "t01_valid": 5,
+      "t12_second_close_same_session": 5,
+      "t13_other_wo_valid": 5,
+      "t15_vendor_enum_only": 15,
+      "t16_authority_rejected_vendor_positive": 15,
+      "t17_authority_granted_vendor_negative": 5,
+      "t18_both_positive": 20,
+      "t19_both_positive_vendor_first": 20,
+      "t20_authority_expired_vendor_fresh": 15,
+      "t21_authority_other_wo_vendor_this_wo": 15
+     }
+    }
+   }
+  },
+  {
+   "arm": "L2x",
+   "input_mode": "manifests",
+   "scenario": "t01_close_after_approval",
+   "source_run": "20261119T210336Z-temporal-clean-t01-goal-level-L2x",
+   "source_config_sha256": "a42d4aba81f1afd2e4c46824ca1f180e770c01d8dcd035963548f8604d7ccba9",
+   "cache_only": true,
+   "workflows": {
+    "direct": [
+     "t01_valid",
+     "t12_second_close_same_session",
+     "t13_other_wo_valid"
+    ],
+    "reads_vendor": [
+     "t18_both_positive",
+     "t19_both_positive_vendor_first"
+    ],
+    "vendor_negative": [
+     "t17_authority_granted_vendor_negative"
+    ]
+   },
+   "surplus_traces": [
+    "t15_vendor_enum_only",
+    "t16_authority_rejected_vendor_positive",
+    "t20_authority_expired_vendor_fresh",
+    "t21_authority_other_wo_vendor_this_wo"
+   ],
+   "views": {
+    "first_shot": {
+     "generator": "naive",
+     "n": 20,
+     "scored": 3,
+     "surplus": 3,
+     "surplus_samples": [
+      0,
+      12,
+      17
+     ],
+     "classes": {
+      "loud_in_both": 0,
+      "silent_when_vendor_read": 3,
+      "silent_in_both": 0,
+      "silent_direct_only": 0
+     },
+     "class_samples": {
+      "loud_in_both": [],
+      "silent_when_vendor_read": [
+       0,
+       12,
+       17
+      ],
+      "silent_in_both": [],
+      "silent_direct_only": []
+     },
+     "workflow_pass_counts": {
+      "direct": 0,
+      "reads_vendor": 3,
+      "vendor_negative": 0
+     },
+     "allow_counts": {
+      "t01_valid": 0,
+      "t12_second_close_same_session": 0,
+      "t13_other_wo_valid": 0,
+      "t15_vendor_enum_only": 3,
+      "t16_authority_rejected_vendor_positive": 3,
+      "t17_authority_granted_vendor_negative": 0,
+      "t18_both_positive": 3,
+      "t19_both_positive_vendor_first": 3,
+      "t20_authority_expired_vendor_fresh": 3,
+      "t21_authority_other_wo_vendor_this_wo": 3
+     }
+    },
+    "final": {
+     "generator": "sondera",
+     "n": 20,
+     "scored": 20,
+     "surplus": 13,
+     "surplus_samples": [
+      0,
+      1,
+      5,
+      6,
+      8,
+      9,
+      10,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19
+     ],
+     "classes": {
+      "loud_in_both": 0,
+      "silent_when_vendor_read": 13,
+      "silent_in_both": 0,
+      "silent_direct_only": 0
+     },
+     "class_samples": {
+      "loud_in_both": [],
+      "silent_when_vendor_read": [
+       0,
+       1,
+       5,
+       6,
+       8,
+       9,
+       10,
+       14,
+       15,
+       16,
+       17,
+       18,
+       19
+      ],
+      "silent_in_both": [],
+      "silent_direct_only": []
+     },
+     "workflow_pass_counts": {
+      "direct": 0,
+      "reads_vendor": 13,
+      "vendor_negative": 0
+     },
+     "allow_counts": {
+      "t01_valid": 0,
+      "t12_second_close_same_session": 0,
+      "t13_other_wo_valid": 0,
+      "t15_vendor_enum_only": 13,
+      "t16_authority_rejected_vendor_positive": 13,
+      "t17_authority_granted_vendor_negative": 0,
+      "t18_both_positive": 13,
+      "t19_both_positive_vendor_first": 13,
+      "t20_authority_expired_vendor_fresh": 13,
+      "t21_authority_other_wo_vendor_this_wo": 13
+     }
+    }
+   }
+  },
+  {
+   "arm": "L3x",
+   "input_mode": "manifests",
+   "scenario": "t01_close_after_approval",
+   "source_run": "20261119T210459Z-temporal-clean-t01-goal-level-L3x",
+   "source_config_sha256": "db61216c4bbb6ebdbf73e070d76112f4e80c4699f2118011a8ec57da8d2c655f",
+   "cache_only": true,
+   "workflows": {
+    "direct": [
+     "t01_valid",
+     "t12_second_close_same_session",
+     "t13_other_wo_valid"
+    ],
+    "reads_vendor": [
+     "t18_both_positive",
+     "t19_both_positive_vendor_first"
+    ],
+    "vendor_negative": [
+     "t17_authority_granted_vendor_negative"
+    ]
+   },
+   "surplus_traces": [
+    "t15_vendor_enum_only",
+    "t16_authority_rejected_vendor_positive",
+    "t20_authority_expired_vendor_fresh",
+    "t21_authority_other_wo_vendor_this_wo"
+   ],
+   "views": {
+    "first_shot": {
+     "generator": "naive",
+     "n": 20,
+     "scored": 20,
+     "surplus": 0,
+     "surplus_samples": [],
+     "classes": {
+      "loud_in_both": 0,
+      "silent_when_vendor_read": 0,
+      "silent_in_both": 0,
+      "silent_direct_only": 0
+     },
+     "class_samples": {
+      "loud_in_both": [],
+      "silent_when_vendor_read": [],
+      "silent_in_both": [],
+      "silent_direct_only": []
+     },
+     "workflow_pass_counts": {
+      "direct": 20,
+      "reads_vendor": 20,
+      "vendor_negative": 20
+     },
+     "allow_counts": {
+      "t01_valid": 20,
+      "t12_second_close_same_session": 20,
+      "t13_other_wo_valid": 20,
+      "t15_vendor_enum_only": 0,
+      "t16_authority_rejected_vendor_positive": 0,
+      "t17_authority_granted_vendor_negative": 20,
+      "t18_both_positive": 20,
+      "t19_both_positive_vendor_first": 20,
+      "t20_authority_expired_vendor_fresh": 0,
+      "t21_authority_other_wo_vendor_this_wo": 0
+     }
+    },
+    "final": {
+     "generator": "sondera",
+     "n": 20,
+     "scored": 20,
+     "surplus": 0,
+     "surplus_samples": [],
+     "classes": {
+      "loud_in_both": 0,
+      "silent_when_vendor_read": 0,
+      "silent_in_both": 0,
+      "silent_direct_only": 0
+     },
+     "class_samples": {
+      "loud_in_both": [],
+      "silent_when_vendor_read": [],
+      "silent_in_both": [],
+      "silent_direct_only": []
+     },
+     "workflow_pass_counts": {
+      "direct": 20,
+      "reads_vendor": 20,
+      "vendor_negative": 20
+     },
+     "allow_counts": {
+      "t01_valid": 20,
+      "t12_second_close_same_session": 20,
+      "t13_other_wo_valid": 20,
+      "t15_vendor_enum_only": 0,
+      "t16_authority_rejected_vendor_positive": 0,
+      "t17_authority_granted_vendor_negative": 20,
+      "t18_both_positive": 20,
+      "t19_both_positive_vendor_first": 20,
+      "t20_authority_expired_vendor_fresh": 0,
+      "t21_authority_other_wo_vendor_this_wo": 0
+     }
+    }
+   }
+  },
+  {
+   "arm": "L5x",
+   "input_mode": "manifests",
+   "scenario": "t01_close_after_approval",
+   "source_run": "20261119T210712Z-temporal-clean-t01-goal-level-L5x",
+   "source_config_sha256": "98da69ba951ab152fc44b817cb40e0cf3e7a86bedacb5334dbc35b952a99e76a",
+   "cache_only": true,
+   "workflows": {
+    "direct": [
+     "t01_valid",
+     "t12_second_close_same_session",
+     "t13_other_wo_valid"
+    ],
+    "reads_vendor": [
+     "t18_both_positive",
+     "t19_both_positive_vendor_first"
+    ],
+    "vendor_negative": [
+     "t17_authority_granted_vendor_negative"
+    ]
+   },
+   "surplus_traces": [
+    "t15_vendor_enum_only",
+    "t16_authority_rejected_vendor_positive",
+    "t20_authority_expired_vendor_fresh",
+    "t21_authority_other_wo_vendor_this_wo"
+   ],
+   "views": {
+    "first_shot": {
+     "generator": "naive",
+     "n": 20,
+     "scored": 7,
+     "surplus": 0,
+     "surplus_samples": [],
+     "classes": {
+      "loud_in_both": 0,
+      "silent_when_vendor_read": 0,
+      "silent_in_both": 0,
+      "silent_direct_only": 0
+     },
+     "class_samples": {
+      "loud_in_both": [],
+      "silent_when_vendor_read": [],
+      "silent_in_both": [],
+      "silent_direct_only": []
+     },
+     "workflow_pass_counts": {
+      "direct": 7,
+      "reads_vendor": 7,
+      "vendor_negative": 7
+     },
+     "allow_counts": {
+      "t01_valid": 7,
+      "t12_second_close_same_session": 7,
+      "t13_other_wo_valid": 7,
+      "t15_vendor_enum_only": 0,
+      "t16_authority_rejected_vendor_positive": 0,
+      "t17_authority_granted_vendor_negative": 7,
+      "t18_both_positive": 7,
+      "t19_both_positive_vendor_first": 7,
+      "t20_authority_expired_vendor_fresh": 0,
+      "t21_authority_other_wo_vendor_this_wo": 0
+     }
+    },
+    "final": {
+     "generator": "sondera",
+     "n": 20,
+     "scored": 20,
+     "surplus": 0,
+     "surplus_samples": [],
+     "classes": {
+      "loud_in_both": 0,
+      "silent_when_vendor_read": 0,
+      "silent_in_both": 0,
+      "silent_direct_only": 0
+     },
+     "class_samples": {
+      "loud_in_both": [],
+      "silent_when_vendor_read": [],
+      "silent_in_both": [],
+      "silent_direct_only": []
+     },
+     "workflow_pass_counts": {
+      "direct": 20,
+      "reads_vendor": 20,
+      "vendor_negative": 20
+     },
+     "allow_counts": {
+      "t01_valid": 20,
+      "t12_second_close_same_session": 20,
+      "t13_other_wo_valid": 20,
+      "t15_vendor_enum_only": 0,
+      "t16_authority_rejected_vendor_positive": 0,
+      "t17_authority_granted_vendor_negative": 20,
+      "t18_both_positive": 20,
+      "t19_both_positive_vendor_first": 20,
+      "t20_authority_expired_vendor_fresh": 0,
+      "t21_authority_other_wo_vendor_this_wo": 0
+     }
+    }
+   }
+  },
+  {
+   "arm": "L6x",
+   "input_mode": "manifests",
+   "scenario": "t01_close_after_approval",
+   "source_run": "20261119T210846Z-temporal-clean-t01-goal-level-L6x",
+   "source_config_sha256": "27b7666d767632d61449d6335b6ab043aa92cbbe5ed897efe679d3e7605f7abe",
+   "cache_only": true,
+   "workflows": {
+    "direct": [
+     "t01_valid",
+     "t12_second_close_same_session",
+     "t13_other_wo_valid"
+    ],
+    "reads_vendor": [
+     "t18_both_positive",
+     "t19_both_positive_vendor_first"
+    ],
+    "vendor_negative": [
+     "t17_authority_granted_vendor_negative"
+    ]
+   },
+   "surplus_traces": [
+    "t15_vendor_enum_only",
+    "t16_authority_rejected_vendor_positive",
+    "t20_authority_expired_vendor_fresh",
+    "t21_authority_other_wo_vendor_this_wo"
+   ],
+   "views": {
+    "first_shot": {
+     "generator": "naive",
+     "n": 20,
+     "scored": 20,
+     "surplus": 0,
+     "surplus_samples": [],
+     "classes": {
+      "loud_in_both": 0,
+      "silent_when_vendor_read": 0,
+      "silent_in_both": 0,
+      "silent_direct_only": 0
+     },
+     "class_samples": {
+      "loud_in_both": [],
+      "silent_when_vendor_read": [],
+      "silent_in_both": [],
+      "silent_direct_only": []
+     },
+     "workflow_pass_counts": {
+      "direct": 0,
+      "reads_vendor": 0,
+      "vendor_negative": 0
+     },
+     "allow_counts": {
+      "t01_valid": 0,
+      "t12_second_close_same_session": 0,
+      "t13_other_wo_valid": 0,
+      "t15_vendor_enum_only": 0,
+      "t16_authority_rejected_vendor_positive": 0,
+      "t17_authority_granted_vendor_negative": 0,
+      "t18_both_positive": 0,
+      "t19_both_positive_vendor_first": 0,
+      "t20_authority_expired_vendor_fresh": 0,
+      "t21_authority_other_wo_vendor_this_wo": 0
+     }
+    },
+    "final": {
+     "generator": "sondera",
+     "n": 20,
+     "scored": 20,
+     "surplus": 0,
+     "surplus_samples": [],
+     "classes": {
+      "loud_in_both": 0,
+      "silent_when_vendor_read": 0,
+      "silent_in_both": 0,
+      "silent_direct_only": 0
+     },
+     "class_samples": {
+      "loud_in_both": [],
+      "silent_when_vendor_read": [],
+      "silent_in_both": [],
+      "silent_direct_only": []
+     },
+     "workflow_pass_counts": {
+      "direct": 0,
+      "reads_vendor": 0,
+      "vendor_negative": 0
+     },
+     "allow_counts": {
+      "t01_valid": 0,
+      "t12_second_close_same_session": 0,
+      "t13_other_wo_valid": 0,
+      "t15_vendor_enum_only": 0,
+      "t16_authority_rejected_vendor_positive": 0,
+      "t17_authority_granted_vendor_negative": 0,
+      "t18_both_positive": 0,
+      "t19_both_positive_vendor_first": 0,
+      "t20_authority_expired_vendor_fresh": 0,
+      "t21_authority_other_wo_vendor_this_wo": 0
+     }
+    }
+   }
+  },
+  {
+   "arm": "L7x",
+   "input_mode": "manifests",
+   "scenario": "t01_close_after_approval",
+   "source_run": "20261119T211100Z-temporal-clean-t01-goal-level-L7x",
+   "source_config_sha256": "d1edee7b5eba58c1d12f999b4f99c2f93b37416a718aa0842fb0a39f4e9469fe",
+   "cache_only": true,
+   "workflows": {
+    "direct": [
+     "t01_valid",
+     "t12_second_close_same_session",
+     "t13_other_wo_valid"
+    ],
+    "reads_vendor": [
+     "t18_both_positive",
+     "t19_both_positive_vendor_first"
+    ],
+    "vendor_negative": [
+     "t17_authority_granted_vendor_negative"
+    ]
+   },
+   "surplus_traces": [
+    "t15_vendor_enum_only",
+    "t16_authority_rejected_vendor_positive",
+    "t20_authority_expired_vendor_fresh",
+    "t21_authority_other_wo_vendor_this_wo"
+   ],
+   "views": {
+    "first_shot": {
+     "generator": "naive",
+     "n": 20,
+     "scored": 14,
+     "surplus": 2,
+     "surplus_samples": [
+      11,
+      15
+     ],
+     "classes": {
+      "loud_in_both": 0,
+      "silent_when_vendor_read": 2,
+      "silent_in_both": 0,
+      "silent_direct_only": 0
+     },
+     "class_samples": {
+      "loud_in_both": [],
+      "silent_when_vendor_read": [
+       11,
+       15
+      ],
+      "silent_in_both": [],
+      "silent_direct_only": []
+     },
+     "workflow_pass_counts": {
+      "direct": 0,
+      "reads_vendor": 2,
+      "vendor_negative": 0
+     },
+     "allow_counts": {
+      "t01_valid": 0,
+      "t12_second_close_same_session": 0,
+      "t13_other_wo_valid": 0,
+      "t15_vendor_enum_only": 2,
+      "t16_authority_rejected_vendor_positive": 2,
+      "t17_authority_granted_vendor_negative": 0,
+      "t18_both_positive": 2,
+      "t19_both_positive_vendor_first": 2,
+      "t20_authority_expired_vendor_fresh": 2,
+      "t21_authority_other_wo_vendor_this_wo": 2
+     }
+    },
+    "final": {
+     "generator": "sondera",
+     "n": 20,
+     "scored": 20,
+     "surplus": 8,
+     "surplus_samples": [
+      5,
+      6,
+      8,
+      10,
+      11,
+      13,
+      15,
+      16
+     ],
+     "classes": {
+      "loud_in_both": 0,
+      "silent_when_vendor_read": 8,
+      "silent_in_both": 0,
+      "silent_direct_only": 0
+     },
+     "class_samples": {
+      "loud_in_both": [],
+      "silent_when_vendor_read": [
+       5,
+       6,
+       8,
+       10,
+       11,
+       13,
+       15,
+       16
+      ],
+      "silent_in_both": [],
+      "silent_direct_only": []
+     },
+     "workflow_pass_counts": {
+      "direct": 0,
+      "reads_vendor": 8,
+      "vendor_negative": 0
+     },
+     "allow_counts": {
+      "t01_valid": 0,
+      "t12_second_close_same_session": 0,
+      "t13_other_wo_valid": 0,
+      "t15_vendor_enum_only": 8,
+      "t16_authority_rejected_vendor_positive": 8,
+      "t17_authority_granted_vendor_negative": 0,
+      "t18_both_positive": 8,
+      "t19_both_positive_vendor_first": 8,
+      "t20_authority_expired_vendor_fresh": 8,
+      "t21_authority_other_wo_vendor_this_wo": 8
+     }
+    }
+   }
+  },
+  {
+   "arm": "L1x",
+   "input_mode": "schema-only",
+   "scenario": "t01_close_after_approval",
+   "source_run": "20261119T211254Z-temporal-clean-t01-goal-level-L1x-S",
+   "source_config_sha256": "d6b423c053e2a0a0d1eef668ab16340ff9bc70ab46527ec0a035652e2cc787ef",
+   "cache_only": true,
+   "workflows": {
+    "direct": [
+     "t01_valid",
+     "t12_second_close_same_session",
+     "t13_other_wo_valid"
+    ],
+    "reads_vendor": [
+     "t18_both_positive",
+     "t19_both_positive_vendor_first"
+    ],
+    "vendor_negative": [
+     "t17_authority_granted_vendor_negative"
+    ]
+   },
+   "surplus_traces": [
+    "t15_vendor_enum_only",
+    "t16_authority_rejected_vendor_positive",
+    "t20_authority_expired_vendor_fresh",
+    "t21_authority_other_wo_vendor_this_wo"
+   ],
+   "views": {
+    "first_shot": {
+     "generator": "naive",
+     "n": 20,
+     "scored": 18,
+     "surplus": 8,
+     "surplus_samples": [
+      4,
+      7,
+      11,
+      12,
+      13,
+      15,
+      16,
+      19
+     ],
+     "classes": {
+      "loud_in_both": 0,
+      "silent_when_vendor_read": 8,
+      "silent_in_both": 0,
+      "silent_direct_only": 0
+     },
+     "class_samples": {
+      "loud_in_both": [],
+      "silent_when_vendor_read": [
+       4,
+       7,
+       11,
+       12,
+       13,
+       15,
+       16,
+       19
+      ],
+      "silent_in_both": [],
+      "silent_direct_only": []
+     },
+     "workflow_pass_counts": {
+      "direct": 10,
+      "reads_vendor": 18,
+      "vendor_negative": 10
+     },
+     "allow_counts": {
+      "t01_valid": 10,
+      "t12_second_close_same_session": 10,
+      "t13_other_wo_valid": 10,
+      "t15_vendor_enum_only": 8,
+      "t16_authority_rejected_vendor_positive": 8,
+      "t17_authority_granted_vendor_negative": 10,
+      "t18_both_positive": 18,
+      "t19_both_positive_vendor_first": 18,
+      "t20_authority_expired_vendor_fresh": 8,
+      "t21_authority_other_wo_vendor_this_wo": 8
+     }
+    },
+    "final": {
+     "generator": "sondera",
+     "n": 20,
+     "scored": 20,
+     "surplus": 10,
+     "surplus_samples": [
+      2,
+      4,
+      7,
+      10,
+      11,
+      12,
+      13,
+      15,
+      16,
+      19
+     ],
+     "classes": {
+      "loud_in_both": 0,
+      "silent_when_vendor_read": 9,
+      "silent_in_both": 1,
+      "silent_direct_only": 0
+     },
+     "class_samples": {
+      "loud_in_both": [],
+      "silent_when_vendor_read": [
+       4,
+       7,
+       10,
+       11,
+       12,
+       13,
+       15,
+       16,
+       19
+      ],
+      "silent_in_both": [
+       2
+      ],
+      "silent_direct_only": []
+     },
+     "workflow_pass_counts": {
+      "direct": 11,
+      "reads_vendor": 20,
+      "vendor_negative": 11
+     },
+     "allow_counts": {
+      "t01_valid": 11,
+      "t12_second_close_same_session": 11,
+      "t13_other_wo_valid": 11,
+      "t15_vendor_enum_only": 10,
+      "t16_authority_rejected_vendor_positive": 10,
+      "t17_authority_granted_vendor_negative": 11,
+      "t18_both_positive": 20,
+      "t19_both_positive_vendor_first": 20,
+      "t20_authority_expired_vendor_fresh": 10,
+      "t21_authority_other_wo_vendor_this_wo": 10
+     }
+    }
+   }
+  }
+ ]
+}

@@ -67,7 +67,9 @@ class Requirements:
     - `prerequisite` = (trace, decision index) of the evidence call itself, or None;
     - Phase 2b: `vendor_only` = contract-deny traces whose only evidence is the vendor's (primary outcome: allows any);
       `vocabulary` = the evidence-vocabulary classification inputs for pgi.analysis.dogwood_text.vocabulary_report
-      (authority_action, vendor_actions, contract_values, vendor_stated_values, approver_kind_fields), text-level, or None."""
+      (authority_action, vendor_actions, contract_values, vendor_stated_values, approver_kind_fields), text-level, or None;
+    - E0 (2026-11-20): `workflows` = name -> contract-ALLOW traces; a policy PASSES a workflow iff it allows every one of
+      them (the positive tests of that workflow), or None when the file has no `workflows` key."""
 
     base: str
     witnesses: dict[str, tuple[str, ...]]
@@ -78,6 +80,7 @@ class Requirements:
     prerequisite: tuple[str, int] | None = None
     vendor_only: tuple[str, ...] = ()
     vocabulary: dict | None = None
+    workflows: dict[str, tuple[str, ...]] | None = None
 
 
 VOCABULARY_KEYS = ("authority_action", "vendor_actions", "contract_values", "vendor_stated_values", "approver_kind_fields")
@@ -185,7 +188,16 @@ def load_requirements(path: Path, suite: TraceSuite) -> Requirements:
         if set(vocab) != set(VOCABULARY_KEYS):
             raise ValueError(f"{path}: evidence_vocabulary must have exactly the keys {VOCABULARY_KEYS}, got {sorted(vocab)}")
         vocab = {k: (list(v) if isinstance(v, list) else v) for k, v in vocab.items()}
-    return Requirements(base, witnesses, numbers, over_p, over_s, sources, prereq, vendor_only, vocab)
+    workflows = None
+    if (wf := data.get("workflows")) is not None:
+        if not isinstance(wf, dict) or not wf:
+            raise ValueError(f"{path}: workflows must be a non-empty map name -> traces")
+        workflows = {}
+        for name, traces in wf.items():
+            if not traces:
+                raise ValueError(f"{path}: workflows.{name} has no traces")
+            workflows[name] = known(f"workflows.{name}", traces, True)
+    return Requirements(base, witnesses, numbers, over_p, over_s, sources, prereq, vendor_only, vocab, workflows)
 
 
 def _layout(inputs: DogwoodInputs) -> dict[str, str]:

@@ -1,0 +1,30 @@
+{
+ "key_hash": "a9962fcc0ab33bad3db0426331a9f7daf1cd71e3794d76217f5ac945596fc06e",
+ "cache_hit": true,
+ "model_version": "claude-sonnet-5-5",
+ "request_id": "req_011ChB8PBBTM4bia9zaYBHZk",
+ "stop_reason": "end_turn",
+ "stop_details": null,
+ "usage": {
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 0,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "cache_creation_input_tokens": 0,
+  "cache_read_input_tokens": 90321,
+  "inference_geo": "global",
+  "input_tokens": 334,
+  "output_tokens": 1743,
+  "output_tokens_details": {
+   "thinking_tokens": 966
+  },
+  "service_tier": "standard",
+  "speed": "standard"
+ },
+ "text": "```\n@id(\"close-workorder-main-after-human-approval\")\npermit (principal, action == Drupe::Action::\"close_workorder\", resource)\nwhen { context.input.site_id == \"MAIN\" }\nwhen temporal {\n  formerly within 1h Drupe::Action::\"authority_get_approval\"::response{\n    eventResource: resource,\n    input.wonum: context.input.wonum,\n    input.site_id: context.input.site_id,\n    output.decision: \"APPROVED\",\n    output.approver_kind: \"human\"\n  }\n};\n\n// The approval lookup must itself be permitted, or it is never recorded as a response.\n@id(\"allow-approval-authority-lookup\")\npermit (principal, action == Drupe::Action::\"authority_get_approval\", resource);\n\n@id(\"allow-read-only-lookups\")\npermit (\n  principal,\n  action in [\n    Drupe::Action::\"get_workorder\",\n    Drupe::Action::\"list_workorders\",\n    Drupe::Action::\"get_workorder_tasks\",\n    Drupe::Action::\"get_workorder_costs\",\n    Drupe::Action::\"get_workorder_actuals_vs_planned\",\n    Drupe::Action::\"get_workorder_kpis\",\n    Drupe::Action::\"get_schedule_calendar\",\n    Drupe::Action::\"get_my_assigned_workorders\",\n    Drupe::Action::\"get_failure_codes\"\n  ],\n  resource\n);\n```\n\nI guessed the literal values the authority tool returns. The manifest does not say what they are, so I assumed `output.decision` is `\"APPROVED\"` and `output.approver_kind` is `\"human\"`. If the tool returns different strings (for example lowercase `\"approved\"`), the close policy will never match and every close will be denied.\n\nOther things to know:\n- Closing is allowed only when `site_id` is `MAIN`, and only if this session recorded a successful `authority_get_approval` response within the last hour for the same `wonum` and `site_id`.\n- That response must show a human approver. Approvals that were refused or pending don't match, and neither do failed or denied lookups.\n- `approve_workorder`, `assign_technician`, `cancel_workorder`, `update_workorder` and `generate_work_order` have no permit, so they are denied by default. The agent therefore cannot approve work orders or change them in a way that would fake an approval.",
+ "content_types": [
+  "thinking",
+  "text"
+ ],
+ "extraction": "fenced"
+}

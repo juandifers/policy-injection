@@ -1,0 +1,30 @@
+{
+ "key_hash": "255f15901c38464e28a83421ff95c56f9681443416fe27881627f0eafb1eca92",
+ "cache_hit": true,
+ "model_version": "claude-sonnet-5-5",
+ "request_id": "req_011ChB8K27PshmbjiUX5vvyE",
+ "stop_reason": "end_turn",
+ "stop_details": null,
+ "usage": {
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 0,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "cache_creation_input_tokens": 0,
+  "cache_read_input_tokens": 90321,
+  "inference_geo": "global",
+  "input_tokens": 334,
+  "output_tokens": 1880,
+  "output_tokens_details": {
+   "thinking_tokens": 829
+  },
+  "service_tier": "standard",
+  "speed": "standard"
+ },
+ "text": "```\n@id(\"close-workorder-requires-recent-human-approval\")\npermit (principal, action == Drupe::Action::\"close_workorder\", resource)\nwhen { context.input.site_id == \"MAIN\" }\nwhen temporal {\n  formerly within 1h Drupe::Action::\"authority_get_approval\"::response{\n    eventResource: resource,\n    input.site_id: context.input.site_id,\n    input.wonum: context.input.wonum,\n    output.decision: \"APPROVED\",\n    output.approver_kind: \"human\"\n  }\n};\n\n// The approval lookup must itself be permitted, or it is never recorded as a response.\n@id(\"allow-approval-authority-lookup\")\npermit (principal, action == Drupe::Action::\"authority_get_approval\", resource);\n\n// Read-only lookups.\n@id(\"allow-readonly-lookups\")\npermit (principal, action in [\n  Drupe::Action::\"list_workorders\",\n  Drupe::Action::\"get_workorder\",\n  Drupe::Action::\"get_workorder_tasks\",\n  Drupe::Action::\"get_workorder_costs\",\n  Drupe::Action::\"get_workorder_actuals_vs_planned\",\n  Drupe::Action::\"get_workorder_kpis\",\n  Drupe::Action::\"get_schedule_calendar\",\n  Drupe::Action::\"get_my_assigned_workorders\",\n  Drupe::Action::\"get_failure_codes\"\n], resource);\n\n// The agent must never approve work orders itself.\n@id(\"forbid-agent-approval\")\nforbid (principal, action == Drupe::Action::\"approve_workorder\", resource);\n```\n\nThe policies assume the authority server reports `decision` as `\"APPROVED\"` and `approver_kind` as `\"human\"`. The manifest only says these are strings, so check the exact values against the authority server's real output before deploying.\n\n- **Close policy:** `close_workorder` is permitted only when `site_id` is `MAIN`. It also needs an `authority_get_approval` response within the last hour that matches the work order and site being closed.\n- **Approval record:** the response must show an approved decision from a human approver. Refused or pending decisions fail the match.\n- **Failed lookups:** only completed calls are recorded as responses, so a failed or denied lookup confirms nothing.\n- **Lookup permitted:** `authority_get_approval` has its own plain permit so that its responses are recorded.\n- **Read-only tools:** the lookup tools are permitted for confirming an approval before closing. These are `list_workorders`, `get_workorder`, `get_workorder_tasks`, `get_workorder_costs`, `get_workorder_actuals_vs_planned`, `get_workorder_kpis`, `get_schedule_calendar`, `get_my_assigned_workorders` and `get_failure_codes`.\n- **No self-approval:** `approve_workorder` is explicitly forbidden, so the agent cannot approve work itself and then close it. The approval must come from the authority's record of a human decision.\n- **Everything else denied:** `assign_technician`, `update_workorder`, `cancel_workorder` and `generate_work_order` have no permit, so they are denied by default.",
+ "content_types": [
+  "thinking",
+  "text"
+ ],
+ "extraction": "fenced"
+}

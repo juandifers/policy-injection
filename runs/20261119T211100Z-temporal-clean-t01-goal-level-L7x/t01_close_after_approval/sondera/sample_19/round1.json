@@ -1,0 +1,75 @@
+{
+ "round": 1,
+ "extraction": "fenced",
+ "generation": {
+  "key_hash": "91894b8ac6543969dba8bb940e5aa1dc2cfad4039ddd98f72bf724d9efcf505e",
+  "cache_hit": true,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011ChB79xvY4MY8aqQPgGQUW",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 90538,
+   "inference_geo": "global",
+   "input_tokens": 334,
+   "output_tokens": 2128,
+   "output_tokens_details": {
+    "thinking_tokens": 1253
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "```cedar\n// Read-only lookups are always allowed. authority_get_approval must be permitted\n// so that its completed responses are recorded and can serve as evidence.\n@id(\"allow-read-only-lookups\")\npermit (\n  principal,\n  action in [\n    Drupe::Action::\"authority_get_approval\",\n    Drupe::Action::\"get_approval_record\",\n    Drupe::Action::\"list_workorders\",\n    Drupe::Action::\"get_workorder_tasks\",\n    Drupe::Action::\"get_workorder_costs\",\n    Drupe::Action::\"get_workorder_actuals_vs_planned\",\n    Drupe::Action::\"get_workorder_kpis\",\n    Drupe::Action::\"get_schedule_calendar\",\n    Drupe::Action::\"get_my_assigned_workorders\",\n    Drupe::Action::\"get_failure_codes\"\n  ],\n  resource\n);\n\n// Closing is allowed only at MAIN, and only if the approval authority confirmed\n// in this session, within the last hour, that this exact work order (same site)\n// was signed off by a human operator.\n@id(\"close-main-only-with-human-signoff\")\npermit (principal, action == Drupe::Action::\"close_workorder\", resource)\nwhen { context.input.site_id == \"MAIN\" }\nwhen temporal {\n  formerly within 1h Drupe::Action::\"authority_get_approval\"::response{\n    eventResource: resource,\n    input.wonum: context.input.wonum,\n    input.site_id: context.input.site_id,\n    output.decision: \"SIGNED_OFF\",\n    output.approver_kind: \"OPERATOR\"\n  }\n};\n\n// The agent may never approve work orders itself.\n@id(\"never-approve-own-work\")\nforbid (principal, action == Drupe::Action::\"approve_workorder\", resource);\n```\n\nTwo assumptions:\n- I used `OPERATOR` as the value of `approver_kind` that means a person, and `SIGNED_OFF` as the value of `decision` that means approved. The `authority` tool only declares these fields as strings. I took the values from the enums that `get_approval_record` declares (`OPERATOR`/`BOT`/`SCHEDULER`, `SIGNED_OFF`/`DECLINED`/`QUEUED`). If the authority uses different values, update the two `output.*` literals.\n- I rely only on `authority_get_approval` as evidence, not on `get_approval_record`, because the authority is the independent record of who approved.\n\nAll other write tools (`generate_work_order`, `update_workorder`, `assign_technician`, `cancel_workorder`) have no permit, so they stay denied by default.",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "deterministic": {
+  "passed": true,
+  "validation": {
+   "policy": "t01_close_after_approval/sondera/sample_19/round1.dw",
+   "schema": "inputs/t01_close_after_approval/schema/t01.dogwood.cedarschema",
+   "ok": true,
+   "errors": [],
+   "warnings": []
+  },
+  "failures": []
+ },
+ "judge": {
+  "key_hash": "b7344e4d377281659fb38a72eb944a6d230872670911a203933dba5fa8cce8be",
+  "cache_hit": true,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011ChB7XEVWD8djbqXY3F5vC",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 2414,
+   "inference_geo": "global",
+   "input_tokens": 938,
+   "output_tokens": 423,
+   "output_tokens_details": {
+    "thinking_tokens": 412
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "NO MISMATCHES",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "judge_passed": true,
+ "passed": true
+}

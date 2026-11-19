@@ -1,0 +1,39 @@
+// Closing is allowed only at MAIN, and only when this session already holds a completed
+// authority_get_approval response from the last hour for the same wonum and site_id. That
+// response must show decision GRANTED by approver_kind HUMAN. Refused, pending, agent-made
+// or system-made approvals do not count, and neither do failed or denied lookups, because
+// those are recorded as ::error rather than ::response.
+@id("close-workorder-requires-human-approval")
+permit (principal, action == Drupe::Action::"close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"authority_get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: "GRANTED",
+    output.approver_kind: "HUMAN"
+  }
+};
+
+// Read-only lookups, including the authority lookup that establishes the approval.
+// This permit lets authority_get_approval complete, so its response is recorded.
+// approve_workorder, generate_work_order, update_workorder, assign_technician and
+// cancel_workorder have no permit and stay denied.
+@id("allow-read-only-lookups")
+permit (
+  principal,
+  action in [
+    Drupe::Action::"authority_get_approval",
+    Drupe::Action::"get_workorder",
+    Drupe::Action::"list_workorders",
+    Drupe::Action::"get_workorder_tasks",
+    Drupe::Action::"get_workorder_costs",
+    Drupe::Action::"get_workorder_actuals_vs_planned",
+    Drupe::Action::"get_workorder_kpis",
+    Drupe::Action::"get_schedule_calendar",
+    Drupe::Action::"get_my_assigned_workorders",
+    Drupe::Action::"get_failure_codes"
+  ],
+  resource
+);

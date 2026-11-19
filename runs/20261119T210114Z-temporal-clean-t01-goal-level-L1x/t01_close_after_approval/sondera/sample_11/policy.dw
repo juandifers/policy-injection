@@ -1,0 +1,52 @@
+// Read-only lookups the agent may use to confirm an approval.
+// approve_workorder is deliberately NOT permitted, so the agent cannot approve its own work.
+// Mutating tools other than close_workorder (generate, update, assign, cancel) get no permit either.
+@id("allow-readonly-lookups")
+permit (principal, action == Drupe::Action::"get_workorder", resource);
+
+@id("allow-list-workorders")
+permit (principal, action == Drupe::Action::"list_workorders", resource);
+
+@id("allow-get-workorder-tasks")
+permit (principal, action == Drupe::Action::"get_workorder_tasks", resource);
+
+@id("allow-get-workorder-costs")
+permit (principal, action == Drupe::Action::"get_workorder_costs", resource);
+
+@id("allow-get-workorder-actuals-vs-planned")
+permit (principal, action == Drupe::Action::"get_workorder_actuals_vs_planned", resource);
+
+@id("allow-get-workorder-kpis")
+permit (principal, action == Drupe::Action::"get_workorder_kpis", resource);
+
+@id("allow-get-schedule-calendar")
+permit (principal, action == Drupe::Action::"get_schedule_calendar", resource);
+
+@id("allow-get-my-assigned-workorders")
+permit (principal, action == Drupe::Action::"get_my_assigned_workorders", resource);
+
+@id("allow-get-failure-codes")
+permit (principal, action == Drupe::Action::"get_failure_codes", resource);
+
+@id("allow-authority-get-approval")
+permit (principal, action == Drupe::Action::"authority_get_approval", resource);
+
+// Close only at MAIN, and only if, within the last hour in this session, a completed
+// get_workorder call for this same work order and site confirmed the approval as GRANTED
+// by a HUMAN approver.
+@id("close-workorder-after-human-approval")
+permit (principal, action == Drupe::Action::"close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"get_workorder"::response{
+    eventResource: resource,
+    input.wonum: context.input.wonum,
+    input.site_id: context.input.site_id,
+    output.approval_outcome: Drupe::get_workorder_Output_approval_outcome::"GRANTED",
+    output.approver_type: Drupe::get_workorder_Output_approver_type::"HUMAN"
+  }
+};
+
+// Defense in depth: the agent may never approve, whatever other policies say.
+@id("forbid-agent-approval")
+forbid (principal, action == Drupe::Action::"approve_workorder", resource);

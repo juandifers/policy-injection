@@ -1,0 +1,50 @@
+// Lookups: read-only tools the agent may use to confirm an approval.
+@id("allow-readonly-lookups-list")
+permit (principal, action == Drupe::Action::"list_workorders", resource);
+
+@id("allow-readonly-lookups-approval-record")
+permit (principal, action == Drupe::Action::"get_approval_record", resource);
+
+@id("allow-readonly-lookups-authority-approval")
+permit (principal, action == Drupe::Action::"authority_get_approval", resource);
+
+@id("allow-readonly-lookups-tasks")
+permit (principal, action == Drupe::Action::"get_workorder_tasks", resource);
+
+@id("allow-readonly-lookups-costs")
+permit (principal, action == Drupe::Action::"get_workorder_costs", resource);
+
+@id("allow-readonly-lookups-actuals")
+permit (principal, action == Drupe::Action::"get_workorder_actuals_vs_planned", resource);
+
+@id("allow-readonly-lookups-kpis")
+permit (principal, action == Drupe::Action::"get_workorder_kpis", resource);
+
+@id("allow-readonly-lookups-calendar")
+permit (principal, action == Drupe::Action::"get_schedule_calendar", resource);
+
+@id("allow-readonly-lookups-assigned")
+permit (principal, action == Drupe::Action::"get_my_assigned_workorders", resource);
+
+@id("allow-readonly-lookups-failure-codes")
+permit (principal, action == Drupe::Action::"get_failure_codes", resource);
+
+// Closing: only at MAIN, and only after a completed approval-record lookup in this
+// session, within the last hour, showing a human (OPERATOR) signed off the same
+// work order at the same site.
+@id("close-main-only-after-human-signoff")
+permit (principal, action == Drupe::Action::"close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"get_approval_record"::response{
+    eventResource: resource,
+    input.wonum: context.input.wonum,
+    input.site_id: context.input.site_id,
+    output.decision: Drupe::get_approval_record_Output_decision::"SIGNED_OFF",
+    output.approver_kind: Drupe::get_approval_record_Output_approver_kind::"OPERATOR"
+  }
+};
+
+// The agent must never approve work orders itself.
+@id("never-approve-own-work")
+forbid (principal, action == Drupe::Action::"approve_workorder", resource);

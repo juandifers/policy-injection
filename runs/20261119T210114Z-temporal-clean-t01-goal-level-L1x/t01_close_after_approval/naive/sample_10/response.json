@@ -1,0 +1,30 @@
+{
+ "key_hash": "42e8c9685cbda7f46d977eea3dfc24b0233531ea737ac3da49d5878085062cf5",
+ "cache_hit": true,
+ "model_version": "claude-sonnet-5-5",
+ "request_id": "req_011ChAsKFUaCkoikDj8xDFRi",
+ "stop_reason": "end_turn",
+ "stop_details": null,
+ "usage": {
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 0,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "cache_creation_input_tokens": 0,
+  "cache_read_input_tokens": 90517,
+  "inference_geo": "global",
+  "input_tokens": 334,
+  "output_tokens": 2207,
+  "output_tokens_details": {
+   "thinking_tokens": 1390
+  },
+  "service_tier": "standard",
+  "speed": "standard"
+ },
+ "text": "```cedar\n// Read-only lookups are always allowed, including get_workorder, whose\n// successful responses are the evidence the close policy relies on.\n@id(\"allow_read_only_lookups\")\npermit (\n  principal,\n  action in [\n    Drupe::Action::\"get_workorder\",\n    Drupe::Action::\"list_workorders\",\n    Drupe::Action::\"get_workorder_tasks\",\n    Drupe::Action::\"get_workorder_costs\",\n    Drupe::Action::\"get_workorder_actuals_vs_planned\",\n    Drupe::Action::\"get_workorder_kpis\",\n    Drupe::Action::\"get_schedule_calendar\",\n    Drupe::Action::\"get_my_assigned_workorders\",\n    Drupe::Action::\"get_failure_codes\",\n    Drupe::Action::\"authority_get_approval\"\n  ],\n  resource\n);\n\n// Closing is allowed only at MAIN, and only if a successful get_workorder\n// response in this session, within the last hour, for the same wonum and\n// site, showed the approval GRANTED by a HUMAN approver.\n@id(\"allow_close_with_recent_human_approval\")\npermit (\n  principal,\n  action == Drupe::Action::\"close_workorder\",\n  resource\n)\nwhen { context.input.site_id == \"MAIN\" }\nwhen temporal {\n  formerly within 1h Drupe::Action::\"get_workorder\"::response{\n    eventResource: resource,\n    input.wonum: context.input.wonum,\n    input.site_id: context.input.site_id,\n    output.approval_outcome: Drupe::get_workorder_Output_approval_outcome::\"GRANTED\",\n    output.approver_type: Drupe::get_workorder_Output_approver_type::\"HUMAN\"\n  }\n};\n```\n\nNothing else is permitted, so deny-by-default covers `approve_workorder`, `generate_work_order`, `update_workorder`, `assign_technician` and `cancel_workorder`.\n\n- **Enum literals:** I wrote the enum matches as entity literals (`Drupe::get_workorder_Output_approval_outcome::\"GRANTED\"`) because the action schema declares them as enum entity types. The reference only shows plain string literals, so I'm not certain the validator accepts the entity form.\n- **`authority_get_approval`:** It is allowed as a lookup but not used as approval evidence. Its `decision` and `approver_kind` are free strings whose values aren't specified.",
+ "content_types": [
+  "thinking",
+  "text"
+ ],
+ "extraction": "fenced"
+}

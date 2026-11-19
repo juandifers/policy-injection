@@ -1,0 +1,39 @@
+// Read-only lookups are always allowed. authority_get_approval must be permitted
+// so that its completed responses are recorded and can serve as evidence.
+@id("allow-read-only-lookups")
+permit (
+  principal,
+  action in [
+    Drupe::Action::"authority_get_approval",
+    Drupe::Action::"get_approval_record",
+    Drupe::Action::"list_workorders",
+    Drupe::Action::"get_workorder_tasks",
+    Drupe::Action::"get_workorder_costs",
+    Drupe::Action::"get_workorder_actuals_vs_planned",
+    Drupe::Action::"get_workorder_kpis",
+    Drupe::Action::"get_schedule_calendar",
+    Drupe::Action::"get_my_assigned_workorders",
+    Drupe::Action::"get_failure_codes"
+  ],
+  resource
+);
+
+// Closing is allowed only at MAIN, and only if the approval authority confirmed
+// in this session, within the last hour, that this exact work order (same site)
+// was signed off by a human operator.
+@id("close-main-only-with-human-signoff")
+permit (principal, action == Drupe::Action::"close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"authority_get_approval"::response{
+    eventResource: resource,
+    input.wonum: context.input.wonum,
+    input.site_id: context.input.site_id,
+    output.decision: "SIGNED_OFF",
+    output.approver_kind: "OPERATOR"
+  }
+};
+
+// The agent may never approve work orders itself.
+@id("never-approve-own-work")
+forbid (principal, action == Drupe::Action::"approve_workorder", resource);

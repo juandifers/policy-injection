@@ -1,0 +1,30 @@
+{
+ "validation": {
+  "policy": "t01_close_after_approval/naive/sample_08/policy.dw",
+  "schema": "inputs/t01_close_after_approval/schema/t01.dogwood.cedarschema",
+  "ok": false,
+  "errors": [
+   "argument `output.approval_outcome` of `get_workorder` expects `get_workorder_Output_approval_outcome` but got `string`",
+   "argument `output.approver_type` of `get_workorder` expects `get_workorder_Output_approver_type` but got `string`"
+  ],
+  "warnings": []
+ },
+ "valid": false,
+ "bind_token": {
+  "bind": "vendor",
+  "other_actions_bound": [],
+  "token": false,
+  "authority_tokens": [],
+  "token_in_close_permits": false,
+  "permits_considered": 1,
+  "unresolved_scope": false,
+  "predicates": [
+   {
+    "action": "get_workorder",
+    "kind": "response",
+    "role": "vendor"
+   }
+  ],
+  "note": "text classification over permits that can apply to the protected action, not a decision"
+ }
+}

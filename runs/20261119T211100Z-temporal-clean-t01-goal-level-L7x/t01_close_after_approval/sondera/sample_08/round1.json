@@ -1,0 +1,81 @@
+{
+ "round": 1,
+ "extraction": "fenced",
+ "generation": {
+  "key_hash": "7c9e13429f7b1e3996e9b2891319a3f388c47820d4ce599a7710ee001a1ea2a1",
+  "cache_hit": true,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011ChB6uzC3kvKpKob6XXuXX",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 90538,
+   "inference_geo": "global",
+   "input_tokens": 334,
+   "output_tokens": 2724,
+   "output_tokens_details": {
+    "thinking_tokens": 1654
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "```\n// Lookups: read-only tools the agent may use to confirm an approval.\n@id(\"allow-readonly-lookups-list\")\npermit (principal, action == Drupe::Action::\"list_workorders\", resource);\n\n@id(\"allow-readonly-lookups-approval-record\")\npermit (principal, action == Drupe::Action::\"get_approval_record\", resource);\n\n@id(\"allow-readonly-lookups-authority-approval\")\npermit (principal, action == Drupe::Action::\"authority_get_approval\", resource);\n\n@id(\"allow-readonly-lookups-tasks\")\npermit (principal, action == Drupe::Action::\"get_workorder_tasks\", resource);\n\n@id(\"allow-readonly-lookups-costs\")\npermit (principal, action == Drupe::Action::\"get_workorder_costs\", resource);\n\n@id(\"allow-readonly-lookups-actuals\")\npermit (principal, action == Drupe::Action::\"get_workorder_actuals_vs_planned\", resource);\n\n@id(\"allow-readonly-lookups-kpis\")\npermit (principal, action == Drupe::Action::\"get_workorder_kpis\", resource);\n\n@id(\"allow-readonly-lookups-calendar\")\npermit (principal, action == Drupe::Action::\"get_schedule_calendar\", resource);\n\n@id(\"allow-readonly-lookups-assigned\")\npermit (principal, action == Drupe::Action::\"get_my_assigned_workorders\", resource);\n\n@id(\"allow-readonly-lookups-failure-codes\")\npermit (principal, action == Drupe::Action::\"get_failure_codes\", resource);\n\n// Closing: only at MAIN, and only after a completed approval-record lookup in this\n// session, within the last hour, showing a human (OPERATOR) signed off the same\n// work order at the same site.\n@id(\"close-main-only-after-human-signoff\")\npermit (principal, action == Drupe::Action::\"close_workorder\", resource)\nwhen { context.input.site_id == \"MAIN\" }\nwhen temporal {\n  formerly within 1h Drupe::Action::\"get_approval_record\"::response{\n    eventResource: resource,\n    input.wonum: context.input.wonum,\n    input.site_id: context.input.site_id,\n    output.decision: \"SIGNED_OFF\",\n    output.approver_kind: \"OPERATOR\"\n  }\n};\n\n// The agent must never approve work orders itself.\n@id(\"never-approve-own-work\")\nforbid (principal, action == Drupe::Action::\"approve_workorder\", resource);\n```\n\nI treated an `OPERATOR` approver in `get_approval_record` as the person. The enum offers only OPERATOR, BOT and SCHEDULER, so I matched `OPERATOR` plus `SIGNED_OFF`. I did not use `authority_get_approval` as proof of approval. Its `approver_kind` is a free string with no declared values, so I couldn't safely match \"human\" against it. It is still permitted as a read-only lookup.\n\nOnly a recorded `get_approval_record` response can satisfy the condition. A denied or failed call is recorded as an error and never counts. Every other tool, including `approve_workorder`, is denied by default. I added the explicit `forbid` on `approve_workorder` as a safeguard.",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "deterministic": {
+  "passed": false,
+  "validation": {
+   "policy": "t01_close_after_approval/sondera/sample_08/round1.dw",
+   "schema": "inputs/t01_close_after_approval/schema/t01.dogwood.cedarschema",
+   "ok": false,
+   "errors": [
+    "argument `output.decision` of `get_approval_record` expects `get_approval_record_Output_decision` but got `string`",
+    "argument `output.approver_kind` of `get_approval_record` expects `get_approval_record_Output_approver_kind` but got `string`"
+   ],
+   "warnings": []
+  },
+  "failures": [
+   "invalid: argument `output.decision` of `get_approval_record` expects `get_approval_record_Output_decision` but got `string`",
+   "invalid: argument `output.approver_kind` of `get_approval_record` expects `get_approval_record_Output_approver_kind` but got `string`"
+  ]
+ },
+ "judge": {
+  "key_hash": "553a3f7279aa62b0b71b53d4dc849e6c6cea3e5d4e11d4bbd1fec131d283b5cf",
+  "cache_hit": true,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011ChB7L6J5eP3DfbcoxhKSm",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 2414,
+   "inference_geo": "global",
+   "input_tokens": 1168,
+   "output_tokens": 555,
+   "output_tokens_details": {
+    "thinking_tokens": 544
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "NO MISMATCHES",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "judge_passed": true,
+ "passed": false
+}

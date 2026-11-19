@@ -1,0 +1,44 @@
+@id("read_only_lookups")
+permit (principal, action == Drupe::Action::"list_workorders", resource);
+
+@id("read_get_approval_record")
+permit (principal, action == Drupe::Action::"get_approval_record", resource);
+
+@id("read_get_workorder_tasks")
+permit (principal, action == Drupe::Action::"get_workorder_tasks", resource);
+
+@id("read_get_workorder_costs")
+permit (principal, action == Drupe::Action::"get_workorder_costs", resource);
+
+@id("read_get_workorder_actuals_vs_planned")
+permit (principal, action == Drupe::Action::"get_workorder_actuals_vs_planned", resource);
+
+@id("read_get_workorder_kpis")
+permit (principal, action == Drupe::Action::"get_workorder_kpis", resource);
+
+@id("read_get_schedule_calendar")
+permit (principal, action == Drupe::Action::"get_schedule_calendar", resource);
+
+@id("read_get_my_assigned_workorders")
+permit (principal, action == Drupe::Action::"get_my_assigned_workorders", resource);
+
+@id("read_get_failure_codes")
+permit (principal, action == Drupe::Action::"get_failure_codes", resource);
+
+// The approval-authority lookup must itself be permitted, otherwise it is
+// recorded as an error and never as a response that the close policy can rely on.
+@id("read_authority_get_approval")
+permit (principal, action == Drupe::Action::"authority_get_approval", resource);
+
+@id("close_main_only_with_recent_human_approval")
+permit (principal, action == Drupe::Action::"close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"authority_get_approval"::response{
+    eventResource: resource,
+    input.wonum: context.input.wonum,
+    input.site_id: context.input.site_id,
+    output.decision: "SIGNED_OFF",
+    output.approver_kind: "OPERATOR"
+  }
+};

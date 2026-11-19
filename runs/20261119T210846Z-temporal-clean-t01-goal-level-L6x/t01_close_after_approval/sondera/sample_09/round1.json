@@ -1,0 +1,75 @@
+{
+ "round": 1,
+ "extraction": "fenced",
+ "generation": {
+  "key_hash": "b729bc1692ef828efafaf9373012dd759e456007c76c037f0b4911d85aded781",
+  "cache_hit": true,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011ChB8RURbmeijh9FVTXk2Q",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 90321,
+   "inference_geo": "global",
+   "input_tokens": 334,
+   "output_tokens": 1753,
+   "output_tokens_details": {
+    "thinking_tokens": 1013
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "```\n// Reads: lookups the agent may use to confirm an approval before closing.\n// The authority_get_approval permit is required so that its call is recorded as\n// a ::response event; a denied call would only be recorded as ::error.\n@id(\"allow-readonly-lookups\")\npermit (\n  principal,\n  action in [\n    Drupe::Action::\"authority_get_approval\",\n    Drupe::Action::\"get_workorder\",\n    Drupe::Action::\"list_workorders\",\n    Drupe::Action::\"get_workorder_tasks\",\n    Drupe::Action::\"get_workorder_costs\",\n    Drupe::Action::\"get_workorder_actuals_vs_planned\",\n    Drupe::Action::\"get_workorder_kpis\",\n    Drupe::Action::\"get_schedule_calendar\",\n    Drupe::Action::\"get_my_assigned_workorders\",\n    Drupe::Action::\"get_failure_codes\"\n  ],\n  resource\n);\n\n// Close only at MAIN, and only if, within the last hour of this session, a\n// completed authority_get_approval call for the same site and work order\n// returned an approved decision made by a human approver.\n// Assumed output literals: decision \"approved\", approver_kind \"human\".\n@id(\"close-workorder-main-with-human-approval\")\npermit (principal, action == Drupe::Action::\"close_workorder\", resource)\nwhen { context.input.site_id == \"MAIN\" }\nwhen temporal {\n  formerly within 1h Drupe::Action::\"authority_get_approval\"::response{\n    eventResource: resource,\n    input.site_id: context.input.site_id,\n    input.wonum: context.input.wonum,\n    output.decision: \"approved\",\n    output.approver_kind: \"human\"\n  }\n};\n\n// Explicit guard: the agent can never approve work orders itself.\n// Every other mutating tool (generate, update, assign, cancel) has no permit\n// and is therefore denied by default.\n@id(\"never-self-approve\")\nforbid (principal, action == Drupe::Action::\"approve_workorder\", resource);\n```\n\nThe schema does not declare the literal values of `decision` and `approver_kind`, so I assumed `\"approved\"` and `\"human\"`. Change them in the temporal condition if the authority server uses different strings.",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "deterministic": {
+  "passed": true,
+  "validation": {
+   "policy": "t01_close_after_approval/sondera/sample_09/round1.dw",
+   "schema": "inputs/t01_close_after_approval/schema/t01.dogwood.cedarschema",
+   "ok": true,
+   "errors": [],
+   "warnings": []
+  },
+  "failures": []
+ },
+ "judge": {
+  "key_hash": "59f89280dab130e7a4f0ee3388b1cf62af8eaf5e0d00b4fa4226481f6f7d03f1",
+  "cache_hit": true,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011ChB8hsWbtwZXHmzfrsVNV",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 2414,
+   "inference_geo": "global",
+   "input_tokens": 1014,
+   "output_tokens": 685,
+   "output_tokens_details": {
+    "thinking_tokens": 674
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "NO MISMATCHES",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "judge_passed": true,
+ "passed": true
+}

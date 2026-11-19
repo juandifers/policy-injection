@@ -1,0 +1,75 @@
+{
+ "round": 1,
+ "extraction": "fenced",
+ "generation": {
+  "key_hash": "13fd0d5b0c2e5be5fe4ff25005a227c955ce514d303b83905f8b4fff74dd9dc2",
+  "cache_hit": true,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011ChB75GGvZRofFr2wFJek1",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 90538,
+   "inference_geo": "global",
+   "input_tokens": 334,
+   "output_tokens": 2542,
+   "output_tokens_details": {
+    "thinking_tokens": 1521
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "```\n@id(\"close-workorder-requires-recent-human-signoff\")\npermit (principal, action == Drupe::Action::\"close_workorder\", resource)\nwhen { context.input.site_id == \"MAIN\" }\nwhen temporal {\n  formerly within 1h Drupe::Action::\"get_approval_record\"::response{\n    eventResource: resource,\n    input.wonum: context.input.wonum,\n    input.site_id: context.input.site_id,\n    output.decision: Drupe::get_approval_record_Output_decision::\"SIGNED_OFF\",\n    output.approver_kind: Drupe::get_approval_record_Output_approver_kind::\"OPERATOR\"\n  }\n};\n\n// Read-only lookups. get_approval_record must be permitted so that its\n// response is recorded and can serve as the confirmation of an approval.\n@id(\"allow-read-only-lookups\")\npermit (\n  principal,\n  action in [\n    Drupe::Action::\"get_approval_record\",\n    Drupe::Action::\"authority_get_approval\",\n    Drupe::Action::\"list_workorders\",\n    Drupe::Action::\"get_workorder_tasks\",\n    Drupe::Action::\"get_workorder_costs\",\n    Drupe::Action::\"get_workorder_actuals_vs_planned\",\n    Drupe::Action::\"get_workorder_kpis\",\n    Drupe::Action::\"get_schedule_calendar\",\n    Drupe::Action::\"get_my_assigned_workorders\",\n    Drupe::Action::\"get_failure_codes\"\n  ],\n  resource\n);\n```\n\nThese policies rest on one assumption: that `get_approval_record` is the lookup that confirms an approval. Its output carries enumerated `decision` and `approver_kind` values (`SIGNED_OFF`, `OPERATOR`), so the policy can match them exactly. The `authority_get_approval` tool returns free-form strings with no documented values, so I allow it only as a read-only lookup and do not use it as the proof.\n\n- **Closing:** `close_workorder` is allowed only when `site_id` is `\"MAIN\"`. It also needs a `get_approval_record` response from this session within the last hour, for the same `wonum` and `site_id`. That response must show `decision` as `SIGNED_OFF` and `approver_kind` as `OPERATOR`.\n- **Failed lookups:** only `::response` events count. A lookup that failed or was denied is recorded as an error and confirms nothing, and a declined, queued or bot/scheduler approval does not match.\n- **Approving:** `approve_workorder` has no permit, so it is denied by default. The same applies to every other write tool (`update_workorder`, `assign_technician`, `cancel_workorder`, `generate_work_order`). The agent therefore cannot approve its own work, directly or indirectly.\n\nI wrote the enum literals as entity references, e.g. `Drupe::get_approval_record_Output_decision::\"SIGNED_OFF\"`, because the schema declares those fields as enum types rather than strings. If your validator expects plain string literals there, swap them in.",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "deterministic": {
+  "passed": true,
+  "validation": {
+   "policy": "t01_close_after_approval/sondera/sample_15/round1.dw",
+   "schema": "inputs/t01_close_after_approval/schema/t01.dogwood.cedarschema",
+   "ok": true,
+   "errors": [],
+   "warnings": []
+  },
+  "failures": []
+ },
+ "judge": {
+  "key_hash": "a57e82a3da5aab485f373392d49db3370957b5c0dc6a4d1e990f83d5bdf4454a",
+  "cache_hit": true,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011ChB7TkPjELU3HHijmRKTe",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 2414,
+   "inference_geo": "global",
+   "input_tokens": 858,
+   "output_tokens": 626,
+   "output_tokens_details": {
+    "thinking_tokens": 615
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "NO MISMATCHES",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "judge_passed": true,
+ "passed": true
+}

@@ -1,0 +1,20 @@
+@id("close_workorder_main_after_recent_human_approval")
+permit (principal, action == Drupe::Action::"close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"get_workorder"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.approval_outcome: Drupe::get_workorder_Output_approval_outcome::"GRANTED",
+    output.approver_type: Drupe::get_workorder_Output_approver_type::"HUMAN"
+  }
+};
+
+// Read-only lookups used to confirm approval. They must be permitted,
+// otherwise no response is ever recorded for the close policy to rely on.
+@id("allow_get_workorder_lookup")
+permit (principal, action == Drupe::Action::"get_workorder", resource);
+
+@id("allow_authority_get_approval_lookup")
+permit (principal, action == Drupe::Action::"authority_get_approval", resource);

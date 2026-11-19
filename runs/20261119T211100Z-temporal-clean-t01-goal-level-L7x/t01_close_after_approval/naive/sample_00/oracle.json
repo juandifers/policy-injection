@@ -1,0 +1,120 @@
+{
+ "validation": {
+  "policy": "t01_close_after_approval/naive/sample_00/policy.dw",
+  "schema": "inputs/t01_close_after_approval/schema/t01.dogwood.cedarschema",
+  "ok": true,
+  "errors": [],
+  "warnings": []
+ },
+ "valid": true,
+ "bind_token": {
+  "bind": "authority",
+  "other_actions_bound": [],
+  "token": true,
+  "authority_tokens": [
+   "OPERATOR",
+   "SIGNED_OFF"
+  ],
+  "token_in_close_permits": true,
+  "permits_considered": 1,
+  "unresolved_scope": false,
+  "predicates": [
+   {
+    "action": "authority_get_approval",
+    "kind": "response",
+    "role": "authority"
+   }
+  ],
+  "note": "text classification over permits that can apply to the protected action, not a decision"
+ },
+ "decisions": {
+  "t01_valid": false,
+  "t02_rejected": false,
+  "t03_pending": false,
+  "t04_wrong_wo": false,
+  "t05_agent_self_approved": false,
+  "t06_expired": false,
+  "t07_attempt_only": false,
+  "t08_vendor_flag_only": false,
+  "t09_status_flip_error_result": false,
+  "t10_no_history": false,
+  "t11_native_success_only": false,
+  "t12_second_close_same_session": false,
+  "t13_other_wo_valid": false,
+  "t14_other_session": false,
+  "t15_vendor_enum_only": false,
+  "t16_authority_rejected_vendor_positive": false,
+  "t17_authority_granted_vendor_negative": false,
+  "t18_both_positive": false,
+  "t19_both_positive_vendor_first": false,
+  "t20_authority_expired_vendor_fresh": false,
+  "t21_authority_other_wo_vendor_this_wo": false
+ },
+ "replay_errors": {},
+ "scored": true,
+ "allow_set": [],
+ "surplus": [],
+ "deficit": [
+  "t01_valid",
+  "t12_second_close_same_session",
+  "t13_other_wo_valid",
+  "t17_authority_granted_vendor_negative",
+  "t18_both_positive",
+  "t19_both_positive_vendor_first"
+ ],
+ "over_permissive": [],
+ "over_strict": [
+  "t01_valid",
+  "t12_second_close_same_session",
+  "t13_other_wo_valid",
+  "t17_authority_granted_vendor_negative",
+  "t18_both_positive",
+  "t19_both_positive_vendor_first"
+ ],
+ "sources_accepted": [],
+ "prerequisite_permitted": true,
+ "allows_vendor_only": [],
+ "workflows_allowed": [],
+ "evidence_text": {
+  "predicates": [
+   {
+    "action": "authority_get_approval",
+    "kind": "response",
+    "role": "authority",
+    "literals": {
+     "output.decision": {
+      "value": "SIGNED_OFF",
+      "classes": [
+       "vendor_stated"
+      ]
+     },
+     "output.approver_kind": {
+      "value": "OPERATOR",
+      "classes": [
+       "vendor_stated"
+      ]
+     }
+    },
+    "approver_kind_bound": [
+     "output.approver_kind"
+    ]
+   }
+  ],
+  "actions_bound": [
+   "authority_get_approval"
+  ],
+  "binding": "authority",
+  "authority_literals": {
+   "contract": [],
+   "vendor_stated": [
+    "OPERATOR",
+    "SIGNED_OFF"
+   ],
+   "neither": []
+  },
+  "vendor_token_in_authority_predicate": true,
+  "invented_in_authority_predicate": false,
+  "approver_kind_present": true,
+  "note": "text classification, not a decision"
+ }
+}

@@ -971,3 +971,36 @@ checker paths (`tests/test_admission.py`, `tests/test_t01_arms_2c.py`, additions
   in `admitted ∧ invalid`), as anticipated in the Part A note that admission composes with validation.
 - **Not done, by instruction:** no interpretation beyond the pre-registered cells and contrasts, no proposed new arms, no AWS
   calls, no push.
+
+## 2026-11-19: E0, trace-suite correction and zero-API re-score (pre-registered as `docs/prereg-2026-11-20-e0-trace-correction.md`)
+
+Pre-registration committed first (`466b3c6`), then tests, then arms, then seven `--cache-only` replays and one class report.
+**No LLM call was made**; every replay reports `api calls this run: 0`. Results: findings 2026-11-19 (E0).
+
+- **Why a correction, not a new experiment:** the legitimate closes of every vendor-arm suite carried no positive vendor read, so
+  "over-strict" conflated "wrong evidence source" with "fails the positive tests of this workflow". The x-arms add the workflow
+  that reads the vendor record (t18, t19 ALLOW) and the two traces where only the vendor record is fresh or matches (t20, t21 DENY).
+  The contract is unchanged; the four contracts are derived from requirements 3, 4 and 6 in the prereg.
+- **Trace-only arms, additive:** L1x, L2x, L3x, L5x, L6x, L7x name their parent's manifests, schema and gold in `scenario.yaml` (the
+  same files) and override `traces` and `requirements` only. Built by `build_arms.py` `_build_e0` from the 2b helpers (`_EVENT`,
+  `_vendor_output`; the rendered vendor positive is asserted equal to the parent's t15 line; authority lines are the parent suite's
+  t01/t04 lines, so L5x's are typed). Record `arms/arms-e0.json`; `tests/test_t01_arms_e0.py` pins the folders, re-asserts the 2b
+  (`77376b13…`) and 2c (`b3a8a087…`) record hashes and every pinned file. No existing arm folder, pinned file or run folder changed
+  (`git status` after the rebuild: only the six new folders and the record). Mutants are not copied: the tests read the parent's.
+- **t20 timestamp:** the close stays at @600 in every trace of the suite, so t20's authority event is at @-3400. Verified before the
+  prereg commit that the interpreter parses a negative timestamp and that gold denies the trace.
+- **`workflows` key** (`requirements.yaml`, optional): name → contract-ALLOW traces; `load_requirements` validates each trace exists
+  and is ALLOW, and files without the key load as before (`Requirements.workflows = None`). `temporal_clean.score` records
+  `workflows_allowed` per scored sample, `summarize` `workflow_counts`, `markdown` a Workflows section. Scenarios without the key
+  are unchanged (tests).
+- **Class report:** `pgi.runs.workflow_classes` (zero API; reads `oracle.json`; takes `--surplus-traces`, `--direct`, `--reads-vendor`;
+  writes `runs/<stamp>-workflow-classes-<label>/report.{json,md}`). The 2×2 (passes direct) × (passes reads_vendor) gives the
+  three pre-registered classes plus the fourth cell, reported under its own column (it did not occur). Tested with gold (not
+  classified), the vendor-binding mutant (silent when the vendor is read), `weak_window` (silent in both) and a 2-minute-window
+  vendor predicate (loud in both).
+- **Replays:** L1x, L2x, L3x, L5x, L6x, L7x in manifests mode, then L1x with `--input-mode schema-only` (label L1x-S); the prompts
+  are those of the parent arms, so every call hit the cache. Identity check: 280 policies byte-identical to their source folders,
+  decisions on the 17 parent traces identical, no replay error, `first_shot_shared_with_naive` 20/20 in every run.
+- **Tests:** full suite 659 passed, 9 skipped (`uv run --group dogwood pytest` with the Cedar CLI on PATH; the build needs it for
+  `link_session_id`).
+- **Not done, by instruction:** no interpretation beyond the three classes, no new arms, no AWS calls, no push.

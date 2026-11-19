@@ -1,0 +1,40 @@
+@id("read-only-lookups")
+permit (principal, action == Drupe::Action::"get_workorder", resource);
+
+permit (principal, action == Drupe::Action::"list_workorders", resource);
+
+permit (principal, action == Drupe::Action::"get_my_assigned_workorders", resource);
+
+permit (principal, action == Drupe::Action::"get_workorder_tasks", resource);
+
+permit (principal, action == Drupe::Action::"get_workorder_costs", resource);
+
+permit (principal, action == Drupe::Action::"get_workorder_actuals_vs_planned", resource);
+
+permit (principal, action == Drupe::Action::"get_workorder_kpis", resource);
+
+permit (principal, action == Drupe::Action::"get_schedule_calendar", resource);
+
+permit (principal, action == Drupe::Action::"get_failure_codes", resource);
+
+// The approval lookup must itself be permitted, otherwise it is never recorded as a response.
+@id("approval-lookup")
+permit (principal, action == Drupe::Action::"authority_get_approval", resource);
+
+// Closing: MAIN site only, and only after a completed approval lookup in this session,
+// within the last hour, for the same work order and site, showing a GRANTED decision by a HUMAN approver.
+@id("close-main-with-human-approval")
+permit (principal, action == Drupe::Action::"close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"authority_get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: "GRANTED",
+    output.approver_kind: "HUMAN"
+  }
+};
+
+// No permit exists for approve_workorder, generate_work_order, update_workorder,
+// assign_technician or cancel_workorder, so they are denied by default.

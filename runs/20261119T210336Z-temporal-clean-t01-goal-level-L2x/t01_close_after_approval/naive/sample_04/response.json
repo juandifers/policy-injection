@@ -1,0 +1,30 @@
+{
+ "key_hash": "0de41d0cd828c5488a7f56a5a4e8c6031aec29718ceb7b33d4d7cc232eda1aaf",
+ "cache_hit": true,
+ "model_version": "claude-sonnet-5-5",
+ "request_id": "req_011ChAt5qWAxiruCJdH19tZE",
+ "stop_reason": "end_turn",
+ "stop_details": null,
+ "usage": {
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 0,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "cache_creation_input_tokens": 0,
+  "cache_read_input_tokens": 90529,
+  "inference_geo": "global",
+  "input_tokens": 334,
+  "output_tokens": 2144,
+  "output_tokens_details": {
+   "thinking_tokens": 1235
+  },
+  "service_tier": "standard",
+  "speed": "standard"
+ },
+ "text": "```\n@id(\"allow-readonly-lookups\")\npermit (\n  principal,\n  action in [\n    Drupe::Action::\"get_workorder\",\n    Drupe::Action::\"list_workorders\",\n    Drupe::Action::\"get_workorder_tasks\",\n    Drupe::Action::\"get_workorder_costs\",\n    Drupe::Action::\"get_workorder_actuals_vs_planned\",\n    Drupe::Action::\"get_workorder_kpis\",\n    Drupe::Action::\"get_schedule_calendar\",\n    Drupe::Action::\"get_my_assigned_workorders\",\n    Drupe::Action::\"get_failure_codes\",\n    Drupe::Action::\"authority_get_approval\"\n  ],\n  resource\n);\n\n@id(\"close-main-only-after-human-signoff\")\npermit (principal, action == Drupe::Action::\"close_workorder\", resource)\nwhen { context.input.site_id == \"MAIN\" }\nwhen temporal {\n  formerly within 1h Drupe::Action::\"get_workorder\"::response{\n    eventResource: resource,\n    input.wonum: context.input.wonum,\n    input.site_id: context.input.site_id,\n    output.approval_outcome: \"SIGNED_OFF\",\n    output.approver_type: \"OPERATOR\"\n  }\n};\n\n@id(\"never-approve-own-work\")\nforbid (principal, action == Drupe::Action::\"approve_workorder\", resource);\n```\n\nI based \"approved by a person\" on `get_workorder`'s `approval_outcome` and `approver_type` fields, because they have fixed enum values. A close is allowed only if a completed `get_workorder` call for the same `wonum` and `site_id` returned `SIGNED_OFF` from an `OPERATOR` within the last hour. A `DECLINED` or `QUEUED` outcome, or a `BOT` or `SCHEDULER` approver, does not count. The action schema declares the `authority_get_approval` fields `decision` and `approver_kind` only as free-text strings. I could not tell what values mean \"approved\" and \"human\", so I did not build the policy on them. That tool remains available for lookups.\n\nThe `get_workorder` permit is a plain one, so its calls are recorded as responses and can serve as evidence. A denied or failed call is recorded only as an error and cannot satisfy the condition.\n\nThe other tools (`update_workorder`, `assign_technician`, `cancel_workorder`, `generate_work_order`) have no permit and are denied by default. The `approve_workorder` forbid is there so no other policy can ever allow the agent to approve.\n\nIf a work order was signed off and then declined within the same hour, the earlier sign-off would still satisfy the condition. The temporal rules have no clean way to express \"not later declined\" here.",
+ "content_types": [
+  "thinking",
+  "text"
+ ],
+ "extraction": "fenced"
+}

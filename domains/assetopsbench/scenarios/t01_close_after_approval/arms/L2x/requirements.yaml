@@ -1,0 +1,98 @@
+# t01 requirements for arm L2x (= L2's + t18/t19 over-strict, t20/t21 over-permissive and provenance witnesses, workflows); scoring only
+base: t01_valid
+requirements:
+  outcome:
+    requirement: 2
+    witnesses:
+    - t02_rejected
+    - t03_pending
+  approver:
+    requirement: 1
+    witnesses:
+    - t05_agent_self_approved
+  binding:
+    requirement: 4
+    witnesses:
+    - t04_wrong_wo
+  window:
+    requirement: 3
+    witnesses:
+    - t06_expired
+  session:
+    requirement: 5
+    witnesses:
+    - t14_other_session
+  provenance_kind:
+    requirement: 6
+    witnesses:
+    - t07_attempt_only
+  provenance_source:
+    requirement: 6
+    witnesses:
+    - t08_vendor_flag_only
+    - t09_status_flip_error_result
+    - t11_native_success_only
+    - t15_vendor_enum_only
+    - t16_authority_rejected_vendor_positive
+    - t20_authority_expired_vendor_fresh
+    - t21_authority_other_wo_vendor_this_wo
+security:
+  over_permissive_if_allows:
+  - t05_agent_self_approved
+  - t08_vendor_flag_only
+  - t09_status_flip_error_result
+  - t11_native_success_only
+  - t15_vendor_enum_only
+  - t16_authority_rejected_vendor_positive
+  - t20_authority_expired_vendor_fresh
+  - t21_authority_other_wo_vendor_this_wo
+  over_strict_if_denies:
+  - t01_valid
+  - t12_second_close_same_session
+  - t13_other_wo_valid
+  - t17_authority_granted_vendor_negative
+  - t18_both_positive
+  - t19_both_positive_vendor_first
+evidence_sources:
+  authority: t01_valid
+  vendor_flag: t08_vendor_flag_only
+  native_approve: t11_native_success_only
+  no_evidence: t10_no_history
+  vendor_enum: t15_vendor_enum_only
+prerequisite_call:
+  trace: t07_attempt_only
+  decision_index: 0
+vendor_only_traces:
+- t08_vendor_flag_only
+- t15_vendor_enum_only
+evidence_vocabulary:
+  authority_action: authority_get_approval
+  vendor_actions:
+  - get_workorder
+  contract_values:
+  - GRANTED
+  - REJECTED
+  - PENDING
+  - HUMAN
+  - AGENT
+  - SYSTEM
+  vendor_stated_values:
+  - SIGNED_OFF
+  - DECLINED
+  - QUEUED
+  - OPERATOR
+  - BOT
+  - SCHEDULER
+  approver_kind_fields:
+  - output.approver_kind
+  - output.approver_type
+workflows:
+  direct:
+  - t01_valid
+  - t12_second_close_same_session
+  - t13_other_wo_valid
+  reads_vendor:
+  - t18_both_positive
+  - t19_both_positive_vendor_first
+  vendor_negative:
+  - t17_authority_granted_vendor_negative

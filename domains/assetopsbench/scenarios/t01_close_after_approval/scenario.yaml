@@ -65,3 +65,37 @@ arms:                      # Phase 2b manifest arms (--arm NAME; default = the f
     traces: arms/L6/traces.yaml
     requirements: arms/L6/requirements.yaml
   # L1-S (Phase 2c schema-only) is not a file arm: it is `--arm L1 --input-mode schema-only` (L1's files unchanged; see arms/arms-2c.json).
+  # E0 (2026-11-20) trace-only arms: each names its parent's manifests, schema and gold (the same files) and overrides only traces and
+  # requirements (parent suite + t18-t21, workflows map). Build: build_arms.py; record arms/arms-e0.json; pinned by tests/test_t01_arms_e0.py.
+  L1x:
+    manifests: {wo: scenarios/t01_close_after_approval/arms/L1/manifests/wo.tools.json, authority: scenarios/t01_close_after_approval/arms/v2/manifests/authority.tools.json}
+    schema: scenarios/t01_close_after_approval/arms/L1/schema/t01.dogwood.cedarschema
+    traces: arms/L1x/traces.yaml
+    requirements: arms/L1x/requirements.yaml
+  L2x:
+    manifests: {wo: scenarios/t01_close_after_approval/arms/L2/manifests/wo.tools.json, authority: scenarios/t01_close_after_approval/arms/v2/manifests/authority.tools.json}
+    schema: scenarios/t01_close_after_approval/arms/L2/schema/t01.dogwood.cedarschema
+    traces: arms/L2x/traces.yaml
+    requirements: arms/L2x/requirements.yaml
+  L3x:
+    manifests: {wo: scenarios/t01_close_after_approval/arms/L3/manifests/wo.tools.json, authority: scenarios/t01_close_after_approval/arms/v2/manifests/authority.tools.json}
+    schema: scenarios/t01_close_after_approval/arms/L3/schema/t01.dogwood.cedarschema
+    traces: arms/L3x/traces.yaml
+    requirements: arms/L3x/requirements.yaml
+  L5x:
+    manifests: {wo: scenarios/t01_close_after_approval/arms/L2/manifests/wo.tools.json, authority: scenarios/t01_close_after_approval/arms/typed/manifests/authority.tools.json}
+    schema: scenarios/t01_close_after_approval/arms/L5/schema/t01.dogwood.cedarschema
+    gold: arms/L5/gold.dw
+    traces: arms/L5x/traces.yaml
+    requirements: arms/L5x/requirements.yaml
+  L6x:
+    manifests: {wo: scenarios/t01_close_after_approval/arms/L6/manifests/wo.tools.json, authority: scenarios/t01_close_after_approval/arms/v2/manifests/authority.tools.json}
+    schema: scenarios/t01_close_after_approval/arms/L6/schema/t01.dogwood.cedarschema
+    traces: arms/L6x/traces.yaml
+    requirements: arms/L6x/requirements.yaml
+  L7x:
+    manifests: {wo: scenarios/t01_close_after_approval/arms/L7/manifests/wo.tools.json, authority: scenarios/t01_close_after_approval/arms/v2/manifests/authority.tools.json}
+    schema: scenarios/t01_close_after_approval/arms/L7/schema/t01.dogwood.cedarschema
+    traces: arms/L7x/traces.yaml
+    requirements: arms/L7x/requirements.yaml
+  # L1x-S is not a file arm: `--arm L1x --input-mode schema-only` (the same prompt and cache entries as L1-S).

@@ -1,0 +1,30 @@
+{
+ "key_hash": "85ea928a5663d382d36817ebc495e317b3f99cbf0cc8aeff65c56e7c75e05005",
+ "cache_hit": true,
+ "model_version": "claude-sonnet-5-5",
+ "request_id": "req_011ChB8zKDsuqAK6NwGTXaBn",
+ "stop_reason": "end_turn",
+ "stop_details": null,
+ "usage": {
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 0,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "cache_creation_input_tokens": 0,
+  "cache_read_input_tokens": 34009,
+  "inference_geo": "global",
+  "input_tokens": 334,
+  "output_tokens": 1784,
+  "output_tokens_details": {
+   "thinking_tokens": 1037
+  },
+  "service_tier": "standard",
+  "speed": "standard"
+ },
+ "text": "```\n// Read-only lookups. authority_get_approval must be permitted so that its\n// completed calls are recorded as responses for the close policy to rely on.\npermit (principal, action == Drupe::Action::\"authority_get_approval\", resource);\npermit (principal, action == Drupe::Action::\"get_workorder\", resource);\npermit (principal, action == Drupe::Action::\"get_workorder_tasks\", resource);\npermit (principal, action == Drupe::Action::\"get_workorder_costs\", resource);\npermit (principal, action == Drupe::Action::\"get_workorder_actuals_vs_planned\", resource);\npermit (principal, action == Drupe::Action::\"get_workorder_kpis\", resource);\npermit (principal, action == Drupe::Action::\"list_workorders\", resource);\npermit (principal, action == Drupe::Action::\"get_my_assigned_workorders\", resource);\npermit (principal, action == Drupe::Action::\"get_schedule_calendar\", resource);\npermit (principal, action == Drupe::Action::\"get_failure_codes\", resource);\n\n// Closing: only at MAIN, and only when a completed authority_get_approval call\n// in this session, within the last hour, confirmed that this same work order\n// at this same site was GRANTED by a HUMAN approver.\n@id(\"close_workorder_requires_human_approval\")\npermit (principal, action == Drupe::Action::\"close_workorder\", resource)\nwhen { context.input.site_id == \"MAIN\" }\nwhen temporal {\n  formerly within 1h Drupe::Action::\"authority_get_approval\"::response{\n    eventResource: resource,\n    input.site_id: context.input.site_id,\n    input.wonum: context.input.wonum,\n    output.decision: \"GRANTED\",\n    output.approver_kind: \"HUMAN\"\n  }\n};\n\n// approve_workorder is deliberately given no permit, so the agent can never\n// approve work orders itself. All other actions are denied by default.\n```\n\nI had to guess two literal values: `output.decision: \"GRANTED\"` and `output.approver_kind: \"HUMAN\"`. The `authority_get_approval` outputs are plain strings, so I took the literals from the enum values on `get_workorder`. If your authority service uses different strings, change those two values.",
+ "content_types": [
+  "thinking",
+  "text"
+ ],
+ "extraction": "fenced"
+}
