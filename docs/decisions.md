@@ -1034,3 +1034,16 @@ naming the existing manifest files). Tests first; 25 bridge tests.
   each kind had `cache_read_input_tokens == 0` (the first). Stop rule: more than two later misses (both kinds together) stops the
   block before the next arm.
 - **Spend:** `--spend-cap-usd 3` per run, total cap $9; manifests mode, N = 20, both generators.
+
+## 2026-11-19: Bridge arms, Part B blocked before the first sample: API key rejected (401), zero spend
+
+- After the prereg commit (`92e4f66`) and the fixture fix (`b0dbd15`: `test_unknown_arm_is_refused` had used `L9` as its
+  never-existing arm name; full suite otherwise 683 passed, 9 skipped), the L8 run was started with `--spend-cap-usd 3`. Its first
+  API call returned `401 authentication_error: invalid x-api-key` (`req_011ChD325oqkdAtayA7KgcX3`); the run failed loudly, wrote no
+  sample, and the atomic `.tmp-…-L8` folder (config and input snapshot only, no call record) was removed. **Zero API spend, zero
+  cached samples; nothing to replay.**
+- The key is read from the repo's gitignored `.env` by `pgi.llm.env.load_env`, as in every earlier run. The file is unchanged since
+  2026-11-12 and its value is well-formed (`sk-ant-…`, 106 characters, no quoting or trailing whitespace), so the key itself is no
+  longer accepted by the API (rotated, revoked or expired). Only Juan can replace it; no retry was attempted.
+- Stop condition as pre-registered (transport failure → stop and report). L8, L9, L10 remain unrun; the arms, tests and prereg are
+  committed and unchanged. Resume = replace the key in `.env`, then run L8, L9, L10 in that order with the A4 check between them.
