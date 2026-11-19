@@ -295,7 +295,7 @@ def test_typed_arm_overrides_authority_schema_gold_traces_requirements():
 
 def test_unknown_arm_is_refused():
     with pytest.raises(ValueError, match="arm"):
-        load_dogwood_inputs(T01, intent="goal-level", arm="L9")
+        load_dogwood_inputs(T01, intent="goal-level", arm="L999")   # a name no arm will have (L9 became an arm on 2026-11-20)
 
 
 def test_snapshot_records_the_arm_and_round_trips(tmp_path):
