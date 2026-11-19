@@ -99,3 +99,23 @@ arms:                      # Phase 2b manifest arms (--arm NAME; default = the f
     traces: arms/L7x/traces.yaml
     requirements: arms/L7x/requirements.yaml
   # L1x-S is not a file arm: `--arm L1x --input-mode schema-only` (the same prompt and cache entries as L1-S).
+  # Bridge arms (2026-11-20; DEFENSE conditions like L5): typed authority + an existing vendor entry; built like L5 + E0's t18-t21 and workflows.
+  # Build: build_arms.py; record arms/arms-bridge.json; pinned by tests/test_t01_arms_bridge.py.
+  L8:                      # typed authority + L7's vendor entry (get_approval_record, authority field names, marker values)
+    manifests: {wo: scenarios/t01_close_after_approval/arms/L7/manifests/wo.tools.json, authority: scenarios/t01_close_after_approval/arms/typed/manifests/authority.tools.json}
+    schema: scenarios/t01_close_after_approval/arms/L8/schema/t01.dogwood.cedarschema
+    gold: arms/L8/gold.dw
+    traces: arms/L8/traces.yaml
+    requirements: arms/L8/requirements.yaml
+  L9:                      # typed authority + L1's vendor entry (get_workorder, approval_outcome / approver_type, true values)
+    manifests: {wo: scenarios/t01_close_after_approval/arms/L1/manifests/wo.tools.json, authority: scenarios/t01_close_after_approval/arms/typed/manifests/authority.tools.json}
+    schema: scenarios/t01_close_after_approval/arms/L9/schema/t01.dogwood.cedarschema
+    gold: arms/L9/gold.dw
+    traces: arms/L9/traces.yaml
+    requirements: arms/L9/requirements.yaml
+  L10:                      # typed authority + L3's vendor entry (get_approval_record, authority field names, true values)
+    manifests: {wo: scenarios/t01_close_after_approval/arms/L3/manifests/wo.tools.json, authority: scenarios/t01_close_after_approval/arms/typed/manifests/authority.tools.json}
+    schema: scenarios/t01_close_after_approval/arms/L10/schema/t01.dogwood.cedarschema
+    gold: arms/L10/gold.dw
+    traces: arms/L10/traces.yaml
+    requirements: arms/L10/requirements.yaml

@@ -1,0 +1,21 @@
+// mutant borrowed_literal (arm L8): typed gold with the marker values on the typed authority predicate (not enum members)
+// typed twin (Phase 2b A3): gold with the two output literals in the enum entity form the typed schema requires
+// t01 reference (signed off 2026-11-16). Event schema: domains/assetopsbench/schema/agentcore.dwschema (AWS shape:
+// sessionId pin, eventPrincipal/eventResource). The contract is README.md; each predicate field is one requirement.
+@id("close-after-approval")
+permit (principal, action == Drupe::Action::"close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"authority_get_approval"::response{
+    eventResource: resource,
+    input.wonum: context.input.wonum,
+    input.site_id: context.input.site_id,
+    output.decision: Drupe::authority_get_approval_Output_decision::"SIGNED_OFF",
+    output.approver_kind: Drupe::authority_get_approval_Output_approver_kind::"OPERATOR"
+  }
+};
+
+// The evidence call itself. AWS records a denied action as `error`, never `response`, so without this permit no
+// approval evidence could ever exist. Every weakening keeps this rule unchanged.
+@id("lookup-approval")
+permit (principal, action == Drupe::Action::"authority_get_approval", resource);

@@ -1004,3 +1004,33 @@ Pre-registration committed first (`466b3c6`), then tests, then arms, then seven 
 - **Tests:** full suite 659 passed, 9 skipped (`uv run --group dogwood pytest` with the Cedar CLI on PATH; the build needs it for
   `link_session_id`).
 - **Not done, by instruction:** no interpretation beyond the three classes, no new arms, no AWS calls, no push.
+
+## 2026-11-20: Bridge arms L8, L9, L10 prepared and pre-registered (zero API calls)
+
+Pre-registration: `docs/prereg-2026-11-20-bridge-arms.md`. Additive: every 2b, 2c and E0 arm file and record keep their bytes
+(`tests/test_t01_arms_bridge.py` re-asserts the three record hashes and every pinned file; `git status` after the rebuild shows only
+the three new folders and `arms/arms-bridge.json`). Edited: `build_arms.py` (`_build_bridge`, `_enum_types`, `_retype`, an optional
+`retype` argument on `_e0_traces` with identity default; the E0 tree rebuilds byte-identical) and `scenario.yaml` (three arm entries
+naming the existing manifest files). Tests first; 25 bridge tests.
+
+- **Composition as L5:** schema = generated over [source vendor manifest, typed authority] + session link; gold = typed gold; suite =
+  typed 14 (copies) + the source arm's t15–t17 with typed authority events + E0's t18–t21 built from the arm's own typed t01/t04
+  lines and its t15 vendor positive; requirements = L5's shape + E0's witnesses and `workflows`. Mutants: `vendor_binding` (killed by
+  t01, t12, t13, t15, t16, t17, t20, t21 in all three); `borrowed_literal` in L8 only, killed by validation like L5's. DEFENSE
+  conditions (recorded `condition: defense`).
+- **Toolchain fact, found by the failing L10 build before any generation:** `pydogwood.schema_mcp` emits ONE shared enum entity
+  named after the bare field (`Drupe::decision`, `Drupe::approver_kind`) when two tools declare an enum field with the same name and
+  the same member list, and both tools' output records reference it. Per-tool `<tool>_Output_<field>` entities otherwise. Only L10
+  is affected (L3's vendor entry mirrors the authority's names and values). The typed gold and the typed trace lines, which use the
+  per-tool names, do not validate / do not match under L10's schema (`authority_get_approval expects approver_kind but got
+  authority_get_approval_Output_approver_kind`). **Judgment call:** the builder now reads the enum type names from each arm's
+  generated schema and encodes gold, trace lines and mutants in those names (identity for L8 and L9, byte-identical to the L5
+  encoding; the shared names for L10). Same literals, same predicates, same contract; the record stores `enum_types` and
+  `shared_enum_types`, the test asserts them. Consequence for the experiment, stated in the prereg: in L10's prompt the authority's
+  and the vendor's `decision` / `approver_kind` are the same type. The L10 prediction and contrast were kept as instructed.
+- **Contrast L10 vs L3:** the comparator (L3 first-shot BIND = vendor) is 0/20, so `fisher_less(0, 20, k, 20)` = 1 for every k and the
+  contrast cannot reject. Registered because the block names it; the L10 prediction is tested by its cell.
+- **Caching check (A4) defined from the 2c L7 run:** two static prompts per run (generator, judge); in L7 exactly one fresh call of
+  each kind had `cache_read_input_tokens == 0` (the first). Stop rule: more than two later misses (both kinds together) stops the
+  block before the next arm.
+- **Spend:** `--spend-cap-usd 3` per run, total cap $9; manifests mode, N = 20, both generators.

@@ -62,6 +62,23 @@ requirements = the parent's + t18/t19 in over_strict_if_denies, t20/t21 in over_
 the `workflows` map {direct: [t01, t12, t13], reads_vendor: [t18, t19], vendor_negative: [t17]}. Mutants are the parent's files
 (not copied); their kill sets grow by t20, t21 (vendor_binding) and t18, t19 (borrowed_literal). L1x-S = `--arm L1x
 --input-mode schema-only`, not a file arm.
+
+Bridge arms (pre-registered 2026-11-20; `arms/arms-bridge.json`; nothing above is touched, `tests/test_t01_arms_bridge.py` pins them):
+the typed authority entry (arms/typed) composed with an existing vendor entry, built exactly as L5 was (schema regenerated from the
+two manifests, typed gold, the typed 14-trace suite + the vendor arm's t15-t17 with the authority events in the typed encoding) plus
+the four E0 traces (t18-t21, typed authority lines) and E0's requirements additions (witnesses, workflows map). DEFENSE conditions
+(they change the trusted authority entry), like L5.
+  L8  = typed authority + L7's vendor entry (get_approval_record, the authority's field names, marker values)
+  L9  = typed authority + L1's vendor entry (get_workorder, approval_outcome / approver_type, true values)
+  L10 = typed authority + L3's vendor entry (get_approval_record, the authority's field names, true values)
+Mutants: vendor_binding in all three (killed by t01, t12, t13, t15, t16, t17, t20, t21); borrowed_literal in L8 only (marker ids on
+the typed authority predicate: killed by validation, as L5's). L9 and L10 state the contract's own values, so no borrowed literal.
+Toolchain fact (found while building, before any generation): when two tools declare an enum field with the SAME name and the SAME
+member list, the Dogwood schema generator emits ONE shared enum entity named after the bare field (`Drupe::decision`,
+`Drupe::approver_kind`) and both tools' outputs reference it; otherwise the entity is `<tool>_Output_<field>`. That happens in L10
+(L3's vendor entry mirrors the authority's names and values) and nowhere else. Each bridge arm therefore reads its enum entity
+type names from its generated schema and encodes gold, the typed trace lines and the mutants in those names: identity for L8 and
+L9 (byte-identical to the typed/L5 encoding), the shared types for L10. Recorded per arm as `enum_types` / `shared_enum_types`.
 """
 from __future__ import annotations
 
@@ -315,6 +332,7 @@ def build(dest: Path) -> dict:
     _dump_json(dest / "arms.json", record)
     _dump_json(dest / "arms-2c.json", _build_2c(dest, base_entries, t01_auth, t02_auth, close))
     _dump_json(dest / "arms-e0.json", _build_e0(dest))
+    _dump_json(dest / "arms-bridge.json", _build_bridge(dest))
     return record
 
 
@@ -474,11 +492,12 @@ def _at(line: str, ts: int) -> str:
     return _TS.sub(f"@{ts} ", line)
 
 
-def _e0_traces(parent_dir: Path, tool: str, positive: dict, plain: bool) -> list[tuple]:
+def _e0_traces(parent_dir: Path, tool: str, positive: dict, plain: bool, retype=lambda text: text) -> list[tuple]:
     """The four E0 traces of one parent arm: (id, contract, event lines, note). The vendor positive is rendered with the
-    2b helpers and checked against the parent's t15 line; the authority lines are the parent suite's (typed in L5)."""
+    2b helpers (then `retype`, identity except for an arm whose generated schema merged enum types) and checked against
+    the parent's t15 line; the authority lines are the parent suite's (typed in L5)."""
     t15 = (parent_dir / "traces" / "t15_vendor_enum_only.log").read_text().splitlines()[0]
-    vendor = _EVENT.format(ts=200, tool=tool, output=_vendor_output(tool, positive, "approved", plain), rid="g1")
+    vendor = retype(_EVENT.format(ts=200, tool=tool, output=_vendor_output(tool, positive, "approved", plain), rid="g1"))
     assert _at(vendor, 100) == t15, (parent_dir, "vendor positive differs from t15")
     t01 = (parent_dir / "traces" / "t01_valid.log").read_text().splitlines()
     auth_ok, close = t01[0], t01[1]
@@ -537,6 +556,123 @@ def _build_e0(dest: Path) -> dict:
         rec["arms"][arm] = {"parent": parent, "note": f"trace-only: {parent}'s manifests, schema and gold (scenario.yaml names the same files); suite + 4, requirements + witnesses + workflows",
                             "vendor_positive": {"tool": tool, "values": positive, "plain_strings": plain},
                             "mutants": mutants, "sha256": _hashes(d)}
+    return rec
+
+
+# ---- bridge arms: typed authority + an existing vendor entry
+BRIDGE = {  # arm -> (vendor source arm, vendor tool, positive, negative, vendor-stated values, approver-kind fields, marker?)
+    "L8": ("L7", "get_approval_record", {"decision": "SIGNED_OFF", "approver_kind": "OPERATOR"}, {"decision": "DECLINED", "approver_kind": "BOT"},
+           MARKER_OUTCOMES + MARKER_KINDS, ["output.approver_kind"], True),
+    "L9": ("L1", "get_workorder", VENDOR_ARMS["L1"]["positive"], VENDOR_ARMS["L1"]["negative"], CONTRACT_VALUES, ["output.approver_kind", "output.approver_type"], False),
+    "L10": ("L3", "get_approval_record", VENDOR_ARMS["L3"]["positive"], VENDOR_ARMS["L3"]["negative"], CONTRACT_VALUES, ["output.approver_kind"], False),
+}
+
+
+def _enum_types(schema_text: str, tool: str, fields: list[str]) -> dict[str, str]:
+    """field -> enum entity type name (without namespace) that `<tool>Output` declares for it in a generated schema."""
+    m = re.search(rf"^  type {re.escape(tool)}Output = \{{\n(.*?)\n  \}};", schema_text, re.S | re.M)
+    assert m, (tool, "no output type in the generated schema")
+    out = {}
+    for f in fields:
+        fm = re.search(rf"^\s+{re.escape(f)}\??: Drupe::(\w+)", m.group(1), re.M)
+        assert fm, (tool, f, "not an entity-typed output field")
+        out[f] = fm.group(1)
+    return out
+
+
+def _retype(text: str, mapping: dict[str, str]) -> str:
+    """Rewrite enum entity references `Drupe::<tool>_Output_<field>::` to the type names a generated schema actually declares."""
+    for old, new in mapping.items():
+        text = text.replace(old, new)
+    return text
+
+
+def _add_e0_requirements(data: dict) -> dict:
+    """E0's additions to a requirements mapping: t20/t21 witnesses, t18/t19 over-strict, the workflows map."""
+    data["requirements"]["provenance_source"]["witnesses"] += E0_OVER_PERMISSIVE
+    data["security"]["over_permissive_if_allows"] += E0_OVER_PERMISSIVE
+    data["security"]["over_strict_if_denies"] += E0_OVER_STRICT
+    data["workflows"] = E0_WORKFLOWS
+    return data
+
+
+def _build_bridge(dest: Path) -> dict:
+    """L8, L9, L10 next to the earlier arms (which are read, never written)."""
+    base_ids = {e["id"] for e in _base_trace_entries()}
+    typed_auth, typed_gold = dest / "typed" / "manifests" / "authority.tools.json", dest / "typed" / "gold.dw"
+    rec: dict = {"phase": "bridge", "condition": "defense",
+                 "built_from": {"arms_json_sha256": sha(dest / "arms.json"), "arms_2c_json_sha256": sha(dest / "arms-2c.json"),
+                                "arms_e0_json_sha256": sha(dest / "arms-e0.json"), "typed_authority": sha(typed_auth), "typed_gold": sha(typed_gold),
+                                **{f"{src}_wo": sha(dest / src / "manifests" / "wo.tools.json") for src, *_ in BRIDGE.values()}},
+                 "workflows": E0_WORKFLOWS, "arms": {}}
+    for arm, (src, tool, positive, negative, stated, approver_fields, marker) in BRIDGE.items():
+        d = dest / arm
+        wo = dest / src / "manifests" / "wo.tools.json"
+        _schema(d, wo, typed_auth)
+        schema_text = (d / "schema" / "t01.dogwood.generated.cedarschema").read_text()
+        auth_types = _enum_types(schema_text, AUTHORITY, ["decision", "approver_kind"])
+        vendor_types = _enum_types(schema_text, tool, list(positive))
+        mapping = {f"Drupe::{AUTHORITY}_Output_{f}::": f"Drupe::{t}::" for f, t in auth_types.items()} | \
+                  {f"Drupe::{tool}_Output_{f}::": f"Drupe::{t}::" for f, t in vendor_types.items()}
+        retype = lambda text: _retype(text, mapping)
+        shared = sorted(set(auth_types.values()) & set(vendor_types.values()))
+        _write(d / "gold.dw", retype(typed_gold.read_text()))
+        entries = [copy.deepcopy(e) for e in _entries(dest / "typed")]
+        for e in entries:
+            _write(d / e["file"], retype((dest / "typed" / e["file"]).read_text()))
+        for e in _entries(dest / src):
+            if e["id"] in base_ids:
+                continue
+            text, e = (dest / src / e["file"]).read_text(), copy.deepcopy(e)
+            if f'"{AUTHORITY}"::response(' in text:
+                text = _typed_authority_lines(text)
+                e["note"] += f" ({arm}: authority events in the typed encoding)"
+            _write(d / e["file"], retype(text))
+            entries.append(e)
+        for tid, contract, lines, note in _e0_traces(d, tool, positive, False, retype):   # reads this arm's t15 / t01 / t04: typed authority lines
+            _write(d / "traces" / f"{tid}.log", "\n".join(lines) + "\n")
+            entries.append({"id": tid, "file": f"traces/{tid}.log", "contract": contract, "note": note + f" ({arm}: typed authority)"})
+        enc = "" if not shared else f"; enum types shared by both tools in this arm's generated schema: {shared}"
+        _write_suite(d, entries, f"arm {arm} (bridge: typed authority + {src}'s vendor entry): the typed suite + {src}'s three held-out traces with "
+                                 f"authority events in the typed encoding + E0's t18-t21 (typed authority); gold = typed gold{enc}")
+        _write(d / "mutants" / "vendor_binding.dw", f"// mutant vendor_binding (arm {arm}): gold's close predicate bound to the vendor tool with {src}'s positive value\n"
+               + retype(_vendor_predicate(tool, positive, None)))
+        mutants = {"vendor_binding": {"killed_by": sorted(set(KILLED_VENDOR_BINDING) | set(E0_OVER_PERMISSIVE)),
+                                      "text": f"close predicate bound to {tool}::response with {positive}"}}
+        if marker:
+            bl = typed_gold.read_text().replace(f'Drupe::{AUTHORITY}_Output_decision::"GRANTED"', f'Drupe::{AUTHORITY}_Output_decision::"SIGNED_OFF"') \
+                .replace(f'Drupe::{AUTHORITY}_Output_approver_kind::"HUMAN"', f'Drupe::{AUTHORITY}_Output_approver_kind::"OPERATOR"')
+            bl = retype(bl)
+            assert bl != retype(typed_gold.read_text())
+            _write(d / "mutants" / "borrowed_literal.dw", f"// mutant borrowed_literal (arm {arm}): typed gold with the marker values on the typed authority predicate (not enum members)\n" + bl)
+            report = temporal.check(d / "mutants" / "borrowed_literal.dw", d / "schema" / "t01.dogwood.cedarschema", DOMAIN / "schema" / "agentcore.dwschema")
+            assert not report.ok
+            mutants["borrowed_literal"] = {"killed_by": [], "killed_by_validation": True, "validation_error": "; ".join(report.errors)[:400],
+                                           "text": "typed authority predicate with SIGNED_OFF / OPERATOR: not members of the enums, rejected by strict validation"}
+            bl_note = "defined, killed by validation: the typed authority schema rejects the marker ids before any trace is replayed"
+        else:
+            bl_note = "not defined: the vendor-stated values are the contract's own, so a borrowed-literal mutant coincides with gold"
+        data = _add_e0_requirements(yaml.safe_load(BASE_REQS.read_text()))
+        # same shape as _requirements(held_out=True) over the E0-extended base, written in one go
+        data["requirements"]["provenance_source"]["witnesses"] = data["requirements"]["provenance_source"]["witnesses"][:3] + ["t15_vendor_enum_only", "t16_authority_rejected_vendor_positive"] + E0_OVER_PERMISSIVE
+        data["security"]["over_permissive_if_allows"] = data["security"]["over_permissive_if_allows"][:4] + ["t15_vendor_enum_only", "t16_authority_rejected_vendor_positive"] + E0_OVER_PERMISSIVE
+        data["security"]["over_strict_if_denies"] = data["security"]["over_strict_if_denies"][:3] + ["t17_authority_granted_vendor_negative"] + E0_OVER_STRICT
+        data["evidence_sources"]["vendor_enum"] = "t15_vendor_enum_only"
+        data["vendor_only_traces"] = ["t08_vendor_flag_only", "t15_vendor_enum_only"]
+        data["evidence_vocabulary"] = {"authority_action": AUTHORITY, "vendor_actions": [tool], "contract_values": CONTRACT_VALUES,
+                                       "vendor_stated_values": stated, "approver_kind_fields": approver_fields}
+        data["workflows"] = E0_WORKFLOWS
+        _write(d / "requirements.yaml", f"# t01 requirements for arm {arm} (= typed + held-out traces t15–t17 + E0 t18–t21, vendor_only_traces, evidence_vocabulary, workflows); scoring only\n"
+               + yaml.safe_dump(data, sort_keys=False, width=200))
+        rec["arms"][arm] = {"note": f"bridge: the typed arm's authority entry + {src}'s vendor entry ({tool}). Changes a trusted input (the authority's output types); "
+                                    "a DEFENSE condition, not an attack baseline.", "condition": "defense",
+                            "files": {"authority": "typed/manifests/authority.tools.json", "wo": f"{src}/manifests/wo.tools.json",
+                                      "gold": "typed gold (copy)" if not shared else "typed gold re-encoded to the shared enum types"},
+                            "vendor_source": src, "positive": positive, "negative": negative,
+                            "enum_types": {"authority": auth_types, "vendor": vendor_types}, "shared_enum_types": shared,
+                            "mutants": mutants, "borrowed_literal_note": bl_note, "sha256": _hashes(d)}
+        if marker:
+            rec["arms"][arm]["marker_tokens"] = MARKER_TOKENS
     return rec
 
 
