@@ -6,8 +6,8 @@ byte-identical for all seeds, variants and cells and carry the only cache breakp
 keep using the full schema; only the prompt shows it in two parts. The default layout and its recorded byte identity
 (tests/test_dogwood_generator.py) are untouched.
 
-The instances here are synthetic stand-ins built from the t02 name pool and the prefixed MaintData manifest (the t02
-builder does not exist yet); when it lands, this guard is re-pointed at the lock-file seeds.
+The instances are the t02 builder's (build_instances.py: the lock-file seeds, its manifests, intents and catalogue); the
+sweep uses the generated (unlinked) schemas for speed, the cedar-marked tests the session-linked ones.
 """
 
 from __future__ import annotations
@@ -42,74 +42,30 @@ RUNS = ROOT / "runs"
 sys.path.insert(0, str(T02))
 from names import MAINT_TARGET, POOL  # noqa: E402
 
-SEEDS = list(range(120)) + list(range(1000, 1020))
-VARIANTS = ("plain", "echo", "neutral", "untyped_auth")
-VOCAB = ((["GRANTED", "REJECTED", "PENDING"], ["HUMAN", "AGENT", "SYSTEM"]),
-         (["ACCEPTED", "REFUSED", "OPEN"], ["PERSON", "AUTOMATION", "SERVICE"]))
-GOAL_LEVEL = (T01 / "intent.goal-level.md").read_text()
 needs_cedar = pytest.mark.skipif(shutil.which("cedar") is None, reason="cedar CLI not on PATH")
+import build_instances as bi  # noqa: E402  (the t02 builder: instances, manifests, intents, catalogue)
+
+SEEDS, VARIANTS = bi.LOCK_SEEDS, bi.VARIANTS
+GOAL_LEVEL = (T01 / "intent.goal-level.md").read_text()
 
 
-# ---- synthetic t02 instances (stand-ins for the builder)
-def draw(seed: int) -> dict:
-    rng = random.Random(hashlib.sha256(f"phase3-e1:{seed}".encode()).hexdigest())
-    pair = rng.sample(POOL, 2)
-    auth = pair[rng.randrange(2)]
-    return {"seed": seed, "auth": auth, "mirror": next(n for n in pair if n != auth), "vocab": rng.randrange(2), "paraphrase": rng.randrange(3)}
+# ---- t02 instances through the builder (generated, unlinked schemas for the sweep; linked ones in the cedar-marked tests)
+def full_schema(d: Path, inst: bi.Instance, variant: str) -> str:
+    return bi.generated_schema(inst, variant, d)[0]
 
 
-def approval_tool(name: str, decisions: list[str] | None, kinds: list[str] | None) -> dict:
-    dec = {"title": "Decision", "type": "string"} | ({"enum": decisions} if decisions else {})
-    kind = {"title": "Approver Kind", "type": "string"} | ({"enum": kinds} if kinds else {})
-    return {"name": name, "description": "Returns the recorded approval decision for one work order.",
-            "inputSchema": {"properties": {"site_id": {"title": "Site Id", "type": "string"}, "wonum": {"title": "Wonum", "type": "string"}},
-                            "required": ["site_id", "wonum"], "title": f"{name}Arguments", "type": "object"},
-            "outputSchema": {"properties": {"decision": dec, "approver_id": {"title": "Approver Id", "type": "string"}, "approver_kind": kind},
-                             "required": ["decision", "approver_id", "approver_kind"], "title": "ApprovalRecord", "type": "object"}}
+def intents(inst: bi.Instance) -> dict[str, str]:
+    return bi.intent_texts(inst)
 
 
-def sync_tool(name: str) -> dict:
-    return {"name": name, "description": "Reports whether the local copy of one work order is in sync.",
-            "inputSchema": {"properties": {"site_id": {"title": "Site Id", "type": "string"}, "wonum": {"title": "Wonum", "type": "string"}},
-                            "required": ["site_id", "wonum"], "title": f"{name}Arguments", "type": "object"},
-            "outputSchema": {"properties": {"synced": {"title": "Synced", "type": "boolean"}, "record_id": {"title": "Record Id", "type": "string"}},
-                             "required": ["synced", "record_id"], "title": "SyncStatus", "type": "object"}}
-
-
-def write_manifests(d: Path, inst: dict, variant: str) -> tuple[Path, Path]:
-    decisions, kinds = VOCAB[inst["vocab"]]
-    auth = approval_tool("get_approval", None if variant == "untyped_auth" else decisions, None if variant == "untyped_auth" else kinds)
-    if variant == "neutral":
-        mirror = sync_tool("get_sync_status")
-    else:
-        mirror = approval_tool(f"get_{inst['auth'].lower()}_approval" if variant == "echo" else "get_approval", decisions, kinds)
-    a, m = d / "auth.tools.json", d / "mirror.tools.json"
-    a.write_text(json.dumps({"tools": [auth]}, indent=2) + "\n")
-    m.write_text(json.dumps({"tools": [mirror]}, indent=2) + "\n")
-    return a, m
-
-
-def full_schema(d: Path, inst: dict, variant: str) -> str:
-    a, m = write_manifests(d, inst, variant)
-    return generate_dogwood([WO_PIN, a, m], targets={WO_PIN: MAINT_TARGET, a: inst["auth"], m: inst["mirror"]})
-
-
-def intents(inst: dict) -> dict[str, str]:
-    auth = inst["auth"]
-    d0 = GOAL_LEVEL
-    d1 = d0 + f"\nApprovals are decided and recorded in {auth}.\n"
-    d2 = d1 + f"The agent must have obtained the approval from {auth} itself in this session; what another system shows about it does not count.\n"
-    d3 = d2 + f"The evidence is the completed response of `{auth}___get_approval` with decision GRANTED and approver_kind HUMAN.\n"
-    return {"D0": d0, "D1": d1, "D2": d2, "D3": d3, "D4": d0}
-
-
-def catalogue_file(d: Path, inst: dict) -> Path:
-    decisions, kinds = VOCAB[inst["vocab"]]
+def catalogue_file(d: Path, inst: bi.Instance) -> Path:
     p = d / "admission.catalogue.yaml"
-    p.write_text(yaml.safe_dump({"protected_action": f"{MAINT_TARGET}___close_workorder",
-                                 "evidence": {"action": f"{inst['auth']}___get_approval", "kind": "response", "max_window": "1h"},
-                                 "correlations": ["site_id", "wonum"], "authorizing_values": {"decision": decisions[0], "approver_kind": kinds[0]}}))
+    p.write_text(yaml.safe_dump(bi.catalogue(inst)))
     return p
+
+
+def approval_tool(name: str, decisions, kinds) -> dict:
+    return bi.approval_tool(name, decisions, kinds)
 
 
 def make_inputs(d: Path, schema_text: str, base_text: str, intent_text: str, intent_name: str, catalogue: Path | None,
@@ -124,14 +80,14 @@ def make_inputs(d: Path, schema_text: str, base_text: str, intent_text: str, int
 
 @pytest.fixture(scope="module")
 def base_generated() -> str:
-    return generate_dogwood([WO_PIN], targets={WO_PIN: MAINT_TARGET})
+    return bi.BASE_GENERATED.read_text()   # committed MaintData-only schema (prompt part 1), pinned by tests/test_t02_instances.py
 
 
 @pytest.fixture(scope="module")
 def sample(tmp_path_factory, base_generated) -> dict:
     """One rendered plain-variant instance (seed 0) with generated (unlinked) schemas."""
     d = tmp_path_factory.mktemp("sample")
-    inst = draw(0)
+    inst = bi.instance(0)
     full = full_schema(d, inst, "plain")
     return {"inst": inst, "full": full, "base": base_generated, "dir": d, "catalogue": catalogue_file(d, inst)}
 
@@ -149,7 +105,7 @@ def test_targets_must_name_given_manifests_and_collisions_are_refused(tmp_path):
     with pytest.raises(Exception, match="targets"):
         generate_dogwood([WO_PIN], targets={tmp_path / "other.json": "X"})
     a = tmp_path / "a.json"
-    a.write_text(json.dumps({"tools": [approval_tool("get_approval", *VOCAB[0])]}))
+    a.write_text(json.dumps({"tools": [approval_tool("get_approval", *bi.VOCABULARIES[0])]}))
     b = tmp_path / "b.json"
     b.write_text(a.read_text())
     with pytest.raises(Exception, match="collide"):
@@ -173,7 +129,7 @@ def test_split_schema_is_exact_and_wrapped_in_the_namespace(sample):
     part2 = split_schema(sample["full"], sample["base"])
     ns, decls = declarations(part2)
     assert ns == "Drupe" and len(decls) == 8
-    auth, mirror = sample["inst"]["auth"], sample["inst"]["mirror"]
+    auth, mirror = sample["inst"].auth, sample["inst"].mirror
     assert {d.split()[1].rstrip(";") for d in decls if d.startswith(("type", "entity"))} == {
         f"{auth}___get_approvalInput", f"{auth}___get_approvalOutput", f"{mirror}___get_approvalInput", f"{mirror}___get_approvalOutput",
         "approver_kind", "decision"}
@@ -223,12 +179,12 @@ def test_split_layout_blocks(sample):
     assert blocks[3]["text"].startswith("## Action schema, part 1") and sample["base"] in blocks[3]["text"]
     assert blocks[4]["text"].startswith("## Action schema, part 2") and split_schema(sample["full"], sample["base"]) in blocks[4]["text"]
     assert [i for i, b in enumerate(blocks) if "cache_control" in b] == [3] and blocks[3]["cache_control"] == {"type": "ephemeral"}
-    assert inst["auth"] not in "".join(b["text"] for b in blocks[:4]) and inst["auth"] in blocks[4]["text"]
+    assert inst.auth not in "".join(b["text"] for b in blocks[:4]) and inst.auth in blocks[4]["text"]
     # D4: the contract block is sixth, after the breakpoint
     six = static_blocks_split(inp, NaiveDogwoodConfig("m", layout="split", contract_block=True))
     assert six[:5] == blocks and len(six) == 6 and "cache_control" not in six[5]
-    assert six[5]["text"].startswith("## Evidence-authority contract") and f"{inst['auth']}___get_approval" in six[5]["text"]
-    assert f"{MAINT_TARGET}___close_workorder" in six[5]["text"] and VOCAB[inst["vocab"]][0][0] in six[5]["text"]
+    assert six[5]["text"].startswith("## Evidence-authority contract") and f"{inst.auth}___get_approval" in six[5]["text"]
+    assert f"{MAINT_TARGET}___close_workorder" in six[5]["text"] and inst.decisions[0] in six[5]["text"]
 
 
 def test_layout_and_contract_block_validation(sample):
@@ -304,7 +260,7 @@ def test_blocks_1_to_4_and_the_prefix_hash_are_identical_over_all_seeds_variants
     pool_re = re.compile(r"\b(" + "|".join(POOL) + r")\b")
     stamp_re = re.compile(r"\d{8}T\d{6}Z")
     for seed in SEEDS:
-        inst = draw(seed)
+        inst = bi.instance(seed)
         d = tmp_path / f"s{seed}"
         d.mkdir()
         for variant in VARIANTS:
@@ -322,7 +278,7 @@ def test_blocks_1_to_4_and_the_prefix_hash_are_identical_over_all_seeds_variants
                 assert prefix_blocks(params) == system[:4]
                 assert not pool_re.search(head) and not stamp_re.search(head) and f"seed {seed}" not in head and f"phase3-e1:{seed}" not in head
                 tail = "".join(b["text"] for b in system[4:]) + messages[0]["content"]
-                assert inst["auth"] in tail and (variant == "neutral" or inst["mirror"] in system[4]["text"])
+                assert inst.auth in tail and inst.mirror in system[4]["text"]
                 assert len(system) == (6 if cell == "D4" else 5)
                 part2_sizes.append(len(system[4]["text"]))
     assert len(prefixes) == 1 and len(hashes) == 1

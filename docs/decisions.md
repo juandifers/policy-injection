@@ -1123,3 +1123,44 @@ readable only after the first response has started; thinking and effort settings
   the one module the t02 builder and the guard import.
 - **Not done, by instruction:** no 1-hour lifetime, no second breakpoint, no Batch API, no API call. The t02 foundations plan
   (instance builder, resolver, lock file) awaits Juan's go-ahead and his call on the exclusion rule.
+
+## 2026-11-20: t02_designated_source foundations (Phase 3, E1; zero API calls)
+
+Scenario folder `domains/assetopsbench/scenarios/t02_designated_source/` (README.md holds the world, the contract, the 19-trace
+suite, the mutants and the intent levels). Reused from `7d90a39`, not rebuilt: `generate_dogwood(targets=)`, `names.py`,
+`schema_split`, `prompt_schema_base`.
+
+- **Instance generator** `build_instances.py`: `instance(seed)` draws from `random.Random(sha256("phase3-e1:<seed>"))` an unordered pair
+  from the twelve-name pool, the AUTH coin flip, one of two vocabulary sets, one of three paraphrases. Four variants (plain, echo,
+  neutral, untyped_auth). `render` writes a loadable scenario folder under `instances/<sNNNN-variant>/` whose scenario.yaml paths
+  treat the t02 folder as the domain (`../../schema/agentcore.dwschema`, `../../manifests/wo.tools.json`, `schema/maintdata…`), so
+  `load_dogwood_inputs` and `snapshot` work unchanged. The MaintData-only schema (`schema/`, prompt part 1) is committed and pinned;
+  `instances/` is gitignored; `instances.lock.json` pins seeds 0-119 and 1000-1019 × four variants (560 instances: draw, tree hash,
+  per-file hashes with the 19 trace files folded into one hash); `--check` rebuilds and compares.
+- **Enum literals** are read per field from the generated schema (`output_types`), never from a naming rule: plain and echo share
+  `Drupe::decision` / `Drupe::approver_kind`; neutral and untyped_auth have per-tool types; untyped AUTH outputs are plain strings.
+  The four toolchain facts Juan checked on Dogwood 1.1.2 are re-verified on the pinned pydogwood 0.1.1 by tests.
+- **Traces**: P1-P5 allow, M1-M6 and N1-N8 deny, close at @600; M5 and N5 put the approval at @0 and the close at @4000, so no
+  timestamp is negative (E0's t20 had needed @-3400). M6's authority request is a decision event at index 0 (the prerequisite call).
+  Mirror-sufficient = allows any of M1-M6, stored as `mirror_sufficient_traces` and under the loader's `vendor_only_traces` key so the
+  existing `allows_vendor_only` scoring is this outcome. Workflows: direct {P1, P5}, reads_mirror {P2, P3}, mirror_negative {P4}.
+- **Mutants** (eight, gold with one change; expected kill sets recorded in `instance.json` and asserted): mirror_only (allows M1-M6,
+  denies P1, P4, P5: P2 and P3 carry the mirror positive, so a mirror-bound predicate allows them like gold), either_source
+  (allows M1-M6), both_required (`&&` of the two predicates in one temporal block, valid Dogwood; denies P1, P4, P5), dropped_outcome
+  (N1, N2, M2, M3), dropped_approver_kind (N3), request_not_response (allows M6, denies P1-P5), window_24h (N5, M5), dropped_correlation
+  (N4, M4). Admission admits gold and rejects mirror_only and either_source.
+- **Resolver** `pgi.trusted.resolver` (new package `pgi.trusted`, so the trusted-only boundary is visible): certifies registered
+  templates, never interprets free text, never reads the cell label. Owner = the one non-fixed target prefix mentioned as a whole word
+  (case-sensitive, `\b`, so `Name___tool` is not a mention; zero or two → none). Exclusive iff a registered exclusion sentence with the
+  owner filled in occurs exactly, or the registered action sentence does, or a catalogue with exactly one evidence action is present.
+  Evidence action only when exclusive: the owner's single action, the action sentence's, the catalogue's; disagreement raises.
+  Required results hold for every level, seed and variant (tests over 16 seeds × 4 variants); echo equals plain; a D2 intent with the
+  exclusion sentence removed resolves as D1; an intent naming both targets resolves to no owner.
+- **Registry** `registry.py` (three exclusion sentences, the action sentence naming `{AUTH}___get_approval`, a values sentence the
+  resolver does not match) is the one file the intent templates import; its hash is recorded in every instance and in the lock.
+  `intents.py`: D0 paraphrase 0 = t01's goal-level intent verbatim (test), paraphrases 1 and 2 reword it; D1 sentences (three); D2 =
+  D1 + exclusion sentence; D3 = D2 + action sentence + values sentence; D4 = D0 (the catalogue is the generator's `contract_block`).
+  Drafts for Juan to edit; frozen at the pre-registration commit.
+- **Guard re-pointed:** `tests/test_prompt_layout.py` now sweeps the builder's instances (lock seeds, builder manifests, intents and
+  catalogue; generated schemas for speed, linked ones in the cedar-marked tests). One prefix hash over 140 × 4 × 5 cells.
+- **Not done, by instruction:** no LLM call; no pre-registration yet (the paraphrases await Juan's edits).

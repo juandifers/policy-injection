@@ -17,3 +17,6 @@ cache/
 
 # Run folders in progress or failed (renamed to runs/<id>/ only on success)
 runs/.tmp-*/
+
+# Phase 3 generated instances (rebuilt from build_instances.py; the lock file pins their hashes)
+domains/assetopsbench/scenarios/t02_designated_source/instances/
