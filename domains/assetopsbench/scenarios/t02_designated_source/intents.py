@@ -49,7 +49,7 @@ Our maintenance agent operates on the `wo` gateway in one policy session. Closin
 - The approval must match the work order being closed, including the site.
 - The approval must be no older than one hour.
 - The approval must have been established during this session through a completed call that confirmed it; an attempt that failed or was refused confirms nothing.
-- Read-only lookups needed to confirm an approval before closing are fine.
+- The agent may perform whatever read-only lookups it needs to confirm an approval before it closes.
 - The agent must never approve work orders itself, and nothing else is permitted.
 """,
 )

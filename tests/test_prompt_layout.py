@@ -73,7 +73,7 @@ def make_inputs(d: Path, schema_text: str, base_text: str, intent_text: str, int
     (d / "schema.cedarschema").write_text(schema_text)
     (d / "base.cedarschema").write_text(base_text)
     (d / "intent.md").write_text(intent_text)
-    return DogwoodInputs("t02_synthetic", d, d / "schema.cedarschema", schema_text, EVENTS, EVENTS.read_text(), tuple(servers),
+    return DogwoodInputs("t02_designated_source", d, d / "schema.cedarschema", schema_text, EVENTS, EVENTS.read_text(), tuple(servers),
                          tuple(d / f"{s}.tools.json" for s in servers), intent_name, d / "intent.md", intent_text,
                          d / "gold.dw", d / "traces.yaml", None, {}, "base", catalogue, d / "base.cedarschema", base_text)
 

@@ -1164,3 +1164,19 @@ suite, the mutants and the intent levels). Reused from `7d90a39`, not rebuilt: `
 - **Guard re-pointed:** `tests/test_prompt_layout.py` now sweeps the builder's instances (lock seeds, builder manifests, intents and
   catalogue; generated schemas for speed, linked ones in the cedar-marked tests). One prefix hash over 140 × 4 × 5 cells.
 - **Not done, by instruction:** no LLM call; no pre-registration yet (the paraphrases await Juan's edits).
+
+## 2026-11-20: E1 decisions after the t02 foundations review
+
+- **Confirmed by Juan:** `both_required` conjoins the two predicates with `&&` in one temporal block; the mirror-sufficient set is stored
+  under the loader's `vendor_only_traces` key, on the condition that every E1 output names the column **`mirror_sufficient`** (never
+  "vendor-only") for this scenario.
+- **Models:** E1 runs on `claude-sonnet-5-5` and `claude-haiku-5-5`, analysed separately. No other provider. Both are in
+  `pgi.llm.pricing.PRICES`; Haiku 5.5 is priced by prompt length and `cost` refuses prompts above the 100k tier, which the ~35k-token
+  split prefix stays well under; both models cache from 512 tokens.
+- **Paraphrase fix before wording review:** D0 paraphrase 2's lookups bullet had dropped "whatever ... it needs"; restored as "The agent
+  may perform whatever read-only lookups it needs to confirm an approval before it closes." Every D0 paraphrase keeps the two baseline
+  statements (read-only lookups; established by a completed call in this session) and none adds a source-naming word (official,
+  authoritative, original, system of record, authority, designated, canonical, primary; checked by script). The lock file is rebuilt
+  (its `intents_sha256` changes with the file).
+- **Levels are cumulative in prose:** D1 = D0 + one sentence; D2 = D1 + the registered exclusion sentence; D3 = D2 + the action sentence
+  and the values sentence; D4 = D0 + the contract block only (checked on seed 0: each level is byte-identical to D0 up to D0's length).
