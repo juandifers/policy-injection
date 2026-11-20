@@ -13,7 +13,7 @@ override. The base inputs are the files named at the top level; "base" is the ar
 
 Snapshot layout, runs/<id>/inputs/<scenario>/:
     inputs.json  scenario.yaml  intent.md  gold.dw  traces.yaml  traces/<file>  requirements.yaml?  catalogue.yaml?
-    schema/<file>  event_schema/<file>  manifests/<server>.tools.json
+    schema/<file>  event_schema/<file>  manifests/<server>.tools.json  schema_base/<file>?  (Phase 3 `prompt_schema_base`)
 `load_snapshot` re-hashes every file and raises SnapshotError on any mismatch.
 """
 
@@ -55,6 +55,11 @@ class DogwoodInputs:
     hashes: dict[str, str]
     arm_name: str = "base"    # which manifest arm (key of scenario.yaml `arms`), "base" for the top-level files
     catalogue: Path | None = None   # trusted admission catalogue (scenario.yaml `catalogue`), scoring/analysis only
+    # Phase 3 split prompt layout (scenario.yaml `prompt_schema_base`, relative to <domain>): the action schema generated
+    # from the fixed manifest alone, shown as part 1 of the prompt (the cached prefix). The validator and the oracle keep
+    # using `schema_path`. None for scenarios without the key.
+    schema_base_path: Path | None = None
+    schema_base_text: str | None = None
 
 
 @dataclass(frozen=True)
@@ -91,7 +96,8 @@ def _hash_all(files: dict[str, Path]) -> dict[str, str]:
 
 
 def _files(folder: Path, schema: Path, event_schema: Path, servers: list[str], manifests: list[Path], intent: Path,
-           gold: Path, traces_yaml: Path, requirements: Path | None, catalogue: Path | None = None) -> dict[str, Path]:
+           gold: Path, traces_yaml: Path, requirements: Path | None, catalogue: Path | None = None,
+           schema_base: Path | None = None) -> dict[str, Path]:
     """Hash key -> file, including every trace of the suite."""
     suite = load_suite(traces_yaml)
     files = {"scenario_yaml": folder / "scenario.yaml", "intent": intent, "gold": gold, "traces_yaml": traces_yaml,
@@ -102,6 +108,8 @@ def _files(folder: Path, schema: Path, event_schema: Path, servers: list[str], m
         files["requirements"] = requirements
     if catalogue is not None:
         files["catalogue"] = catalogue
+    if schema_base is not None:
+        files["schema_base"] = schema_base
     return files
 
 
@@ -124,7 +132,7 @@ def load_dogwood_inputs(folder: Path, intent: str | None = None, arm: str | None
         spec, arm_name = dict(manifest_arms[arm] or {}), arm
     else:
         raise ValueError(f"{folder}: no manifest arm {arm!r} in scenario.yaml `arms` {sorted(manifest_arms)}")
-    if unknown := set(spec) - {"manifests", "schema", "gold", "traces", "requirements", "catalogue"}:
+    if unknown := set(spec) - {"manifests", "schema", "gold", "traces", "requirements", "catalogue", "prompt_schema_base"}:
         raise ValueError(f"{folder}: arm {arm!r} overrides unknown keys {sorted(unknown)}")
     servers = list(meta["servers"])
     arm_manifests = dict(spec.get("manifests") or {})
@@ -146,10 +154,12 @@ def load_dogwood_inputs(folder: Path, intent: str | None = None, arm: str | None
     reqs = folder / reqs_file if reqs_file else None
     cat_file = spec.get("catalogue", meta.get("catalogue"))
     catalogue = folder / cat_file if cat_file else None
-    files = _files(folder, schema, events, servers, manifests, intent_path, gold, traces, reqs, catalogue)
+    base_file = spec.get("prompt_schema_base", meta.get("prompt_schema_base"))
+    schema_base = domain / base_file if base_file else None
+    files = _files(folder, schema, events, servers, manifests, intent_path, gold, traces, reqs, catalogue, schema_base)
     return DogwoodInputs(folder.name, folder, schema, schema.read_text(), events, events.read_text(), tuple(servers),
                          tuple(manifests), intent_name, intent_path, intent_path.read_text(), gold, traces, reqs, _hash_all(files),
-                         arm_name, catalogue)
+                         arm_name, catalogue, schema_base, schema_base.read_text() if schema_base else None)
 
 
 def load_requirements(path: Path, suite: TraceSuite) -> Requirements:
@@ -212,6 +222,8 @@ def _layout(inputs: DogwoodInputs) -> dict[str, str]:
         lay["requirements"] = "requirements.yaml"
     if inputs.catalogue is not None:
         lay["catalogue"] = "catalogue.yaml"
+    if inputs.schema_base_path is not None:
+        lay["schema_base"] = f"schema_base/{inputs.schema_base_path.name}"
     return lay
 
 
@@ -222,7 +234,7 @@ def snapshot(inputs: DogwoodInputs, dest: Path) -> DogwoodInputs:
     suite = load_suite(inputs.traces_yaml)
     sources = _files(inputs.folder, inputs.schema_path, inputs.event_schema_path, list(inputs.servers),
                      list(inputs.manifest_paths), inputs.intent_path, inputs.gold, inputs.traces_yaml, inputs.requirements,
-                     inputs.catalogue)
+                     inputs.catalogue, inputs.schema_base_path)
     layout = _layout(inputs)
     if set(sources) != set(inputs.hashes) or set(layout) != set(inputs.hashes):
         raise SnapshotError(f"hash keys {sorted(inputs.hashes)} != files {sorted(sources)} / layout {sorted(layout)}")
@@ -261,8 +273,10 @@ def load_snapshot(folder: Path) -> DogwoodInputs:
     schema, events = folder / layout["schema"], folder / layout["event_schema"]
     reqs = folder / layout["requirements"] if "requirements" in layout else None
     cat = folder / layout["catalogue"] if "catalogue" in layout else None
+    base = folder / layout["schema_base"] if "schema_base" in layout else None
     intent = folder / layout["intent"]
     return DogwoodInputs(index["name"], folder, schema, schema.read_text(), events, events.read_text(), tuple(servers),
                          tuple(folder / layout[f"manifest:{s}"] for s in servers), index.get("intent_name", "intent.md"),
                          intent, intent.read_text(),
-                         folder / layout["gold"], folder / layout["traces_yaml"], reqs, hashes, index.get("arm_name", "base"), cat)
+                         folder / layout["gold"], folder / layout["traces_yaml"], reqs, hashes, index.get("arm_name", "base"), cat,
+                         base, base.read_text() if base else None)

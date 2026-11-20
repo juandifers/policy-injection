@@ -93,7 +93,7 @@ def _dump(path: Path, obj) -> None:
 def _call_record(c: Completion) -> dict:
     """What we keep about one LLM call (the prompt lives in the cache entry and the scenario's prompt files)."""
     raw = c.raw
-    return {"key_hash": c.key_hash, "cache_hit": c.cache_hit, "model_version": c.model_version,
+    return {"key_hash": c.key_hash, "prefix_hash": c.prefix_hash, "cache_hit": c.cache_hit, "model_version": c.model_version,
             "request_id": raw.get("_request_id"), "stop_reason": raw.get("stop_reason"),
             "stop_details": raw.get("stop_details"), "usage": c.usage, "text": c.text,
             "content_types": [b.get("type") for b in raw.get("content", [])]}

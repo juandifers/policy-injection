@@ -7,6 +7,16 @@ scenario's trace suite, written to runs/<id>/.
     ... --input-mode schema-only           # Phase 2c L1-S: intent + generated schema only, no manifest text (default: manifests)
     ... --cache-only            # every LLM call must hit the cache (re-score; zero API calls)
     ... --spend-cap-usd 15      # stop (run fails loudly, samples so far stay cached) before a call would exceed the cap
+    ... --layout split          # Phase 3: one cached prefix shared by every instance/cell/round (scenario needs `prompt_schema_base`)
+    ... --contract-block        # Phase 3 D4: the trusted evidence-authority contract as the last system block (split layout only)
+    ... --plan                  # no API call, no run folder: call counts, prefix hashes, sizes and expected cost (pgi.runs.cache_watch)
+
+Phase 3 additions (2026-11-20; pgi.runs.cache_watch): every call record carries `prefix_hash` (pgi.llm.prefix: model + system
+blocks up to the cache breakpoint + thinking + effort) and `cache_split` (tokens and USD by cache write / cache read / uncached
+input / output); config.json records the generator and judge prefix hashes under `request.prompt_cache`; summary.json carries per
+generator `cache` (hit rate over fresh calls, cost split); `cache_watch.json` the PrefixWatch summary. The budget wrapper hosts the
+circuit breaker (three consecutive zero-read calls on a written prefix stop the run) and, in the split layout, the run-level rule
+(a fresh call whose prefix is not the one registered at the start raises before it is sent). Calls stay sequential.
 
 Phase 2b additions (requirements.yaml `vendor_only_traces`, `evidence_vocabulary`): per sample `allows_vendor_only` (the
 primary outcome of the evidence-vocabulary gate: allows a contract-deny trace whose only evidence is the vendor's) and
@@ -55,7 +65,9 @@ from pgi.analysis.dogwood_text import close_binding_report, vocabulary_report
 from pgi.generators import dogwood
 from pgi.generators.dogwood_inputs import DogwoodInputs, Requirements, load_dogwood_inputs, load_requirements, snapshot
 from pgi.llm.cache import CachedLLM
+from pgi.llm.prefix import prefix_hash
 from pgi.llm.pricing import cost
+from pgi.runs.cache_watch import PrefixWatch, cost_split, plan, plan_text
 from pgi.oracle import temporal
 from pgi.oracle.errors import OracleError
 from pgi.runs.clean import _call_record, _dump, _NoProvider, atomic_run_dir, wilson
@@ -70,18 +82,37 @@ class SpendCapExceeded(RuntimeError):
 
 class _Budget:
     """Provider wrapper: adds up the cost of every fresh call from the API's usage fields and refuses a call once the cap
-    is reached. Cached hits never reach it. The first call always goes through (the cap is checked before each call)."""
+    is reached (`cap_usd` None = no cap). Cached hits never reach it. The first call always goes through (the cap is
+    checked before each call). With a `watch` (PrefixWatch) it also runs the prompt-cache checks: the registered-prefix
+    rule and the in-flight guard before the call, the circuit breaker after it, reading the cache counts through the
+    provider's `cache_usage`; a provider without it disables the watch with a logged reason."""
 
-    def __init__(self, provider, model: str, cap_usd: float) -> None:
+    def __init__(self, provider, model: str, cap_usd: float | None = None, watch: PrefixWatch | None = None) -> None:
         self.provider, self.model, self.cap_usd, self.spent_usd, self.calls = provider, model, cap_usd, 0.0, 0
-        self.name = provider.name
+        self.watch, self.name = watch, provider.name
+        if watch is not None and getattr(provider, "cache_usage", None) is None:
+            watch.disable(f"provider {provider.name} reports no cache usage fields (no cache_usage method)")
 
     def call(self, model, messages, temperature, params):
-        if self.spent_usd >= self.cap_usd:
+        if self.cap_usd is not None and self.spent_usd >= self.cap_usd:
             raise SpendCapExceeded(f"spend cap ${self.cap_usd:.2f} reached (${self.spent_usd:.4f} over {self.calls} calls); refusing call {self.calls + 1}")
-        raw = self.provider.call(model, messages, temperature, params)
+        h = prefix_hash(model, params, strict=False) if self.watch is not None else None
+        if h is not None:
+            self.watch.before(h)
+        try:
+            raw = self.provider.call(model, messages, temperature, params)
+        except BaseException:
+            if h is not None:
+                self.watch.abort(h)
+            raise
         self.calls += 1
         self.spent_usd += cost(model, self.provider.usage(raw) or {})
+        if h is not None:
+            cache_usage = getattr(self.provider, "cache_usage", None)
+            cu = cache_usage(raw) if cache_usage is not None else None
+            if cu is None:
+                self.watch.disable(f"provider {self.provider.name} reports no cache usage fields")
+            self.watch.after(h, cu)
         return raw
 
     def text(self, raw):
@@ -182,15 +213,20 @@ def score(policy: Path, fr: Frame) -> dict:
     return out
 
 
+def _record(c, model: str) -> dict:
+    """A call record with the Phase 3 cache telemetry: prefix hash (from the completion) and the cost split of its usage."""
+    return _call_record(c) | {"cache_split": cost_split(model, c.usage or {})}
+
+
 def run_naive(llm: CachedLLM, fr: Frame, cfg: dogwood.NaiveDogwoodConfig, i: int, d: Path) -> dict:
     """One naive sample: generate, write, score."""
     s = dogwood.generate(llm, fr.inputs, cfg, i)
     d.mkdir(parents=True, exist_ok=True)
     (d / "policy.dw").write_text(_policy_file_text(s.policy_text))
-    _dump(d / "response.json", _call_record(s.completion) | {"extraction": s.extraction})
+    _dump(d / "response.json", _record(s.completion, cfg.model) | {"extraction": s.extraction})
     oracle = score(d / "policy.dw", fr)
     _dump(d / "oracle.json", oracle)
-    return {"sample": i, "calls": [_call_record(s.completion)], "oracle": oracle,
+    return {"sample": i, "calls": [_record(s.completion, cfg.model)], "oracle": oracle,
             "first_shot": _first_shot(_policy_file_text(s.policy_text), s.completion.key_hash, oracle["valid"], fr)}
 
 
@@ -199,8 +235,8 @@ def run_sondera(llm: CachedLLM, fr: Frame, cfg: dogwood.SonderaDogwoodConfig, i:
     res = dogwood.run(llm, fr.inputs, cfg, i, d)
     calls = []
     for r in res.rounds:
-        rec = {"round": r.index, "extraction": r.extraction, "generation": _call_record(r.completion),
-               "deterministic": r.deterministic.as_dict(), "judge": _call_record(r.judge_completion),
+        rec = {"round": r.index, "extraction": r.extraction, "generation": _record(r.completion, cfg.model),
+               "deterministic": r.deterministic.as_dict(), "judge": _record(r.judge_completion, cfg.model),
                "judge_passed": r.judge_passed, "passed": r.passed}
         _dump(d / f"round{r.index}.json", rec)
         calls += [rec["generation"], rec["judge"]]
@@ -248,6 +284,11 @@ def summarize(model: str, results: list[dict], fr: Frame) -> dict:
                   for k in ("input_tokens", "cache_creation_input_tokens", "cache_read_input_tokens", "output_tokens")},
         "cost_usd_all_calls": round(sum(cost(model, c["usage"] or {}) for c in calls), 4),
         "cost_usd_this_run": round(sum(cost(model, c["usage"] or {}) for c in fresh), 4),
+        # Phase 3 prompt-cache telemetry over this run's fresh calls: hit = cache_read_input_tokens > 0
+        "cache": {"hit_rate": {"k": sum(1 for c in fresh if ((c["usage"] or {}).get("cache_read_input_tokens") or 0) > 0), "n": len(fresh)},
+                  "cost_split": cost_split(model, {k: sum(((c["usage"] or {}).get(k) or 0) for c in fresh)
+                                                   for k in ("input_tokens", "cache_creation_input_tokens", "cache_read_input_tokens", "output_tokens")}),
+                  "prefix_hashes": sorted({c["prefix_hash"] for c in calls if c.get("prefix_hash")})},
     }
     if fr.requirements:
         base = fr.requirements.base
@@ -392,6 +433,13 @@ def markdown(config: dict, summary: dict) -> str:
                       "(TOKEN: a vendor-stated, non-contract value in an authority predicate anywhere in the policy). The first shot is "
                       "round 1 of the Sondera-style loop, which is the naive request; the two generators share it, so first-shot and "
                       "final columns are two views of 20 samples, not 40."]
+    lines += ["", "## Prompt cache (fresh calls of this run; hit = cache_read_input_tokens > 0)", "",
+              "| generator | fresh calls | cache hits | cache write $ | cache read $ | uncached input $ | output $ | total $ | prefix hashes |", "|---|---|---|---|---|---|---|---|---|"]
+    for g, s in summary.items():
+        c = s["cache"]
+        usd = c["cost_split"]["usd"]
+        lines.append(f"| {g} | {c['hit_rate']['n']} | {c['hit_rate']['k']}/{c['hit_rate']['n']} | {usd['cache_write']:.3f} | {usd['cache_read']:.3f} "
+                     f"| {usd['uncached_input']:.3f} | {usd['output']:.3f} | {c['cost_split']['total_usd']:.3f} | {', '.join(h[:12] for h in c['prefix_hashes'])} |")
     lines += ["", "## Validity: first-shot vs post-repair", "", "| generator | first-shot valid | post-repair (final) valid |", "|---|---|---|"]
     for g, s in summary.items():
         lines.append(f"| {g} | {s['first_shot_valid']}/{s['n']} {s['first_shot_valid_ci95']} | {s['post_repair_valid']}/{s['n']} {s['validity_ci95']} |")
@@ -445,35 +493,62 @@ def main() -> None:
     p.add_argument("--judge-sees-manifests", action="store_true")
     p.add_argument("--cache-only", action="store_true", help="every LLM call must hit the cache; zero API calls")
     p.add_argument("--cache", type=Path, default=ROOT / "cache/llm")
+    p.add_argument("--layout", default="default", choices=dogwood.LAYOUTS,
+                   help="prompt layout: default (breakpoint on the last static block) or split (Phase 3: fixed blocks 1-4, breakpoint on the MaintData-only schema)")
+    p.add_argument("--contract-block", action="store_true", help="Phase 3 D4: append the trusted evidence-authority contract (catalogue) as the last system block; split layout only")
+    p.add_argument("--plan", action="store_true", help="no API call and no run folder: print call counts, prefix hashes, sizes and the expected cost")
+    p.add_argument("--runs-dir", type=Path, default=ROOT / "runs", help="where run folders are written and, for --plan, where recorded token counts are looked up")
     args = p.parse_args()
+    ncfg = dogwood.NaiveDogwoodConfig(args.model, include_descriptions=not args.no_descriptions, input_mode=args.input_mode,
+                                      layout=args.layout, contract_block=args.contract_block)
+    scfg = dogwood.SonderaDogwoodConfig(args.model, include_descriptions=not args.no_descriptions,
+                                        judge_sees_manifests=args.judge_sees_manifests, input_mode=args.input_mode,
+                                        layout=args.layout, contract_block=args.contract_block)
+    if args.plan:
+        print(plan_text(plan(load_dogwood_inputs(args.scenario, args.intent, args.arm), ncfg, scfg, args.generators, args.n, args.runs_dir)))
+        return
     from pgi.llm.anthropic_provider import AnthropicProvider
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     run_id = "-".join(x for x in (stamp, "temporal-clean", args.label) if x)
-    with atomic_run_dir(ROOT / "runs", run_id) as out:
-        provider = _NoProvider() if args.cache_only else AnthropicProvider()
-        transport = provider.request_settings() if not args.cache_only else None
-        if args.spend_cap_usd is not None and not args.cache_only:
-            provider = _Budget(provider, args.model, args.spend_cap_usd)
-        llm = CachedLLM(provider, args.cache, allow_api=not args.cache_only)
-        ncfg = dogwood.NaiveDogwoodConfig(args.model, include_descriptions=not args.no_descriptions, input_mode=args.input_mode)
-        scfg = dogwood.SonderaDogwoodConfig(args.model, include_descriptions=not args.no_descriptions,
-                                            judge_sees_manifests=args.judge_sees_manifests, input_mode=args.input_mode)
+    with atomic_run_dir(args.runs_dir, run_id) as out:
         src_inputs = load_dogwood_inputs(args.scenario, args.intent, args.arm)
         inp = snapshot(src_inputs, out / "inputs" / args.scenario.name)
         fr = frame(inp)
+        # Phase 3: the prefixes this run will use, computed before any call (judge only when the pipeline has one)
+        prefixes = {"generation": prefix_hash(args.model, dogwood.build_request(inp, ncfg)[1]),
+                    "judge": prefix_hash(args.model, dogwood.judge_request(inp, "", scfg)[1]) if "sondera" in args.generators else None}
+        watch = None
+        if args.cache_only:
+            provider, transport = _NoProvider(), None
+            telemetry = {"enabled": False, "reason": "cache-only run: no API call, nothing to observe"}
+            rule = "off (cache-only run)"
+        else:
+            provider = AnthropicProvider()
+            transport = provider.request_settings()
+            rule = "on" if args.layout == "split" else "off (default layout)"
+            watch = PrefixWatch(expected={k: v for k, v in prefixes.items() if v} if args.layout == "split" else None, model=args.model)
+            provider = _Budget(provider, args.model, args.spend_cap_usd, watch)
+            telemetry = {"enabled": watch.enabled, "reason": watch.disabled_reason}
+        llm = CachedLLM(provider, args.cache, allow_api=not args.cache_only)
         config = {"run_id": run_id, "created": stamp, "kind": "temporal-clean", "model": args.model, "n": args.n,
                   "cache_only": args.cache_only, "scenario": inp.name,
                   "intent": {"arm": inp.intent_name, "file": src_inputs.intent_path.name, "sha256": inp.hashes["intent"]},
                   "arm": {"name": inp.arm_name,
                           "files": {"manifests": {s: _rel(p) for s, p in zip(src_inputs.servers, src_inputs.manifest_paths)},
                                     "schema": _rel(src_inputs.schema_path), "gold": _rel(src_inputs.gold),
-                                    "traces": _rel(src_inputs.traces_yaml), "requirements": _rel(src_inputs.requirements)}},
+                                    "traces": _rel(src_inputs.traces_yaml), "requirements": _rel(src_inputs.requirements),
+                                    "prompt_schema_base": _rel(src_inputs.schema_base_path)}},
                   "spend_cap_usd": args.spend_cap_usd, "input_mode": args.input_mode,
                   "inputs": "inputs/<scenario>/ (snapshot; generation and scoring read only from it)",
                   "generators": {"naive": ncfg.as_dict(), "sondera": scfg.as_dict()}, "generators_run": args.generators,
                   "request": {"sampling": "not sent (API default)", "thinking": {"type": "adaptive"},
                               "output_config": {"effort": ncfg.effort}, "max_tokens": ncfg.max_tokens,
-                              "fallbacks": "none", "prompt_cache": "ephemeral breakpoint on last static system block",
+                              "fallbacks": "none",
+                              "prompt_cache": {"layout": args.layout,
+                                               "breakpoint": ("ephemeral breakpoint on the last static system block" if args.layout == "default" else
+                                                              "ephemeral breakpoint on block 4 (action schema part 1 = prompt_schema_base); part 2 and the contract block after it"),
+                                               "prefix_hashes": prefixes, "telemetry": telemetry, "run_level_prefix_rule": rule,
+                                               "circuit_breaker": "3 consecutive zero-read fresh calls on a written prefix stop the run" if watch else None},
                               "transport": transport},
                   "frame": {"schema": str(inp.schema_path.relative_to(out)), "event_schema": str(inp.event_schema_path.relative_to(out)),
                             "traces": sorted(fr.suite.ids), "gold_allow_set": sorted(fr.gold_allowed),
@@ -503,8 +578,15 @@ def main() -> None:
             summary["sondera"]["first_shot_shared_with_naive"] = {"k": shared, "n": args.n}
         _dump(out / "summary.json", summary)
         (out / "summary.md").write_text(markdown(config, summary))
-    spent = f"; spent ${provider.spent_usd:.4f} of cap ${provider.cap_usd:.2f}" if isinstance(provider, _Budget) else ""
-    print(f"\nwrote {ROOT / 'runs' / run_id}\napi calls this run: {llm.api_calls}{spent}")
+        if watch is not None:
+            _dump(out / "cache_watch.json", watch.summary())
+    spent = ""
+    if isinstance(provider, _Budget):
+        spent = f"; spent ${provider.spent_usd:.4f}" + (f" of cap ${provider.cap_usd:.2f}" if provider.cap_usd is not None else "")
+        if watch is not None and watch.enabled:
+            hr = watch.summary()["hit_rate"]
+            spent += f"; cache hits {hr['k']}/{hr['n']} fresh calls"
+    print(f"\nwrote {args.runs_dir / run_id}\napi calls this run: {llm.api_calls}{spent}")
 
 
 if __name__ == "__main__":

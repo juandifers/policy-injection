@@ -15,6 +15,17 @@ natural-language generator necessarily carries one. Ours is transcribed from the
 "Temporal policy examples" pages and the Dogwood guide (chapters 02–04), read 2026-11-16. It is trusted, static text
 (no scenario content), the same for every scenario (docs/decisions.md, docs/transfer-fidelity.md #8).
 
+Prompt layouts (Phase 3, 2026-11-20; `layout`, recorded in every config): `default` (above; byte-identical to Phases 2a-2c)
+and `split`, used by t02 so that every instance, cell and repair round shares ONE cached prefix. The generator sorts a
+schema's declarations by name, so an instance's own tool declarations are interleaved with the fixed MaintData ones and the
+default layout gives every instance a different prefix. The split layout's system blocks: (1) the schema-only instructions
+plus one sentence saying the schema is shown in two parts of one namespace; (2) LANGUAGE_REFERENCE_V2 (the reference plus
+one sentence on `<Target>___<tool>` action names); (3) the temporal event schema; (4) action schema part 1 = the schema
+generated from the fixed manifest alone (scenario.yaml `prompt_schema_base`), the ONLY block with cache_control; (5) part 2
+= the instance's own declarations (pgi.generators.schema_split); (6) D4 cells only (`contract_block`): the trusted
+evidence-authority contract rendered from the admission catalogue. The intent is the user turn. Blocks 1-4 are identical
+for every seed, variant, cell and round (tests/test_prompt_layout.py). The validator and the oracle keep the full schema.
+
 Sondera-style loop: as `critic.run`, with the deterministic critic reduced to strict Dogwood validation (errors or warnings
 fail; an empty policy set fails): there is no symbolic backend for Dogwood. The judge sees the language reference and the
 event schema in addition to the intent and the policy, because it cannot judge a language it does not know.
@@ -144,6 +155,17 @@ INSTRUCTIONS_SCHEMA_ONLY = (
     "The user message is the administrator's intent."
 )
 
+LAYOUTS = ("default", "split")
+INSTRUCTIONS_SPLIT = (INSTRUCTIONS_SCHEMA_ONLY +
+                      "\nThe action schema is shown in two parts of one namespace (part 1, then part 2); read them together as a "
+                      "single schema.")
+LANGUAGE_REFERENCE_V2 = LANGUAGE_REFERENCE + """
+### Action names
+
+Action names have the form `<Target>___<tool>`: the target part is assigned by the gateway administrator and the tool
+part comes from the target's own definition.
+"""
+
 JUDGE_INSTRUCTIONS = (
     "You are a policy reviewer. You compare a Dogwood authorization policy with the administrator's intent it was "
     "written from, and list every mismatch: anything the policy allows that the intent forbids, and anything the "
@@ -166,6 +188,8 @@ class NaiveDogwoodConfig:
     max_tokens: int = 16000
     generator: str = LABEL_NAIVE
     input_mode: str = "manifests"
+    layout: str = "default"        # Phase 3: "default" or "split" (LAYOUTS)
+    contract_block: bool = False   # Phase 3 D4: append the trusted evidence-authority contract (catalogue) as the last system block
 
     def as_dict(self) -> dict:
         return asdict(self)
@@ -177,8 +201,10 @@ def _manifest_block(inputs: DogwoodInputs, include_descriptions: bool) -> str:
     return f"## MCP tool manifests\n{manifests}"
 
 
-def static_blocks(inputs: DogwoodInputs, include_descriptions: bool, input_mode: str = "manifests") -> list[dict]:
-    """System blocks shared by every sample of a scenario; the last carries the cache breakpoint."""
+def static_blocks(inputs: DogwoodInputs, include_descriptions: bool, input_mode: str = "manifests", layout: str = "default") -> list[dict]:
+    """System blocks shared by every sample of a scenario (default layout); the last carries the cache breakpoint."""
+    if layout != "default":
+        raise ValueError(f"static_blocks renders the default layout only; use static_blocks_split for {layout!r}")
     if input_mode not in INPUT_MODES:
         raise ValueError(f"input_mode must be one of {INPUT_MODES}, got {input_mode!r}")
     blocks = [
@@ -193,10 +219,61 @@ def static_blocks(inputs: DogwoodInputs, include_descriptions: bool, input_mode:
     return blocks
 
 
+def contract_block_text(inputs: DogwoodInputs) -> str:
+    """D4: the trusted evidence-authority contract, rendered from the scenario's admission catalogue (a trusted file derived
+    from the written contract; never from gold). Wording is frozen at the t02 pre-registration commit."""
+    from pgi.analysis.admission import load_catalogue
+
+    if inputs.catalogue is None:
+        raise ValueError("contract_block needs the scenario's admission catalogue (scenario.yaml `catalogue`)")
+    cat = load_catalogue(inputs.catalogue)
+    e = cat["evidence"]
+    corr = ", ".join(f"input.{c} equal to the protected request's context.input.{c}" for c in cat["correlations"])
+    vals = "; ".join(f"output.{f} equal to {v}" for f, v in cat["authorizing_values"].items())
+    return ("## Evidence-authority contract\n"
+            "Trusted administrator input; it binds the policy.\n"
+            f"- Protected action: `{cat['protected_action']}`.\n"
+            f"- Evidence: the completed `{e['kind']}` of `{e['action']}`, recorded earlier in the same session, within {e['max_window']} "
+            "of the protected request.\n"
+            f"- Correlation: {corr}.\n"
+            f"- Authorizing values: {vals}.\n"
+            "- No other action's events are evidence for the protected action.\n")
+
+
+def static_blocks_split(inputs: DogwoodInputs, config: NaiveDogwoodConfig) -> list[dict]:
+    """Split layout (module doc): blocks 1-4 fixed, breakpoint on block 4; part 2 and the optional contract block after it."""
+    from pgi.generators.schema_split import split_schema
+
+    if inputs.schema_base_text is None:
+        raise ValueError("the split layout needs scenario.yaml `prompt_schema_base` (the schema generated from the fixed manifest alone)")
+    part2 = split_schema(inputs.schema_text, inputs.schema_base_text)
+    blocks = [
+        {"type": "text", "text": INSTRUCTIONS_SPLIT},
+        {"type": "text", "text": LANGUAGE_REFERENCE_V2},
+        {"type": "text", "text": f"## Temporal event schema\n```dwschema\n{inputs.event_schema_text}```\n"},
+        {"type": "text", "text": f"## Action schema, part 1\n```cedarschema\n{inputs.schema_base_text}```\n", "cache_control": {"type": "ephemeral"}},
+        {"type": "text", "text": f"## Action schema, part 2\n```cedarschema\n{part2}```\n"},
+    ]
+    if config.contract_block:
+        blocks.append({"type": "text", "text": contract_block_text(inputs)})
+    return blocks
+
+
+def system_blocks(inputs: DogwoodInputs, config: NaiveDogwoodConfig) -> list[dict]:
+    """The system blocks of a generation request under the config's layout."""
+    if config.layout not in LAYOUTS:
+        raise ValueError(f"layout must be one of {LAYOUTS}, got {config.layout!r}")
+    if config.layout == "default":
+        if config.contract_block:
+            raise ValueError("contract_block is only available in the split layout")
+        return static_blocks(inputs, config.include_descriptions, config.input_mode)
+    return static_blocks_split(inputs, config)
+
+
 def build_request(inputs: DogwoodInputs, config: NaiveDogwoodConfig) -> tuple[list[dict], dict]:
     """The exact (messages, params) sent for one sample. No sampling parameters: API default."""
     messages = [{"role": "user", "content": f"{inputs.intent.rstrip()}\n\n{FINAL_LINE}"}]
-    params = {"system": static_blocks(inputs, config.include_descriptions, config.input_mode), "max_tokens": config.max_tokens,
+    params = {"system": system_blocks(inputs, config), "max_tokens": config.max_tokens,
               "thinking": {"type": "adaptive"}, "output_config": {"effort": config.effort}}
     return messages, params
 
@@ -238,12 +315,15 @@ class SonderaDogwoodConfig:
     max_tokens: int = 16000
     generator: str = LABEL
     input_mode: str = "manifests"
+    layout: str = "default"
+    contract_block: bool = False
 
     def as_dict(self) -> dict:
         return asdict(self)
 
     def naive(self) -> NaiveDogwoodConfig:
-        return NaiveDogwoodConfig(self.model, self.include_descriptions, self.effort, self.max_tokens, input_mode=self.input_mode)
+        return NaiveDogwoodConfig(self.model, self.include_descriptions, self.effort, self.max_tokens, input_mode=self.input_mode,
+                                  layout=self.layout, contract_block=self.contract_block)
 
 
 @dataclass(frozen=True)
@@ -274,8 +354,11 @@ def deterministic_critique(policy: Path, schema: Path, event_schema: Path) -> Do
 
 def judge_request(inputs: DogwoodInputs, policy_text: str, config: SonderaDogwoodConfig) -> tuple[list[dict], dict]:
     """The exact (messages, params) of one judge call: instructions, language + event schema, [manifests], intent + policy."""
+    if config.layout not in LAYOUTS:
+        raise ValueError(f"layout must be one of {LAYOUTS}, got {config.layout!r}")
+    reference = LANGUAGE_REFERENCE_V2 if config.layout == "split" else LANGUAGE_REFERENCE   # the judge reads the same reference version
     system = [{"type": "text", "text": JUDGE_INSTRUCTIONS},
-              {"type": "text", "text": f"{LANGUAGE_REFERENCE}\n## Temporal event schema\n```dwschema\n{inputs.event_schema_text}```\n"}]
+              {"type": "text", "text": f"{reference}\n## Temporal event schema\n```dwschema\n{inputs.event_schema_text}```\n"}]
     if config.judge_sees_manifests:
         if config.input_mode != "manifests":
             raise ValueError("judge_sees_manifests needs input_mode 'manifests'")

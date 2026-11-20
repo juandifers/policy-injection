@@ -55,3 +55,13 @@ class AnthropicProvider:
     def usage(self, raw: dict) -> dict:
         """Token usage exactly as returned."""
         return raw.get("usage", {})
+
+    CACHE_FIELDS = ("cache_creation_input_tokens", "cache_read_input_tokens", "input_tokens", "output_tokens")
+
+    def cache_usage(self, raw: dict) -> dict | None:
+        """The four prompt-cache token counts (cache write, cache read, uncached input, output), or None when the response
+        carries no cache fields (telemetry and the circuit breaker are then disabled)."""
+        u = raw.get("usage") or {}
+        if "cache_read_input_tokens" not in u or "cache_creation_input_tokens" not in u:
+            return None
+        return {k: int(u.get(k) or 0) for k in self.CACHE_FIELDS}

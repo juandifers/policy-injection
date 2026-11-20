@@ -19,6 +19,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Protocol
 
+from pgi.llm.prefix import prefix_hash
+
 
 class CacheMiss(RuntimeError):
     """A request was not in the cache and API calls are disabled."""
@@ -33,6 +35,9 @@ class Provider(Protocol):
     def text(self, raw: dict) -> str: ...
     def model_version(self, raw: dict) -> str: ...
     def usage(self, raw: dict) -> dict: ...
+    # Optional (Phase 3 telemetry): the four prompt-cache token counts of one response, or None when the API reports
+    # none. A provider without this method, or returning None, disables cache telemetry and the circuit breaker.
+    # def cache_usage(self, raw: dict) -> dict | None: ...
 
 
 @dataclass(frozen=True)
@@ -45,6 +50,7 @@ class Completion:
     key_hash: str
     cache_hit: bool
     raw: dict
+    prefix_hash: str | None = None   # identity of the request's cacheable prefix (pgi.llm.prefix); None without a breakpoint
 
 
 def cache_key(model: str, messages: list[dict], temperature: float | None, sample_index: int, params: dict) -> dict:
@@ -76,12 +82,13 @@ class CachedLLM:
         """Return the cached response for this exact request, calling the API only on a miss."""
         key = cache_key(model, messages, temperature, sample_index, params)
         h = key_hash(key)
+        ph = prefix_hash(model, params, strict=False)
         path = self._path(h)
         if path.exists():
             entry = json.loads(path.read_text())  # corrupt entry -> ValueError, never a re-call
             if entry.get("key") != key:
                 raise ValueError(f"cache entry {path} does not match its key")
-            return Completion(entry["text"], entry["model_version"], entry["usage"], h, True, entry["raw"])
+            return Completion(entry["text"], entry["model_version"], entry["usage"], h, True, entry["raw"], ph)
         if not self.allow_api:
             raise CacheMiss(f"no cache entry for {model} sample {sample_index} ({h[:12]}) and API calls are disabled")
         raw = self.provider.call(model, messages, temperature, params)
@@ -95,4 +102,4 @@ class CachedLLM:
         with tempfile.NamedTemporaryFile("w", dir=path.parent, delete=False, suffix=".tmp") as f:
             json.dump(entry, f, indent=1, ensure_ascii=False)
         os.replace(f.name, path)  # atomic: a crash never leaves a half-written entry
-        return Completion(entry["text"], entry["model_version"], entry["usage"], h, False, raw)
+        return Completion(entry["text"], entry["model_version"], entry["usage"], h, False, raw, ph)

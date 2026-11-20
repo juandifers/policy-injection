@@ -22,6 +22,7 @@ from __future__ import annotations
 import json
 import subprocess
 import tempfile
+from collections.abc import Mapping
 from pathlib import Path
 
 CONFIG = {
@@ -49,11 +50,21 @@ class SchemaGenError(Exception):
     """Schema generation or linking failed."""
 
 
-def _tools(manifests: list[Path]) -> list[dict]:
-    """The tools of these `{"tools": [...]}` manifests, concatenated in order; tool names must be unique."""
+def _tools(manifests: list[Path], targets: Mapping[Path | str, str] | None = None) -> list[dict]:
+    """The tools of these `{"tools": [...]}` manifests, concatenated in order; tool names must be unique.
+
+    `targets` (Phase 3): manifest path -> gateway target name; every tool of that manifest is renamed `<Target>___<tool>`
+    in memory (the AgentCore gateway form). Manifests on disk keep their unprefixed names. Every key must name one of the
+    manifests.
+    """
+    targets = {Path(k).resolve(): v for k, v in (targets or {}).items()}
+    if unknown := set(targets) - {Path(p).resolve() for p in manifests}:
+        raise SchemaGenError(f"targets name manifests not in the list: {sorted(str(p) for p in unknown)}")
     tools = []
     for path in manifests:
-        tools += json.loads(Path(path).read_text())["tools"]
+        target = targets.get(Path(path).resolve())
+        for tool in json.loads(Path(path).read_text())["tools"]:
+            tools.append({**tool, "name": f"{target}___{tool['name']}"} if target else tool)
     names = [t["name"] for t in tools]
     if len(names) != len(set(names)):
         raise SchemaGenError(f"tool names collide across manifests: {sorted({n for n in names if names.count(n) > 1})}")
@@ -68,12 +79,16 @@ def generate(stub: Path, manifests: list[Path]) -> str:
                                     config=CONFIG)["schema"]
 
 
-def generate_dogwood(manifests: list[Path]) -> str:
-    """The Dogwood-generated .cedarschema text for these manifests' tools (temporal track, DOGWOOD_PROFILE)."""
+def generate_dogwood(manifests: list[Path], targets: Mapping[Path | str, str] | None = None) -> str:
+    """The Dogwood-generated .cedarschema text for these manifests' tools (temporal track, DOGWOOD_PROFILE).
+
+    `targets` renames the tools of the named manifests to `<Target>___<tool>` before generation (see `_tools`); without
+    it the output is byte-identical to before (every pinned schema).
+    """
     import pydogwood  # dependency group `dogwood`
 
     try:
-        return pydogwood.schema_mcp(json.dumps({"result": {"tools": _tools(manifests)}}))
+        return pydogwood.schema_mcp(json.dumps({"result": {"tools": _tools(manifests, targets)}}))
     except pydogwood.DogwoodError as e:
         raise SchemaGenError(f"dogwood schema mcp failed: {e}") from e
 

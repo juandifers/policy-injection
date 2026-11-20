@@ -1062,3 +1062,64 @@ naming the existing manifest files). Tests first; 25 bridge tests.
   no surplus sample in any bridge arm, so nothing to classify.
 - **Not done, by instruction:** no interpretation beyond the pre-registered cells, contrasts and the E0 split; no new arms; no AWS
   calls; no push.
+
+## 2026-11-20: Phase 3 prompt layout: one cached prefix for every t02 instance, cell and repair round (zero API calls)
+
+Why: `static_blocks` puts the whole action schema in one block with the breakpoint on the last system block. The Dogwood schema
+generator sorts declarations by name, so an instance's two per-instance tools are interleaved with the fixed MaintData declarations
+and every t02 instance would pay a full cache write of its own ~34k-token prefix (the difference between roughly $30 and roughly $90
+for the first batch). Cache rules relied on, from the prompt-caching page (read 2026-11-20): byte-identical prefix (tools, system,
+messages) up to the block with `cache_control`; entries written only at the breakpoint; 5-minute lifetime restarted by each use;
+readable only after the first response has started; thinking and effort settings are part of the prefix.
+
+- **Second layout, selected by config and used only by t02** (`NaiveDogwoodConfig.layout = "split"`, `SonderaDogwoodConfig` likewise,
+  `--layout split`): (1) the schema-only instructions plus one sentence saying the schema is shown in two parts of one namespace;
+  (2) `LANGUAGE_REFERENCE_V2` = the reference plus one sentence on `<Target>___<tool>` action names (target part assigned by the
+  gateway administrator, tool part from the target's own definition); (3) the temporal event schema; (4) action schema part 1 =
+  the schema generated from MaintData alone (new scenario.yaml key `prompt_schema_base`, relative to the domain, hashed and
+  snapshotted once per run under `schema_base/`), the ONLY block with `cache_control`; (5) part 2 = every declaration of the
+  instance's full schema not in part 1, wrapped in the same namespace (`pgi.generators.schema_split`: split on top-level `;`,
+  assert every part-1 declaration occurs unchanged in the full text and that part 1 + part 2 = the full schema as a set);
+  (6) D4 cells only, `contract_block=True` (a config field a runner sets per cell; `--contract-block` is a convenience for
+  temporal_clean): the trusted evidence-authority contract rendered from the admission catalogue (wording frozen at the t02
+  prereg). User turn = the intent and the final line. The default layout is untouched; its recorded byte identity (L1 run
+  `prompt_static.json` and cache key) still holds. The judge under the split layout reads the v2 reference (its own prefix is
+  already instance-independent). The validator and the oracle keep using the full schema.
+- **`generate_dogwood(manifests, targets=)`** renames the tools of the named manifests to `<Target>___<tool>` before generation;
+  manifests on disk keep unprefixed names; without `targets` the output is byte-identical (the pinned t01 schema regenerates).
+- **Toolchain facts re-verified on the pinned pydogwood 0.1.1 (interpreter 1.1.0)**, matching Juan's checks on 1.1.2: prefixed
+  action names generate and validate; the output is sorted by declaration name (manifest order has no effect); two tools with the
+  same enum field name and member list share one entity (`Drupe::decision`); otherwise per-tool `<tool>_Output_<field>`; the 122
+  MaintData declarations are a textual subset of the 130-declaration full schema, also after `link_session_id` (Cedar translator).
+- **Prefix identity** (`pgi.llm.prefix.prefix_hash`): SHA-256 of model + system blocks up to and including the last breakpoint +
+  `thinking` + `output_config` (`max_tokens` is not part of the prompt). Carried by every `Completion` and call record
+  (`prefix_hash`), and in `config.json` `request.prompt_cache.prefix_hashes` for the generator and the judge (computed before any
+  call). Guard test over seeds 0-119 and 1000-1019, four variants, five cells (synthetic instances from the t02 name pool, to be
+  re-pointed at the lock-file seeds when the builder lands): blocks 1-4 serialize identically, exactly one `cache_control` and it
+  is on block 4, no pool name / seed / timestamp before the breakpoint, one prefix hash; `regeneration_request` keeps them.
+- **Telemetry** reads the four cache counts through a new optional provider method `cache_usage(raw)` (Anthropic implements it;
+  `_NoProvider` and providers without it disable telemetry and the breaker with a logged reason recorded in config). Per call:
+  `cache_split` (tokens and USD by cache write / read / uncached input / output, `pgi.runs.cache_watch.cost_split`); per run:
+  `summary.json` `cache` per generator (hit rate over fresh calls, cost split, prefix hashes), a `## Prompt cache` table in
+  `summary.md`, and `cache_watch.json`.
+- **Circuit breaker** (`PrefixWatch`, hosted by the budget wrapper, which now always wraps the real provider): once a prefix has
+  been written in this process, a fresh call on it with `cache_read_input_tokens == 0` is a miss even if it writes again; only a
+  read resets the counter; three consecutive misses abort the run (`CacheBreakerTripped`); a single miss (entry expired during a
+  long generation) is logged. A prefix never written never trips (logged). **Run-level rule (split layout only):** the run
+  registers its generator and judge prefix hashes up front; a fresh call with any other prefix raises `PrefixChanged` before it is
+  sent, since per-prefix counting cannot see a prefix that changes on every call. **Sequential calls:** a second call on a prefix
+  whose first call is still in flight is refused (`ConcurrentPrefixCall`); if concurrency is ever added, the first call on a prefix
+  must complete before others are sent.
+- **`--plan`** (no API call, no run folder): generation and judge call counts (judge only when the pipeline has a judge; min/max over
+  repair rounds), both prefix hashes, the sizes of parts 1 and 2 and of the user message, expected cost with and without cache
+  hits. Token sizes come from a recorded call on the same prefix hash in the runs folder when one exists (its
+  `cache_creation_input_tokens`; output mean from generation calls only), else from character counts calibrated on recorded runs:
+  schema text 73,110 chars / 34,009 cached tokens (L1-S, 2.15 chars per token), prose 1,106 / 334 (the goal-level user message).
+- **Measured on a rendered plain-variant instance (linked schemas):** blocks 1-4 = 75,236 chars ≈ 34,090 tokens; part 2 = 1,224
+  to 1,321 chars ≈ 569 to 614 tokens across the four variants (8 declarations); user message 1,106 chars = 334 tokens (D0) up to
+  ≈ 423 (D3 stub); D4 contract block ≈ 177 tokens. Expected cost for N = 20, both generators: $0.80 to $2.24 with cache hits
+  against $2.45 to $7.36 if every call wrote the prefix.
+- **Name pool:** `domains/assetopsbench/scenarios/t02_designated_source/names.py` (`POOL`, twelve invented names, `MAINT_TARGET`),
+  the one module the t02 builder and the guard import.
+- **Not done, by instruction:** no 1-hour lifetime, no second breakpoint, no Batch API, no API call. The t02 foundations plan
+  (instance builder, resolver, lock file) awaits Juan's go-ahead and his call on the exclusion rule.
