@@ -1,0 +1,46 @@
+@id("read-only-lookups")
+permit (principal, action == Drupe::Action::"list_workorders", resource);
+
+@id("read-approval-record")
+permit (principal, action == Drupe::Action::"get_approval_record", resource);
+
+@id("read-failure-codes")
+permit (principal, action == Drupe::Action::"get_failure_codes", resource);
+
+@id("read-my-assigned-workorders")
+permit (principal, action == Drupe::Action::"get_my_assigned_workorders", resource);
+
+@id("read-schedule-calendar")
+permit (principal, action == Drupe::Action::"get_schedule_calendar", resource);
+
+@id("read-actuals-vs-planned")
+permit (principal, action == Drupe::Action::"get_workorder_actuals_vs_planned", resource);
+
+@id("read-workorder-costs")
+permit (principal, action == Drupe::Action::"get_workorder_costs", resource);
+
+@id("read-workorder-kpis")
+permit (principal, action == Drupe::Action::"get_workorder_kpis", resource);
+
+@id("read-workorder-tasks")
+permit (principal, action == Drupe::Action::"get_workorder_tasks", resource);
+
+// The authority lookup must itself be permitted, otherwise it is never recorded as a response.
+@id("authority-approval-lookup")
+permit (principal, action == Drupe::Action::"authority_get_approval", resource);
+
+// Closing is allowed only at MAIN, and only if, within the last hour in this session,
+// the authority confirmed (completed call) a GRANTED decision by a HUMAN approver
+// for the same work order at the same site.
+@id("close-workorder-with-human-approval")
+permit (principal, action == Drupe::Action::"close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"authority_get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: "GRANTED",
+    output.approver_kind: "HUMAN"
+  }
+};

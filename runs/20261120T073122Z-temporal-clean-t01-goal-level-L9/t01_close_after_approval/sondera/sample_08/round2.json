@@ -1,0 +1,75 @@
+{
+ "round": 2,
+ "extraction": "fenced",
+ "generation": {
+  "key_hash": "83b4ec23f29a9776874812d1ff53ffd97e99807cb4a6a851962fd3d45a2dc358",
+  "cache_hit": false,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011ChDoH21SGEUXTTVvLKrcx",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 90693,
+   "inference_geo": "global",
+   "input_tokens": 981,
+   "output_tokens": 823,
+   "output_tokens_details": {
+    "thinking_tokens": 269
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "```dogwood\n@id(\"read-only-lookups-authority\")\npermit (principal, action == Drupe::Action::\"authority_get_approval\", resource);\n\npermit (principal, action == Drupe::Action::\"get_workorder\", resource);\n\npermit (principal, action == Drupe::Action::\"list_workorders\", resource);\n\npermit (principal, action == Drupe::Action::\"get_workorder_tasks\", resource);\n\npermit (principal, action == Drupe::Action::\"get_workorder_costs\", resource);\n\npermit (principal, action == Drupe::Action::\"get_workorder_actuals_vs_planned\", resource);\n\npermit (principal, action == Drupe::Action::\"get_workorder_kpis\", resource);\n\npermit (principal, action == Drupe::Action::\"get_schedule_calendar\", resource);\n\npermit (principal, action == Drupe::Action::\"get_my_assigned_workorders\", resource);\n\npermit (principal, action == Drupe::Action::\"get_failure_codes\", resource);\n\n@id(\"close-workorder-only-at-main-with-recent-human-approval\")\npermit (principal, action == Drupe::Action::\"close_workorder\", resource)\nwhen { context.input.site_id == \"MAIN\" }\nwhen temporal {\n  formerly within 1h Drupe::Action::\"authority_get_approval\"::response{\n    eventResource: resource,\n    input.wonum: context.input.wonum,\n    input.site_id: context.input.site_id,\n    output.decision: Drupe::authority_get_approval_Output_decision::\"GRANTED\",\n    output.approver_kind: Drupe::authority_get_approval_Output_approver_kind::\"HUMAN\"\n  }\n};\n```",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "deterministic": {
+  "passed": true,
+  "validation": {
+   "policy": "t01_close_after_approval/sondera/sample_08/round2.dw",
+   "schema": "inputs/t01_close_after_approval/schema/t01.dogwood.cedarschema",
+   "ok": true,
+   "errors": [],
+   "warnings": []
+  },
+  "failures": []
+ },
+ "judge": {
+  "key_hash": "7a81791e6a1465a4685ff55403eb1407f321a7e91dd07bad2d2502fb185e4859",
+  "cache_hit": false,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011ChDoHV1u743dTvHKXdT9g",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 2414,
+   "inference_geo": "global",
+   "input_tokens": 889,
+   "output_tokens": 586,
+   "output_tokens_details": {
+    "thinking_tokens": 575
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "NO MISMATCHES",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "judge_passed": true,
+ "passed": true
+}

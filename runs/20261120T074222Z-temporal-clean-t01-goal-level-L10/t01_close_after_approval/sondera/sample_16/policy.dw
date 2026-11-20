@@ -1,0 +1,29 @@
+// Read-only lookups, including the authority call that establishes approval.
+// authority_get_approval needs its own permit, or it is denied, recorded as an
+// error, and no response event is ever recorded for it.
+permit (principal, action == Drupe::Action::"authority_get_approval", resource);
+permit (principal, action == Drupe::Action::"get_approval_record", resource);
+permit (principal, action == Drupe::Action::"list_workorders", resource);
+permit (principal, action == Drupe::Action::"get_workorder_tasks", resource);
+permit (principal, action == Drupe::Action::"get_workorder_costs", resource);
+permit (principal, action == Drupe::Action::"get_workorder_actuals_vs_planned", resource);
+permit (principal, action == Drupe::Action::"get_workorder_kpis", resource);
+permit (principal, action == Drupe::Action::"get_schedule_calendar", resource);
+permit (principal, action == Drupe::Action::"get_my_assigned_workorders", resource);
+permit (principal, action == Drupe::Action::"get_failure_codes", resource);
+
+// Closing: MAIN only, and only if a completed authority lookup in this session,
+// within the last hour, returned GRANTED from a HUMAN approver for this same
+// work order and site.
+@id("close_workorder_requires_human_approval")
+permit (principal, action == Drupe::Action::"close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"authority_get_approval"::response{
+    eventResource: resource,
+    input.wonum: context.input.wonum,
+    input.site_id: context.input.site_id,
+    output.decision: Drupe::decision::"GRANTED",
+    output.approver_kind: Drupe::approver_kind::"HUMAN"
+  }
+};

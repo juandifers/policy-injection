@@ -1,0 +1,75 @@
+{
+ "round": 1,
+ "extraction": "fenced",
+ "generation": {
+  "key_hash": "82c850a222afc2698673ca6d39e84a4e73c6bf2643f1b83fc902d8f6b2c640b2",
+  "cache_hit": true,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011ChDosqiJ4Y7ag4t4jvCis",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 90554,
+   "inference_geo": "global",
+   "input_tokens": 334,
+   "output_tokens": 2147,
+   "output_tokens_details": {
+    "thinking_tokens": 1230
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "```\n// Read-only lookups, including the authority call that establishes approval.\n// authority_get_approval needs its own permit, or it is denied, recorded as an\n// error, and no response event is ever recorded for it.\npermit (principal, action == Drupe::Action::\"authority_get_approval\", resource);\npermit (principal, action == Drupe::Action::\"get_approval_record\", resource);\npermit (principal, action == Drupe::Action::\"list_workorders\", resource);\npermit (principal, action == Drupe::Action::\"get_workorder_tasks\", resource);\npermit (principal, action == Drupe::Action::\"get_workorder_costs\", resource);\npermit (principal, action == Drupe::Action::\"get_workorder_actuals_vs_planned\", resource);\npermit (principal, action == Drupe::Action::\"get_workorder_kpis\", resource);\npermit (principal, action == Drupe::Action::\"get_schedule_calendar\", resource);\npermit (principal, action == Drupe::Action::\"get_my_assigned_workorders\", resource);\npermit (principal, action == Drupe::Action::\"get_failure_codes\", resource);\n\n// Closing: MAIN only, and only if a completed authority lookup in this session,\n// within the last hour, returned GRANTED from a HUMAN approver for this same\n// work order and site.\n@id(\"close_workorder_requires_human_approval\")\npermit (principal, action == Drupe::Action::\"close_workorder\", resource)\nwhen { context.input.site_id == \"MAIN\" }\nwhen temporal {\n  formerly within 1h Drupe::Action::\"authority_get_approval\"::response{\n    eventResource: resource,\n    input.wonum: context.input.wonum,\n    input.site_id: context.input.site_id,\n    output.decision: Drupe::decision::\"GRANTED\",\n    output.approver_kind: Drupe::approver_kind::\"HUMAN\"\n  }\n};\n```\n\nI left `approve_workorder`, `generate_work_order`, `update_workorder`, `assign_technician` and `cancel_workorder` without a permit, so they are denied by default. This means the agent cannot approve its own work, directly or indirectly.\n\nI assumed enum values in a temporal field pattern are written as entity literals, such as `Drupe::decision::\"GRANTED\"`, because the schema declares `decision` and `approver_kind` as enum entities rather than strings. I could not check this against a validator.\n\nOnly the `authority` server's `authority_get_approval` response counts as proof of approval. The `wo` tool `get_approval_record` is permitted as a lookup but is not trusted for that purpose.\n\nI did not add a revocation rule. If the agent sees a GRANTED approval and then a later lookup shows REJECTED within the hour, the close would still be allowed.",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "deterministic": {
+  "passed": true,
+  "validation": {
+   "policy": "t01_close_after_approval/sondera/sample_16/round1.dw",
+   "schema": "inputs/t01_close_after_approval/schema/t01.dogwood.cedarschema",
+   "ok": true,
+   "errors": [],
+   "warnings": []
+  },
+  "failures": []
+ },
+ "judge": {
+  "key_hash": "5d43ad12de5422bd4768efe5ad5867d876a50f2f3d0a12d8fd0c87973854c60e",
+  "cache_hit": false,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011ChDpC8sAjJyfbh7YqAniG",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 2414,
+   "inference_geo": "global",
+   "input_tokens": 972,
+   "output_tokens": 471,
+   "output_tokens_details": {
+    "thinking_tokens": 460
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "NO MISMATCHES",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "judge_passed": true,
+ "passed": true
+}

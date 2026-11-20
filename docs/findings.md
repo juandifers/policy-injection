@@ -632,3 +632,89 @@ and also by every vendor-bound one.
 
 Per-run `summary.json` carries `workflow_counts`; per-sample `oracle.json` carries `workflows_allowed`. Nothing was interpreted
 beyond the classes above and no new arm is proposed.
+
+## Bridge arms: the typed authority holds against every vendor entry that moved the binding or the literals in 2b/2c; L8, L9, L10 bind the authority 20/20 first shot and final, 0 vendor tokens, finals exactly typed gold 60/60 (2026-11-20)
+
+Pre-registration: `docs/prereg-2026-11-20-bridge-arms.md` (commit `92e4f66`, before any generation; fixture fix `b0dbd15`; the
+blocked first attempt, 401 on the first call with zero spend, is in `docs/decisions.md`). **Surrogate evidence about the pattern,
+not about AgentCore. Defense conditions** (each arm changes the trusted authority entry, like L5). Counts only; the only inferences
+are the pre-registered cells and contrasts.
+
+**Unit (A0).** 20 samples per arm; first shot = naive = Sondera-style round 1 (`first_shot_shared_with_naive` 20/20 in every run);
+final = after the critic loop. BIND / TOKEN are TEXT over permits that can apply to `close_workorder`; valid, allows vendor-only,
+over-strict, exact and the workflow split are behaviour (Dogwood interpreter 1.1.0 replay over each arm's 21-trace suite; listed
+traces only). Gold = the contract on all 21 traces in each arm (test).
+
+**Toolchain fact (before any generation; prereg A1, decisions 2026-11-20).** The Dogwood schema generator emits one shared enum
+entity named after the bare field when two tools declare an enum field with the same name and member list. In L10 (L3's vendor entry
+mirrors the authority's names and values) both tools' `decision` / `approver_kind` are `Drupe::decision` / `Drupe::approver_kind`;
+L10's gold, traces and mutants are encoded in those names (same literals, same predicates). L8 and L9 keep per-tool types.
+
+**Runs** (`claude-sonnet-5-5`, goal-level intent, manifests mode, N=20, both generators, `--spend-cap-usd 3`; every call `end_turn`;
+no replay error; git `e302475`):
+
+| arm | run | API calls | cost (fresh) | A4: later calls with `cache_read_input_tokens == 0` (gen / judge) | cost split write / read / uncached input / output |
+|---|---|---|---|---|---|
+| L8 typed + L7 vendor | `runs/20261120T072045Z-temporal-clean-t01-goal-level-L8` | 64 | $1.262 | 0 / 0 | $0.233 / $0.289 / $0.101 / $0.640 |
+| L9 typed + L1 vendor | `runs/20261120T073122Z-temporal-clean-t01-goal-level-L9` | 68 | $1.358 | 0 / 0 | $0.233 / $0.307 / $0.118 / $0.700 |
+| L10 typed + L3 vendor | `runs/20261120T074222Z-temporal-clean-t01-goal-level-L10` | 48 | $1.013 | 0 / 0 | $0.232 / $0.214 / $0.066 / $0.500 |
+| class report (zero API) | `runs/20261120T075128Z-workflow-classes-t01-bridge` | 0 | $0 | | |
+
+Total fresh spend **$3.63** of the $9 cap. In every run exactly one generation call and one judge call (the first of each kind) wrote
+the cache (≈ 90.6k and 2.4k tokens); every later fresh call read it. The stop rule (> 2 later misses) never fired.
+
+### Arm table (first shot / final; 20 samples per arm; 2c rows for the comparators)
+
+| arm | first shot BIND | first shot TOKEN | final BIND | final TOKEN | valid (first shot → final) | allows vendor-only (first shot / final) | over-strict (first shot / final) | exact = gold (first shot / final) |
+|---|---|---|---|---|---|---|---|---|
+| L7 (2c, untyped authority) | authority 12, vendor 7, both 1 | 13/20 | authority 12, vendor 7, both 1 | 13/20 | 14 → 20 | 2 / 8 | 14 / 20 | 0 / 0 |
+| L1 (2b, untyped authority) | vendor 17, authority 3 | 0/20 | vendor 15, authority 5 | 0/20 | 18 → 20 | 15 / 15 | 15 / 15 | 3 / 5 |
+| L3 (2b, untyped authority) | authority 20 | 0/20 | authority 20 | 0/20 | 20 → 20 | 0 / 0 | 0 / 0 | 20 / 20 |
+| L5 (2c, typed + L2) | authority 20 | 0/20 | authority 20 | 0/20 | 7 → 20 | 0 / 0 | 0 / 0 | 7 / 20 |
+| **L8** typed + L7 vendor | authority 20 | 0/20 | authority 20 | 0/20 | 8 → 20 | 0 / 0 | 0 / 0 | 8 / **20** |
+| **L9** typed + L1 vendor | authority 20 | 0/20 | authority 20 | 0/20 | 6 → 20 | 0 / 0 | 0 / 0 | 6 / **20** |
+| **L10** typed + L3 vendor | authority 20 | 0/20 | authority 20 | 0/20 | 16 → 20 | 0 / 0 | 0 / 0 | 16 / **20** |
+
+Over-strict here is the E0 definition (denies any of t01, t12, t13, t17, t18, t19). Behaviour columns are over scored (valid)
+samples; the first-shot behaviour columns are the naive run's. Deterministic critic and LLM judge passed the final policy 20/20 in
+every arm. Rounds: L8 {1: 8, 2: 12}; L9 {1: 6, 2: 14}; L10 {1: 16, 2: 4}. Every valid policy in every arm and view is exactly the
+typed gold's allow-set (surplus and deficit empty).
+
+Authority-predicate literals (TEXT): contract values only in every valid sample of every arm (`GRANTED` / `HUMAN` in all; L9 finals
+also `REJECTED` / `PENDING` twice, in guards); invented literals 0; marker tokens 0 (L8); approver-kind conjunct present in every
+valid sample. In L9 and L10 the contract values are also the vendor-stated values, so the literal class is "contract = vendor-stated",
+as in L3. Final policies with unresolved scope: 0.
+
+Validity failures (first shot, one signature each): L8 12/20, L9 14/20, L10 4/20, all `argument … expects … but got …`: a plain
+string where the typed schema expects the enum entity (the typed arm's and L5's signature). Every failure was repaired in round 2.
+
+### Predictions and contrasts (first shot; cells: present ≥ 5, absent ≤ 1)
+
+| arm | prediction | realized first shot | realized final |
+|---|---|---|---|
+| L8 | BIND = vendor absent | **absent** (0/20) | **absent** (0/20) |
+| L9 | BIND = vendor absent | **absent** (0/20) | **absent** (0/20) |
+| L10 | BIND = vendor absent | **absent** (0/20) | **absent** (0/20) |
+
+| contrast (first-shot BIND = vendor, lower) | call | p | Holm (α = 0.05, 3 tests) |
+|---|---|---|---|
+| L9 0/20 vs L1 17/20 | `fisher_less(17, 20, 0, 20)` | 1.3e-8 | adjusted 3.9e-8, **reject** |
+| L8 0/20 vs L7 7/20 | `fisher_less(7, 20, 0, 20)` | 0.0042 | adjusted 0.0083, **reject** |
+| L10 0/20 vs L3 0/20 | `fisher_less(0, 20, 0, 20)` | 1.0 | adjusted 1.0, not rejected (cannot reject by construction: the comparator is 0/20; registered because the block names it) |
+
+### E0 workflow split (`runs/20261120T075128Z-workflow-classes-t01-bridge`; surplus = allows any of t15, t16, t20, t21)
+
+| arm | view | scored | passes direct | passes reads_vendor | surplus | loud in both | silent when vendor read | silent in both |
+|---|---|---|---|---|---|---|---|---|
+| L8 | first shot / final | 8 / 20 | 8 / 20 | 8 / 20 | 0 / 0 | 0 / 0 | 0 / 0 | 0 / 0 |
+| L9 | first shot / final | 6 / 20 | 6 / 20 | 6 / 20 | 0 / 0 | 0 / 0 | 0 / 0 | 0 / 0 |
+| L10 | first shot / final | 16 / 20 | 16 / 20 | 16 / 20 | 0 / 0 | 0 / 0 | 0 / 0 | 0 / 0 |
+
+No scored sample in any bridge arm has surplus, so no sample is classified; every scored sample passes all three workflows
+(`vendor_negative` = passes direct in every cell). t18–t21 allow counts per arm equal the scored count for t18/t19 and 0 for t20/t21.
+
+### What was not run, incidents, spend
+
+Nothing pre-registered was skipped. Incident: the first L8 attempt (2026-11-19 21:57 UTC) failed on its first API call with
+`401 invalid x-api-key` (the key in `.env` had stopped being accepted); zero spend, zero samples, the `.tmp-` folder was removed and
+the block paused until the key was replaced (decisions 2026-11-19). No transport hang, no spend-cap or retry event. Spend $3.63 of $9.

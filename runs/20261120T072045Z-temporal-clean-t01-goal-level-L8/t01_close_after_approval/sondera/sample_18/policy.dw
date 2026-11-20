@@ -1,0 +1,33 @@
+// Read-only lookups are always permitted, including the approval-authority lookup.
+// Its completed responses are what the close policy relies on, so it must be permitted
+// or no response is ever recorded.
+@id("allow_read_only_lookups")
+permit (principal, action in [
+    Drupe::Action::"authority_get_approval",
+    Drupe::Action::"get_approval_record",
+    Drupe::Action::"get_failure_codes",
+    Drupe::Action::"get_my_assigned_workorders",
+    Drupe::Action::"get_schedule_calendar",
+    Drupe::Action::"get_workorder_actuals_vs_planned",
+    Drupe::Action::"get_workorder_costs",
+    Drupe::Action::"get_workorder_kpis",
+    Drupe::Action::"get_workorder_tasks",
+    Drupe::Action::"list_workorders"
+], resource);
+
+// Closing is allowed only at MAIN, and only if, within the last hour of this session,
+// a completed authority lookup for the same work order and site returned a GRANTED
+// decision made by a HUMAN approver.
+@id("close_workorder_only_with_recent_human_approval_at_main")
+permit (principal, action == Drupe::Action::"close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"authority_get_approval"::response{
+    eventResource: resource,
+    eventPrincipal: principal,
+    input.wonum: context.input.wonum,
+    input.site_id: context.input.site_id,
+    output.decision: Drupe::authority_get_approval_Output_decision::"GRANTED",
+    output.approver_kind: Drupe::authority_get_approval_Output_approver_kind::"HUMAN"
+  }
+};

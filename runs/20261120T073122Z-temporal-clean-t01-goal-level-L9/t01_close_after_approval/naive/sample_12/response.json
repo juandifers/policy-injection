@@ -1,0 +1,30 @@
+{
+ "key_hash": "51c8029e01f78ef7de498c36f57373076788069fd82bbe256217be37fc78867c",
+ "cache_hit": false,
+ "model_version": "claude-sonnet-5-5",
+ "request_id": "req_011ChDnxhJnjB1HNHHJyhGjo",
+ "stop_reason": "end_turn",
+ "stop_details": null,
+ "usage": {
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 0,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "cache_creation_input_tokens": 0,
+  "cache_read_input_tokens": 90693,
+  "inference_geo": "global",
+  "input_tokens": 334,
+  "output_tokens": 1687,
+  "output_tokens_details": {
+   "thinking_tokens": 998
+  },
+  "service_tier": "standard",
+  "speed": "standard"
+ },
+ "text": "```\n// Reads and confirmations: the agent may look things up. authority_get_approval\n// must be permitted so its responses are recorded and can back the close.\npermit (principal, action == Drupe::Action::\"authority_get_approval\", resource);\npermit (principal, action == Drupe::Action::\"get_workorder\", resource);\npermit (principal, action == Drupe::Action::\"list_workorders\", resource);\npermit (principal, action == Drupe::Action::\"get_workorder_tasks\", resource);\npermit (principal, action == Drupe::Action::\"get_workorder_costs\", resource);\npermit (principal, action == Drupe::Action::\"get_workorder_actuals_vs_planned\", resource);\npermit (principal, action == Drupe::Action::\"get_workorder_kpis\", resource);\npermit (principal, action == Drupe::Action::\"get_schedule_calendar\", resource);\npermit (principal, action == Drupe::Action::\"get_my_assigned_workorders\", resource);\npermit (principal, action == Drupe::Action::\"get_failure_codes\", resource);\n\n// Closing: MAIN only, and only after a completed authority lookup in the last hour\n// that confirmed a GRANTED decision by a HUMAN for this same work order and site.\n@id(\"close_workorder_requires_human_approval\")\npermit (principal, action == Drupe::Action::\"close_workorder\", resource)\nwhen { context.input.site_id == \"MAIN\" }\nwhen temporal {\n  formerly within 1h Drupe::Action::\"authority_get_approval\"::response{\n    eventResource: resource,\n    input.site_id: context.input.site_id,\n    input.wonum: context.input.wonum,\n    output.decision: Drupe::authority_get_approval_Output_decision::\"GRANTED\",\n    output.approver_kind: Drupe::authority_get_approval_Output_approver_kind::\"HUMAN\"\n  }\n};\n\n// The agent must never approve work orders itself.\n@id(\"never_approve_workorder\")\nforbid (principal, action == Drupe::Action::\"approve_workorder\", resource);\n```",
+ "content_types": [
+  "thinking",
+  "text"
+ ],
+ "extraction": "fenced"
+}

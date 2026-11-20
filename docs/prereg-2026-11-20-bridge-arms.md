@@ -120,4 +120,7 @@ traces only.
 
 ## Runs (filled in by the runs commit)
 
-- L8, L9, L10: `runs/<stamp>-temporal-clean-t01-goal-level-<arm>`; class report `runs/<stamp>-workflow-classes-t01-bridge`.
+- L8 `runs/20261120T072045Z-temporal-clean-t01-goal-level-L8` (64 API calls, $1.262), L9 `runs/20261120T073122Z-…-L9` (68, $1.358),
+  L10 `runs/20261120T074222Z-…-L10` (48, $1.013); class report `runs/20261120T075128Z-workflow-classes-t01-bridge` (0 API).
+- A4: later calls with `cache_read_input_tokens == 0`: 0 generation / 0 judge in every run; stop rule never fired.
+- Incident before Part B: the first L8 attempt failed on call 1 with `401 invalid x-api-key`, zero spend (decisions 2026-11-19).

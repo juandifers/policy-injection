@@ -1,0 +1,31 @@
+// Reads and confirmations: the agent may look things up. authority_get_approval
+// must be permitted so its responses are recorded and can back the close.
+permit (principal, action == Drupe::Action::"authority_get_approval", resource);
+permit (principal, action == Drupe::Action::"get_workorder", resource);
+permit (principal, action == Drupe::Action::"list_workorders", resource);
+permit (principal, action == Drupe::Action::"get_workorder_tasks", resource);
+permit (principal, action == Drupe::Action::"get_workorder_costs", resource);
+permit (principal, action == Drupe::Action::"get_workorder_actuals_vs_planned", resource);
+permit (principal, action == Drupe::Action::"get_workorder_kpis", resource);
+permit (principal, action == Drupe::Action::"get_schedule_calendar", resource);
+permit (principal, action == Drupe::Action::"get_my_assigned_workorders", resource);
+permit (principal, action == Drupe::Action::"get_failure_codes", resource);
+
+// Closing: MAIN only, and only after a completed authority lookup in the last hour
+// that confirmed a GRANTED decision by a HUMAN for this same work order and site.
+@id("close_workorder_requires_human_approval")
+permit (principal, action == Drupe::Action::"close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"authority_get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::authority_get_approval_Output_decision::"GRANTED",
+    output.approver_kind: Drupe::authority_get_approval_Output_approver_kind::"HUMAN"
+  }
+};
+
+// The agent must never approve work orders itself.
+@id("never_approve_workorder")
+forbid (principal, action == Drupe::Action::"approve_workorder", resource);

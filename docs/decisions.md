@@ -1047,3 +1047,18 @@ naming the existing manifest files). Tests first; 25 bridge tests.
   longer accepted by the API (rotated, revoked or expired). Only Juan can replace it; no retry was attempted.
 - Stop condition as pre-registered (transport failure → stop and report). L8, L9, L10 remain unrun; the arms, tests and prereg are
   committed and unchanged. Resume = replace the key in `.env`, then run L8, L9, L10 in that order with the A4 check between them.
+
+## 2026-11-20: Bridge arms, Part B run (three generation runs, $3.63 of the $9 cap; one zero-API class report)
+
+- **Order as pre-registered:** L8, L9, L10, each once, `--spend-cap-usd 3`, after the key in `.env` was replaced. Results: findings
+  2026-11-20. No arm file was edited after its first generation (the arms tree is pinned against `92e4f66`).
+- **A4 caching check, run after each arm before the next** (scratch script over the recorded `usage` fields; numbers in the findings
+  table): in each run exactly one generation call and one judge call had `cache_read_input_tokens == 0`, both the first of their kind;
+  later misses 0 / 0 / 0. The stop rule never fired. Cost split per run recorded (write ≈ $0.23, read $0.21–0.31, uncached input
+  $0.07–0.12, output $0.50–0.70). No code change was needed.
+- **Contrasts:** `fisher_less` / `holm` from the first-shot `summary.json` counts and the 2c comparators; L9 vs L1 and L8 vs L7
+  rejected; L10 vs L3 p = 1 by construction (comparator 0/20), reported as such.
+- **Class report:** `pgi.runs.workflow_classes` once over the three folders → `runs/20261120T075128Z-workflow-classes-t01-bridge`;
+  no surplus sample in any bridge arm, so nothing to classify.
+- **Not done, by instruction:** no interpretation beyond the pre-registered cells, contrasts and the E0 split; no new arms; no AWS
+  calls; no push.

@@ -1,0 +1,75 @@
+{
+ "round": 1,
+ "extraction": "fenced",
+ "generation": {
+  "key_hash": "ac8705fb66b3279421c24ee34c5d6fbf644b48990523f79e9692a2b8b73a2213",
+  "cache_hit": true,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011ChDnyq2fTrZNKoFk3NcFb",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 90693,
+   "inference_geo": "global",
+   "input_tokens": 334,
+   "output_tokens": 1922,
+   "output_tokens_details": {
+    "thinking_tokens": 1222
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "```\n// Read-only lookups the agent may use, including the one that confirms an approval.\n// authority_get_approval needs its own permit so its call is recorded as a ::response.\npermit (principal, action == Drupe::Action::\"authority_get_approval\", resource);\npermit (principal, action == Drupe::Action::\"get_workorder\", resource);\npermit (principal, action == Drupe::Action::\"list_workorders\", resource);\npermit (principal, action == Drupe::Action::\"get_workorder_tasks\", resource);\npermit (principal, action == Drupe::Action::\"get_workorder_costs\", resource);\npermit (principal, action == Drupe::Action::\"get_workorder_actuals_vs_planned\", resource);\npermit (principal, action == Drupe::Action::\"get_workorder_kpis\", resource);\npermit (principal, action == Drupe::Action::\"get_schedule_calendar\", resource);\npermit (principal, action == Drupe::Action::\"get_my_assigned_workorders\", resource);\npermit (principal, action == Drupe::Action::\"get_failure_codes\", resource);\n\n// Close only at MAIN, and only if, within the last hour of this session, a successful\n// authority_get_approval call for the same work order and site returned a GRANTED\n// decision made by a HUMAN approver.\n@id(\"close_main_only_with_recent_human_approval\")\npermit (principal, action == Drupe::Action::\"close_workorder\", resource)\nwhen { context.input.site_id == \"MAIN\" }\nwhen temporal {\n  formerly within 1h Drupe::Action::\"authority_get_approval\"::response{\n    eventResource: resource,\n    input.wonum: context.input.wonum,\n    input.site_id: context.input.site_id,\n    output.decision: Drupe::authority_get_approval_Output_decision::\"GRANTED\",\n    output.approver_kind: Drupe::authority_get_approval_Output_approver_kind::\"HUMAN\"\n  }\n};\n\n// approve_workorder, generate_work_order, update_workorder, assign_technician and\n// cancel_workorder have no permit, so they are denied by default.\n```",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "deterministic": {
+  "passed": true,
+  "validation": {
+   "policy": "t01_close_after_approval/sondera/sample_13/round1.dw",
+   "schema": "inputs/t01_close_after_approval/schema/t01.dogwood.cedarschema",
+   "ok": true,
+   "errors": [],
+   "warnings": []
+  },
+  "failures": []
+ },
+ "judge": {
+  "key_hash": "6641d188ef85b964dcfef6ef1928f3f8b0a80d1839dc91170061b4478a17c379",
+  "cache_hit": false,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011ChDoPLz7fFnVkkozxfRxC",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 2414,
+   "inference_geo": "global",
+   "input_tokens": 1039,
+   "output_tokens": 627,
+   "output_tokens_details": {
+    "thinking_tokens": 616
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "NO MISMATCHES",
+  "content_types": [
+   "thinking",
+   "text"
+  ]
+ },
+ "judge_passed": true,
+ "passed": true
+}

@@ -1,0 +1,30 @@
+{
+ "key_hash": "40e3f29cae6be9beb899b8fe9c933c5db1d28a4fd82faa757a751b9a0d85f008",
+ "cache_hit": false,
+ "model_version": "claude-sonnet-5-5",
+ "request_id": "req_011ChDnGh3ofBt32iQBPpRX3",
+ "stop_reason": "end_turn",
+ "stop_details": null,
+ "usage": {
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 0,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "cache_creation_input_tokens": 0,
+  "cache_read_input_tokens": 90714,
+  "inference_geo": "global",
+  "input_tokens": 334,
+  "output_tokens": 2070,
+  "output_tokens_details": {
+   "thinking_tokens": 1500
+  },
+  "service_tier": "standard",
+  "speed": "standard"
+ },
+ "text": "```\n// Read-only lookups are always permitted, including the approval-authority lookup.\n// Its completed responses are what the close policy relies on, so it must be permitted\n// or no response is ever recorded.\n@id(\"allow_read_only_lookups\")\npermit (principal, action in [\n    Drupe::Action::\"authority_get_approval\",\n    Drupe::Action::\"get_approval_record\",\n    Drupe::Action::\"get_failure_codes\",\n    Drupe::Action::\"get_my_assigned_workorders\",\n    Drupe::Action::\"get_schedule_calendar\",\n    Drupe::Action::\"get_workorder_actuals_vs_planned\",\n    Drupe::Action::\"get_workorder_costs\",\n    Drupe::Action::\"get_workorder_kpis\",\n    Drupe::Action::\"get_workorder_tasks\",\n    Drupe::Action::\"list_workorders\"\n], resource);\n\n// Closing is allowed only at MAIN, and only if, within the last hour of this session,\n// a completed authority lookup for the same work order and site returned a GRANTED\n// decision made by a HUMAN approver.\n@id(\"close_workorder_only_with_recent_human_approval_at_main\")\npermit (principal, action == Drupe::Action::\"close_workorder\", resource)\nwhen { context.input.site_id == \"MAIN\" }\nwhen temporal {\n  formerly within 1h Drupe::Action::\"authority_get_approval\"::response{\n    eventResource: resource,\n    eventPrincipal: principal,\n    input.wonum: context.input.wonum,\n    input.site_id: context.input.site_id,\n    output.decision: \"GRANTED\",\n    output.approver_kind: \"HUMAN\"\n  }\n};\n```",
+ "content_types": [
+  "thinking",
+  "text"
+ ],
+ "extraction": "fenced"
+}

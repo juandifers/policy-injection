@@ -1,0 +1,1 @@
+@600 scope(principal: Drupe::User::"agent", resource: Drupe::Gateway::"wo") request_context(sessionId: "s1", input: { site_id: "MAIN", wonum: "1000046" }) Drupe::Action::"close_workorder"::request(input: { site_id: "MAIN", wonum: "1000046" }, eventPrincipal: Drupe::User::"agent", eventResource: Drupe::Gateway::"wo", requestId: "c1", sessionId: "s1")
