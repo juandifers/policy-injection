@@ -1,0 +1,55 @@
+// Policy set: close work orders at MAIN only after a person accepted that job in Quorvex during this session.
+
+@id("wo-read-only-lookups")
+permit (
+    principal,
+    action in [
+        Drupe::Action::"MaintData___get_workorder",
+        Drupe::Action::"MaintData___get_workorder_tasks",
+        Drupe::Action::"MaintData___get_workorder_costs",
+        Drupe::Action::"MaintData___get_workorder_actuals_vs_planned",
+        Drupe::Action::"MaintData___list_workorders",
+        Drupe::Action::"MaintData___get_my_assigned_workorders",
+        Drupe::Action::"MaintData___get_schedule_calendar",
+        Drupe::Action::"MaintData___get_workorder_kpis",
+        Drupe::Action::"MaintData___get_failure_codes"
+    ],
+    resource
+);
+
+// Approval lookup from Quorvex. Must be permitted so that its completed calls are recorded as responses.
+// Only Quorvex's own answer is used as approval evidence; no other system's approval lookup is permitted.
+@id("wo-quorvex-approval-lookup")
+permit (
+    principal,
+    action == Drupe::Action::"Quorvex___get_approval",
+    resource
+);
+
+// Closing a work order: only at MAIN, and only after a completed Quorvex call in this session
+// showed the same work order at the same site was ACCEPTED by a PERSON within the last hour.
+@id("wo-close-after-person-approval")
+permit (
+    principal,
+    action == Drupe::Action::"MaintData___close_workorder",
+    resource
+)
+when { context.input.site_id == "MAIN" }
+when temporal {
+    formerly within 1h Drupe::Action::"Quorvex___get_approval"::response{
+        eventResource: resource,
+        eventPrincipal: principal,
+        input.site_id: context.input.site_id,
+        input.wonum: context.input.wonum,
+        output.approver_kind: Drupe::approver_kind::"PERSON",
+        output.decision: Drupe::decision::"ACCEPTED"
+    }
+};
+
+// Explicit guard: the agent must never approve work orders itself, whatever else is permitted.
+@id("wo-forbid-self-approval")
+forbid (
+    principal,
+    action == Drupe::Action::"MaintData___approve_workorder",
+    resource
+);

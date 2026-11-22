@@ -27,7 +27,10 @@ schema rate (the denser calibration) priced as a cache write plus `max_tokens` p
 cached and of what is not (part 2 and the user message), and the expected cost with and without cache hits. Token sizes are
 the recorded `cache_creation_input_tokens` of an earlier call on the same prefix when one exists in the runs folder, else an
 estimate from character counts calibrated on recorded runs (CALIBRATION): schema text on the L1-S run (73,110 static chars for
-34,009 cached tokens), prose on the goal-level user message (1,106 chars for 334 tokens).
+34,009 cached tokens), prose on the goal-level user message (1,106 chars for 334 tokens). Output tokens per call: the mean of
+the recorded calls on the same prefix; else (2026-11-22) the mean over every recorded call of the same MODEL in the runs folder,
+whatever the prefix (Haiku's outputs are several times Sonnet's); else the Sonnet L1-S calibration. Both run layouts are read
+(temporal-clean `<scn>/<gen>/sample_*/`, e1-instances `<cell>/seed_*/round*.json`).
 """
 
 from __future__ import annotations
@@ -220,24 +223,28 @@ def _block_report(b: dict) -> dict:
     return {"heading": b["text"].splitlines()[0][:60], "kind": _kind(b["text"]), "chars": len(b["text"]), "tokens": estimate_tokens(b["text"], _kind(b["text"]))}
 
 
+def _call_records(runs_dir: Path):
+    """Every generation / judge call record in the runs folder, both layouts: (run name, part, record, run config)."""
+    runs_dir = Path(runs_dir)
+    if not runs_dir.is_dir():
+        return
+    for run in sorted(p for p in runs_dir.iterdir() if p.is_dir()):
+        cfg_path = run / "config.json"
+        cfg = json.loads(cfg_path.read_text()) if cfg_path.is_file() else {}
+        for p in run.glob("*/*/sample_*/response.json"):
+            yield run.name, "generation", json.loads(p.read_text()), cfg
+        for pattern in ("*/*/sample_*/round*.json", "*/seed_*/round*.json"):
+            for p in run.glob(pattern):
+                r = json.loads(p.read_text())
+                for part in ("generation", "judge"):
+                    if r.get(part):
+                        yield run.name, part, r[part], cfg
+
+
 def recorded_prefix(runs_dir: Path, h: str) -> dict | None:
     """Recorded calls on this prefix in the runs folder: the prefix's token count (a cache write, else a read), the number
     of calls and their mean output tokens, and the run ids. None when no call record carries the hash."""
-    runs_dir = Path(runs_dir)
-    if not runs_dir.is_dir():
-        return None
-    recs: list[tuple[str, dict]] = []
-    for run in sorted(p for p in runs_dir.iterdir() if p.is_dir()):
-        for p in run.glob("*/*/sample_*/response.json"):
-            r = json.loads(p.read_text())
-            if r.get("prefix_hash") == h:
-                recs.append((run.name, r.get("usage") or {}))
-        for p in run.glob("*/*/sample_*/round*.json"):
-            r = json.loads(p.read_text())
-            for part in ("generation", "judge"):
-                c = r.get(part) or {}
-                if c.get("prefix_hash") == h:
-                    recs.append((run.name, c.get("usage") or {}))
+    recs = [(run, c.get("usage") or {}) for run, _, c, _ in _call_records(runs_dir) if c.get("prefix_hash") == h]
     if not recs:
         return None
     writes = [int(u["cache_creation_input_tokens"]) for _, u in recs if u.get("cache_creation_input_tokens")]
@@ -245,6 +252,21 @@ def recorded_prefix(runs_dir: Path, h: str) -> dict | None:
     outs = [int(u.get("output_tokens") or 0) for _, u in recs]
     return {"prefix_tokens": writes[0] if writes else (reads[0] if reads else None), "calls": len(recs),
             "output_tokens_mean": sum(outs) / len(outs), "run_ids": sorted({r for r, _ in recs})}
+
+
+def recorded_output_mean(runs_dir: Path, model: str, part: str = "generation") -> dict | None:
+    """Mean output tokens over every recorded call of `part` by this model in the runs folder (any prefix; one entry per cache
+    key, so replays are not double counted), or None. The model is the run config's; a record without one is skipped."""
+    seen: dict[str, int] = {}
+    runs: set[str] = set()
+    for run, p, c, cfg in _call_records(runs_dir):
+        if p != part or cfg.get("model") != model or not c.get("key_hash"):
+            continue
+        seen[c["key_hash"]] = int((c.get("usage") or {}).get("output_tokens") or 0)
+        runs.add(run)
+    if not seen:
+        return None
+    return {"mean": sum(seen.values()) / len(seen), "calls": len(seen), "run_ids": sorted(runs)}
 
 
 def _prefix_report(model: str, params: dict, runs_dir: Path) -> tuple[dict, dict | None]:
@@ -285,6 +307,8 @@ def plan(inputs: DogwoodInputs, ncfg: dogwood.NaiveDogwoodConfig, scfg: dogwood.
     uncached_gen = _uncached(params, messages[0]["content"])
     if rec:
         out_mean = {"value": rec["output_tokens_mean"], "source": f"recorded: {rec['calls']} generation call(s) with this prefix in {', '.join(rec['run_ids'])}"}
+    elif by_model := recorded_output_mean(runs_dir, model):
+        out_mean = {"value": by_model["mean"], "source": f"recorded: {by_model['calls']} generation call(s) by {model} on other prefixes in {', '.join(by_model['run_ids'])}"}
     else:
         out_mean = {"value": CALIBRATION["generation_output_tokens_mean"],
                     "source": f"estimate: mean output tokens of the naive generation calls of the L1-S run ({CALIBRATION['sources']['schema_and_generation_output']})"}
@@ -301,7 +325,8 @@ def plan(inputs: DogwoodInputs, ncfg: dogwood.NaiveDogwoodConfig, scfg: dogwood.
         base = _uncached(jp, jm[0]["content"])
         policy_tokens = round(out_mean["value"])   # the policy under review stands in at one generation's output size
         uncached_judge = {**base, "policy_tokens_assumed": policy_tokens, "tokens": base["tokens"] + policy_tokens}
-        judge_out = jrec["output_tokens_mean"] if jrec else CALIBRATION["judge_output_tokens_mean"]
+        jmodel = recorded_output_mean(runs_dir, model, "judge")
+        judge_out = jrec["output_tokens_mean"] if jrec else jmodel["mean"] if jmodel else CALIBRATION["judge_output_tokens_mean"]
     out = out_mean["value"]
     with_cache = {k: _cost(model, gen["tokens"], uncached_gen["tokens"], out, g, True) +
                   (_cost(model, judge["tokens"], uncached_judge["tokens"], judge_out, j, True) if judge else 0.0)

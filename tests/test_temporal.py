@@ -240,3 +240,70 @@ def test_tool_versions_name_the_interpreter():
     v = temporal.tool_versions()
     assert v["pydogwood"] == "0.1.1"
     assert v["dogwood"] == "1.1.0"
+
+
+# ---------------------------------------------------------------- explicit denies (decision 2026-11-22)
+FORBID = '@id("no-read")\nforbid (principal, action == Drupe::Action::"read_document", resource);\n'
+
+
+def _read_action(text: str) -> str:
+    """The action of the fixture's permit, so the forbid below applies to the same decision events."""
+    import re
+    return re.search(r'action\s*==\s*Drupe::Action::"([^"]+)"', text).group(1)
+
+
+def test_gold_plus_a_forbid_is_a_scored_explicit_deny(tmp_path):
+    """A deny that cites only forbid rules is a legitimate explicit deny (Cedar semantics), not an oracle error: the forbid's
+    0-based statement index is cited, with no evaluation error, placed last or first."""
+    gold = POLICY.read_text()
+    forbid = FORBID.replace("read_document", _read_action(gold))
+    last = write(tmp_path, "last.dw", gold + "\n" + forbid)
+    first = write(tmp_path, "first.dw", forbid + "\n" + gold)
+    n = len(temporal.rule_effects(gold))
+    v_last = temporal.replay(last, SCHEMA, trace(tmp_path, "ok.log", 0, 1))
+    v_first = temporal.replay(first, SCHEMA, trace(tmp_path, "ok2.log", 0, 1))
+    assert [(v.allowed, v.determining_rules, v.errors) for v in v_last] == [(False, (n,), ())]
+    assert [(v.allowed, v.determining_rules, v.errors) for v in v_first] == [(False, (0,), ())]
+    assert temporal.decision(last, SCHEMA, trace(tmp_path, "ok3.log", 0, 1)) is False
+
+
+def test_a_permit_only_policy_never_yields_a_cited_deny(tmp_path):
+    assert set(temporal.rule_effects(POLICY.read_text())) == {"permit"}
+    verdicts = temporal.replay(POLICY, SCHEMA, TRACE)
+    denies = [v for v in verdicts if not v.allowed]
+    assert denies and all(v.determining_rules == () and v.errors == () for v in denies)
+    assert all(v.determining_rules != () for v in verdicts if v.allowed)
+
+
+def test_evaluation_error_still_raises_with_a_forbid_present(tmp_path):
+    gold = POLICY.read_text()
+    pol = write(tmp_path, "doc.dw", gold.replace("when temporal {", 'when { context.input.document == "doc1" }\nwhen temporal {', 1)
+                + "\n" + FORBID.replace("read_document", _read_action(gold)))
+    broken = LINES[1].replace('request_context(input: { document: "doc1", user: "alice" })', 'request_context(input: { user: "alice" })')
+    t = write(tmp_path, "noctx.log", LINES[0] + "\n" + broken + "\n")
+    with pytest.raises(OracleError, match="evaluation errors"):
+        temporal.replay(pol, SCHEMA, t)
+
+
+def test_check_verdicts_rejects_a_deny_citing_a_permit_and_an_allow_citing_nothing():
+    V = temporal.Verdict
+    ok = (V(0, 100, True, (0,), ()), V(1, 200, False, (), ()), V(2, 300, False, (1,), ()), V(3, 400, False, (1, 2), ()))
+    temporal.check_verdicts(ok, ("permit", "forbid", "forbid"), "x")
+    with pytest.raises(OracleError, match="not forbids"):
+        temporal.check_verdicts((V(0, 100, False, (0,), ()),), ("permit", "forbid"), "x")
+    with pytest.raises(OracleError, match="not forbids"):
+        temporal.check_verdicts((V(0, 100, False, (1, 0), ()),), ("permit", "forbid"), "x")   # one of two cited rules is a permit
+    with pytest.raises(OracleError, match="not forbids"):
+        temporal.check_verdicts((V(0, 100, False, (5,), ()),), ("permit", "forbid"), "x")      # index the policy has no rule for
+    with pytest.raises(OracleError, match="allow citing no determining rule"):
+        temporal.check_verdicts((V(0, 100, True, (), ()),), ("permit",), "x")
+    with pytest.raises(OracleError, match="evaluation errors"):
+        temporal.check_verdicts((V(0, 100, False, (1,), ("boom",)),), ("permit", "forbid"), "x")
+
+
+def test_rule_effects_reads_statement_order_and_ignores_comments_and_strings():
+    text = ('// permit (this is a comment)\n@id("forbid (not a rule)")\nforbid (principal, action, resource);\n'
+            'permit (principal, action == Drupe::Action::"permit (x)", resource) when { context.input.note == "forbid (" };\n'
+            "permit(principal, action, resource);\n")
+    assert temporal.rule_effects(text) == ("forbid", "permit", "permit")
+    assert temporal.rule_effects("") == ()

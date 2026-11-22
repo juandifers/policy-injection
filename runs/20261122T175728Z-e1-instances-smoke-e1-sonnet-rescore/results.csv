@@ -1,0 +1,3 @@
+model,seed,C1,C1.first_shot,C1.declined,C1.form,C1.valid,C1.rounds,C5,C5.first_shot,C5.declined,C5.form,C5.valid,C5.rounds
+claude-sonnet-5-5,1018,1,1,0,either_source,1,1,0,0,0,designated_only,1,1
+claude-sonnet-5-5,1019,1,1,0,either_source,1,1,0,0,0,designated_only,1,1

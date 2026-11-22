@@ -26,7 +26,7 @@ from pgi.llm.anthropic_provider import AnthropicProvider
 from pgi.llm.cache import CachedLLM
 from pgi.llm.prefix import prefix_hash
 from pgi.llm.pricing import PRICES, cost
-from pgi.runs.cache_watch import (CALIBRATION, CacheBreakerTripped, ConcurrentPrefixCall, PrefixChanged, PrefixWatch, cost_split,
+from pgi.runs.cache_watch import (CALIBRATION, recorded_output_mean, CacheBreakerTripped, ConcurrentPrefixCall, PrefixChanged, PrefixWatch, cost_split,
                                   estimate_tokens, plan, plan_text, recorded_prefix)
 from pgi.runs.clean import _call_record
 from pgi.runs.temporal_clean import SpendCapExceeded, _Budget
@@ -363,3 +363,39 @@ def test_config_records_prefix_hashes_and_watch_status(tmp_path, monkeypatch):
     summary = json.loads((run / "summary.json").read_text())
     assert summary["naive"]["cache"]["hit_rate"] == {"k": 0, "n": 1} and summary["naive"]["cache"]["cost_split"]["tokens"]["cache_write"] == 100
     assert "## Prompt cache" in (run / "summary.md").read_text()
+
+
+def _e1_run(runs: Path, name: str, model: str, h: str, outs: list[int], key_prefix: str) -> None:
+    run = runs / name
+    (run / "C1").mkdir(parents=True)
+    json.dump({"model": model}, (run / "config.json").open("w"))
+    for i, out in enumerate(outs):
+        d = run / "C1" / f"seed_{1000 + i}"
+        d.mkdir()
+        json.dump({"round": 1, "generation": {"key_hash": f"{key_prefix}{i}", "prefix_hash": h, "cache_hit": False, "usage": usage(read=35000, out=out)}},
+                  (d / "round1.json").open("w"))
+
+
+def test_recorded_prefix_and_model_means_read_the_e1_layout(tmp_path):
+    runs = tmp_path / "runs"
+    _e1_run(runs, "20261122T000000Z-e1-instances-a", "claude-haiku-5-5", "a" * 64, [9000, 11000], "k")
+    _e1_run(runs, "20261122T000001Z-e1-instances-b", "claude-haiku-5-5", "b" * 64, [9000, 11000], "k")      # a replay of the same keys: not double counted
+    _e1_run(runs, "20261122T000002Z-e1-instances-c", "claude-sonnet-5-5", "c" * 64, [1500], "s")
+    r = recorded_prefix(runs, "a" * 64)
+    assert r["prefix_tokens"] == 35000 and r["calls"] == 2 and r["output_tokens_mean"] == 10000
+    m = recorded_output_mean(runs, "claude-haiku-5-5")
+    assert m == {"mean": 10000.0, "calls": 2, "run_ids": ["20261122T000000Z-e1-instances-a", "20261122T000001Z-e1-instances-b"]}
+    assert recorded_output_mean(runs, "claude-sonnet-5-5")["mean"] == 1500 and recorded_output_mean(runs, "claude-opus-5-5") is None
+    assert recorded_output_mean(runs, "claude-haiku-5-5", "judge") is None
+
+
+def test_plan_falls_back_to_the_models_recorded_mean_before_the_calibration(tmp_path):
+    inp = load_dogwood_inputs(T01, intent="goal-level", arm="L1")
+    haiku = "claude-haiku-5-5"
+    ncfg, scfg = NaiveDogwoodConfig(haiku), SonderaDogwoodConfig(haiku)
+    _e1_run(tmp_path / "runs", "20261122T000000Z-e1-instances-a", haiku, "a" * 64, [9000, 11000], "k")
+    r = plan(inp, ncfg, scfg, ["naive"], 3, tmp_path / "runs")
+    assert r["prefixes"]["generation"]["source"] == "estimate"    # no recorded call on THIS prefix
+    assert r["output_tokens_mean"]["value"] == 10000 and r["output_tokens_mean"]["source"].startswith("recorded: 2 generation call(s) by claude-haiku-5-5 on other prefixes")
+    r2 = plan(inp, NaiveDogwoodConfig(MODEL), SonderaDogwoodConfig(MODEL), ["naive"], 3, tmp_path / "runs")
+    assert r2["output_tokens_mean"]["value"] == CALIBRATION["generation_output_tokens_mean"]   # nothing recorded for Sonnet here

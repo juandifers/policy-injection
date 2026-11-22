@@ -244,6 +244,7 @@ def run_one(llm: CachedLLM, inputs: DogwoodInputs, fr: Frame, cfg: dogwood.Valid
     for r in res.rounds:
         _, params = dogwood.build_request(inputs, cfg.naive())
         rec = _record(r.completion, cfg.model, deadline_s, expiries_before)
+        rec["truncated"] = rec["stop_reason"] == "max_tokens"   # the completion hit max_tokens: cut off, whatever extraction found
         _dump(d / f"round{r.index}.json", {"round": r.index, "extraction": r.extraction, "generation": rec,
                                            "deterministic": r.deterministic.as_dict(), "unresolved": list(r.unresolved),
                                            "request": _request_text(r.request_messages, params)})
@@ -252,9 +253,12 @@ def run_one(llm: CachedLLM, inputs: DogwoodInputs, fr: Frame, cfg: dogwood.Valid
     first = score_stage(res.first.policy_path, res.first.completion.text, fr, list(res.first.unresolved), cat, roles)
     final = score_stage(d / "policy.dw", res.final.completion.text, fr, list(res.final.unresolved), cat, roles)
     oracle = {"rounds_used": res.rounds_used, "passed": res.passed, "first_shot": first, "final": final}
+    truncated = [r.index for r, rec in zip(res.rounds, calls) if rec["truncated"]]
+    oracle["truncated_rounds"], oracle["final_truncated"] = truncated, calls[-1]["truncated"]
     _dump(d / "oracle.json", oracle)
     return {"cell": cell.name, "seed": seed, "level": cell.level, "variant": cell.variant, "decline": cell.decline,
-            "rounds": res.rounds_used, "passed": res.passed, "calls": calls, "first_shot": first, "final": final}
+            "rounds": res.rounds_used, "passed": res.passed, "calls": calls, "first_shot": first, "final": final,
+            "truncated_rounds": truncated, "final_truncated": calls[-1]["truncated"]}
 
 
 # ---- summaries
@@ -290,6 +294,10 @@ def summarize_cell(model: str, rows: list[dict], workflows: list[str]) -> dict:
         }
     calls = [c for r in rows for c in r["calls"]]
     fresh = [c for c in calls if not c["cache_hit"]]
+    out["stop_reasons"] = dict(sorted(Counter(str(c["stop_reason"]) for c in calls).items()))
+    out["max_tokens_stops"] = sum(c["stop_reason"] == "max_tokens" for c in calls)
+    out["samples_truncated"] = [r["seed"] for r in rows if r["truncated_rounds"]]
+    out["samples_final_truncated"] = [r["seed"] for r in rows if r["final_truncated"]]
     usage_sum = lambda cs: {k: sum(((c["usage"] or {}).get(k) or 0) for c in cs) for k in ("input_tokens", "cache_creation_input_tokens", "cache_read_input_tokens", "output_tokens")}
     out["calls"], out["api_calls"] = len(calls), len(fresh)
     out["cost_usd_all_calls"] = round(sum(cost(model, c["usage"] or {}) for c in calls), 4)
@@ -327,7 +335,8 @@ def write_results_csv(path: Path, model: str, cells: list[str], rows: list[dict]
 
 def write_samples_csv(path: Path, model: str, rows: list[dict]) -> None:
     cols = ["model", "cell", "seed", "level", "variant", "decline", "stage", "valid", "scored", "mirror_sufficient", "exact", "silent_reads_mirror",
-            "silent_all_allow", "workflow_deficit", "admitted", "declined", "form", "form_by_order", "rounds", "surplus", "deficit"]
+            "silent_all_allow", "workflow_deficit", "admitted", "declined", "form", "form_by_order", "rounds", "surplus", "deficit",
+            "truncated_rounds", "final_truncated"]
     fmt = lambda v: "" if v is None else (int(v) if isinstance(v, bool) else ";".join(v) if isinstance(v, list) else v)
     with open(path, "w", newline="") as f:
         w = csv.writer(f)
@@ -338,7 +347,7 @@ def write_samples_csv(path: Path, model: str, rows: list[dict]) -> None:
                 w.writerow([model, r["cell"], r["seed"], r["level"], r["variant"], int(r["decline"]), stage, int(s["valid"]), int(s["scored"]),
                             fmt(s["mirror_sufficient"]), fmt(s["exact"]), fmt(s["silent_reads_mirror"]), fmt(s["silent_all_allow"]),
                             fmt(s["workflow_deficit"]), int(s["admission"]["admitted"]), int(s["declined"]), s["form"], s["form_by_order"],
-                            r["rounds"], fmt(s["surplus"]), fmt(s["deficit"])])
+                            r["rounds"], fmt(s["surplus"]), fmt(s["deficit"]), ";".join(map(str, r["truncated_rounds"])), int(r["final_truncated"])])
 
 
 def _pct(r: dict) -> str:
@@ -369,10 +378,12 @@ def markdown(config: dict, summary: dict, instances: list[dict]) -> str:
                          f"| {s['silent_reads_mirror']['k']}/{s['scored']} | {s['silent_all_allow']['k']}/{s['scored']} "
                          f"| {wd.get('direct', 0)} / {wd.get('reads_mirror', 0)} / {wd.get('mirror_negative', 0)} | {s['admitted']['k']}/{s['admitted']['n']} "
                          f"| {s['declined']['k']}/{s['declined']['n']} | {forms or '—'} |")
-    lines += ["", "## Rounds, cache and spend", "", "| cell | rounds used | api calls | cache hits | cost this run $ | expiries |", "|---|---|---|---|---|---|"]
+    lines += ["", f"## Rounds, stop reasons (max_tokens = {config['request']['max_tokens']}), cache and spend", "",
+              "| cell | rounds used | stop reasons | max_tokens stops | samples truncated (final) | api calls | cache hits | cost this run $ | expiries |", "|---|---|---|---|---|---|---|---|---|"]
     for c in cells:
         s = summary[c]
-        lines.append(f"| {c} | {s['rounds']} | {s['api_calls']} | {s['cache']['hit_rate']['k']}/{s['cache']['hit_rate']['n']} | {s['cost_usd_this_run']:.3f} | {s['deadline_expiries']} |")
+        lines.append(f"| {c} | {s['rounds']} | {s['stop_reasons']} | {s['max_tokens_stops']} | {len(s['samples_truncated'])} ({len(s['samples_final_truncated'])}) "
+                     f"| {s['api_calls']} | {s['cache']['hit_rate']['k']}/{s['cache']['hit_rate']['n']} | {s['cost_usd_this_run']:.3f} | {s['deadline_expiries']} |")
     lines += ["", "## Instances", "", "| seed | designated | mirror | vocabulary | paraphrase | schema order (designated is) |", "|---|---|---|---|---|---|"]
     for i in instances:
         lines.append(f"| {i['seed']} | {i['auth']} | {i['mirror']} | {i['vocab']} | {i['paraphrase']} | {i['designated_position']} |")
@@ -397,7 +408,7 @@ def main(argv: list[str] | None = None) -> Path | None:
     p.add_argument("--deadline-s", type=float, default=DEFAULT_DEADLINE_S)
     p.add_argument("--max-rounds", type=int, default=3)
     p.add_argument("--effort", default="high")
-    p.add_argument("--max-tokens", type=int, default=16000)
+    p.add_argument("--max-tokens", type=int, default=16000, help="output cap per call (recorded in config); Haiku runs use 32000 (decision 2026-11-22), Sonnet 16000")
     args = p.parse_args(argv)
 
     spec = load_cells(args.scenario / "cells.yaml")

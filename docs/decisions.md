@@ -1296,3 +1296,31 @@ suite, the mutants and the intent levels). Reused from `7d90a39`, not rebuilt: `
   rewritten); its `instances.json` `variants.*.actions` carries the correct names.
 - **Expected vs observed:** prefix 34,862 tokens (plan estimated ~34,090); every later call read exactly that amount, repairs included; uncached
   input ~0.9k on a first shot as expected, 2.7k on the one repair (Juan's 1.7k assumed a ~2k-token previous attempt; Haiku's was ~9k).
+
+## 2026-11-22: Oracle accepts explicit denies cited to forbid rules; truncation recorded; per-model --plan means (no API call)
+
+- **Old invariant.** `temporal.replay` raised whenever a verdict's decision disagreed with "cites a determining rule": an allow had to
+  cite one, a deny had to cite none. That assumed permit-only policies, which every gold and every generated policy before the E1 smoke
+  had been.
+- **Why it was wrong.** In Cedar (and the Dogwood interpreter) a deny cites the forbid rules that matched. Juan reproduced it: the typed t01
+  gold plus one forbid, replayed on t02_rejected, returns deny with the forbid's index and no errors. The unscored Haiku smoke sample (C1,
+  seed 1018, final) cited rules 3 and 4; both are forbids (`no-close-after-recent-refusal-*`), checked before changing anything. Nothing
+  else in `runs/` had hit the refusal (grep over every oracle.json / summary.json: only the Haiku smoke run).
+- **New rule** (`temporal.check_verdicts`, `temporal.rule_effects`; tests in tests/test_temporal.py): evaluation errors still raise; an
+  allow citing no rule still raises; a deny citing rules is accepted iff every cited rule is a forbid, else it raises (a cited permit, or an
+  index the policy has no rule for). The interpreter does not expose rule effects, so they come from the policy text in statement order
+  (string literals and comments removed first); the interpreter's indices are 0-based in that order (checked on pydogwood 0.1.1 with a
+  forbid placed last and first). The t01/t02 suites and every stored score are unaffected: a permit-only policy never yields a cited deny.
+- **Re-scores, cache-only** (0 API calls): `runs/20261122T175728Z-e1-instances-smoke-e1-sonnet-rescore` (unchanged: C1 2/2 mirror_sufficient,
+  C5 2/2 exact) and `runs/20261122T175808Z-e1-instances-smoke-e1-haiku-rescore`. The Haiku C1 seed 1018 sample is now scored: valid, rounds 2
+  (round 1 truncated at max_tokens), mirror_sufficient (M1, M3, M4, M5, M6 allowed), not exact, either_source, not admitted; its forbid
+  (no close after a recent refusal by either system) also denies P4, so the mirror_negative workflow fails while direct and reads_mirror
+  pass; its three forbid-cited traces (P4, M2, N1) are denies. Haiku C1 2/2 mirror_sufficient, C5 2/2 exact. Smoke evidence only.
+- **Output cap.** `--max-tokens` of the instance runner (default unchanged, 16000) is recorded in `request.max_tokens` and the generator
+  config; every call record carries `stop_reason` and `truncated` (stop_reason == max_tokens); sample rows and oracle.json carry
+  `truncated_rounds` and `final_truncated`; the per-cell summary counts `stop_reasons`, `max_tokens_stops`, `samples_truncated`,
+  `samples_final_truncated`; samples.csv has the two truncation columns. Decision: Haiku runs use `--max-tokens 32000`, Sonnet stays at 16000
+  (one of four Haiku first shots hit 16,000 in the smoke test; Sonnet's outputs were 1.4k–2.0k).
+- **--plan.** Output tokens per call: recorded calls on the same prefix; else the mean over every recorded call of the same model in the runs
+  folder (any prefix, one entry per cache key); else the Sonnet L1-S calibration. Both run layouts are read. With the smoke runs on disk,
+  a Haiku plan now uses Haiku's recorded mean instead of Sonnet's 1,939.

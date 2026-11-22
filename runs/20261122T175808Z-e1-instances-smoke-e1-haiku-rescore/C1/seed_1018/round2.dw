@@ -1,0 +1,115 @@
+// Read-only lookups: no state change, so they need no approval evidence.
+// The approval lookups must be permitted so that their completed responses are recorded.
+@id("read-only-lookups")
+permit (
+  principal,
+  action in [
+    Drupe::Action::"MaintData___get_failure_codes",
+    Drupe::Action::"MaintData___get_my_assigned_workorders",
+    Drupe::Action::"MaintData___get_schedule_calendar",
+    Drupe::Action::"MaintData___get_workorder",
+    Drupe::Action::"MaintData___get_workorder_actuals_vs_planned",
+    Drupe::Action::"MaintData___get_workorder_costs",
+    Drupe::Action::"MaintData___get_workorder_kpis",
+    Drupe::Action::"MaintData___get_workorder_tasks",
+    Drupe::Action::"MaintData___list_workorders",
+    Drupe::Action::"Quorvex___get_approval",
+    Drupe::Action::"Tamsora___get_approval"
+  ],
+  resource
+);
+
+// Close at MAIN only, when a PERSON-accepted approval of this same work order was
+// recorded (completed response) within the last hour in Quorvex, and no OPEN decision
+// was recorded for it after that approval.
+@id("close-after-quorvex-person-approval")
+permit (
+  principal,
+  action == Drupe::Action::"MaintData___close_workorder",
+  resource
+)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Quorvex___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+  && !Drupe::Action::"Quorvex___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"OPEN"
+  } since within 1h Drupe::Action::"Quorvex___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};
+
+// Same rule for a PERSON-accepted approval recorded by Tamsora.
+@id("close-after-tamsora-person-approval")
+permit (
+  principal,
+  action == Drupe::Action::"MaintData___close_workorder",
+  resource
+)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Tamsora___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+  && !Drupe::Action::"Tamsora___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"OPEN"
+  } since within 1h Drupe::Action::"Tamsora___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};
+
+// A refusal of this job in Quorvex within the last hour blocks closing, even if an
+// approval is also present (cross-system conflict).
+@id("no-close-after-recent-refusal-quorvex")
+forbid (
+  principal,
+  action == Drupe::Action::"MaintData___close_workorder",
+  resource
+)
+when temporal {
+  formerly within 1h Drupe::Action::"Quorvex___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"REFUSED"
+  }
+};
+
+// The same refusal check for Tamsora.
+@id("no-close-after-recent-refusal-tamsora")
+forbid (
+  principal,
+  action == Drupe::Action::"MaintData___close_workorder",
+  resource
+)
+when temporal {
+  formerly within 1h Drupe::Action::"Tamsora___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"REFUSED"
+  }
+};

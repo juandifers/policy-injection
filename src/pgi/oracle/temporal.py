@@ -38,6 +38,7 @@ import yaml
 from pgi.oracle.errors import OracleError
 
 _TS = re.compile(r"^@(-?\d+)\s")
+_COMMENT = re.compile(r"//[^\n]*")
 _SUITE_KEYS = {"traces"}
 _TRACE_KEYS = {"id", "file", "contract", "note"}
 _CONTRACT = {"allow": True, "deny": False}
@@ -178,13 +179,37 @@ def replay(policy: Path, schema: Path, trace: Path, event_schema: Path | None = 
     verdicts = tuple(Verdict(v["index"], v["timestamp"], v["verdict"] == "allow",
                              tuple(v["determining_rules"]), tuple(v["errors"]))
                      for v in json.loads(out)["verdicts"])
+    check_verdicts(verdicts, rule_effects(Path(policy).read_text()), f"{trace} under {policy}")
+    return verdicts
+
+
+_STRING = re.compile(r'"(?:[^"\\]|\\.)*"')
+_RULE = re.compile(r"\b(permit|forbid)\s*\(")
+
+
+def rule_effects(policy_text: str) -> tuple[str, ...]:
+    """The effect (permit / forbid) of every top-level rule of a Dogwood policy text, in statement order: the interpreter's
+    `determining_rules` are 0-based indices into this order (checked on pydogwood 0.1.1: a forbid placed last is cited as
+    index len(rules) - 1, placed first as 0). The interpreter does not expose effects, so they are read from the text: string
+    literals and comments are removed first, so a `permit (` inside either is not a rule."""
+    clean = _COMMENT.sub("", _STRING.sub('""', policy_text))
+    return tuple(m.group(1) for m in _RULE.finditer(clean))
+
+
+def check_verdicts(verdicts: tuple[Verdict, ...], effects: tuple[str, ...], where: str) -> None:
+    """Invariant 6 on a verdict stream (decision 2026-11-22). Raises OracleError when a decision had evaluation errors; when
+    an allow cites no determining rule; when a deny cites a rule that is not a forbid (or an index the policy has no rule
+    for). A deny with no cited rule is the default deny; a deny whose every cited rule is a forbid is an explicit deny."""
     for v in verdicts:
         if v.errors:
-            raise OracleError(f"{trace} under {policy}: decision {v.index} at @{v.timestamp} "
-                              f"had evaluation errors {list(v.errors)} (not a deny)")
-        if v.allowed != (v.determining_rules != ()):
-            raise OracleError(f"{trace} under {policy}: verdict {v.allowed} with rules {v.determining_rules}")
-    return verdicts
+            raise OracleError(f"{where}: decision {v.index} at @{v.timestamp} had evaluation errors {list(v.errors)} (not a deny)")
+        if v.allowed and not v.determining_rules:
+            raise OracleError(f"{where}: decision {v.index} at @{v.timestamp} is an allow citing no determining rule")
+        if not v.allowed and v.determining_rules:
+            cited = {i: (effects[i] if 0 <= i < len(effects) else "missing") for i in v.determining_rules}
+            if bad := {i: e for i, e in cited.items() if e != "forbid"}:
+                raise OracleError(f"{where}: decision {v.index} at @{v.timestamp} is a deny citing rule(s) that are not forbids "
+                                  f"{bad} (rules {list(effects)}); not a legitimate explicit deny")
 
 
 def decision(policy: Path, schema: Path, trace: Path, event_schema: Path | None = None) -> bool:

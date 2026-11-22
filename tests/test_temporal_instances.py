@@ -153,8 +153,13 @@ class Canned:
         self.calls += 1
         self.requests.append((messages, params))
         text = self.texts.pop(0)
+        stop = "end_turn"
+        if isinstance(text, tuple):   # (text, stop_reason)
+            text, stop = text
         u = dict(GOLD_TOKENS) if self.calls > 1 else {"cache_creation_input_tokens": PREFIX_TOKENS, "cache_read_input_tokens": 0, "input_tokens": 900, "output_tokens": 1500}
-        return {"model": f"{model}-v1", "content": [{"type": "text", "text": text}], "stop_reason": "end_turn", "usage": u}
+        if stop == "max_tokens":
+            u = u | {"output_tokens": params["max_tokens"]}
+        return {"model": f"{model}-v1", "content": [{"type": "text", "text": text}], "stop_reason": stop, "usage": u}
 
     def text(self, raw):
         return raw["content"][0]["text"]
@@ -320,6 +325,25 @@ def test_invalid_first_shot_then_repair_gives_two_rounds_and_a_d0_cell_is_scored
     s = json.loads((run / "summary.json").read_text())["C1"]
     assert s["rounds"] == {2: 1} or s["rounds"] == {"2": 1}
     assert s["first_shot"]["valid"]["k"] == 0 and s["final"]["valid"]["k"] == 1
+    assert s["stop_reasons"] == {"end_turn": 2} and s["max_tokens_stops"] == 0 and s["samples_truncated"] == [] and o["truncated_rounds"] == [] and o["final_truncated"] is False
+
+
+def test_max_tokens_is_recorded_and_a_truncated_first_shot_is_marked(tmp_path, monkeypatch, scenario):
+    gold = _instance_text(scenario, 0, "plain", "gold.dw")
+    canned = Canned([("```dogwood\npermit (principal, action == Drupe::Action::\"MaintData___close_workorder\", resource) when temporal {", "max_tokens"), fence(gold)])
+    run = _run(tmp_path, monkeypatch, scenario, canned, ["C4"], [0], "trunc", extra=["--max-tokens", "32000"])
+    cfg = json.loads((run / "config.json").read_text())
+    assert cfg["request"]["max_tokens"] == 32000 and cfg["generator"]["max_tokens"] == 32000 and canned.requests[0][1]["max_tokens"] == 32000
+    r1 = json.loads((run / "C4" / "seed_0" / "round1.json").read_text())["generation"]
+    r2 = json.loads((run / "C4" / "seed_0" / "round2.json").read_text())["generation"]
+    assert (r1["stop_reason"], r1["truncated"], r1["usage"]["output_tokens"]) == ("max_tokens", True, 32000) and (r2["stop_reason"], r2["truncated"]) == ("end_turn", False)
+    o = json.loads((run / "C4" / "seed_0" / "oracle.json").read_text())
+    assert o["truncated_rounds"] == [1] and o["final_truncated"] is False and o["rounds_used"] == 2 and o["final"]["exact"] is True
+    s = json.loads((run / "summary.json").read_text())["C4"]
+    assert s["stop_reasons"] == {"end_turn": 1, "max_tokens": 1} and s["max_tokens_stops"] == 1 and s["samples_truncated"] == [0] and s["samples_final_truncated"] == []
+    long = list(__import__("csv").DictReader(open(run / "samples.csv")))
+    assert long[0]["truncated_rounds"] == "1" and long[0]["final_truncated"] == "0"
+    assert "max_tokens = 32000" in (run / "summary.md").read_text()
 
 
 def test_resolver_precheck_aborts_before_any_call(tmp_path, monkeypatch, scenario):
