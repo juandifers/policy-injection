@@ -326,7 +326,7 @@ def summarize(model: str, results: list[dict], fr: Frame) -> dict:
         # Phase 3 prompt-cache telemetry over this run's fresh calls: hit = cache_read_input_tokens > 0
         "cache": {"hit_rate": {"k": sum(1 for c in fresh if ((c["usage"] or {}).get("cache_read_input_tokens") or 0) > 0), "n": len(fresh)},
                   "cost_split": cost_split(model, {k: sum(((c["usage"] or {}).get(k) or 0) for c in fresh)
-                                                   for k in ("input_tokens", "cache_creation_input_tokens", "cache_read_input_tokens", "output_tokens")}),
+                                                   for k in ("input_tokens", "cache_creation_input_tokens", "cache_read_input_tokens", "output_tokens")}, summed=True),
                   "prefix_hashes": sorted({c["prefix_hash"] for c in calls if c.get("prefix_hash")})},
     }
     if fr.requirements:

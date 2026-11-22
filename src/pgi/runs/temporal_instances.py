@@ -194,7 +194,7 @@ def roles_of(record: dict) -> dict:
     is the order the model sees them in part 2)."""
     designated, mirror = record["actions"]["authority"], record["actions"]["mirror"]
     first, second = sorted([designated, mirror])
-    return {"designated": designated, "mirror": mirror, "first_listed": first, "second_listed": second,
+    return {"designated_action": designated, "mirror_action": mirror, "first_listed": first, "second_listed": second,
             "designated_position": "first" if designated == first else "second"}
 
 
@@ -295,7 +295,7 @@ def summarize_cell(model: str, rows: list[dict], workflows: list[str]) -> dict:
     out["cost_usd_all_calls"] = round(sum(cost(model, c["usage"] or {}) for c in calls), 4)
     out["cost_usd_this_run"] = round(sum(cost(model, c["usage"] or {}) for c in fresh), 4)
     out["cache"] = {"hit_rate": {"k": sum(1 for c in fresh if ((c["usage"] or {}).get("cache_read_input_tokens") or 0) > 0), "n": len(fresh)},
-                    "cost_split": cost_split(model, usage_sum(fresh)), "prefix_hashes": sorted({c["prefix_hash"] for c in calls if c.get("prefix_hash")})}
+                    "cost_split": cost_split(model, usage_sum(fresh), summed=True), "prefix_hashes": sorted({c["prefix_hash"] for c in calls if c.get("prefix_hash")})}
     out["deadline_expiries"] = sum(len(r.get("deadline_expiries") or []) for r in rows)
     out["samples_retried_after_expiry"] = [r["seed"] for r in rows if r.get("deadline_expiries")]
     return out

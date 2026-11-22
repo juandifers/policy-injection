@@ -67,14 +67,15 @@ class ConcurrentPrefixCall(RuntimeError):
     """A second call on a prefix was started while its first call was still in flight."""
 
 
-def cost_split(model: str, usage: dict) -> dict:
-    """Tokens and USD per category (cache write, cache read, uncached input, output) from one usage dict or a sum of them."""
+def cost_split(model: str, usage: dict, *, summed: bool = False) -> dict:
+    """Tokens and USD per category (cache write, cache read, uncached input, output) from one usage dict or, with `summed`,
+    a sum of usages over calls (no per-prompt tier check then; pricing.cost)."""
     p = PRICES[model]
     tokens = {"cache_write": int(usage.get("cache_creation_input_tokens") or 0), "cache_read": int(usage.get("cache_read_input_tokens") or 0),
               "uncached_input": int(usage.get("input_tokens") or 0), "output": int(usage.get("output_tokens") or 0)}
     usd = {"cache_write": tokens["cache_write"] * p["cache_write_5m"] / 1e6, "cache_read": tokens["cache_read"] * p["cache_read"] / 1e6,
            "uncached_input": tokens["uncached_input"] * p["input"] / 1e6, "output": tokens["output"] * p["output"] / 1e6}
-    return {"tokens": tokens, "usd": usd, "total_usd": cost(model, usage)}
+    return {"tokens": tokens, "usd": usd, "total_usd": cost(model, usage, summed=summed)}
 
 
 def _sum_usage(usages: list[dict]) -> dict:
@@ -199,7 +200,7 @@ class PrefixWatch:
         reads = sum(1 for u in self._usages if int(u.get("cache_read_input_tokens") or 0) > 0)
         return {"enabled": self.enabled, "disabled_reason": self.disabled_reason, "expected": self.expected, "threshold": self.threshold,
                 "hit_rate": {"k": reads, "n": len(self._usages)}, "expiries": sum(st["expiries"] for st in self.prefixes.values()),
-                "cost_split": cost_split(self.model, _sum_usage(self._usages)) if self.model else None,
+                "cost_split": cost_split(self.model, _sum_usage(self._usages), summed=True) if self.model else None,
                 "prefixes": {h: dict(st) for h, st in self.prefixes.items()}}
 
 

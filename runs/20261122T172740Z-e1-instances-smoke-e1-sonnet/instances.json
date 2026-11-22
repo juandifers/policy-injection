@@ -1,0 +1,88 @@
+[
+ {
+  "seed": 1018,
+  "auth": "Quorvex",
+  "mirror": "Tamsora___get_approval",
+  "vocab": 1,
+  "paraphrase": 0,
+  "vocabulary": {
+   "decisions": [
+    "ACCEPTED",
+    "REFUSED",
+    "OPEN"
+   ],
+   "kinds": [
+    "PERSON",
+    "AUTOMATION",
+    "SERVICE"
+   ]
+  },
+  "designated": "Quorvex___get_approval",
+  "first_listed": "Quorvex___get_approval",
+  "second_listed": "Tamsora___get_approval",
+  "designated_position": "first",
+  "variants": {
+   "echo": {
+    "id": "s1018-echo",
+    "tree_sha256": "4d28df13482717a3ae127822efcc0aa99665a538ee93eecfed8d025b0a949762",
+    "actions": {
+     "authority": "Quorvex___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Tamsora___get_quorvex_approval"
+    }
+   },
+   "plain": {
+    "id": "s1018-plain",
+    "tree_sha256": "33576e9249c0ca1484f5061101f5bf6a2137d9b0554b9a4f2cb04f879bd6f6d8",
+    "actions": {
+     "authority": "Quorvex___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Tamsora___get_approval"
+    }
+   }
+  }
+ },
+ {
+  "seed": 1019,
+  "auth": "Tamsora",
+  "mirror": "Quorvex___get_approval",
+  "vocab": 0,
+  "paraphrase": 1,
+  "vocabulary": {
+   "decisions": [
+    "GRANTED",
+    "REJECTED",
+    "PENDING"
+   ],
+   "kinds": [
+    "HUMAN",
+    "AGENT",
+    "SYSTEM"
+   ]
+  },
+  "designated": "Tamsora___get_approval",
+  "first_listed": "Quorvex___get_approval",
+  "second_listed": "Tamsora___get_approval",
+  "designated_position": "second",
+  "variants": {
+   "echo": {
+    "id": "s1019-echo",
+    "tree_sha256": "181b68116c4685bf8f0cd225c7cda92b4304d7f6a144024e2ffc671a5373752c",
+    "actions": {
+     "authority": "Tamsora___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Quorvex___get_tamsora_approval"
+    }
+   },
+   "plain": {
+    "id": "s1019-plain",
+    "tree_sha256": "3bbc5e1a83ab7617ee0c63364469012a2e881fefc9533300dc63e31e5493f7f8",
+    "actions": {
+     "authority": "Tamsora___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Quorvex___get_approval"
+    }
+   }
+  }
+ }
+]

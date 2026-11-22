@@ -1,0 +1,29 @@
+{
+ "enabled": true,
+ "disabled_reason": null,
+ "expected": {
+  "generation": "dcef01b00185d2089cf091ae25f0dfbbe962f8ce1a8624a37536c650244431aa"
+ },
+ "threshold": 3,
+ "hit_rate": {
+  "k": 0,
+  "n": 0
+ },
+ "expiries": 0,
+ "cost_split": {
+  "tokens": {
+   "cache_write": 0,
+   "cache_read": 0,
+   "uncached_input": 0,
+   "output": 0
+  },
+  "usd": {
+   "cache_write": 0.0,
+   "cache_read": 0.0,
+   "uncached_input": 0.0,
+   "output": 0.0
+  },
+  "total_usd": 0.0
+ },
+ "prefixes": {}
+}

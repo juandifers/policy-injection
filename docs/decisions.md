@@ -1270,3 +1270,29 @@ suite, the mutants and the intent levels). Reused from `7d90a39`, not rebuilt: `
   binomial tail at one half, capped at 1). Checked: 0/60 upper 4.9%; 6/60 lower 4.4%; 0/120 upper 2.5%; McNemar 8 vs 0 p = 0.0078; 6 vs 0
   p = 0.03125.
 - **Reserved seeds.** 1018 and 1019 are the smoke-test seeds; 1000–1009 stay for the pilot; 1010–1017 unused.
+
+## 2026-11-22: E1 smoke tests (seeds 1018, 1019; cells C1, C5; Sonnet 5.5 then Haiku 5.5), two fixes they surfaced
+
+- **Sonnet** `runs/20261122T172740Z-e1-instances-smoke-e1-sonnet`: 4 calls, every one `end_turn`, one round each. Call 1 wrote 34,862 tokens to
+  the cache (0 read); calls 2–4 read 34,862 and wrote 0, including across the cell change (C1 → C5). Uncached input 866–955 tokens on the
+  first shots (part 2 + user message); output 1,372–2,042. Cost $0.173 of the $0.50 cap (call 1 $0.108, the others $0.019–0.026). No
+  deadline expiry, no breaker event. C1 (D0/plain): both samples valid, either_source, mirror_sufficient; C5 (D2/echo): both exact, designated_only,
+  admitted. Two samples per cell: smoke evidence only, no conclusion.
+- **Haiku** (same request settings: adaptive thinking, effort high, max_tokens 16,000): the first attempt (`runs/.tmp-20261122T172943Z-…-haiku`, kept,
+  gitignored) made 5 fresh calls, all with the expected cache behaviour (call 1 wrote 34,862; calls 2–5 read 34,862, wrote 0), then failed
+  while writing cache_watch.json (fix 1 below); the rerun `runs/20261122T173510Z-e1-instances-smoke-e1-haiku` replayed every call from the
+  cache (0 API calls) and is the run of record; its call records carry the same usage fields. Fresh-call cost $0.032 of the $0.10 cap.
+  C1 seed 1018 round 1 stopped at `max_tokens` (16,000 output tokens, thinking included) and was invalid; the repair (uncached input 2,723 tokens:
+  the long previous attempt is in the message) validated, so rounds = 2. The other three samples validated in round 1 with 4,635–12,425 output
+  tokens. Valid after the loop: 4/4. Scored: 3/4. The repaired C1 sample is valid but **not scored**: on three traces the interpreter returned a
+  deny that cites a determining rule (`verdict False with rules (4,)`), which the oracle refuses as inconsistent (errors are not denies); the
+  policy uses `!A since within 1h B` conjoined with `formerly`. Recorded as a replay error, excluded from the rates, and left as an open
+  oracle/interpreter question for Juan (an oracle change needs approval). C5: both exact, designated_only, admitted; C1 1019: either_source.
+- **Fix 1 (pricing):** `pricing.cost` refused a Haiku *sum* of usages over calls (180,678 prompt tokens over four calls) as one prompt above the
+  100k tier. `cost(..., summed=True)` and `cost_split(..., summed=True)` skip the per-prompt tier check for sums; used by the PrefixWatch
+  summary and both runners' per-generator / per-cell cache cost. Per-call pricing still refuses prompts above the tier. Test added.
+- **Fix 2 (recording):** the instance table's `mirror` column held the mirror's action id instead of the target name (a key collision in
+  `roles_of`); the roles now use `designated_action` / `mirror_action`. The Sonnet run folder keeps the wrong column as written (runs are never
+  rewritten); its `instances.json` `variants.*.actions` carries the correct names.
+- **Expected vs observed:** prefix 34,862 tokens (plan estimated ~34,090); every later call read exactly that amount, repairs included; uncached
+  input ~0.9k on a first shot as expected, 2.7k on the one repair (Juan's 1.7k assumed a ~2k-token previous attempt; Haiku's was ~9k).

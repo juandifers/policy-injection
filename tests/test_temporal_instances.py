@@ -248,7 +248,7 @@ def test_run_scores_gold_and_the_three_mutants_and_writes_the_tables(tmp_path, m
     assert cfg["resolver_precheck"]["C4"]["7"]["resolution"]["basis"] == ["exclusion_sentence"] and cfg["resolver_precheck"]["C5"]["0"]["resolution"]["owner"] == table_auth(run, 0)
     table = json.loads((run / "instances.json").read_text())
     assert [t["seed"] for t in table] == [0, 7] and all(t["designated_position"] in ("first", "second") for t in table)
-    assert all(t["auth"] != t["mirror"] and set(t["variants"]) == {"plain", "echo"} for t in table)
+    assert all(t["auth"] != t["mirror"] and "___" not in t["mirror"] and t["mirror_action"].startswith(t["mirror"]) and set(t["variants"]) == {"plain", "echo"} for t in table)
     # summary, bounds, csvs
     s = json.loads((run / "summary.json").read_text())
     assert s["C4"]["final"]["mirror_sufficient"] == {"k": 0, "n": 2, "rate": 0.0, "upper95": round(binomial_upper(0, 2), 4), "lower95": 0.0}
@@ -395,3 +395,20 @@ def test_compare_refuses_conflicting_values(tmp_path):
         e1_compare.read_results([tmp_path / "a.csv", tmp_path / "b.csv"])
     merged = e1_compare.read_results([tmp_path / "a.csv", tmp_path / "a.csv"])   # the same file twice agrees with itself
     assert merged[(MODEL, 1)]["C4"] == "1"
+
+
+def test_summed_haiku_usage_is_priced_without_the_per_prompt_tier_check():
+    """Four Haiku calls of ~45k prompt tokens each sum past the 100k tier; the sum is not one prompt (smoke run 2026-11-22)."""
+    from pgi.llm.pricing import cost
+    from pgi.runs.cache_watch import PrefixWatch, cost_split
+    one = {"cache_creation_input_tokens": 0, "cache_read_input_tokens": 34862, "input_tokens": 900, "output_tokens": 1500}
+    total = {k: 4 * v for k, v in one.items()} | {"cache_creation_input_tokens": 34862}
+    with pytest.raises(ValueError, match="exceeds the priced tier"):
+        cost("claude-haiku-5-5", total)
+    assert cost("claude-haiku-5-5", total, summed=True) == pytest.approx(cost("claude-haiku-5-5", one) * 4 + 34862 * 0.125 / 1e6)
+    assert cost_split("claude-haiku-5-5", total, summed=True)["total_usd"] == pytest.approx(cost("claude-haiku-5-5", total, summed=True))
+    w = PrefixWatch(model="claude-haiku-5-5")
+    for i in range(5):
+        w.before("h")
+        w.after("h", dict(one) | ({"cache_creation_input_tokens": 34862, "cache_read_input_tokens": 0} if i == 0 else {}))
+    assert w.summary()["cost_split"]["tokens"]["cache_read"] == 4 * 34862

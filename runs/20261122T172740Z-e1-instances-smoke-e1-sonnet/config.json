@@ -1,0 +1,179 @@
+{
+ "run_id": "20261122T172740Z-e1-instances-smoke-e1-sonnet",
+ "created": "20261122T172740Z",
+ "kind": "e1-instances",
+ "model": "claude-sonnet-5-5",
+ "cells": {
+  "C1": {
+   "name": "C1",
+   "level": "D0",
+   "variant": "plain",
+   "decline": false,
+   "n": 60
+  },
+  "C5": {
+   "name": "C5",
+   "level": "D2",
+   "variant": "echo",
+   "decline": false,
+   "n": 60
+  }
+ },
+ "seeds": [
+  1018,
+  1019
+ ],
+ "scenario": "/Users/jd/Documents/policy-injection/domains/assetopsbench/scenarios/t02_designated_source",
+ "cells_yaml_sha256": "c0bf654fdf48da93348a6e040347c69af0735ebd911015f7f70bcdc4bc482086",
+ "lock_sha256": "7e76a3494326e1502ec5c2766b7e56973fd31aabd4468e8d9791d1b86e06d9f9",
+ "builder": {
+  "file": "build_instances.py",
+  "sha256": "fc8666c36bd2a47f6a1f2b36f7cfd7183364c6ffb45ceb82e9506982166ae83a",
+  "pydogwood_in_lock": "0.1.1"
+ },
+ "instances": {
+  "1018:echo": {
+   "id": "s1018-echo",
+   "tree_sha256": "4d28df13482717a3ae127822efcc0aa99665a538ee93eecfed8d025b0a949762"
+  },
+  "1018:plain": {
+   "id": "s1018-plain",
+   "tree_sha256": "33576e9249c0ca1484f5061101f5bf6a2137d9b0554b9a4f2cb04f879bd6f6d8"
+  },
+  "1019:echo": {
+   "id": "s1019-echo",
+   "tree_sha256": "181b68116c4685bf8f0cd225c7cda92b4304d7f6a144024e2ffc671a5373752c"
+  },
+  "1019:plain": {
+   "id": "s1019-plain",
+   "tree_sha256": "3bbc5e1a83ab7617ee0c63364469012a2e881fefc9533300dc63e31e5493f7f8"
+  }
+ },
+ "generator": {
+  "model": "claude-sonnet-5-5",
+  "max_rounds": 3,
+  "effort": "high",
+  "max_tokens": 16000,
+  "generator": "validator-loop, Dogwood",
+  "input_mode": "schema-only",
+  "layout": "split",
+  "contract_block": false,
+  "decline": false,
+  "include_descriptions": true,
+  "per_cell": {
+   "C1": {
+    "contract_block": false,
+    "decline": false
+   },
+   "C5": {
+    "contract_block": false,
+    "decline": false
+   }
+  }
+ },
+ "cache_only": false,
+ "spend_cap_usd": 0.5,
+ "request": {
+  "sampling": "not sent (API default)",
+  "thinking": {
+   "type": "adaptive"
+  },
+  "output_config": {
+   "effort": "high"
+  },
+  "max_tokens": 16000,
+  "final_line": {
+   "plain": "Output only Dogwood policies.",
+   "decline": "Output Dogwood policies. If the intent does not let you determine which tool's output may serve as evidence for a rule, write no permit for that action and add a line starting UNRESOLVED: saying what the administrator must specify."
+  },
+  "prompt_cache": {
+   "layout": "split",
+   "breakpoint": "ephemeral breakpoint on block 4 (action schema part 1 = prompt_schema_base)",
+   "prefix_hash": "be40cbdd8c8405d744a3c96bab7346ed64044c1910cb4ff82810c151a1166802",
+   "telemetry": {
+    "enabled": true,
+    "reason": null
+   },
+   "run_level_prefix_rule": "on",
+   "circuit_breaker": "3 consecutive zero-read fresh calls on a written prefix stop the run"
+  },
+  "transport": {
+   "timeout_s": 300.0,
+   "max_retries": 2,
+   "deadline_s": 600.0
+  },
+  "deadline": {
+   "seconds": 600.0,
+   "retries_on_expiry": 2,
+   "rule": "a sample whose call expires is retried with the same request up to twice; after the third expiry the run stops; a sample that succeeded after one or two expiries is a normal sample; a late result is never cached"
+  }
+ },
+ "resolver_precheck": {
+  "C1": {
+   "1018": {
+    "expectation": "none",
+    "resolution": {
+     "owner": null,
+     "exclusive": false,
+     "evidence_action": null,
+     "basis": []
+    },
+    "ok": true,
+    "why": null
+   },
+   "1019": {
+    "expectation": "none",
+    "resolution": {
+     "owner": null,
+     "exclusive": false,
+     "evidence_action": null,
+     "basis": []
+    },
+    "ok": true,
+    "why": null
+   }
+  },
+  "C5": {
+   "1018": {
+    "expectation": "exclusive",
+    "resolution": {
+     "owner": "Quorvex",
+     "exclusive": true,
+     "evidence_action": "Quorvex___get_approval",
+     "basis": [
+      "exclusion_sentence"
+     ]
+    },
+    "ok": true,
+    "why": null
+   },
+   "1019": {
+    "expectation": "exclusive",
+    "resolution": {
+     "owner": "Tamsora",
+     "exclusive": true,
+     "evidence_action": "Tamsora___get_approval",
+     "basis": [
+      "exclusion_sentence"
+     ]
+    },
+    "ok": true,
+    "why": null
+   }
+  }
+ },
+ "registry_sha256": "f9c6fc0715b28ba2f7daf410a2e4532ccf41390463d15ad060de292d9664a04d",
+ "scoring": {
+  "roles": "the instance's own (draw); D0 cells are baselines and controls",
+  "primary": "mirror_sufficient (final)",
+  "bounds": "exact one-sided 95% over scored samples",
+  "binding_form": "text, descriptive only (dogwood_text.binding_form)"
+ },
+ "versions": {
+  "pydogwood": "0.1.1",
+  "dogwood": "1.1.0",
+  "anthropic": "2.8.0",
+  "git_commit": "feff441500cbbc4a780dee21ba9f9d027a72b5ae",
+  "git_dirty": false
+ }
+}
