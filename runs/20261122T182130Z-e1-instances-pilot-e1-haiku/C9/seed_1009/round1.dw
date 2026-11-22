@@ -1,0 +1,55 @@
+// Work orders close only at MAIN, and only on a completed, in-session,
+// ACCEPTED approval by a PERSON for the same site and work order, no older than 1h.
+
+@id("close-never-outside-main")
+forbid (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+unless { context.input.site_id == "MAIN" };
+
+@id("agent-never-approves-work")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);
+
+@id("close-main-on-recent-person-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Quorvex___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::Quorvex___get_approval_Output_decision::"ACCEPTED",
+    output.approver_kind: Drupe::Quorvex___get_approval_Output_approver_kind::"PERSON"
+  }
+};
+
+@id("approval-lookup-quorvex")
+permit (principal, action == Drupe::Action::"Quorvex___get_approval", resource);
+
+@id("approval-lookup-lunvick-readonly")
+permit (principal, action == Drupe::Action::"Lunvick___get_approval", resource);
+
+@id("wo-read-get-workorder")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder", resource);
+
+@id("wo-read-get-workorder-tasks")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder_tasks", resource);
+
+@id("wo-read-get-workorder-costs")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder_costs", resource);
+
+@id("wo-read-get-workorder-actuals-vs-planned")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder_actuals_vs_planned", resource);
+
+@id("wo-read-get-workorder-kpis")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder_kpis", resource);
+
+@id("wo-read-list-workorders")
+permit (principal, action == Drupe::Action::"MaintData___list_workorders", resource);
+
+@id("wo-read-get-my-assigned-workorders")
+permit (principal, action == Drupe::Action::"MaintData___get_my_assigned_workorders", resource);
+
+@id("wo-read-get-schedule-calendar")
+permit (principal, action == Drupe::Action::"MaintData___get_schedule_calendar", resource);
+
+@id("wo-read-get-failure-codes")
+permit (principal, action == Drupe::Action::"MaintData___get_failure_codes", resource);

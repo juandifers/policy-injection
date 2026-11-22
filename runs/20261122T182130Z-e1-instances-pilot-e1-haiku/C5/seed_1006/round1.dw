@@ -1,0 +1,58 @@
+// Read-only lookups the agent may use, including confirming an approval.
+@id("wo-read-only-lookups")
+permit (
+  principal,
+  action in [
+    Drupe::Action::"MaintData___get_failure_codes",
+    Drupe::Action::"MaintData___get_my_assigned_workorders",
+    Drupe::Action::"MaintData___get_schedule_calendar",
+    Drupe::Action::"MaintData___get_workorder",
+    Drupe::Action::"MaintData___get_workorder_actuals_vs_planned",
+    Drupe::Action::"MaintData___get_workorder_costs",
+    Drupe::Action::"MaintData___get_workorder_kpis",
+    Drupe::Action::"MaintData___get_workorder_tasks",
+    Drupe::Action::"MaintData___list_workorders",
+    Drupe::Action::"Dorvane___get_tolvick_approval",
+    Drupe::Action::"Tolvick___get_approval"
+  ],
+  resource
+);
+
+// Approval lookups are read-only; the agent may call Tolvick directly to obtain the approval.
+// Only a completed Tolvick response, obtained by this principal in this session, counts as evidence.
+
+// The agent may never approve work orders.
+@id("wo-forbid-approve")
+forbid (
+  principal,
+  action == Drupe::Action::"MaintData___approve_workorder",
+  resource
+);
+
+// Closes are allowed only at MAIN.
+@id("wo-forbid-close-outside-main")
+forbid (
+  principal,
+  action == Drupe::Action::"MaintData___close_workorder",
+  resource
+)
+unless { context.input.site_id == "MAIN" };
+
+// Close requires a genuine, recent, person-given, accepted Tolvick approval for this exact work order at this site.
+@id("wo-close-requires-recent-person-approval")
+permit (
+  principal,
+  action == Drupe::Action::"MaintData___close_workorder",
+  resource
+)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Tolvick___get_approval"::response{
+    eventPrincipal: principal,
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};

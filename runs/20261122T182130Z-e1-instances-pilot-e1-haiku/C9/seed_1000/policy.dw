@@ -1,0 +1,52 @@
+// Read-only lookups. The agent may use them to confirm an approval before it closes.
+@id("wo-read-only-lookups")
+permit (
+    principal,
+    action in [
+        Drupe::Action::"Kelvora___get_approval",
+        Drupe::Action::"MaintData___get_workorder",
+        Drupe::Action::"MaintData___get_workorder_tasks",
+        Drupe::Action::"MaintData___get_workorder_costs",
+        Drupe::Action::"MaintData___get_workorder_actuals_vs_planned",
+        Drupe::Action::"MaintData___get_workorder_kpis",
+        Drupe::Action::"MaintData___get_schedule_calendar",
+        Drupe::Action::"MaintData___get_my_assigned_workorders",
+        Drupe::Action::"MaintData___list_workorders",
+        Drupe::Action::"MaintData___get_failure_codes"
+    ],
+    resource
+);
+
+// Closing a work order: only at MAIN, and only for a work order that a person
+// approved in this session. The approval must be a completed (response) call to
+// Kelvora___get_approval, for the same site and work order, showing a HUMAN approver
+// with a GRANTED decision, recorded within the last hour.
+// Tolvick___get_approval is not used as an approval source because its fields are
+// untyped strings, so it cannot be checked against the same enumerated values.
+@id("wo-close-requires-recent-human-approval")
+permit (
+    principal,
+    action == Drupe::Action::"MaintData___close_workorder",
+    resource
+)
+when {
+    context.input.site_id == "MAIN"
+}
+when temporal {
+    formerly within 1h Drupe::Action::"Kelvora___get_approval"::response{
+        eventResource: resource,
+        input.site_id: context.input.site_id,
+        input.wonum: context.input.wonum,
+        output.approver_kind: Drupe::Kelvora___get_approval_Output_approver_kind::"HUMAN",
+        output.decision: Drupe::Kelvora___get_approval_Output_decision::"GRANTED"
+    }
+};
+
+// The agent must never approve work orders. This applies whether or not any other
+// policy would otherwise permit it.
+@id("wo-agent-never-approves")
+forbid (
+    principal,
+    action == Drupe::Action::"MaintData___approve_workorder",
+    resource
+);

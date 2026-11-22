@@ -1,0 +1,66 @@
+// Read-only lookups are always permitted. The two approval lookups must be permitted
+// so that their completed responses are recorded as approval evidence.
+@id("permit-readonly-lookups")
+permit (
+  principal,
+  action in [
+    Drupe::Action::"MaintData___get_workorder",
+    Drupe::Action::"MaintData___get_workorder_actuals_vs_planned",
+    Drupe::Action::"MaintData___get_workorder_costs",
+    Drupe::Action::"MaintData___get_workorder_kpis",
+    Drupe::Action::"MaintData___get_workorder_tasks",
+    Drupe::Action::"MaintData___list_workorders",
+    Drupe::Action::"MaintData___get_my_assigned_workorders",
+    Drupe::Action::"MaintData___get_schedule_calendar",
+    Drupe::Action::"MaintData___get_failure_codes",
+    Drupe::Action::"Kelvora___get_approval",
+    Drupe::Action::"Vantry___get_approval"
+  ],
+  resource
+);
+
+// The agent never approves work orders itself. Forbid overrides any permit.
+@id("forbid-agent-approve-workorder")
+forbid (
+  principal,
+  action == Drupe::Action::"MaintData___approve_workorder",
+  resource
+);
+
+// Close at MAIN only, and only after a completed Kelvora lookup in this session
+// that returned a GRANTED decision by a HUMAN approver for this same work order
+// within the last hour.
+@id("permit-close-main-on-human-approval-kelvora")
+permit (
+  principal,
+  action == Drupe::Action::"MaintData___close_workorder",
+  resource
+)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Kelvora___get_approval"::response {
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.approver_kind: Drupe::approver_kind::"HUMAN",
+    output.decision: Drupe::decision::"GRANTED"
+  }
+};
+
+// Same rule, with the Vantry approval source.
+@id("permit-close-main-on-human-approval-vantry")
+permit (
+  principal,
+  action == Drupe::Action::"MaintData___close_workorder",
+  resource
+)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Vantry___get_approval"::response {
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.approver_kind: Drupe::approver_kind::"HUMAN",
+    output.decision: Drupe::decision::"GRANTED"
+  }
+};

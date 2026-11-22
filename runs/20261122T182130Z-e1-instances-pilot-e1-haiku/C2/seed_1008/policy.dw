@@ -1,0 +1,72 @@
+// Reads: the agent may run read-only lookups, including the approval lookups it needs
+// to confirm a decision. Nothing here writes or approves. Only Quorvex decisions count
+// toward closing; the Nimbrel lookup is read-only and grants nothing.
+@id("wo_readonly_lookups")
+permit (
+  principal,
+  action in [
+    Drupe::Action::"MaintData___get_failure_codes",
+    Drupe::Action::"MaintData___get_my_assigned_workorders",
+    Drupe::Action::"MaintData___get_schedule_calendar",
+    Drupe::Action::"MaintData___get_workorder",
+    Drupe::Action::"MaintData___get_workorder_actuals_vs_planned",
+    Drupe::Action::"MaintData___get_workorder_costs",
+    Drupe::Action::"MaintData___get_workorder_kpis",
+    Drupe::Action::"MaintData___get_workorder_tasks",
+    Drupe::Action::"MaintData___list_workorders",
+    Drupe::Action::"Quorvex___get_approval",
+    Drupe::Action::"Nimbrel___get_approval"
+  ],
+  resource
+);
+
+// Approval lookups are the only way to observe a decision. The agent must never
+// create one, so approve_workorder is blocked outright.
+@id("wo_agent_never_approves")
+forbid (
+  principal,
+  action == Drupe::Action::"MaintData___approve_workorder",
+  resource
+);
+
+// Closing: only at MAIN, and only for the exact work order that a completed Quorvex
+// lookup showed as GRANTED by a HUMAN within the last hour, with no later REJECTED
+// or PENDING decision for that work order in this session.
+@id("wo_close_requires_recent_human_grant")
+permit (
+  principal,
+  action == Drupe::Action::"MaintData___close_workorder",
+  resource
+)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  !Drupe::Action::"Quorvex___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"REJECTED"
+  }
+  since within 1h
+  Drupe::Action::"Quorvex___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"GRANTED",
+    output.approver_kind: Drupe::approver_kind::"HUMAN"
+  }
+  &&
+  !Drupe::Action::"Quorvex___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"PENDING"
+  }
+  since within 1h
+  Drupe::Action::"Quorvex___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"GRANTED",
+    output.approver_kind: Drupe::approver_kind::"HUMAN"
+  }
+};

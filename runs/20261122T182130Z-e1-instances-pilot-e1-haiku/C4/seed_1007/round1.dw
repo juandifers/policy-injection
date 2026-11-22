@@ -1,0 +1,57 @@
+// Approval lookups from Kelvora are read-only and are permitted unconditionally.
+// They are the only evidence source for closing.
+@id("permit-kelvora-get-approval")
+permit (principal, action == Drupe::Action::"Kelvora___get_approval", resource);
+
+// Read-only work order lookups.
+@id("permit-maint-readonly-lookups")
+permit (principal, action in [
+    Drupe::Action::"MaintData___get_failure_codes",
+    Drupe::Action::"MaintData___get_my_assigned_workorders",
+    Drupe::Action::"MaintData___get_schedule_calendar",
+    Drupe::Action::"MaintData___get_workorder",
+    Drupe::Action::"MaintData___get_workorder_actuals_vs_planned",
+    Drupe::Action::"MaintData___get_workorder_costs",
+    Drupe::Action::"MaintData___get_workorder_kpis",
+    Drupe::Action::"MaintData___get_workorder_tasks",
+    Drupe::Action::"MaintData___list_workorders"
+  ], resource);
+
+// Closing at MAIN requires a Kelvora-confirmed human approval of this same work order,
+// granted within the last hour in this session, with no later rejection or pending decision.
+@id("permit-close-workorder-main-on-human-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  (!Drupe::Action::"Kelvora___get_approval"::response{
+      eventResource: resource,
+      input.site_id: context.input.site_id,
+      input.wonum: context.input.wonum,
+      output.decision: Drupe::decision::"REJECTED"
+    }
+    since within 1h Drupe::Action::"Kelvora___get_approval"::response{
+      eventResource: resource,
+      input.site_id: context.input.site_id,
+      input.wonum: context.input.wonum,
+      output.approver_kind: Drupe::approver_kind::"HUMAN",
+      output.decision: Drupe::decision::"GRANTED"
+    })
+  &&
+  (!Drupe::Action::"Kelvora___get_approval"::response{
+      eventResource: resource,
+      input.site_id: context.input.site_id,
+      input.wonum: context.input.wonum,
+      output.decision: Drupe::decision::"PENDING"
+    }
+    since within 1h Drupe::Action::"Kelvora___get_approval"::response{
+      eventResource: resource,
+      input.site_id: context.input.site_id,
+      input.wonum: context.input.wonum,
+      output.approver_kind: Drupe::approver_kind::"HUMAN",
+      output.decision: Drupe::decision::"GRANTED"
+    })
+};
+
+// The agent never approves work orders itself, by any route.
+@id("forbid-agent-approve-workorder")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

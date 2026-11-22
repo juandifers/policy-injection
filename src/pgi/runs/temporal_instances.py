@@ -60,7 +60,8 @@ from pgi.llm.deadline import DEFAULT_DEADLINE_S, DeadlineProvider
 from pgi.llm.prefix import prefix_blocks, prefix_hash
 from pgi.llm.pricing import cost
 from pgi.runs.attempts import DEFAULT_MAX_RETRIES, DeadlineRunStopped, run_sample_with_retries
-from pgi.runs.cache_watch import PrefixWatch, cost_split
+from pgi.llm.pricing import PRICES
+from pgi.runs.cache_watch import CALIBRATION, PrefixWatch, _prefix_report, _uncached, cost_split, recorded_output_mean
 from pgi.runs.clean import _dump, _NoProvider, atomic_run_dir
 from pgi.runs.temporal_clean import Frame, _Budget, _record, _versions, frame, score
 from pgi.trusted.resolver import Resolution, resolve
@@ -393,6 +394,67 @@ def markdown(config: dict, summary: dict, instances: list[dict]) -> str:
     return "\n".join(lines) + "\n"
 
 
+# ---- --plan
+REPAIR_EXTRA_TOKENS = 1800   # uncached tokens a repair round adds (the previous attempt and the diagnostics); E1 smoke, Haiku C1/1018: 2,723 - ~900
+
+
+def plan(model: str, cells: list[Cell], seeds_of: dict[str, list[int]], uncached: dict[str, list[dict]], params: dict, max_rounds: int, runs_dir: Path) -> dict:
+    """The `--plan` report: no API call, no run folder. Requests are built exactly as the run would build them (the caller did);
+    call counts are the seeds of each cell (min, every first shot valid) to max_rounds x that (max); the one prefix is written once and read
+    on every later call of the process (with cache) or written on every call (without). Prefix tokens: a recorded call on the same
+    prefix hash in the runs folder, else the character estimate; output tokens per call: recorded on this prefix, else the model's
+    recorded mean on other prefixes, else the Sonnet L1-S calibration. Repair rounds add REPAIR_EXTRA_TOKENS of uncached input."""
+    gen, rec = _prefix_report(model, params, runs_dir)
+    if rec:
+        out_mean = {"value": rec["output_tokens_mean"], "source": f"recorded: {rec['calls']} generation call(s) with this prefix in {', '.join(rec['run_ids'])}"}
+    elif by_model := recorded_output_mean(runs_dir, model):
+        out_mean = {"value": by_model["mean"], "source": f"recorded: {by_model['calls']} generation call(s) by {model} on other prefixes in {', '.join(by_model['run_ids'])}"}
+    else:
+        out_mean = {"value": CALIBRATION["generation_output_tokens_mean"],
+                    "source": f"estimate: mean output tokens of the naive generation calls of the L1-S run ({CALIBRATION['sources']['schema_and_generation_output']})"}
+    seeds = sorted({s for ss in seeds_of.values() for s in ss})
+    per_cell = {}
+    for c in cells:
+        us, n = uncached[c.name], len(seeds_of[c.name])
+        per_cell[c.name] = {"level": c.level, "variant": c.variant, "decline": c.decline, "samples": n, "calls": {"min": n, "max": n * max_rounds},
+                            "uncached_tokens_first_shot": round(sum(u["tokens"] for u in us) / len(us)),
+                            "blocks_after_breakpoint": [b["heading"] for b in us[0]["blocks_after_breakpoint"]]}
+    first = sum(v["calls"]["min"] for v in per_cell.values())
+    repairs_max = sum(v["calls"]["max"] for v in per_cell.values()) - first
+    first_uncached = sum(v["calls"]["min"] * v["uncached_tokens_first_shot"] for v in per_cell.values())
+    mean_first = first_uncached / first
+    p = PRICES[model]
+
+    def total(repairs: int, cached: bool) -> float:
+        calls = first + repairs
+        prefix = (gen["tokens"] * p["cache_write_5m"] + (calls - 1) * gen["tokens"] * p["cache_read"]) if cached else calls * gen["tokens"] * p["cache_write_5m"]
+        inputs = first_uncached + repairs * (mean_first + REPAIR_EXTRA_TOKENS)
+        return (prefix + inputs * p["input"] + calls * out_mean["value"] * p["output"]) / 1e6
+
+    return {"model": model, "cells": per_cell, "seeds": seeds, "max_rounds": max_rounds,
+            "calls": {"min": first, "max": first + repairs_max}, "prefix": gen, "output_tokens_mean": out_mean,
+            "repair_extra_uncached_tokens": REPAIR_EXTRA_TOKENS,
+            "cost_usd": {"with_cache": {"min": total(0, True), "max": total(repairs_max, True)},
+                         "without_cache": {"min": total(0, False), "max": total(repairs_max, False)}}}
+
+
+def plan_text(r: dict) -> str:
+    g = r["prefix"]
+    lines = [f"plan (no API call, no run folder): model {r['model']}, cells {', '.join(r['cells'])}, seeds {r['seeds'][0]}..{r['seeds'][-1]} "
+             f"({len(r['seeds'])} distinct; per cell below), validator loop max {r['max_rounds']} rounds, no judge",
+             f"calls: {r['calls']['min']} (every first shot valid) to {r['calls']['max']} (every sample uses {r['max_rounds']} rounds)",
+             f"generation prefix {g['hash']}: {g['tokens']} tokens ({g['source']}; estimate {g['tokens_estimate']} from {g['chars']} chars in {len(g['blocks'])} blocks)"]
+    for name, c in r["cells"].items():
+        lines.append(f"  {name} ({c['level']}/{c['variant']}{', decline' if c['decline'] else ''}): {c['samples']} samples, {c['calls']['min']}-{c['calls']['max']} calls, "
+                     f"uncached ~{c['uncached_tokens_first_shot']} tokens per first shot (after the breakpoint: {'; '.join(c['blocks_after_breakpoint'])}; + user message)")
+    lines.append(f"repair rounds: +{r['repair_extra_uncached_tokens']} uncached tokens each (previous attempt and diagnostics; E1 smoke)")
+    lines.append(f"output tokens per call: {r['output_tokens_mean']['value']:.0f} ({r['output_tokens_mean']['source']})")
+    c = r["cost_usd"]
+    lines.append(f"expected cost with cache hits: ${c['with_cache']['min']:.2f} to ${c['with_cache']['max']:.2f}; "
+                 f"without cache hits (every call writes the prefix): ${c['without_cache']['min']:.2f} to ${c['without_cache']['max']:.2f}")
+    return "\n".join(lines)
+
+
 # ---- main
 def main(argv: list[str] | None = None) -> Path | None:
     p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
@@ -409,6 +471,7 @@ def main(argv: list[str] | None = None) -> Path | None:
     p.add_argument("--max-rounds", type=int, default=3)
     p.add_argument("--effort", default="high")
     p.add_argument("--max-tokens", type=int, default=16000, help="output cap per call (recorded in config); Haiku runs use 32000 (decision 2026-11-22), Sonnet 16000")
+    p.add_argument("--plan", action="store_true", help="no API call and no run folder: call counts, the prefix hash and size, uncached sizes per cell, expected cost")
     args = p.parse_args(argv)
 
     spec = load_cells(args.scenario / "cells.yaml")
@@ -420,21 +483,24 @@ def main(argv: list[str] | None = None) -> Path | None:
     registry = sys.modules["registry"].REGISTRY if "registry" in sys.modules else __import__("registry").REGISTRY
     lock = json.loads(builder.LOCK.read_text())
     lock_sha = hashlib.sha256(builder.LOCK.read_bytes()).hexdigest()
+    # a cell whose planned n is smaller than the seed list takes the first n seeds given, so one process runs C8 at 20 beside
+    # the 60-seed cells (prereg 2026-11-22); recorded per cell in config.json
+    seeds_of = {c.name: seeds[: c.n] for c in cells}
     for c in cells:
         if len(seeds) > c.n:
-            raise SystemExit(f"cell {c.name}: {len(seeds)} seeds exceed its planned n = {c.n}")
+            print(f"cell {c.name}: planned n = {c.n}; using the first {c.n} of the {len(seeds)} seeds given ({seeds_of[c.name][0]}..{seeds_of[c.name][-1]})", flush=True)
 
     # instances: render or verify against the lock; roles and the instance table
     instances: dict[tuple[int, str], dict] = {}
     for c in cells:
-        for seed in seeds:
+        for seed in seeds_of[c.name]:
             if (seed, c.variant) in instances:
                 continue
             folder, tree = builder.ensure_instance(seed, c.variant, lock, args.scenario / "instances")
             rec = json.loads((folder / "instance.json").read_text())
             instances[(seed, c.variant)] = {"folder": folder, "tree_sha256": tree, "record": rec, "roles": roles_of(rec)}
     table = []
-    for seed in seeds:
+    for seed in sorted({s for s, _ in instances}):
         rec = next(v["record"] for (s, _), v in instances.items() if s == seed)
         roles = roles_of(rec)
         table.append({"seed": seed, "auth": rec["draw"]["auth"], "mirror": rec["draw"]["mirror"], "vocab": rec["draw"]["vocab"],
@@ -448,10 +514,11 @@ def main(argv: list[str] | None = None) -> Path | None:
     loaded: dict[tuple[str, int], DogwoodInputs] = {}
     prechecks: dict[str, dict] = {}
     hashes: dict[str, str] = {}
+    uncached: dict[str, list[dict]] = {}
     first_params = None
     for c in cells:
         prechecks[c.name] = {}
-        for seed in seeds:
+        for seed in seeds_of[c.name]:
             inp = load_dogwood_inputs(instances[(seed, c.variant)]["folder"], intent=c.level)
             loaded[(c.name, seed)] = inp
             pc = precheck(inp, c, spec, registry)
@@ -460,10 +527,14 @@ def main(argv: list[str] | None = None) -> Path | None:
                 raise ResolverPrecheckFailed(f"cell {c.name} ({c.level}/{c.variant}) seed {seed}: {pc['why']}; nothing sent")
             msgs, params = dogwood.build_request(inp, cfgs[c.name].naive())
             hashes[f"{c.name}:{seed}"] = prefix_hash(args.model, params)
+            uncached.setdefault(c.name, []).append(_uncached(params, msgs[0]["content"]))
             first_params = first_params or params
     if len(set(hashes.values())) != 1:
         raise PrefixNotShared(f"the samples would use {len(set(hashes.values()))} different prefixes: {hashes}; nothing sent")
     (h,) = set(hashes.values())
+    if args.plan:
+        print(plan_text(plan(args.model, cells, seeds_of, uncached, first_params, args.max_rounds, args.runs_dir)))
+        return None
 
     from pgi.llm.anthropic_provider import AnthropicProvider
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
@@ -482,7 +553,7 @@ def main(argv: list[str] | None = None) -> Path | None:
         llm = CachedLLM(provider, args.cache, allow_api=not args.cache_only)
         deadline_s = None if args.cache_only else args.deadline_s
         config = {"run_id": run_id, "created": stamp, "kind": "e1-instances", "model": args.model, "cells": {c.name: asdict(c) for c in cells},
-                  "seeds": seeds, "scenario": str(args.scenario), "cells_yaml_sha256": spec.sha256, "lock_sha256": lock_sha,
+                  "seeds": seeds, "seeds_per_cell": seeds_of, "scenario": str(args.scenario), "cells_yaml_sha256": spec.sha256, "lock_sha256": lock_sha,
                   "builder": {"file": spec.builder, "sha256": hashlib.sha256((args.scenario / spec.builder).read_bytes()).hexdigest(),
                               "pydogwood_in_lock": lock.get("pydogwood")},
                   "instances": {f"{s}:{v}": {"id": i["record"]["id"], "tree_sha256": i["tree_sha256"]} for (s, v), i in sorted(instances.items())},
@@ -508,7 +579,7 @@ def main(argv: list[str] | None = None) -> Path | None:
         events: list[dict] = []
         try:
             for c in cells:
-                for seed in seeds:
+                for seed in seeds_of[c.name]:
                     inp = loaded[(c.name, seed)]
                     fr = frame(inp)
                     d = out / c.name / f"seed_{seed}"
@@ -535,7 +606,7 @@ def main(argv: list[str] | None = None) -> Path | None:
                 _dump(out / "spend.json", provider.spend() | {"cap_usd": provider.cap_usd})
             if watch is not None:
                 _dump(out / "cache_watch.json", watch.summary())
-        workflows = list(frame(loaded[(cells[0].name, seeds[0])]).requirements.workflows)
+        workflows = list(frame(loaded[(cells[0].name, seeds_of[cells[0].name][0])]).requirements.workflows)
         summary = {c.name: summarize_cell(args.model, [r for r in rows if r["cell"] == c.name], workflows) for c in cells}
         _dump(out / "summary.json", summary)
         write_results_csv(out / "results.csv", args.model, [c.name for c in cells], rows)

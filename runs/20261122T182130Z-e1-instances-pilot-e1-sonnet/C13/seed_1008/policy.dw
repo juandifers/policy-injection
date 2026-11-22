@@ -1,0 +1,24 @@
+@id("close-workorder-main-with-human-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Quorvex___get_approval"::response{
+    eventResource: resource,
+    eventPrincipal: principal,
+    input.wonum: context.input.wonum,
+    input.site_id: context.input.site_id,
+    output.decision: "GRANTED",
+    output.approver_kind: "HUMAN"
+  }
+};
+
+// The approval lookup must itself be permitted, otherwise it is never recorded as a response.
+@id("allow-quorvex-approval-lookup")
+permit (principal, action == Drupe::Action::"Quorvex___get_approval", resource);
+
+// Read-only lookup in the other system; permitted, but it never satisfies the close policy.
+@id("allow-nimbrel-approval-lookup")
+permit (principal, action == Drupe::Action::"Nimbrel___get_approval", resource);
+
+@id("never-approve-workorders")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

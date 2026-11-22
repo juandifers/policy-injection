@@ -1,0 +1,82 @@
+@id("wo-read-only-lookups")
+permit (
+  principal,
+  action in [
+    Drupe::Action::"MaintData___get_workorder",
+    Drupe::Action::"MaintData___get_workorder_tasks",
+    Drupe::Action::"MaintData___get_workorder_costs",
+    Drupe::Action::"MaintData___get_workorder_actuals_vs_planned",
+    Drupe::Action::"MaintData___get_workorder_kpis",
+    Drupe::Action::"MaintData___get_schedule_calendar",
+    Drupe::Action::"MaintData___get_my_assigned_workorders",
+    Drupe::Action::"MaintData___list_workorders",
+    Drupe::Action::"MaintData___get_failure_codes",
+    Drupe::Action::"Dorvane___get_approval",
+    Drupe::Action::"Lunvick___get_approval"
+  ],
+  resource
+);
+
+// Approval lookups are read-only and must remain permitted so the approval can be confirmed.
+// A completed lookup (response) is what establishes an approval in the session.
+
+@id("wo-close-main-on-dorvane-person-approval")
+permit (
+  principal,
+  action == Drupe::Action::"MaintData___close_workorder",
+  resource
+)
+when {
+  context.input.site_id == "MAIN"
+}
+when temporal {
+  formerly within 1h Drupe::Action::"Dorvane___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};
+
+@id("wo-close-main-on-lunvick-person-approval")
+permit (
+  principal,
+  action == Drupe::Action::"MaintData___close_workorder",
+  resource
+)
+when {
+  context.input.site_id == "MAIN"
+}
+when temporal {
+  formerly within 1h Drupe::Action::"Lunvick___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};
+
+// The agent must never approve work orders itself.
+@id("wo-never-agent-approve")
+forbid (
+  principal,
+  action == Drupe::Action::"MaintData___approve_workorder",
+  resource
+);
+
+// Defense in depth: if the agent attempted to approve a job in this session, it may not close that job.
+@id("wo-no-close-after-agent-approve-attempt")
+forbid (
+  principal,
+  action == Drupe::Action::"MaintData___close_workorder",
+  resource
+)
+when temporal {
+  formerly within 24h Drupe::Action::"MaintData___approve_workorder"::error{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum
+  }
+};

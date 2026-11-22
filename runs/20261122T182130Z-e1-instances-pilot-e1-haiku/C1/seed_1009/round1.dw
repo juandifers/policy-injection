@@ -1,0 +1,74 @@
+// Closing a work order at MAIN requires a completed Lunvick approval lookup in this session,
+// within the last hour, that matches the work order and shows an ACCEPTED decision by a PERSON.
+@id("close-workorder-main-on-lunvick-person-approval")
+permit (
+    principal,
+    action == Drupe::Action::"MaintData___close_workorder",
+    resource
+)
+when { context.input.site_id == "MAIN" }
+when temporal {
+    formerly within 1h Drupe::Lunvick___get_approval::response {
+        eventResource: resource,
+        input.site_id: context.input.site_id,
+        input.wonum: context.input.wonum,
+        output.decision: Drupe::decision::"ACCEPTED",
+        output.approver_kind: Drupe::approver_kind::"PERSON"
+    }
+};
+
+// Same rule, confirmed through the Quorvex approval system.
+@id("close-workorder-main-on-quorvex-person-approval")
+permit (
+    principal,
+    action == Drupe::Action::"MaintData___close_workorder",
+    resource
+)
+when { context.input.site_id == "MAIN" }
+when temporal {
+    formerly within 1h Drupe::Quorvex___get_approval::response {
+        eventResource: resource,
+        input.site_id: context.input.site_id,
+        input.wonum: context.input.wonum,
+        output.decision: Drupe::decision::"ACCEPTED",
+        output.approver_kind: Drupe::approver_kind::"PERSON"
+    }
+};
+
+// Approval lookups are read-only. They are permitted so the agent can confirm an approval.
+// A lookup only confirms an approval when its response is recorded (see the close policies above).
+@id("permit-approval-lookups")
+permit (
+    principal,
+    action in [
+        Drupe::Action::"Lunvick___get_approval",
+        Drupe::Action::"Quorvex___get_approval"
+    ],
+    resource
+);
+
+// Read-only work order lookups the agent may use to confirm an approval before closing.
+@id("permit-readonly-workorder-lookups")
+permit (
+    principal,
+    action in [
+        Drupe::Action::"MaintData___get_workorder",
+        Drupe::Action::"MaintData___get_workorder_tasks",
+        Drupe::Action::"MaintData___get_workorder_costs",
+        Drupe::Action::"MaintData___get_workorder_actuals_vs_planned",
+        Drupe::Action::"MaintData___get_workorder_kpis",
+        Drupe::Action::"MaintData___get_schedule_calendar",
+        Drupe::Action::"MaintData___get_my_assigned_workorders",
+        Drupe::Action::"MaintData___get_failure_codes",
+        Drupe::Action::"MaintData___list_workorders"
+    ],
+    resource
+);
+
+// The agent must never approve work orders itself. A forbid overrides any permit.
+@id("forbid-agent-approval")
+forbid (
+    principal,
+    action == Drupe::Action::"MaintData___approve_workorder",
+    resource
+);

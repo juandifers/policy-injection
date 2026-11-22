@@ -1,0 +1,71 @@
+// Read-only lookups. Quorvex___get_approval is the only source of approvals; Nimbrel___get_quorvex_approval
+// is a copy shown by another system and never satisfies the close condition below.
+permit (
+  principal,
+  action in [
+    Drupe::Action::"MaintData___get_workorder",
+    Drupe::Action::"MaintData___get_workorder_tasks",
+    Drupe::Action::"MaintData___get_workorder_costs",
+    Drupe::Action::"MaintData___get_workorder_actuals_vs_planned",
+    Drupe::Action::"MaintData___get_workorder_kpis",
+    Drupe::Action::"MaintData___list_workorders",
+    Drupe::Action::"MaintData___get_my_assigned_workorders",
+    Drupe::Action::"MaintData___get_schedule_calendar",
+    Drupe::Action::"MaintData___get_failure_codes",
+    Drupe::Action::"Quorvex___get_approval",
+    Drupe::Action::"Nimbrel___get_quorvex_approval"
+  ],
+  resource
+);
+
+// Close a work order at MAIN only, and only with a person's GRANTED approval for exactly this work order,
+// obtained from Quorvex in this session by a completed call, and not superseded by a REJECTED or PENDING
+// decision since then. The approval must have been granted within the last hour.
+@id("close-workorder-requires-recent-human-approval")
+permit (
+  principal,
+  action == Drupe::Action::"MaintData___close_workorder",
+  resource
+)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  // A HUMAN GRANTED approval for this work order was recorded within the last hour, and no REJECTED
+  // decision was recorded after it.
+  !Drupe::Action::"Quorvex___get_approval"::response{
+    eventResource: resource,
+    eventPrincipal: principal,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"REJECTED"
+  } since within 1h Drupe::Action::"Quorvex___get_approval"::response{
+    eventResource: resource,
+    eventPrincipal: principal,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"GRANTED",
+    output.approver_kind: Drupe::approver_kind::"HUMAN"
+  }
+  // No PENDING decision was recorded after that approval either.
+  && !Drupe::Action::"Quorvex___get_approval"::response{
+    eventResource: resource,
+    eventPrincipal: principal,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"PENDING"
+  } since within 1h Drupe::Action::"Quorvex___get_approval"::response{
+    eventResource: resource,
+    eventPrincipal: principal,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"GRANTED",
+    output.approver_kind: Drupe::approver_kind::"HUMAN"
+  }
+};
+
+// The agent must never approve work orders, directly or otherwise.
+@id("never-approve-workorders")
+forbid (
+  principal,
+  action == Drupe::Action::"MaintData___approve_workorder",
+  resource
+);

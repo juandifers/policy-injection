@@ -1,0 +1,23 @@
+// Read-only lookup of the approval record in Nimbrel, the system that decides and records approvals.
+// It needs its own permit so its completion is recorded as a ::response.
+@id("allow_nimbrel_get_approval")
+permit (principal, action == Drupe::Action::"Nimbrel___get_approval", resource);
+
+// Close only at MAIN, and only after a completed Nimbrel lookup in this session, no older than 1h,
+// for the same work order and site, showing an approved decision made by a person.
+@id("close_workorder_main_with_person_approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Nimbrel___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: "APPROVED",
+    output.approver_kind: "PERSON"
+  }
+};
+
+// The agent must never approve work orders itself (belt and braces; there is also no permit for it).
+@id("never_agent_approve")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

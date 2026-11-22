@@ -1,0 +1,46 @@
+@id("wo-read-lookups")
+permit (
+  principal,
+  action in [
+    Drupe::Action::"Dorvane___get_approval",
+    Drupe::Action::"Quorvex___get_approval",
+    Drupe::Action::"MaintData___get_workorder",
+    Drupe::Action::"MaintData___list_workorders"
+  ],
+  resource
+);
+
+@id("wo-close-main-approved-by-dorvane-human")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Dorvane___get_approval"::response {
+    eventPrincipal: principal,
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"GRANTED",
+    output.approver_kind: Drupe::approver_kind::"HUMAN"
+  }
+};
+
+@id("wo-close-main-approved-by-quorvex-human")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Quorvex___get_approval"::response {
+    eventPrincipal: principal,
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"GRANTED",
+    output.approver_kind: Drupe::approver_kind::"HUMAN"
+  }
+};
+
+@id("wo-close-only-at-main")
+forbid (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+unless { context.input.site_id == "MAIN" };
+
+@id("wo-agent-never-approves")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

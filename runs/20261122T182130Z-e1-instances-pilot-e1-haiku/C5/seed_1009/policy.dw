@@ -1,0 +1,49 @@
+// Read-only lookups. Lunvick___get_approval must stay a plain permit: its
+// successful responses are the approval evidence the closing policy checks.
+@id("wo-readonly-lookups")
+permit (
+  principal,
+  action in [
+    Drupe::Action::"Lunvick___get_approval",
+    Drupe::Action::"MaintData___get_workorder",
+    Drupe::Action::"MaintData___get_workorder_tasks",
+    Drupe::Action::"MaintData___get_workorder_costs",
+    Drupe::Action::"MaintData___get_workorder_actuals_vs_planned",
+    Drupe::Action::"MaintData___get_workorder_kpis",
+    Drupe::Action::"MaintData___list_workorders",
+    Drupe::Action::"MaintData___get_my_assigned_workorders",
+    Drupe::Action::"MaintData___get_schedule_calendar",
+    Drupe::Action::"MaintData___get_failure_codes"
+  ],
+  resource
+);
+
+// Closing: MAIN only, and only with a successful Lunvick approval in this session,
+// within the last hour, for the same site and work order, accepted, and given by a PERSON.
+// Only response events count, so failed or refused lookups confirm nothing.
+// Approvals from Quorvex or any other system are not evidence.
+@id("wo-close-main-on-person-approval")
+permit (
+  principal,
+  action == Drupe::Action::"MaintData___close_workorder",
+  resource
+)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Lunvick___get_approval"::response {
+    eventPrincipal: principal,
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};
+
+// The agent must never approve work orders itself. Explicit forbid, so no later permit can reopen it.
+@id("wo-never-self-approve")
+forbid (
+  principal,
+  action == Drupe::Action::"MaintData___approve_workorder",
+  resource
+);

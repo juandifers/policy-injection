@@ -1,0 +1,42 @@
+// Closing is allowed only at MAIN, and only after a completed Ostrel lookup in
+// this session, within the last hour, confirmed that this work order was
+// ACCEPTED by a PERSON.
+@id("close_workorder_main_with_ostrel_person_approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Ostrel___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};
+
+// Same condition, with the approval confirmed through the Yarbeck lookup.
+@id("close_workorder_main_with_yarbeck_person_approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Yarbeck___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};
+
+// Read-only approval lookups. They must be permitted themselves, otherwise they
+// are recorded as errors and no ::response event exists for the close policies.
+@id("allow_ostrel_get_approval")
+permit (principal, action == Drupe::Action::"Ostrel___get_approval", resource);
+
+@id("allow_yarbeck_get_approval")
+permit (principal, action == Drupe::Action::"Yarbeck___get_approval", resource);
+
+// The agent can never approve work orders. Nothing permits this action, and
+// this forbid makes the denial explicit.
+@id("never_approve_workorder")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

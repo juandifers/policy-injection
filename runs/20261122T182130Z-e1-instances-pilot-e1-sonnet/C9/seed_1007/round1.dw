@@ -1,0 +1,28 @@
+// Closing a work order is permitted only at MAIN, and only after a completed
+// Vantry get_approval call in this session, within the last hour, for the same
+// site and work order. That call must have returned a GRANTED decision from a
+// HUMAN approver.
+// Vantry is used because its approver_kind and decision values are declared
+// as enums. The Kelvora lookup returns free-form strings, so it is not
+// accepted as proof of approval.
+@id("close-workorder-main-with-human-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Vantry___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::Vantry___get_approval_Output_decision::"GRANTED",
+    output.approver_kind: Drupe::Vantry___get_approval_Output_approver_kind::"HUMAN"
+  }
+};
+
+// The approval lookup needs its own permit. Otherwise it is denied, recorded
+// only as an error event, and no response is ever available to the close rule.
+@id("allow-approval-lookup")
+permit (principal, action == Drupe::Action::"Vantry___get_approval", resource);
+
+// The agent must never approve work orders itself, whatever else is permitted.
+@id("never-approve-workorder")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

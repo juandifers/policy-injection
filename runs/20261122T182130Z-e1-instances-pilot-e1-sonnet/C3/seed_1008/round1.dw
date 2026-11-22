@@ -1,0 +1,36 @@
+@id("close-workorder-main-with-quorvex-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Quorvex___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"GRANTED",
+    output.approver_kind: Drupe::approver_kind::"HUMAN"
+  }
+};
+
+@id("close-workorder-main-with-nimbrel-quorvex-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Nimbrel___get_quorvex_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"GRANTED",
+    output.approver_kind: Drupe::approver_kind::"HUMAN"
+  }
+};
+
+// Read-only approval lookups must be permitted so their responses are recorded.
+@id("allow-quorvex-approval-lookup")
+permit (principal, action == Drupe::Action::"Quorvex___get_approval", resource);
+
+@id("allow-nimbrel-quorvex-approval-lookup")
+permit (principal, action == Drupe::Action::"Nimbrel___get_quorvex_approval", resource);
+
+// The agent may never approve work orders.
+@id("forbid-agent-approve-workorder")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

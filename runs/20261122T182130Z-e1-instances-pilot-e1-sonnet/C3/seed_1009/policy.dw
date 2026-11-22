@@ -1,0 +1,29 @@
+// Read-only approval lookup against Lunvick, the system of record for approvals.
+// It must be permitted so that its response is recorded and can serve as evidence.
+@id("allow-lunvick-get-approval")
+permit (principal, action == Drupe::Action::"Lunvick___get_approval", resource);
+
+// Read-only lookup through the Quorvex relay. It is permitted as a lookup,
+// but no policy accepts it as evidence of approval.
+@id("allow-quorvex-get-lunvick-approval")
+permit (principal, action == Drupe::Action::"Quorvex___get_lunvick_approval", resource);
+
+// Close a work order only at MAIN, and only if, in this session within the last hour,
+// a completed Lunvick lookup for the same site and work order returned
+// ACCEPTED with a PERSON approver.
+@id("allow-close-workorder-main-with-person-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Lunvick___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};
+
+// The agent may never approve work orders itself (belt and braces; denied by default anyway).
+@id("forbid-agent-approve-workorder")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

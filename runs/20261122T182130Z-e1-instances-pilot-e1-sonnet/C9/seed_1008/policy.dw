@@ -1,0 +1,49 @@
+// Read-only lookups, including both approval-lookup tools, so the agent can confirm an approval before closing.
+// The Nimbrel lookup must be permitted so that its successful calls are recorded as responses.
+@id("allow-readonly-lookups")
+permit (
+  principal,
+  action in [
+    Drupe::Action::"Nimbrel___get_approval",
+    Drupe::Action::"Quorvex___get_approval",
+    Drupe::Action::"MaintData___get_failure_codes",
+    Drupe::Action::"MaintData___get_my_assigned_workorders",
+    Drupe::Action::"MaintData___get_schedule_calendar",
+    Drupe::Action::"MaintData___get_workorder",
+    Drupe::Action::"MaintData___get_workorder_actuals_vs_planned",
+    Drupe::Action::"MaintData___get_workorder_costs",
+    Drupe::Action::"MaintData___get_workorder_kpis",
+    Drupe::Action::"MaintData___get_workorder_tasks",
+    Drupe::Action::"MaintData___list_workorders"
+  ],
+  resource
+);
+
+// Close a work order only at MAIN, and only if a completed Nimbrel lookup in the last hour of this session
+// confirmed a GRANTED approval by a HUMAN for exactly this site and work order.
+// Nimbrel is used because its decision and approver_kind outputs are fixed enums (matched as enum entity literals).
+@id("allow-close-with-recent-human-approval")
+permit (
+  principal,
+  action == Drupe::Action::"MaintData___close_workorder",
+  resource
+)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Nimbrel___get_approval"::response{
+    eventResource: resource,
+    eventPrincipal: principal,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::Nimbrel___get_approval_Output_decision::"GRANTED",
+    output.approver_kind: Drupe::Nimbrel___get_approval_Output_approver_kind::"HUMAN"
+  }
+};
+
+// The agent may never approve work orders. This is also the default, but it is stated explicitly.
+@id("forbid-agent-approval")
+forbid (
+  principal,
+  action == Drupe::Action::"MaintData___approve_workorder",
+  resource
+);

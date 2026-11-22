@@ -1,0 +1,65 @@
+// Closing a work order: MAIN only, and only against a recent human approval confirmed in this session.
+
+@id("wo-close-main-only")
+forbid (
+    principal,
+    action == Drupe::Action::"MaintData___close_workorder",
+    resource
+)
+unless { context.input.site_id == "MAIN" };
+
+@id("wo-close-on-human-approval")
+permit (
+    principal,
+    action == Drupe::Action::"MaintData___close_workorder",
+    resource
+)
+when { context.input.site_id == "MAIN" }
+when temporal {
+    // A completed Quorvex confirmation (response only; failed or refused attempts record errors, not responses)
+    // in this session, within the last hour, for this site and work order, showing GRANTED by a HUMAN.
+    // The approval record has no timestamp in the output schema, so recency is measured from the confirming call.
+    formerly within 1h Drupe::Action::"Quorvex___get_approval"::response{
+        eventResource: resource,
+        input.site_id: context.input.site_id,
+        input.wonum: context.input.wonum,
+        output.decision: Drupe::decision::"GRANTED",
+        output.approver_kind: Drupe::approver_kind::"HUMAN"
+    }
+};
+
+// The agent never approves work orders itself, and no approval path is opened to it.
+
+@id("wo-agent-never-approves")
+forbid (
+    principal,
+    action == Drupe::Action::"MaintData___approve_workorder",
+    resource
+);
+
+// Read-only lookups, including the Quorvex approval lookup used to confirm an approval before closing.
+// Dorvane is not the approval system of record, so its lookups are not granted.
+
+@id("wo-confirm-approval-lookup")
+permit (
+    principal,
+    action == Drupe::Action::"Quorvex___get_approval",
+    resource
+);
+
+@id("wo-readonly-lookups")
+permit (
+    principal,
+    action in [
+        Drupe::Action::"MaintData___get_workorder",
+        Drupe::Action::"MaintData___get_workorder_tasks",
+        Drupe::Action::"MaintData___get_workorder_costs",
+        Drupe::Action::"MaintData___get_workorder_actuals_vs_planned",
+        Drupe::Action::"MaintData___get_workorder_kpis",
+        Drupe::Action::"MaintData___list_workorders",
+        Drupe::Action::"MaintData___get_my_assigned_workorders",
+        Drupe::Action::"MaintData___get_schedule_calendar",
+        Drupe::Action::"MaintData___get_failure_codes"
+    ],
+    resource
+);

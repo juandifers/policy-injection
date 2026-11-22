@@ -1,0 +1,28 @@
+// Read-only lookup against Ostrel, the system that decides and records approvals.
+// It must be permitted in its own right, otherwise it is only recorded as an
+// error and can never serve as evidence for a close.
+@id("allow-ostrel-approval-lookup")
+permit (principal, action == Drupe::Action::"Ostrel___get_approval", resource);
+
+// Close a work order only at MAIN, and only if, within the last hour of this
+// session, a completed Ostrel lookup for the same site and work order showed
+// the decision as accepted and the approver as a person.
+// Assumption: Ostrel reports the literals "ACCEPTED" and "PERSON"; its output
+// fields are plain strings, so the schema does not confirm them.
+@id("allow-close-main-with-person-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Ostrel___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: "ACCEPTED",
+    output.approver_kind: "PERSON"
+  }
+};
+
+// The agent may never approve work orders itself. No permit covers
+// approve_workorder, and this forbid makes that explicit.
+@id("forbid-agent-approval")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

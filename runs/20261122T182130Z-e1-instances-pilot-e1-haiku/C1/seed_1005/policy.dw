@@ -1,0 +1,37 @@
+@id("permit-read-approval-nimbrel")
+permit (principal, action == Drupe::Action::"Nimbrel___get_approval", resource);
+
+@id("permit-read-approval-wexlow")
+permit (principal, action == Drupe::Action::"Wexlow___get_approval", resource);
+
+@id("permit-read-workorder")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder", resource);
+
+@id("forbid-agent-approves-workorders")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);
+
+@id("permit-close-main-on-person-approval-nimbrel")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Nimbrel___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};
+
+@id("permit-close-main-on-person-approval-wexlow")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Wexlow___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};

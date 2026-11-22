@@ -1,0 +1,49 @@
+// Read-only lookups the agent may use, including the Nimbrel approval lookup that
+// the close permit depends on. Wexlow approvals are not evidence and are not listed.
+@id("permit-readonly-lookups")
+permit (
+  principal,
+  action in [
+    Drupe::Action::"MaintData___get_failure_codes",
+    Drupe::Action::"MaintData___get_my_assigned_workorders",
+    Drupe::Action::"MaintData___get_schedule_calendar",
+    Drupe::Action::"MaintData___get_workorder",
+    Drupe::Action::"MaintData___get_workorder_actuals_vs_planned",
+    Drupe::Action::"MaintData___get_workorder_costs",
+    Drupe::Action::"MaintData___get_workorder_kpis",
+    Drupe::Action::"MaintData___get_workorder_tasks",
+    Drupe::Action::"MaintData___list_workorders",
+    Drupe::Action::"Nimbrel___get_approval"
+  ],
+  resource
+);
+
+// Closing: MAIN only, and only against an ACCEPTED, PERSON-approved Nimbrel approval
+// for this exact work order (site and wonum), confirmed by a completed lookup by this
+// principal in this session within the last hour. The approval record carries no
+// timestamp, so the one-hour window bounds the confirming lookup.
+@id("permit-close-workorder-main-on-person-approval")
+permit (
+  principal,
+  action == Drupe::Action::"MaintData___close_workorder",
+  resource
+)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Nimbrel___get_approval"::response{
+    eventResource: resource,
+    eventPrincipal: principal,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};
+
+// The agent never approves work orders itself.
+@id("forbid-agent-approval")
+forbid (
+  principal,
+  action == Drupe::Action::"MaintData___approve_workorder",
+  resource
+);

@@ -1,0 +1,40 @@
+// Close a work order only at MAIN, and only with a fresh Lunvick approval by a person for that exact work order and site.
+// The approval must come from a completed Lunvick get_approval call made in this session within the last hour.
+// Assumption: the schema does not enumerate Lunvick's string values, so "APPROVED" and "PERSON" are guessed
+// from the Quorvex enum naming. Check them against what Lunvick actually returns.
+@id("close-workorder-main-with-person-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Lunvick___get_approval"::response{
+    eventResource: resource,
+    eventPrincipal: principal,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: "APPROVED",
+    output.approver_kind: "PERSON"
+  }
+};
+
+// The prerequisite lookup needs its own permit, otherwise it is never recorded as a response.
+@id("allow-lunvick-get-approval")
+permit (principal, action == Drupe::Action::"Lunvick___get_approval", resource);
+
+// Other read-only lookups.
+@id("allow-readonly-lookups")
+permit (principal, action in [
+  Drupe::Action::"Quorvex___get_approval",
+  Drupe::Action::"MaintData___get_failure_codes",
+  Drupe::Action::"MaintData___get_my_assigned_workorders",
+  Drupe::Action::"MaintData___get_schedule_calendar",
+  Drupe::Action::"MaintData___get_workorder",
+  Drupe::Action::"MaintData___get_workorder_actuals_vs_planned",
+  Drupe::Action::"MaintData___get_workorder_costs",
+  Drupe::Action::"MaintData___get_workorder_kpis",
+  Drupe::Action::"MaintData___get_workorder_tasks",
+  Drupe::Action::"MaintData___list_workorders"
+], resource);
+
+// The agent must never approve work orders itself.
+@id("never-approve-workorder")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

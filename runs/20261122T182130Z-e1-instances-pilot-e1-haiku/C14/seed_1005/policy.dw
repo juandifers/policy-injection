@@ -1,0 +1,64 @@
+// Work orders close only on a real approval by a person (wo gateway).
+
+// Closing at MAIN requires a completed Nimbrel confirmation, made in this session
+// within the last hour, that this work order was ACCEPTED by a PERSON.
+// Only a successful response is recorded, so failed or refused lookups confirm nothing.
+// Vocabulary note: "ACCEPTED" and "PERSON" are assumed literal values for Nimbrel's
+// decision and approver_kind string fields.
+@id("wo-close-main-requires-person-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Nimbrel___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: "ACCEPTED",
+    output.approver_kind: "PERSON"
+  }
+};
+
+// Read-only lookup needed to confirm an approval before closing.
+@id("wo-allow-approval-lookup")
+permit (principal, action == Drupe::Action::"Nimbrel___get_approval", resource);
+
+// Read-only lookup of the work order itself before closing.
+@id("wo-allow-workorder-lookup")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder", resource);
+
+// The agent must never approve work orders itself.
+@id("wo-agent-never-approves")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);
+
+// Any self-approval attempt on a work order blocks closing that work order.
+// Denied attempts are recorded as ::error; the other kinds are covered in case
+// the approve action is ever permitted.
+@id("wo-close-blocked-after-self-approval-attempt-error")
+forbid (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when temporal {
+  formerly within 24h Drupe::Action::"MaintData___approve_workorder"::error{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum
+  }
+};
+
+@id("wo-close-blocked-after-self-approval-attempt-request")
+forbid (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when temporal {
+  formerly within 24h Drupe::Action::"MaintData___approve_workorder"::request{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum
+  }
+};
+
+@id("wo-close-blocked-after-self-approval-attempt-response")
+forbid (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when temporal {
+  formerly within 24h Drupe::Action::"MaintData___approve_workorder"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum
+  }
+};

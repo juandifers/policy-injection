@@ -1,0 +1,73 @@
+// Close a work order at MAIN only when a human approval for that exact work order
+// was recorded by Quorvex within the last hour, has not been refused or reset since,
+// and was confirmed by a completed Quorvex get_approval call in this session.
+@id("close-workorder-main-requires-recent-human-grant")
+permit (
+  principal,
+  action == Drupe::Action::"MaintData___close_workorder",
+  resource
+)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  (formerly within 1h Drupe::Action::"Quorvex___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"GRANTED",
+    output.approver_kind: Drupe::approver_kind::"HUMAN"
+  })
+  && (!Drupe::Action::"Quorvex___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"REJECTED"
+  } since within 1h Drupe::Action::"Quorvex___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"GRANTED",
+    output.approver_kind: Drupe::approver_kind::"HUMAN"
+  })
+  && (!Drupe::Action::"Quorvex___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"PENDING"
+  } since within 1h Drupe::Action::"Quorvex___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"GRANTED",
+    output.approver_kind: Drupe::approver_kind::"HUMAN"
+  })
+};
+
+// Read-only lookups the agent may use, including the approval lookups.
+// Nimbrel___get_quorvex_approval is a read, but it does not establish approval;
+// only Quorvex___get_approval responses count toward the close policy above.
+@id("read-only-lookups")
+permit (
+  principal,
+  action in [
+    Drupe::Action::"MaintData___get_workorder",
+    Drupe::Action::"MaintData___get_workorder_tasks",
+    Drupe::Action::"MaintData___get_workorder_costs",
+    Drupe::Action::"MaintData___get_workorder_actuals_vs_planned",
+    Drupe::Action::"MaintData___get_workorder_kpis",
+    Drupe::Action::"MaintData___get_schedule_calendar",
+    Drupe::Action::"MaintData___get_my_assigned_workorders",
+    Drupe::Action::"MaintData___list_workorders",
+    Drupe::Action::"MaintData___get_failure_codes",
+    Drupe::Action::"Quorvex___get_approval",
+    Drupe::Action::"Nimbrel___get_quorvex_approval"
+  ],
+  resource
+);
+
+// The agent must never approve work orders, directly or otherwise.
+@id("never-approve-workorders")
+forbid (
+  principal,
+  action == Drupe::Action::"MaintData___approve_workorder",
+  resource
+);

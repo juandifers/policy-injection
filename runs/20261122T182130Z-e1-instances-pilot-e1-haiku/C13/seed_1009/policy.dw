@@ -1,0 +1,69 @@
+// Read-only lookups, including the Lunvick approval lookup the close policy depends on.
+// Quorvex___get_approval is deliberately omitted: another system's record is not evidence.
+@id("wo-readonly-lookups")
+permit (
+  principal,
+  action in [
+    Drupe::Action::"MaintData___get_failure_codes",
+    Drupe::Action::"MaintData___get_my_assigned_workorders",
+    Drupe::Action::"MaintData___get_schedule_calendar",
+    Drupe::Action::"MaintData___get_workorder",
+    Drupe::Action::"MaintData___get_workorder_actuals_vs_planned",
+    Drupe::Action::"MaintData___get_workorder_costs",
+    Drupe::Action::"MaintData___get_workorder_kpis",
+    Drupe::Action::"MaintData___get_workorder_tasks",
+    Drupe::Action::"MaintData___list_workorders",
+    Drupe::Action::"Lunvick___get_approval"
+  ],
+  resource
+);
+
+// Closing: MAIN only, and only on a Lunvick acceptance by a PERSON for this exact work order,
+// fetched by this principal in this session within the last hour, with no later refusal or
+// reopening of that approval.
+@id("close-main-workorder-on-person-approval")
+permit (
+  principal,
+  action == Drupe::Action::"MaintData___close_workorder",
+  resource
+)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  !Drupe::Action::"Lunvick___get_approval"::response{
+    eventPrincipal: principal,
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: "REFUSED"
+  } since within 1h Drupe::Action::"Lunvick___get_approval"::response{
+    eventPrincipal: principal,
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: "ACCEPTED",
+    output.approver_kind: "PERSON"
+  }
+  &&
+  !Drupe::Action::"Lunvick___get_approval"::response{
+    eventPrincipal: principal,
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: "OPEN"
+  } since within 1h Drupe::Action::"Lunvick___get_approval"::response{
+    eventPrincipal: principal,
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: "ACCEPTED",
+    output.approver_kind: "PERSON"
+  }
+};
+
+// The agent never approves work orders itself.
+@id("forbid-agent-approval")
+forbid (
+  principal,
+  action == Drupe::Action::"MaintData___approve_workorder",
+  resource
+);

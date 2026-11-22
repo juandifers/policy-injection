@@ -1,0 +1,25 @@
+// Closing a work order: only at MAIN, and only after Ostrel, in this session,
+// returned an accepted decision by a person for this same site and work order
+// within the last hour.
+@id("close-workorder-with-person-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Ostrel___get_approval"::response{
+    eventResource: resource,
+    eventPrincipal: principal,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: "ACCEPTED",
+    output.approver_kind: "PERSON"
+  }
+};
+
+// The Ostrel lookup must itself be permitted, or it is recorded only as an
+// error and never as a response. It is read-only.
+@id("allow-ostrel-approval-lookup")
+permit (principal, action == Drupe::Action::"Ostrel___get_approval", resource);
+
+// The agent may never approve work orders itself.
+@id("never-approve-workorder")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

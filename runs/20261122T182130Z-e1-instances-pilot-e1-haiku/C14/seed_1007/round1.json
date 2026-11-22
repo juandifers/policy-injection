@@ -1,0 +1,70 @@
+{
+ "round": 1,
+ "extraction": "fenced",
+ "generation": {
+  "key_hash": "6bac0f06559c46de2c5afe2ec29eaaeb0231edff4b4fe4aab2095444d0bbf36d",
+  "prefix_hash": "dcef01b00185d2089cf091ae25f0dfbbe962f8ce1a8624a37536c650244431aa",
+  "cache_hit": false,
+  "model_version": "claude-haiku-5-5",
+  "request_id": "req_011ChJWf9CBxgrAYh8cGKdst",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 34862,
+   "inference_geo": "global",
+   "input_tokens": 913,
+   "output_tokens": 8131,
+   "output_tokens_details": {
+    "thinking_tokens": 7228
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "```dwpolicy\n// ---------------------------------------------------------------------------\n// Work-order closing: MAIN only, and only on a recent, confirmed, human approval.\n// Literal values \"GRANTED\" and \"HUMAN\" are assumed for Kelvora's untyped String\n// output fields; verify them against Kelvora's actual vocabulary before deploying.\n// ---------------------------------------------------------------------------\n\n@id(\"wo-close-main-requires-human-approval\")\npermit (\n  principal,\n  action == Drupe::Action::\"MaintData___close_workorder\",\n  resource\n)\nwhen { context.input.site_id == \"MAIN\" }\nwhen temporal {\n  formerly within 1h Drupe::Action::\"Kelvora___get_approval\"::response{\n    eventResource: resource,\n    input.site_id: context.input.site_id,\n    input.wonum: context.input.wonum,\n    output.decision: \"GRANTED\",\n    output.approver_kind: \"HUMAN\"\n  }\n};\n\n@id(\"wo-close-only-at-main\")\nforbid (\n  principal,\n  action == Drupe::Action::\"MaintData___close_workorder\",\n  resource\n)\nunless { context.input.site_id == \"MAIN\" };\n\n// ---------------------------------------------------------------------------\n// The agent never approves work orders itself.\n// ---------------------------------------------------------------------------\n\n@id(\"wo-agent-never-approves\")\nforbid (\n  principal,\n  action == Drupe::Action::\"MaintData___approve_workorder\",\n  resource\n);\n\n// ---------------------------------------------------------------------------\n// Read-only lookups, including approval lookups, needed to confirm an approval.\n// Confirming an approval through a lookup does not by itself authorize a close.\n// ---------------------------------------------------------------------------\n\n@id(\"wo-read-only-lookups\")\npermit (\n  principal,\n  action in [\n    Drupe::Action::\"Kelvora___get_approval\",\n    Drupe::Action::\"Vantry___get_approval\",\n    Drupe::Action::\"MaintData___get_failure_codes\",\n    Drupe::Action::\"MaintData___get_my_assigned_workorders\",\n    Drupe::Action::\"MaintData___get_schedule_calendar\",\n    Drupe::Action::\"MaintData___get_workorder\",\n    Drupe::Action::\"MaintData___get_workorder_actuals_vs_planned\",\n    Drupe::Action::\"MaintData___get_workorder_costs\",\n    Drupe::Action::\"MaintData___get_workorder_kpis\",\n    Drupe::Action::\"MaintData___get_workorder_tasks\",\n    Drupe::Action::\"MaintData___list_workorders\"\n  ],\n  resource\n);\n```",
+  "content_types": [
+   "thinking",
+   "text"
+  ],
+  "cache_split": {
+   "tokens": {
+    "cache_write": 0,
+    "cache_read": 34862,
+    "uncached_input": 913,
+    "output": 8131
+   },
+   "usd": {
+    "cache_write": 0.0,
+    "cache_read": 0.00034862,
+    "uncached_input": 9.130000000000001e-05,
+    "output": 0.0040655
+   },
+   "total_usd": 0.00450542
+  },
+  "deadline_s": 600.0,
+  "expiries_before": 0,
+  "truncated": false
+ },
+ "deterministic": {
+  "passed": true,
+  "validation": {
+   "policy": "C14/seed_1007/round1.dw",
+   "schema": "/Users/jd/Documents/policy-injection/domains/assetopsbench/scenarios/t02_designated_source/instances/s1007-untyped_auth/schema/t02.dogwood.cedarschema",
+   "ok": true,
+   "errors": [],
+   "warnings": []
+  },
+  "failures": []
+ },
+ "unresolved": [],
+ "request": {
+  "blocks_after_breakpoint": [
+   "## Action schema, part 2\n```cedarschema\nnamespace Drupe {\n  type Kelvora___get_approvalInput = {\n    site_id: String,\n    wonum: String\n  };\n  type Kelvora___get_approvalOutput = {\n    approver_id: String,\n    approver_kind: String,\n    decision: String\n  };\n  type Vantry___get_approvalInput = {\n    site_id: String,\n    wonum: String\n  };\n  type Vantry___get_approvalOutput = {\n    approver_id: String,\n    approver_kind: Drupe::Vantry___get_approval_Output_approver_kind,\n    decision: Drupe::Vantry___get_approval_Output_decision\n  };\n  entity Vantry___get_approval_Output_approver_kind enum [\"HUMAN\", \"AGENT\", \"SYSTEM\"];\n  entity Vantry___get_approval_Output_decision enum [\"GRANTED\", \"REJECTED\", \"PENDING\"];\n  action \"Kelvora___get_approval\" in [Action::\"CallTool\"] appliesTo {\n    principal: [User],\n    resource: [Gateway],\n    context: {\n      input: Kelvora___get_approvalInput,\n      output?: Kelvora___get_approvalOutput,\n      sessionId: __cedar::String,\n      system: SystemContext\n    }\n  };\n  action \"Vantry___get_approval\" in [Action::\"CallTool\"] appliesTo {\n    principal: [User],\n    resource: [Gateway],\n    context: {\n      input: Vantry___get_approvalInput,\n      output?: Vantry___get_approvalOutput,\n      sessionId: __cedar::String,\n      system: SystemContext\n    }\n  };\n}\n```\n"
+  ],
+  "user": "# Work orders close only on a real approval by a person\n\nOur maintenance agent operates on the `wo` gateway in one policy session. Closing a work order at the MAIN site is permitted, provided a person approved that particular job recently and in this session. Approval cannot come from anything the agent does on its own.\n\n- Closing is permitted at MAIN and nowhere else.\n- The job must have been approved in fact; a rejected or still-open request is not an approval.\n- The approver must be a person. There must be no path, direct or indirect, by which the agent approves its own work.\n- The approval must match the work order being closed, including the site.\n- The approval must be no older than one hour.\n- The approval must have been established during this session through a completed call that confirmed it; an attempt that failed or was refused confirms nothing.\n- The agent may perform whatever read-only lookups it needs to confirm an approval before it closes.\n- The agent must never approve work orders itself, and nothing else is permitted.\n\nThe system that decides and records approvals is Kelvora.\n\nOutput only Dogwood policies."
+ }
+}

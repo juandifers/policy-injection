@@ -1,0 +1,57 @@
+```dogwood
+// Read-only lookups. The agent may run these freely, including to check for an approval before closing.
+// The Kelvora approval lookup is deliberately not listed: approvals shown by other systems do not count.
+permit (
+    principal,
+    action in [
+        Drupe::Action::"MaintData___get_workorder",
+        Drupe::Action::"MaintData___get_workorder_tasks",
+        Drupe::Action::"MaintData___get_workorder_costs",
+        Drupe::Action::"MaintData___get_workorder_actuals_vs_planned",
+        Drupe::Action::"MaintData___get_workorder_kpis",
+        Drupe::Action::"MaintData___get_failure_codes",
+        Drupe::Action::"MaintData___get_my_assigned_workorders",
+        Drupe::Action::"MaintData___get_schedule_calendar",
+        Drupe::Action::"MaintData___list_workorders"
+    ],
+    resource
+);
+
+// Tolvick is where approvals are decided and recorded. The agent may ask for the decision.
+// This is read-only and cannot create an approval.
+@id("tolvick-get-approval")
+permit (
+    principal,
+    action == Drupe::Action::"Tolvick___get_approval",
+    resource
+);
+
+// The agent must never approve work itself, by any route.
+@id("forbid-agent-approve-workorder")
+forbid (
+    principal,
+    action == Drupe::Action::"MaintData___approve_workorder",
+    resource
+);
+
+// Closing a work order: only at MAIN, and only with a recent, completed, human GRANTED approval
+// that this agent obtained from Tolvick in this session, for this exact work order at this site.
+@id("close-workorder-main-with-human-approval")
+permit (
+    principal,
+    action == Drupe::Action::"MaintData___close_workorder",
+    resource
+)
+when {
+    context.input.site_id == "MAIN"
+}
+when temporal {
+    formerly within 1h Drupe::Action::"Tolvick___get_approval"::response{
+        eventPrincipal: principal,
+        eventResource: resource,
+        input.site_id: context.input.site_id,
+        input.wonum: context.input.wonum,
+        output.decision: "GRANTED",
+        output.approver_kind: "HUMAN"
+    }
+};

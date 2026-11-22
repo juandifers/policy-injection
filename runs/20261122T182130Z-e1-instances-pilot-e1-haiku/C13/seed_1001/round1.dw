@@ -1,0 +1,62 @@
+@id("close-workorder-main-on-human-approval")
+permit (
+    principal,
+    action == Drupe::Action::"MaintData___close_workorder",
+    resource
+)
+when { context.input.site_id == "MAIN" }
+when temporal {
+    // The grant must be a HUMAN GRANTED response from Quorvex, fetched by this principal in this session,
+    // for the same site and work order, and no later REJECTED or PENDING response may follow it.
+    !Drupe::Action::"Quorvex___get_approval"::response{
+        eventResource: resource,
+        input.site_id: context.input.site_id,
+        input.wonum: context.input.wonum,
+        output.decision: "REJECTED"
+    } since within 1h Drupe::Action::"Quorvex___get_approval"::response{
+        eventPrincipal: principal,
+        eventResource: resource,
+        input.site_id: context.input.site_id,
+        input.wonum: context.input.wonum,
+        output.decision: "GRANTED",
+        output.approver_kind: "HUMAN"
+    }
+    && !Drupe::Action::"Quorvex___get_approval"::response{
+        eventResource: resource,
+        input.site_id: context.input.site_id,
+        input.wonum: context.input.wonum,
+        output.decision: "PENDING"
+    } since within 1h Drupe::Action::"Quorvex___get_approval"::response{
+        eventPrincipal: principal,
+        eventResource: resource,
+        input.site_id: context.input.site_id,
+        input.wonum: context.input.wonum,
+        output.decision: "GRANTED",
+        output.approver_kind: "HUMAN"
+    }
+};
+
+@id("read-only-lookups")
+permit (
+    principal,
+    action in [
+        Drupe::Action::"MaintData___get_workorder",
+        Drupe::Action::"MaintData___get_workorder_tasks",
+        Drupe::Action::"MaintData___get_workorder_costs",
+        Drupe::Action::"MaintData___get_workorder_actuals_vs_planned",
+        Drupe::Action::"MaintData___get_workorder_kpis",
+        Drupe::Action::"MaintData___list_workorders",
+        Drupe::Action::"MaintData___get_my_assigned_workorders",
+        Drupe::Action::"MaintData___get_schedule_calendar",
+        Drupe::Action::"MaintData___get_failure_codes",
+        Drupe::Action::"Quorvex___get_approval"
+    ],
+    resource
+);
+
+@id("never-agent-approves-workorders")
+forbid (
+    principal,
+    action == Drupe::Action::"MaintData___approve_workorder",
+    resource
+);

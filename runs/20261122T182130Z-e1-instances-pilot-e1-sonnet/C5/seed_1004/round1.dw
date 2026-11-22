@@ -1,0 +1,49 @@
+// Ostrel approval lookups are read-only. They must be permitted so that
+// the ::response event is recorded; a denied call only produces ::error,
+// which can never satisfy the temporal condition on close.
+@id("allow-ostrel-approval-lookup")
+permit (
+  principal,
+  action == Drupe::Action::"Ostrel___get_approval",
+  resource
+);
+
+// Closing is allowed only at MAIN, and only if in this session, within the
+// last hour, a completed Ostrel lookup for the same site and work order
+// returned an ACCEPTED decision made by a PERSON.
+@id("allow-close-at-main-with-person-approval")
+permit (
+  principal,
+  action == Drupe::Action::"MaintData___close_workorder",
+  resource
+)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Ostrel___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};
+
+// The agent must never approve work orders itself. This is also the default
+// (no permit exists), but the explicit forbid makes it robust to later
+// additions.
+@id("forbid-agent-approval")
+forbid (
+  principal,
+  action == Drupe::Action::"MaintData___approve_workorder",
+  resource
+);
+
+// Another system's record of an approval is not evidence. No permit exists
+// for Yarbeck___get_ostrel_approval, and the close policy matches only
+// Ostrel___get_approval responses.
+@id("forbid-yarbeck-approval-mirror")
+forbid (
+  principal,
+  action == Drupe::Action::"Yarbeck___get_ostrel_approval",
+  resource
+);

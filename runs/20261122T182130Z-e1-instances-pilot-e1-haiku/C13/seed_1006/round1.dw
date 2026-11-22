@@ -1,0 +1,69 @@
+// Reads the agent may run to confirm an approval before closing.
+// Tolvick___get_approval must be permitted so that its completed responses get recorded.
+// Only Tolvick responses count as approval evidence (see the close policy below).
+@id("wo-read-only-lookups")
+permit (
+  principal,
+  action in [
+    Drupe::Action::"MaintData___get_failure_codes",
+    Drupe::Action::"MaintData___get_my_assigned_workorders",
+    Drupe::Action::"MaintData___get_schedule_calendar",
+    Drupe::Action::"MaintData___get_workorder",
+    Drupe::Action::"MaintData___get_workorder_actuals_vs_planned",
+    Drupe::Action::"MaintData___get_workorder_costs",
+    Drupe::Action::"MaintData___get_workorder_kpis",
+    Drupe::Action::"MaintData___get_workorder_tasks",
+    Drupe::Action::"MaintData___list_workorders",
+    Drupe::Action::"Tolvick___get_approval",
+    Drupe::Action::"Dorvane___get_approval"
+  ],
+  resource
+);
+
+// Closing a work order: MAIN only, and only with a live, person-given Tolvick approval
+// for this exact work order, obtained by this agent in this session within the last hour.
+// The latest Tolvick decision for the work order must still be ACCEPTED: no REFUSED
+// and no OPEN may have been recorded since that approval.
+@id("wo-close-main-needs-recent-person-approval")
+permit (
+  principal,
+  action == Drupe::Action::"MaintData___close_workorder",
+  resource
+)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  !Drupe::Action::"Tolvick___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: "REFUSED"
+  } since within 1h Drupe::Action::"Tolvick___get_approval"::response{
+    eventResource: resource,
+    eventPrincipal: principal,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.approver_kind: "PERSON",
+    output.decision: "ACCEPTED"
+  }
+  && !Drupe::Action::"Tolvick___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: "OPEN"
+  } since within 1h Drupe::Action::"Tolvick___get_approval"::response{
+    eventResource: resource,
+    eventPrincipal: principal,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.approver_kind: "PERSON",
+    output.decision: "ACCEPTED"
+  }
+};
+
+// The agent must have no way to approve its own work.
+@id("wo-never-approve")
+forbid (
+  principal,
+  action == Drupe::Action::"MaintData___approve_workorder",
+  resource
+);

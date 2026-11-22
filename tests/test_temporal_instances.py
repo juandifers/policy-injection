@@ -15,6 +15,7 @@ from pgi.analysis.dogwood_text import FORMS, binding_form, close_binding_report
 from pgi.analysis.stats import binomial_lower, binomial_upper, mcnemar_exact
 from pgi.generators import dogwood
 from pgi.generators.dogwood_inputs import load_dogwood_inputs
+from pgi.llm.pricing import PRICES
 from pgi.runs import e1_compare, temporal_instances as ti
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -36,15 +37,20 @@ def test_exact_bounds_and_mcnemar_reference_values():
 
 
 # ---- cells.yaml
-def test_cells_yaml_has_the_fourteen_cells_and_consistent_families():
+def test_cells_yaml_has_the_sixteen_cells_and_consistent_families():
     spec = ti.load_cells(T02 / "cells.yaml")
-    assert list(spec.cells) == [f"C{i}" for i in range(1, 15)]
+    assert list(spec.cells) == [f"C{i}" for i in range(1, 17)]
     c = spec.cells
     assert (c["C1"].level, c["C1"].variant, c["C1"].decline, c["C1"].n) == ("D0", "plain", False, 60)
     assert (c["C5"].level, c["C5"].variant) == ("D2", "echo") and (c["C7"].level, c["C7"].variant) == ("D4", "echo")
     assert c["C8"].n == 20 and c["C8"].variant == "neutral" and c["C9"].variant == "untyped_auth"
     assert all(c[x].decline for x in ("C10", "C11", "C12")) and c["C13"].level == "D2" and c["C14"].level == "D1"
-    assert spec.families == {"boundary": ("C4", "C5", "C6", "C7", "C13"), "guesses": ("C1", "C2", "C3", "C14"), "controls": ("C8", "C9")}
+    # batch 2 of the 2026-11-22 pre-registration: the D3 / D4 rungs with the designated source untyped, same n and no decline
+    assert (c["C15"].level, c["C15"].variant, c["C15"].decline, c["C15"].n) == ("D3", "untyped_auth", False, 60)
+    assert (c["C16"].level, c["C16"].variant, c["C16"].decline, c["C16"].n) == ("D4", "untyped_auth", False, 60)
+    assert all(not c[x].decline for x in c if x not in ("C10", "C11", "C12")) and all(c[x].n == 60 for x in c if x != "C8")
+    assert spec.families == {"boundary": ("C4", "C5", "C6", "C7", "C13", "C15", "C16"), "guesses": ("C1", "C2", "C3", "C14"), "controls": ("C8", "C9")}
+    assert sorted(x for fam in spec.families.values() for x in fam) == [f"C{i}" for i in (1, 13, 14, 15, 16, 2, 3, 4, 5, 6, 7, 8, 9)]   # every non-decline cell in exactly one family
     assert spec.contrasts["primary"] == (("C5", "C4"), ("C3", "C2"), ("C5", "C3"), ("C4", "C2")) and spec.contrasts["untyped"] == (("C13", "C4"), ("C14", "C2"))
     assert spec.contract_block_levels == ("D4",) and spec.fixed_target == "MaintData"
 
@@ -346,6 +352,25 @@ def test_max_tokens_is_recorded_and_a_truncated_first_shot_is_marked(tmp_path, m
     assert "max_tokens = 32000" in (run / "summary.md").read_text()
 
 
+def test_plan_sends_nothing_writes_nothing_and_counts_calls_per_cell(tmp_path, monkeypatch, scenario, capsys):
+    canned = Canned([])
+    out = _run(tmp_path, monkeypatch, scenario, canned, ["C4", "C7"], SEEDS, "plan", extra=["--plan"])
+    text = capsys.readouterr().out
+    assert out is None and canned.calls == 0 and not (tmp_path / "runs").exists() and not (tmp_path / "cache").exists()
+    assert "calls: 4 (every first shot valid) to 12 (every sample uses 3 rounds)" in text
+    assert "C4 (D2/plain): 2 samples, 2-6 calls" in text and "C7 (D4/echo): 2 samples, 2-6 calls" in text
+    assert "## Evidence-authority contract" in text.split("C7 (D4/echo)")[1].splitlines()[0] and "## Evidence-authority contract" not in text.split("C4 (D2/plain)")[1].splitlines()[0]
+    assert "expected cost with cache hits: $" in text and "without cache hits" in text
+    r = ti.plan(MODEL, [ti.Cell("C4", "D2", "plain", False, 60)], {"C4": [0, 7]}, {"C4": [{"tokens": 900, "blocks_after_breakpoint": [{"heading": "## Action schema, part 2"}]}] * 2},
+                dogwood.build_request(load_dogwood_inputs(scenario / "instances" / "s0000-plain", intent="D2"), dogwood.ValidatorLoopConfig(MODEL).naive())[1], 3, tmp_path / "none")
+    assert r["calls"] == {"min": 2, "max": 6} and r["prefix"]["source"] == "estimate" and r["output_tokens_mean"]["source"].startswith("estimate")
+    c = r["cost_usd"]
+    assert 0 < c["with_cache"]["min"] < c["with_cache"]["max"] and c["with_cache"]["min"] < c["without_cache"]["min"] and c["with_cache"]["max"] < c["without_cache"]["max"]
+    p = PRICES[MODEL]
+    expected_min = (r["prefix"]["tokens"] * p["cache_write_5m"] + r["prefix"]["tokens"] * p["cache_read"] + 2 * 900 * p["input"] + 2 * r["output_tokens_mean"]["value"] * p["output"]) / 1e6
+    assert c["with_cache"]["min"] == pytest.approx(expected_min)
+
+
 def test_resolver_precheck_aborts_before_any_call(tmp_path, monkeypatch, scenario):
     bad = scenario.parent / "t02_bad"
     if not bad.exists():
@@ -357,11 +382,28 @@ def test_resolver_precheck_aborts_before_any_call(tmp_path, monkeypatch, scenari
     assert canned.calls == 0 and not (tmp_path / "runs").exists()
 
 
-def test_more_seeds_than_planned_and_unknown_cells_are_refused(tmp_path, monkeypatch, scenario):
+def test_unknown_cells_are_refused_and_a_smaller_cell_takes_the_first_n_seeds(tmp_path, monkeypatch, scenario, capsys):
     with pytest.raises(SystemExit, match="unknown cells"):
         _run(tmp_path, monkeypatch, scenario, Canned([]), ["C99"], [0], "x")
-    with pytest.raises(SystemExit, match="exceed its planned n"):
-        _run(tmp_path, monkeypatch, scenario, Canned([]), ["C8"], ["0-20"], "x")
+    # one process runs C8 (planned 20) beside the 60-seed cells: C8 takes the first n seeds given, the others every seed (prereg 2026-11-22)
+    small = scenario.parent / "t02_small"
+    if not small.exists():
+        shutil.copytree(scenario, small, ignore=shutil.ignore_patterns("instances", "__pycache__"))
+        (small / "cells.yaml").write_text((small / "cells.yaml").read_text().replace("variant: neutral,      decline: false, n: 20", "variant: neutral,      decline: false, n: 1"))
+    assert ti.load_cells(small / "cells.yaml").cells["C8"].n == 1
+    _run(tmp_path, monkeypatch, small, Canned([]), ["C8", "C4"], SEEDS, "plan", extra=["--plan"])
+    text = capsys.readouterr().out
+    assert "cell C8: planned n = 1; using the first 1 of the 2 seeds given (0..0)" in text
+    assert "C8 (D2/neutral): 1 samples, 1-3 calls" in text and "C4 (D2/plain): 2 samples, 2-6 calls" in text and "calls: 3 (every first shot valid) to 9" in text
+    gold = fence(_instance_text(small, 0, "neutral", "gold.dw"))
+    canned = Canned([gold, fence(_instance_text(small, 0, "plain", "gold.dw")), fence(_instance_text(small, 7, "plain", "gold.dw"))])
+    run = _run(tmp_path, monkeypatch, small, canned, ["C8", "C4"], SEEDS, "small")
+    cfg = json.loads((run / "config.json").read_text())
+    assert canned.calls == 3 and cfg["seeds"] == list(SEEDS) and cfg["seeds_per_cell"] == {"C8": [0], "C4": list(SEEDS)} and "7:neutral" not in cfg["instances"]
+    assert (run / "C8" / "seed_0").is_dir() and not (run / "C8" / "seed_7").exists() and (run / "C4" / "seed_7").is_dir()
+    rows = list(__import__("csv").DictReader(open(run / "results.csv")))
+    assert [r["seed"] for r in rows] == ["0", "7"] and rows[1]["C8"] == "" and rows[1]["C4"] == "0" and rows[0]["C8"] == "0"   # not run is blank, never NA or 0
+    assert json.loads((run / "summary.json").read_text())["C8"]["n"] == 1
 
 
 # ---- compare
@@ -402,11 +444,11 @@ def test_compare_mcnemar_holm_and_three_tables(tmp_path):
     unt = r["contrasts"]["untyped"]
     assert unt["C14 vs C2"]["a_only"] == 3 and unt["C14 vs C2"]["holm_adjusted"] == pytest.approx(2 * 0.25) and unt["C13 vs C4"]["p"] == 1.0
     tables = r["tables"]
-    assert [t["cell"] for t in tables["boundary"]] == ["C4", "C5", "C6", "C7", "C13"] and [t["cell"] for t in tables["guesses"]] == ["C1", "C2", "C3", "C14"]
+    assert [t["cell"] for t in tables["boundary"]] == ["C4", "C5", "C6", "C7", "C13", "C15", "C16"] and [t["cell"] for t in tables["guesses"]] == ["C1", "C2", "C3", "C14"]
     assert [t["cell"] for t in tables["controls"]] == ["C8", "C9"]
     c5row = next(t for t in tables["boundary"] if t["cell"] == "C5")
     assert (c5row["n"], c5row["scored"], c5row["mirror_sufficient"], c5row["not_scored"]) == (20, 19, 8, 1) and c5row["forms"]["mirror_only"] == 8
-    assert next(t for t in tables["boundary"] if t["cell"] == "C6")["n"] == 0
+    assert all(next(t for t in tables["boundary"] if t["cell"] == c)["n"] == 0 for c in ("C6", "C15", "C16"))   # not run: an empty row, never a zero
     md = (tmp_path / "cmp.md").read_text()
     assert "### Boundary crossings (boundary)" in md and "### Guesses under underspecification (guesses)" in md and "### Controls (controls)" in md
     assert md.index("Boundary crossings") < md.index("Guesses under") < md.index("Controls (")

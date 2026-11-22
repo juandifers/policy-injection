@@ -1,0 +1,70 @@
+// Action names follow the Drupe schema (MaintData___* and the Nimbrel/Quorvex approval lookups).
+// The schema declares no `wo` target, so the names are used as declared.
+
+// Read-only lookups. The approval lookups must be permitted, or their completed calls are never
+// recorded as responses and the close policies below can never be satisfied.
+@id("allow-readonly-lookups")
+permit (
+  principal,
+  action in [
+    Drupe::Action::"MaintData___get_workorder",
+    Drupe::Action::"MaintData___list_workorders",
+    Drupe::Action::"MaintData___get_workorder_tasks",
+    Drupe::Action::"MaintData___get_workorder_costs",
+    Drupe::Action::"MaintData___get_workorder_actuals_vs_planned",
+    Drupe::Action::"MaintData___get_workorder_kpis",
+    Drupe::Action::"MaintData___get_my_assigned_workorders",
+    Drupe::Action::"MaintData___get_schedule_calendar",
+    Drupe::Action::"MaintData___get_failure_codes",
+    Drupe::Action::"Nimbrel___get_approval",
+    Drupe::Action::"Quorvex___get_approval"
+  ],
+  resource
+);
+
+// Close at MAIN, only with a completed, GRANTED, HUMAN-given approval lookup from Nimbrel
+// for this exact work order at this site, made within the last hour.
+@id("close-with-recent-human-grant-nimbrel")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Nimbrel___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"GRANTED",
+    output.approver_kind: Drupe::approver_kind::"HUMAN"
+  }
+};
+
+// Same condition, using the Quorvex approval source. Dogwood has no || inside temporal blocks,
+// so the two sources are separate permits.
+@id("close-with-recent-human-grant-quorvex")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Quorvex___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"GRANTED",
+    output.approver_kind: Drupe::approver_kind::"HUMAN"
+  }
+};
+
+// The agent must never approve work orders. This forbid overrides any permit.
+@id("forbid-approve-workorder")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);
+
+// Other write tools are outside this scope. Deny by default already covers them; the forbid makes it explicit.
+@id("forbid-other-writes")
+forbid (
+  principal,
+  action in [
+    Drupe::Action::"MaintData___assign_technician",
+    Drupe::Action::"MaintData___cancel_workorder",
+    Drupe::Action::"MaintData___generate_work_order",
+    Drupe::Action::"MaintData___update_workorder"
+  ],
+  resource
+);

@@ -1,0 +1,44 @@
+// Read-only lookup: the agent may fetch Lunvick's approval record. Each fetch is recorded as a response event
+// only when it succeeds, so only successful Lunvick lookups can establish an approval.
+@id("permit_lunvick_approval_lookup")
+permit (principal, action == Drupe::Action::"Lunvick___get_approval", resource);
+
+// Read-only lookup: the agent may read the work order before closing it.
+@id("permit_get_workorder")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder", resource);
+
+// The agent must never approve work orders itself.
+@id("forbid_agent_approve_workorder")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);
+
+// Close only at MAIN, and only when Lunvick recorded an ACCEPTED decision by a PERSON for this exact work order,
+// fetched in this session within the last hour, with no later REFUSED or OPEN decision for the same work order.
+@id("close_main_workorder_on_person_approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  !Drupe::Lunvick___get_approval::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"REFUSED"
+  } since within 1h Drupe::Lunvick___get_approval::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  } &&
+  !Drupe::Lunvick___get_approval::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"OPEN"
+  } since within 1h Drupe::Lunvick___get_approval::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};

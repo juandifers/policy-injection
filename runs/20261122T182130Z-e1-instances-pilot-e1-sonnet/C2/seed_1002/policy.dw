@@ -1,0 +1,23 @@
+// Read-only lookup of the approval record. This must itself be permitted,
+// otherwise it is recorded as an error event and no response is ever recorded.
+@id("allow-lunvick-get-approval")
+permit (principal, action == Drupe::Action::"Lunvick___get_approval", resource);
+
+// Closing is allowed only at MAIN, and only if a completed Lunvick lookup in this
+// session within the last hour confirmed that this same work order (same site and
+// wonum) was ACCEPTED by a PERSON.
+@id("allow-close-workorder-main-with-person-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Lunvick___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};
+
+// No permit exists for MaintData___approve_workorder, so the agent can never
+// approve work orders itself. All other actions are denied by default.

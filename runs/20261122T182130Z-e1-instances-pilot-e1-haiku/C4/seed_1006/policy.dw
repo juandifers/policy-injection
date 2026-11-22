@@ -1,0 +1,73 @@
+@id("wo-read-only-lookups")
+permit (principal, action == Drupe::Action::"MaintData___get_failure_codes", resource);
+
+@id("wo-read-only-lookups")
+permit (principal, action == Drupe::Action::"MaintData___get_my_assigned_workorders", resource);
+
+@id("wo-read-only-lookups")
+permit (principal, action == Drupe::Action::"MaintData___get_schedule_calendar", resource);
+
+@id("wo-read-only-lookups")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder", resource);
+
+@id("wo-read-only-lookups")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder_actuals_vs_planned", resource);
+
+@id("wo-read-only-lookups")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder_costs", resource);
+
+@id("wo-read-only-lookups")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder_kpis", resource);
+
+@id("wo-read-only-lookups")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder_tasks", resource);
+
+@id("wo-read-only-lookups")
+permit (principal, action == Drupe::Action::"MaintData___list_workorders", resource);
+
+@id("wo-approval-lookup-tolvick")
+permit (principal, action == Drupe::Action::"Tolvick___get_approval", resource);
+
+@id("wo-approval-lookup-dorvane-readonly")
+permit (principal, action == Drupe::Action::"Dorvane___get_approval", resource);
+
+@id("wo-close-main-with-session-person-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  !Drupe::Action::"Tolvick___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"REFUSED"
+  } since within 1h Drupe::Action::"Tolvick___get_approval"::response{
+    eventResource: resource,
+    eventPrincipal: principal,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+  && !Drupe::Action::"Tolvick___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"OPEN"
+  } since within 1h Drupe::Action::"Tolvick___get_approval"::response{
+    eventResource: resource,
+    eventPrincipal: principal,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};
+
+@id("wo-deny-approve-workorder")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);
+
+@id("wo-deny-generic-passthrough")
+forbid (principal, action == Drupe::Action::"Mcp", resource);
+
+@id("wo-deny-generic-passthrough")
+forbid (principal, action == Drupe::Action::"CallTool", resource);

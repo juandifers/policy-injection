@@ -1,0 +1,27 @@
+// Read-only lookup of the approval from Kelvora. It must be permitted so that
+// its response is recorded and can serve as evidence. Vantry's copy of the
+// approval is deliberately not permitted and is never referenced.
+@id("allow-kelvora-get-approval")
+permit (principal, action == Drupe::Action::"Kelvora___get_approval", resource);
+
+// Close a work order only at MAIN, and only with a completed Kelvora lookup
+// from the last hour in this session. The lookup must be for the same site and
+// work order, show GRANTED, and show a HUMAN approver.
+@id("allow-close-main-with-human-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Kelvora___get_approval"::response{
+    eventResource: resource,
+    eventPrincipal: principal,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"GRANTED",
+    output.approver_kind: Drupe::approver_kind::"HUMAN"
+  }
+};
+
+// Explicit guard: the agent never approves work orders, however other
+// policies change.
+@id("forbid-agent-approval")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

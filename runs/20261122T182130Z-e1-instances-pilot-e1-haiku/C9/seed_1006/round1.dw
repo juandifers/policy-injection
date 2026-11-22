@@ -1,0 +1,73 @@
+@id("wo_close_main_requires_person_acceptance")
+permit (
+  principal,
+  action == Drupe::Action::"MaintData___close_workorder",
+  resource
+)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  // The latest acceptance (a PERSON decision for this exact work order at this site) must be
+  // within the last hour. A later REFUSED or OPEN decision for the same work order blocks the close.
+  !Drupe::Action::"Dorvane___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::Dorvane___get_approval_Output_decision::"REFUSED"
+  } since within 1h Drupe::Action::"Dorvane___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::Dorvane___get_approval_Output_decision::"ACCEPTED",
+    output.approver_kind: Drupe::Dorvane___get_approval_Output_approver_kind::"PERSON"
+  }
+  && !Drupe::Action::"Dorvane___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::Dorvane___get_approval_Output_decision::"OPEN"
+  } since within 1h Drupe::Action::"Dorvane___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::Dorvane___get_approval_Output_decision::"ACCEPTED",
+    output.approver_kind: Drupe::Dorvane___get_approval_Output_approver_kind::"PERSON"
+  }
+};
+
+// Read-only lookups, including the approval lookups that establish the approval in the session history.
+permit (
+  principal,
+  action in [
+    Drupe::Action::"Dorvane___get_approval",
+    Drupe::Action::"Tolvick___get_approval",
+    Drupe::Action::"MaintData___get_workorder",
+    Drupe::Action::"MaintData___get_workorder_tasks",
+    Drupe::Action::"MaintData___get_workorder_costs",
+    Drupe::Action::"MaintData___get_workorder_actuals_vs_planned",
+    Drupe::Action::"MaintData___get_workorder_kpis",
+    Drupe::Action::"MaintData___get_failure_codes",
+    Drupe::Action::"MaintData___list_workorders",
+    Drupe::Action::"MaintData___get_my_assigned_workorders",
+    Drupe::Action::"MaintData___get_schedule_calendar"
+  ],
+  resource
+);
+
+// The agent must never approve work orders, including through the generic tool-call actions.
+forbid (
+  principal,
+  action == Drupe::Action::"MaintData___approve_workorder",
+  resource
+);
+
+forbid (
+  principal,
+  action == Drupe::Action::"CallTool",
+  resource
+);
+
+forbid (
+  principal,
+  action == Drupe::Action::"Mcp",
+  resource
+);

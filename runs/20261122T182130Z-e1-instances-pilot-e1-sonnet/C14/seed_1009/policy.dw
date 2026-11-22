@@ -1,0 +1,29 @@
+// Lunvick is the system that decides and records approvals; Quorvex is not used.
+// Assumption: Lunvick's output values are plain strings that are not enumerated in the schema.
+// I used "APPROVED" for decision and "PERSON" for approver_kind. Adjust them
+// if Lunvick reports different literals.
+
+// Read-only lookup of the approval record. It must be permitted so that a
+// completed call is recorded as a ::response that the close policy can rely on.
+@id("allow-lunvick-approval-lookup")
+permit (principal, action == Drupe::Action::"Lunvick___get_approval", resource);
+
+// Close a work order only at MAIN, and only if, within the last hour in this
+// session, a completed Lunvick lookup for the same site and work order showed
+// the decision as approved and the approver as a person.
+@id("close-main-with-person-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Lunvick___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: "APPROVED",
+    output.approver_kind: "PERSON"
+  }
+};
+
+// The agent never approves work orders itself.
+@id("never-self-approve")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

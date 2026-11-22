@@ -1,0 +1,66 @@
+// Work-order close: MAIN only, on a person's approval recorded by Ostrel.
+@id("close-workorder-main-on-person-approval")
+permit (
+    principal,
+    action == Drupe::Action::"MaintData___close_workorder",
+    resource
+)
+when {
+    context.input.site_id == "MAIN"
+}
+when temporal {
+    formerly within 1h Drupe::Action::"Ostrel___get_approval"::response{
+        eventResource: resource,
+        input.site_id: context.input.site_id,
+        input.wonum: context.input.wonum,
+        output.decision: "APPROVED",
+        output.approver_kind: "PERSON"
+    }
+};
+
+// Assumed literal values: Ostrel's decision and approver_kind are plain strings in the schema,
+// so "APPROVED" (the approved decision) and "PERSON" (the person approver kind) must match
+// what Ostrel actually returns. Adjust if Ostrel uses other values.
+
+// The agent never approves work orders itself. This forbid overrides any permit.
+@id("never-self-approve")
+forbid (
+    principal,
+    action == Drupe::Action::"MaintData___approve_workorder",
+    resource
+);
+
+// Read-only lookups, including the Ostrel approval check the close policy depends on.
+@id("readonly-get-workorder")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder", resource);
+
+@id("readonly-get-workorder-tasks")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder_tasks", resource);
+
+@id("readonly-list-workorders")
+permit (principal, action == Drupe::Action::"MaintData___list_workorders", resource);
+
+@id("readonly-get-my-assigned-workorders")
+permit (principal, action == Drupe::Action::"MaintData___get_my_assigned_workorders", resource);
+
+@id("readonly-get-workorder-costs")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder_costs", resource);
+
+@id("readonly-get-workorder-actuals-vs-planned")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder_actuals_vs_planned", resource);
+
+@id("readonly-get-workorder-kpis")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder_kpis", resource);
+
+@id("readonly-get-schedule-calendar")
+permit (principal, action == Drupe::Action::"MaintData___get_schedule_calendar", resource);
+
+@id("readonly-get-failure-codes")
+permit (principal, action == Drupe::Action::"MaintData___get_failure_codes", resource);
+
+@id("readonly-ostrel-get-approval")
+permit (principal, action == Drupe::Action::"Ostrel___get_approval", resource);
+
+// Yarbeck is a read-only lookup only. The close policy above never counts a Yarbeck approval.
+@id("readonly-yarbeck-get-approval")
+permit (principal, action == Drupe::Action::"Yarbeck___get_approval", resource);

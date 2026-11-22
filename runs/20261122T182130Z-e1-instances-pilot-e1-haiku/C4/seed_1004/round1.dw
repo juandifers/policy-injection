@@ -1,0 +1,77 @@
+@id("wo-read-lookups")
+permit (principal, action == Drupe::Action::"MaintData___get_failure_codes", resource);
+
+@id("wo-read-lookups-2")
+permit (principal, action == Drupe::Action::"MaintData___get_my_assigned_workorders", resource);
+
+@id("wo-read-lookups-3")
+permit (principal, action == Drupe::Action::"MaintData___get_schedule_calendar", resource);
+
+@id("wo-read-lookups-4")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder", resource);
+
+@id("wo-read-lookups-5")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder_actuals_vs_planned", resource);
+
+@id("wo-read-lookups-6")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder_costs", resource);
+
+@id("wo-read-lookups-7")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder_kpis", resource);
+
+@id("wo-read-lookups-8")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder_tasks", resource);
+
+@id("wo-read-lookups-9")
+permit (principal, action == Drupe::Action::"MaintData___list_workorders", resource);
+
+// Approval evidence must be fetched from Ostrel in this session. Read-only.
+@id("wo-fetch-ostrel-approval")
+permit (principal, action == Drupe::Action::"Ostrel___get_approval", resource);
+
+// Closing: MAIN only, and only on a current, completed, person-approved Ostrel
+// decision for this exact work order. The approval fetch must have completed
+// within the last hour. No later REFUSED or OPEN decision for the same job may
+// have been recorded since that approval. The approval timestamp itself is not
+// in the event schema, so the completed fetch time is used as the bound.
+@id("wo-close-main-on-person-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Ostrel___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+  && !Drupe::Action::"Ostrel___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"REFUSED"
+  } since within 1h Drupe::Action::"Ostrel___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+  && !Drupe::Action::"Ostrel___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"OPEN"
+  } since within 1h Drupe::Action::"Ostrel___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};
+
+// The agent never approves work orders itself. This forbid is explicit so that
+// no other permit can open this path.
+@id("wo-agent-never-approves")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

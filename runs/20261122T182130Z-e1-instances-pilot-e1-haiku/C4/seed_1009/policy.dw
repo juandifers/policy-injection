@@ -1,0 +1,72 @@
+// The agent must never approve work orders itself.
+@id("forbid_agent_approve_workorder")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);
+
+// Read-only: Lunvick's approval record. Only a successful fetch is recorded as a response, so only successful
+// Lunvick lookups can establish an approval.
+@id("permit_lunvick_approval_lookup")
+permit (principal, action == Drupe::Action::"Lunvick___get_approval", resource);
+
+// Read-only work order lookups, needed to confirm the work order before closing it.
+@id("permit_get_workorder")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder", resource);
+
+@id("permit_get_workorder_tasks")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder_tasks", resource);
+
+@id("permit_get_workorder_costs")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder_costs", resource);
+
+@id("permit_get_workorder_actuals_vs_planned")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder_actuals_vs_planned", resource);
+
+@id("permit_get_workorder_kpis")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder_kpis", resource);
+
+@id("permit_list_workorders")
+permit (principal, action == Drupe::Action::"MaintData___list_workorders", resource);
+
+@id("permit_get_my_assigned_workorders")
+permit (principal, action == Drupe::Action::"MaintData___get_my_assigned_workorders", resource);
+
+@id("permit_get_schedule_calendar")
+permit (principal, action == Drupe::Action::"MaintData___get_schedule_calendar", resource);
+
+@id("permit_get_failure_codes")
+permit (principal, action == Drupe::Action::"MaintData___get_failure_codes", resource);
+
+// Close only at MAIN, and only when Lunvick recorded, in this session and within the last hour, an ACCEPTED
+// decision by a PERSON for this exact work order, with no later REFUSED or OPEN decision for it.
+@id("permit_close_main_workorder_on_person_approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  !Drupe::Action::"Lunvick___get_approval"::response{
+    eventPrincipal: principal,
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"REFUSED"
+  } since within 1h Drupe::Action::"Lunvick___get_approval"::response{
+    eventPrincipal: principal,
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  } &&
+  !Drupe::Action::"Lunvick___get_approval"::response{
+    eventPrincipal: principal,
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"OPEN"
+  } since within 1h Drupe::Action::"Lunvick___get_approval"::response{
+    eventPrincipal: principal,
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};

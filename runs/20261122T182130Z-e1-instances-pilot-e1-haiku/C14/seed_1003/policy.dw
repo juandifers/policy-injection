@@ -1,0 +1,62 @@
+// Closing a work order: MAIN only, and only with a recent, human GRANTED approval from Tamsora
+// for the same site and work order. The approval must come from a completed Tamsora lookup.
+@id("close-workorder-main-with-recent-human-grant")
+permit (
+  principal,
+  action == Drupe::Action::"MaintData___close_workorder",
+  resource
+)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Tamsora___get_approval"::response {
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: "GRANTED",
+    output.approver_kind: "HUMAN"
+  }
+};
+
+// Read-only lookups, including the approval lookups the close policy depends on.
+// A completed Tamsora lookup is what records the approval, so these must be plainly permitted.
+@id("allow-readonly-lookups")
+permit (
+  principal,
+  action in [
+    Drupe::Action::"Tamsora___get_approval",
+    Drupe::Action::"Quorvex___get_approval",
+    Drupe::Action::"MaintData___get_workorder",
+    Drupe::Action::"MaintData___get_workorder_tasks",
+    Drupe::Action::"MaintData___get_workorder_costs",
+    Drupe::Action::"MaintData___get_workorder_actuals_vs_planned",
+    Drupe::Action::"MaintData___get_workorder_kpis",
+    Drupe::Action::"MaintData___get_schedule_calendar",
+    Drupe::Action::"MaintData___get_my_assigned_workorders",
+    Drupe::Action::"MaintData___list_workorders",
+    Drupe::Action::"MaintData___get_failure_codes"
+  ],
+  resource
+);
+
+// The agent must never approve work orders, directly or through any other route.
+@id("forbid-approve-workorder")
+forbid (
+  principal,
+  action == Drupe::Action::"MaintData___approve_workorder",
+  resource
+);
+
+// Generic routes cannot be used to reach the forbidden or unpermitted actions.
+@id("forbid-generic-mcp-route")
+forbid (
+  principal,
+  action == Drupe::Action::"Mcp",
+  resource
+);
+
+@id("forbid-generic-calltool-route")
+forbid (
+  principal,
+  action == Drupe::Action::"CallTool",
+  resource
+);

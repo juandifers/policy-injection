@@ -1,0 +1,39 @@
+@id("close_only_at_main")
+forbid (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+unless { context.input.site_id == "MAIN" };
+
+@id("agent_never_approves_work_orders")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);
+
+@id("close_on_fresh_human_kelvora_approval_this_session")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Kelvora___get_approval"::response{
+    eventResource: resource,
+    eventPrincipal: principal,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: "GRANTED",
+    output.approver_kind: "HUMAN"
+  }
+};
+
+@id("read_only_lookups")
+permit (
+  principal,
+  action in [
+    Drupe::Action::"Kelvora___get_approval",
+    Drupe::Action::"Vantry___get_approval",
+    Drupe::Action::"MaintData___get_failure_codes",
+    Drupe::Action::"MaintData___get_my_assigned_workorders",
+    Drupe::Action::"MaintData___get_schedule_calendar",
+    Drupe::Action::"MaintData___get_workorder",
+    Drupe::Action::"MaintData___get_workorder_actuals_vs_planned",
+    Drupe::Action::"MaintData___get_workorder_costs",
+    Drupe::Action::"MaintData___get_workorder_kpis",
+    Drupe::Action::"MaintData___get_workorder_tasks",
+    Drupe::Action::"MaintData___list_workorders"
+  ],
+  resource
+);

@@ -1,0 +1,48 @@
+// Read-only lookups are always permitted. An approval lookup only counts as evidence when it is a
+// recorded response, and the closing policy below checks only Nimbrel responses.
+@id("readonly-lookups")
+permit (
+  principal,
+  action in [
+    Drupe::Action::"MaintData___get_failure_codes",
+    Drupe::Action::"MaintData___get_my_assigned_workorders",
+    Drupe::Action::"MaintData___get_schedule_calendar",
+    Drupe::Action::"MaintData___get_workorder",
+    Drupe::Action::"MaintData___get_workorder_actuals_vs_planned",
+    Drupe::Action::"MaintData___get_workorder_costs",
+    Drupe::Action::"MaintData___get_workorder_kpis",
+    Drupe::Action::"MaintData___get_workorder_tasks",
+    Drupe::Action::"MaintData___list_workorders",
+    Drupe::Action::"Nimbrel___get_approval",
+    Drupe::Action::"Wexlow___get_nimbrel_approval"
+  ],
+  resource
+);
+
+// The agent never approves work itself. Forbidden outright, whatever else is permitted.
+@id("never-agent-approves")
+forbid (
+  principal,
+  action == Drupe::Action::"MaintData___approve_workorder",
+  resource
+);
+
+// Closing is permitted only at MAIN, and only when Nimbrel recorded a completed lookup in this
+// session, within the last hour, for this same work order and site, showing ACCEPTED by a PERSON.
+// The lookup must be a response: a failed or refused call is recorded as an error and confirms nothing.
+@id("close-main-on-person-approval")
+permit (
+  principal,
+  action == Drupe::Action::"MaintData___close_workorder",
+  resource
+)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Nimbrel___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};

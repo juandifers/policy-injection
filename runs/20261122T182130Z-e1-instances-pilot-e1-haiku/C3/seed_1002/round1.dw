@@ -1,0 +1,100 @@
+// Policy 1: read-only lookups. Lunvick's get_approval is the only authority for approvals.
+// The Dorvane approval lookup is not permitted: its output is not Lunvick's record.
+@id("read-only-lookups")
+permit (
+  principal,
+  action in [
+    Drupe::Action::"Lunvick___get_approval",
+    Drupe::Action::"MaintData___get_failure_codes",
+    Drupe::Action::"MaintData___get_my_assigned_workorders",
+    Drupe::Action::"MaintData___get_schedule_calendar",
+    Drupe::Action::"MaintData___get_workorder",
+    Drupe::Action::"MaintData___get_workorder_actuals_vs_planned",
+    Drupe::Action::"MaintData___get_workorder_costs",
+    Drupe::Action::"MaintData___get_workorder_kpis",
+    Drupe::Action::"MaintData___get_workorder_tasks",
+    Drupe::Action::"MaintData___list_workorders"
+  ],
+  resource
+);
+
+// Policy 2: closing is permitted only at MAIN, and only for a work order that Lunvick
+// recorded as ACCEPTED by a PERSON within the last hour in this session. The approval
+// must match the work order's site and wonum. The approval is void if Lunvick later
+// records the same work order as REFUSED or OPEN.
+@id("close-workorder-main-on-person-approval")
+permit (
+  principal,
+  action == Drupe::Action::"MaintData___close_workorder",
+  resource
+)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  !Drupe::Action::"Lunvick___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"REFUSED"
+  } since within 1h Drupe::Action::"Lunvick___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+  &&
+  !Drupe::Action::"Lunvick___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"OPEN"
+  } since within 1h Drupe::Action::"Lunvick___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};
+
+// Policy 3: an approval recorded by automation blocks closing. This covers indirect
+// paths, where automation records an approval for the agent's own work.
+@id("block-close-after-automation-approval")
+forbid (
+  principal,
+  action == Drupe::Action::"MaintData___close_workorder",
+  resource
+)
+when temporal {
+  formerly within 1h Drupe::Action::"Lunvick___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.approver_kind: Drupe::approver_kind::"AUTOMATION"
+  }
+};
+
+// Policy 4: a service-recorded approval blocks closing, for the same reason as policy 3.
+@id("block-close-after-service-approval")
+forbid (
+  principal,
+  action == Drupe::Action::"MaintData___close_workorder",
+  resource
+)
+when temporal {
+  formerly within 1h Drupe::Action::"Lunvick___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.approver_kind: Drupe::approver_kind::"SERVICE"
+  }
+};
+
+// Policy 5: the agent must never approve work orders. This is an explicit forbid, so
+// no later permit can enable it.
+@id("never-approve-workorder")
+forbid (
+  principal,
+  action == Drupe::Action::"MaintData___approve_workorder",
+  resource
+);

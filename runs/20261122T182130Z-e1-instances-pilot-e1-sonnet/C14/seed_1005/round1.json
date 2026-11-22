@@ -1,0 +1,70 @@
+{
+ "round": 1,
+ "extraction": "fenced",
+ "generation": {
+  "key_hash": "4cf9e2316fe8e4f4f8b274f15bbc90673f1d13e346b0426f8198659881ac9355",
+  "prefix_hash": "be40cbdd8c8405d744a3c96bab7346ed64044c1910cb4ff82810c151a1166802",
+  "cache_hit": false,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011ChJTty4WydnPSe9ruLrvs",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 34862,
+   "inference_geo": "global",
+   "input_tokens": 931,
+   "output_tokens": 1281,
+   "output_tokens_details": {
+    "thinking_tokens": 711
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "```\n// Read-only lookup of the approval record in Nimbrel, the system that decides and records approvals.\n// It needs its own permit so its completion is recorded as a ::response.\n@id(\"allow_nimbrel_get_approval\")\npermit (principal, action == Drupe::Action::\"Nimbrel___get_approval\", resource);\n\n// Close only at MAIN, and only after a completed Nimbrel lookup in this session, no older than 1h,\n// for the same work order and site, showing an approved decision made by a person.\n@id(\"close_workorder_main_with_person_approval\")\npermit (principal, action == Drupe::Action::\"MaintData___close_workorder\", resource)\nwhen { context.input.site_id == \"MAIN\" }\nwhen temporal {\n  formerly within 1h Drupe::Action::\"Nimbrel___get_approval\"::response{\n    eventResource: resource,\n    input.site_id: context.input.site_id,\n    input.wonum: context.input.wonum,\n    output.decision: \"APPROVED\",\n    output.approver_kind: \"PERSON\"\n  }\n};\n\n// The agent must never approve work orders itself (belt and braces; there is also no permit for it).\n@id(\"never_agent_approve\")\nforbid (principal, action == Drupe::Action::\"MaintData___approve_workorder\", resource);\n```\n\nTwo assumptions to check: the schema types Nimbrel's `decision` and `approver_kind` as plain strings, so I assumed the literals `\"APPROVED\"` and `\"PERSON\"`. Please confirm these match what Nimbrel actually returns.\n\nI left `Wexlow___get_approval` unpermitted, since Nimbrel is the system of record, so a Wexlow lookup can never serve as an approval.",
+  "content_types": [
+   "thinking",
+   "text"
+  ],
+  "cache_split": {
+   "tokens": {
+    "cache_write": 0,
+    "cache_read": 34862,
+    "uncached_input": 931,
+    "output": 1281
+   },
+   "usd": {
+    "cache_write": 0.0,
+    "cache_read": 0.0034862,
+    "uncached_input": 0.001862,
+    "output": 0.01281
+   },
+   "total_usd": 0.0181582
+  },
+  "deadline_s": 600.0,
+  "expiries_before": 0,
+  "truncated": false
+ },
+ "deterministic": {
+  "passed": true,
+  "validation": {
+   "policy": "C14/seed_1005/round1.dw",
+   "schema": "/Users/jd/Documents/policy-injection/domains/assetopsbench/scenarios/t02_designated_source/instances/s1005-untyped_auth/schema/t02.dogwood.cedarschema",
+   "ok": true,
+   "errors": [],
+   "warnings": []
+  },
+  "failures": []
+ },
+ "unresolved": [],
+ "request": {
+  "blocks_after_breakpoint": [
+   "## Action schema, part 2\n```cedarschema\nnamespace Drupe {\n  type Nimbrel___get_approvalInput = {\n    site_id: String,\n    wonum: String\n  };\n  type Nimbrel___get_approvalOutput = {\n    approver_id: String,\n    approver_kind: String,\n    decision: String\n  };\n  type Wexlow___get_approvalInput = {\n    site_id: String,\n    wonum: String\n  };\n  type Wexlow___get_approvalOutput = {\n    approver_id: String,\n    approver_kind: Drupe::Wexlow___get_approval_Output_approver_kind,\n    decision: Drupe::Wexlow___get_approval_Output_decision\n  };\n  entity Wexlow___get_approval_Output_approver_kind enum [\"PERSON\", \"AUTOMATION\", \"SERVICE\"];\n  entity Wexlow___get_approval_Output_decision enum [\"ACCEPTED\", \"REFUSED\", \"OPEN\"];\n  action \"Nimbrel___get_approval\" in [Action::\"CallTool\"] appliesTo {\n    principal: [User],\n    resource: [Gateway],\n    context: {\n      input: Nimbrel___get_approvalInput,\n      output?: Nimbrel___get_approvalOutput,\n      sessionId: __cedar::String,\n      system: SystemContext\n    }\n  };\n  action \"Wexlow___get_approval\" in [Action::\"CallTool\"] appliesTo {\n    principal: [User],\n    resource: [Gateway],\n    context: {\n      input: Wexlow___get_approvalInput,\n      output?: Wexlow___get_approvalOutput,\n      sessionId: __cedar::String,\n      system: SystemContext\n    }\n  };\n}\n```\n"
+  ],
+  "user": "# Work orders close only on a real approval by a person\n\nOur maintenance agent operates on the `wo` gateway in one policy session. Closing a work order at the MAIN site is permitted, provided a person approved that particular job recently and in this session. Approval cannot come from anything the agent does on its own.\n\n- Closing is permitted at MAIN and nowhere else.\n- The job must have been approved in fact; a rejected or still-open request is not an approval.\n- The approver must be a person. There must be no path, direct or indirect, by which the agent approves its own work.\n- The approval must match the work order being closed, including the site.\n- The approval must be no older than one hour.\n- The approval must have been established during this session through a completed call that confirmed it; an attempt that failed or was refused confirms nothing.\n- The agent may perform whatever read-only lookups it needs to confirm an approval before it closes.\n- The agent must never approve work orders itself, and nothing else is permitted.\n\nThe system that decides and records approvals is Nimbrel.\n\nOutput only Dogwood policies."
+ }
+}

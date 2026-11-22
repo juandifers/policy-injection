@@ -1,0 +1,40 @@
+@id("permit-approval-lookup-nimbrel")
+permit (principal, action == Drupe::Action::"Nimbrel___get_approval", resource);
+
+@id("permit-approval-lookup-wexlow")
+permit (principal, action == Drupe::Action::"Wexlow___get_approval", resource);
+
+// Close at MAIN only, backed by a completed Nimbrel lookup within the last hour
+// that returned ACCEPTED from a PERSON for the same work order and site.
+@id("permit-close-main-with-nimbrel-person-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Nimbrel___get_approval"::response{
+    eventResource: resource,
+    eventPrincipal: principal,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};
+
+// Same rule, with the approval confirmed through the Wexlow lookup.
+@id("permit-close-main-with-wexlow-person-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Wexlow___get_approval"::response{
+    eventResource: resource,
+    eventPrincipal: principal,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};
+
+// The agent may never approve work orders itself.
+@id("forbid-agent-approve-workorder")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

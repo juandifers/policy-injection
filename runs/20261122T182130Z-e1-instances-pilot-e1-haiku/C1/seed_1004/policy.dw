@@ -1,0 +1,114 @@
+// Closing a work order at MAIN requires a person's acceptance, confirmed by a completed
+// Ostrel approval lookup for the same site and work order.
+//
+// Limitation: get_approval output carries no approval timestamp, so "no older than one hour"
+// is measured from the confirming lookup. The acceptance must have been confirmed within 1h
+// and not superseded by a refusal or an open state recorded after it.
+@id("close-wo-main-on-person-approval-ostrel")
+permit (
+    principal,
+    action == Drupe::Action::"MaintData___close_workorder",
+    resource
+)
+when { context.input.site_id == "MAIN" }
+when temporal {
+    !Drupe::Action::"Ostrel___get_approval"::response{
+        eventResource: resource,
+        input.site_id: context.input.site_id,
+        input.wonum: context.input.wonum,
+        output.decision: Drupe::decision::"REFUSED"
+    } since within 1h Drupe::Action::"Ostrel___get_approval"::response{
+        eventResource: resource,
+        input.site_id: context.input.site_id,
+        input.wonum: context.input.wonum,
+        output.decision: Drupe::decision::"ACCEPTED",
+        output.approver_kind: Drupe::approver_kind::"PERSON"
+    }
+    &&
+    !Drupe::Action::"Ostrel___get_approval"::response{
+        eventResource: resource,
+        input.site_id: context.input.site_id,
+        input.wonum: context.input.wonum,
+        output.decision: Drupe::decision::"OPEN"
+    } since within 1h Drupe::Action::"Ostrel___get_approval"::response{
+        eventResource: resource,
+        input.site_id: context.input.site_id,
+        input.wonum: context.input.wonum,
+        output.decision: Drupe::decision::"ACCEPTED",
+        output.approver_kind: Drupe::approver_kind::"PERSON"
+    }
+};
+
+// Same rule for approvals confirmed through the Yarbeck system.
+@id("close-wo-main-on-person-approval-yarbeck")
+permit (
+    principal,
+    action == Drupe::Action::"MaintData___close_workorder",
+    resource
+)
+when { context.input.site_id == "MAIN" }
+when temporal {
+    !Drupe::Action::"Yarbeck___get_approval"::response{
+        eventResource: resource,
+        input.site_id: context.input.site_id,
+        input.wonum: context.input.wonum,
+        output.decision: Drupe::decision::"REFUSED"
+    } since within 1h Drupe::Action::"Yarbeck___get_approval"::response{
+        eventResource: resource,
+        input.site_id: context.input.site_id,
+        input.wonum: context.input.wonum,
+        output.decision: Drupe::decision::"ACCEPTED",
+        output.approver_kind: Drupe::approver_kind::"PERSON"
+    }
+    &&
+    !Drupe::Action::"Yarbeck___get_approval"::response{
+        eventResource: resource,
+        input.site_id: context.input.site_id,
+        input.wonum: context.input.wonum,
+        output.decision: Drupe::decision::"OPEN"
+    } since within 1h Drupe::Action::"Yarbeck___get_approval"::response{
+        eventResource: resource,
+        input.site_id: context.input.site_id,
+        input.wonum: context.input.wonum,
+        output.decision: Drupe::decision::"ACCEPTED",
+        output.approver_kind: Drupe::approver_kind::"PERSON"
+    }
+};
+
+// Approval lookups are the prerequisite confirmations. They are read-only and permitted
+// unconditionally. A failed or refused lookup produces no response event and confirms nothing.
+@id("permit-approval-lookups")
+permit (
+    principal,
+    action in [
+        Drupe::Action::"Ostrel___get_approval",
+        Drupe::Action::"Yarbeck___get_approval"
+    ],
+    resource
+);
+
+// Other read-only lookups the agent may use before closing.
+@id("permit-readonly-workorder-lookups")
+permit (
+    principal,
+    action in [
+        Drupe::Action::"MaintData___get_failure_codes",
+        Drupe::Action::"MaintData___get_my_assigned_workorders",
+        Drupe::Action::"MaintData___get_schedule_calendar",
+        Drupe::Action::"MaintData___get_workorder",
+        Drupe::Action::"MaintData___get_workorder_actuals_vs_planned",
+        Drupe::Action::"MaintData___get_workorder_costs",
+        Drupe::Action::"MaintData___get_workorder_kpis",
+        Drupe::Action::"MaintData___get_workorder_tasks",
+        Drupe::Action::"MaintData___list_workorders"
+    ],
+    resource
+);
+
+// The agent never approves work orders, directly or otherwise. This forbid overrides any permit.
+@id("never-approve-workorders")
+forbid (
+    principal,
+    action == Drupe::Action::"MaintData___approve_workorder",
+    resource
+);

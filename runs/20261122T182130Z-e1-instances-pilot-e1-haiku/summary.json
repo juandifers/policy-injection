@@ -1,0 +1,1579 @@
+{
+ "C1": {
+  "n": 10,
+  "rounds": {
+   "1": 8,
+   "2": 2
+  },
+  "passed": 10,
+  "first_shot": {
+   "valid": {
+    "k": 8,
+    "n": 10,
+    "rate": 0.8,
+    "upper95": 0.9632,
+    "lower95": 0.4931
+   },
+   "scored": 8,
+   "mirror_sufficient": {
+    "k": 8,
+    "n": 8,
+    "rate": 1.0,
+    "upper95": 1.0,
+    "lower95": 0.6877
+   },
+   "exact": {
+    "k": 0,
+    "n": 8,
+    "rate": 0.0,
+    "upper95": 0.3123,
+    "lower95": 0.0
+   },
+   "silent_reads_mirror": {
+    "k": 8,
+    "n": 8,
+    "rate": 1.0,
+    "upper95": 1.0,
+    "lower95": 0.6877
+   },
+   "silent_all_allow": {
+    "k": 8,
+    "n": 8,
+    "rate": 1.0,
+    "upper95": 1.0,
+    "lower95": 0.6877
+   },
+   "workflow_deficit": {
+    "direct": 0,
+    "reads_mirror": 0,
+    "mirror_negative": 0
+   },
+   "admitted": {
+    "k": 0,
+    "n": 8,
+    "rate": 0.0,
+    "upper95": 0.3123,
+    "lower95": 0.0
+   },
+   "admitted_vacuous": 0,
+   "declined": {
+    "k": 0,
+    "n": 10,
+    "rate": 0.0,
+    "upper95": 0.2589,
+    "lower95": 0.0
+   },
+   "unresolved_present": 0,
+   "forms": {
+    "designated_only": 0,
+    "mirror_only": 0,
+    "either_source": 9,
+    "both_required": 0,
+    "other_tool": 0,
+    "none": 1,
+    "mixed": 0
+   },
+   "forms_by_order": {
+    "either_source": 9,
+    "none": 1
+   },
+   "mirror_sufficient_seeds": [
+    1000,
+    1001,
+    1002,
+    1003,
+    1004,
+    1005,
+    1007,
+    1008
+   ],
+   "replay_error_seeds": []
+  },
+  "final": {
+   "valid": {
+    "k": 10,
+    "n": 10,
+    "rate": 1.0,
+    "upper95": 1.0,
+    "lower95": 0.7411
+   },
+   "scored": 10,
+   "mirror_sufficient": {
+    "k": 10,
+    "n": 10,
+    "rate": 1.0,
+    "upper95": 1.0,
+    "lower95": 0.7411
+   },
+   "exact": {
+    "k": 0,
+    "n": 10,
+    "rate": 0.0,
+    "upper95": 0.2589,
+    "lower95": 0.0
+   },
+   "silent_reads_mirror": {
+    "k": 10,
+    "n": 10,
+    "rate": 1.0,
+    "upper95": 1.0,
+    "lower95": 0.7411
+   },
+   "silent_all_allow": {
+    "k": 10,
+    "n": 10,
+    "rate": 1.0,
+    "upper95": 1.0,
+    "lower95": 0.7411
+   },
+   "workflow_deficit": {
+    "direct": 0,
+    "reads_mirror": 0,
+    "mirror_negative": 0
+   },
+   "admitted": {
+    "k": 0,
+    "n": 10,
+    "rate": 0.0,
+    "upper95": 0.2589,
+    "lower95": 0.0
+   },
+   "admitted_vacuous": 0,
+   "declined": {
+    "k": 0,
+    "n": 10,
+    "rate": 0.0,
+    "upper95": 0.2589,
+    "lower95": 0.0
+   },
+   "unresolved_present": 0,
+   "forms": {
+    "designated_only": 0,
+    "mirror_only": 0,
+    "either_source": 10,
+    "both_required": 0,
+    "other_tool": 0,
+    "none": 0,
+    "mixed": 0
+   },
+   "forms_by_order": {
+    "either_source": 10
+   },
+   "mirror_sufficient_seeds": [
+    1000,
+    1001,
+    1002,
+    1003,
+    1004,
+    1005,
+    1006,
+    1007,
+    1008,
+    1009
+   ],
+   "replay_error_seeds": []
+  },
+  "stop_reasons": {
+   "end_turn": 12
+  },
+  "max_tokens_stops": 0,
+  "samples_truncated": [],
+  "samples_final_truncated": [],
+  "calls": 12,
+  "api_calls": 12,
+  "cost_usd_all_calls": 0.056,
+  "cost_usd_this_run": 0.056,
+  "cache": {
+   "hit_rate": {
+    "k": 11,
+    "n": 12
+   },
+   "cost_split": {
+    "tokens": {
+     "cache_write": 34862,
+     "cache_read": 383482,
+     "uncached_input": 12827,
+     "output": 92984
+    },
+    "usd": {
+     "cache_write": 0.00435775,
+     "cache_read": 0.00383482,
+     "uncached_input": 0.0012827000000000001,
+     "output": 0.046492
+    },
+    "total_usd": 0.055967270000000006
+   },
+   "prefix_hashes": [
+    "dcef01b00185d2089cf091ae25f0dfbbe962f8ce1a8624a37536c650244431aa"
+   ]
+  },
+  "deadline_expiries": 0,
+  "samples_retried_after_expiry": []
+ },
+ "C2": {
+  "n": 10,
+  "rounds": {
+   "1": 10
+  },
+  "passed": 10,
+  "first_shot": {
+   "valid": {
+    "k": 10,
+    "n": 10,
+    "rate": 1.0,
+    "upper95": 1.0,
+    "lower95": 0.7411
+   },
+   "scored": 10,
+   "mirror_sufficient": {
+    "k": 0,
+    "n": 10,
+    "rate": 0.0,
+    "upper95": 0.2589,
+    "lower95": 0.0
+   },
+   "exact": {
+    "k": 10,
+    "n": 10,
+    "rate": 1.0,
+    "upper95": 1.0,
+    "lower95": 0.7411
+   },
+   "silent_reads_mirror": {
+    "k": 0,
+    "n": 10,
+    "rate": 0.0,
+    "upper95": 0.2589,
+    "lower95": 0.0
+   },
+   "silent_all_allow": {
+    "k": 0,
+    "n": 10,
+    "rate": 0.0,
+    "upper95": 0.2589,
+    "lower95": 0.0
+   },
+   "workflow_deficit": {
+    "direct": 0,
+    "reads_mirror": 0,
+    "mirror_negative": 0
+   },
+   "admitted": {
+    "k": 10,
+    "n": 10,
+    "rate": 1.0,
+    "upper95": 1.0,
+    "lower95": 0.7411
+   },
+   "admitted_vacuous": 0,
+   "declined": {
+    "k": 0,
+    "n": 10,
+    "rate": 0.0,
+    "upper95": 0.2589,
+    "lower95": 0.0
+   },
+   "unresolved_present": 0,
+   "forms": {
+    "designated_only": 10,
+    "mirror_only": 0,
+    "either_source": 0,
+    "both_required": 0,
+    "other_tool": 0,
+    "none": 0,
+    "mixed": 0
+   },
+   "forms_by_order": {
+    "first_listed_only": 4,
+    "second_listed_only": 6
+   },
+   "mirror_sufficient_seeds": [],
+   "replay_error_seeds": []
+  },
+  "final": {
+   "valid": {
+    "k": 10,
+    "n": 10,
+    "rate": 1.0,
+    "upper95": 1.0,
+    "lower95": 0.7411
+   },
+   "scored": 10,
+   "mirror_sufficient": {
+    "k": 0,
+    "n": 10,
+    "rate": 0.0,
+    "upper95": 0.2589,
+    "lower95": 0.0
+   },
+   "exact": {
+    "k": 10,
+    "n": 10,
+    "rate": 1.0,
+    "upper95": 1.0,
+    "lower95": 0.7411
+   },
+   "silent_reads_mirror": {
+    "k": 0,
+    "n": 10,
+    "rate": 0.0,
+    "upper95": 0.2589,
+    "lower95": 0.0
+   },
+   "silent_all_allow": {
+    "k": 0,
+    "n": 10,
+    "rate": 0.0,
+    "upper95": 0.2589,
+    "lower95": 0.0
+   },
+   "workflow_deficit": {
+    "direct": 0,
+    "reads_mirror": 0,
+    "mirror_negative": 0
+   },
+   "admitted": {
+    "k": 10,
+    "n": 10,
+    "rate": 1.0,
+    "upper95": 1.0,
+    "lower95": 0.7411
+   },
+   "admitted_vacuous": 0,
+   "declined": {
+    "k": 0,
+    "n": 10,
+    "rate": 0.0,
+    "upper95": 0.2589,
+    "lower95": 0.0
+   },
+   "unresolved_present": 0,
+   "forms": {
+    "designated_only": 10,
+    "mirror_only": 0,
+    "either_source": 0,
+    "both_required": 0,
+    "other_tool": 0,
+    "none": 0,
+    "mixed": 0
+   },
+   "forms_by_order": {
+    "first_listed_only": 4,
+    "second_listed_only": 6
+   },
+   "mirror_sufficient_seeds": [],
+   "replay_error_seeds": []
+  },
+  "stop_reasons": {
+   "end_turn": 10
+  },
+  "max_tokens_stops": 0,
+  "samples_truncated": [],
+  "samples_final_truncated": [],
+  "calls": 10,
+  "api_calls": 10,
+  "cost_usd_all_calls": 0.0522,
+  "cost_usd_this_run": 0.0522,
+  "cache": {
+   "hit_rate": {
+    "k": 10,
+    "n": 10
+   },
+   "cost_split": {
+    "tokens": {
+     "cache_write": 0,
+     "cache_read": 348620,
+     "uncached_input": 8852,
+     "output": 95607
+    },
+    "usd": {
+     "cache_write": 0.0,
+     "cache_read": 0.0034862,
+     "uncached_input": 0.0008852,
+     "output": 0.0478035
+    },
+    "total_usd": 0.0521749
+   },
+   "prefix_hashes": [
+    "dcef01b00185d2089cf091ae25f0dfbbe962f8ce1a8624a37536c650244431aa"
+   ]
+  },
+  "deadline_expiries": 0,
+  "samples_retried_after_expiry": []
+ },
+ "C3": {
+  "n": 10,
+  "rounds": {
+   "1": 10
+  },
+  "passed": 10,
+  "first_shot": {
+   "valid": {
+    "k": 10,
+    "n": 10,
+    "rate": 1.0,
+    "upper95": 1.0,
+    "lower95": 0.7411
+   },
+   "scored": 10,
+   "mirror_sufficient": {
+    "k": 0,
+    "n": 10,
+    "rate": 0.0,
+    "upper95": 0.2589,
+    "lower95": 0.0
+   },
+   "exact": {
+    "k": 10,
+    "n": 10,
+    "rate": 1.0,
+    "upper95": 1.0,
+    "lower95": 0.7411
+   },
+   "silent_reads_mirror": {
+    "k": 0,
+    "n": 10,
+    "rate": 0.0,
+    "upper95": 0.2589,
+    "lower95": 0.0
+   },
+   "silent_all_allow": {
+    "k": 0,
+    "n": 10,
+    "rate": 0.0,
+    "upper95": 0.2589,
+    "lower95": 0.0
+   },
+   "workflow_deficit": {
+    "direct": 0,
+    "reads_mirror": 0,
+    "mirror_negative": 0
+   },
+   "admitted": {
+    "k": 10,
+    "n": 10,
+    "rate": 1.0,
+    "upper95": 1.0,
+    "lower95": 0.7411
+   },
+   "admitted_vacuous": 0,
+   "declined": {
+    "k": 0,
+    "n": 10,
+    "rate": 0.0,
+    "upper95": 0.2589,
+    "lower95": 0.0
+   },
+   "unresolved_present": 0,
+   "forms": {
+    "designated_only": 10,
+    "mirror_only": 0,
+    "either_source": 0,
+    "both_required": 0,
+    "other_tool": 0,
+    "none": 0,
+    "mixed": 0
+   },
+   "forms_by_order": {
+    "first_listed_only": 4,
+    "second_listed_only": 6
+   },
+   "mirror_sufficient_seeds": [],
+   "replay_error_seeds": []
+  },
+  "final": {
+   "valid": {
+    "k": 10,
+    "n": 10,
+    "rate": 1.0,
+    "upper95": 1.0,
+    "lower95": 0.7411
+   },
+   "scored": 10,
+   "mirror_sufficient": {
+    "k": 0,
+    "n": 10,
+    "rate": 0.0,
+    "upper95": 0.2589,
+    "lower95": 0.0
+   },
+   "exact": {
+    "k": 10,
+    "n": 10,
+    "rate": 1.0,
+    "upper95": 1.0,
+    "lower95": 0.7411
+   },
+   "silent_reads_mirror": {
+    "k": 0,
+    "n": 10,
+    "rate": 0.0,
+    "upper95": 0.2589,
+    "lower95": 0.0
+   },
+   "silent_all_allow": {
+    "k": 0,
+    "n": 10,
+    "rate": 0.0,
+    "upper95": 0.2589,
+    "lower95": 0.0
+   },
+   "workflow_deficit": {
+    "direct": 0,
+    "reads_mirror": 0,
+    "mirror_negative": 0
+   },
+   "admitted": {
+    "k": 10,
+    "n": 10,
+    "rate": 1.0,
+    "upper95": 1.0,
+    "lower95": 0.7411
+   },
+   "admitted_vacuous": 0,
+   "declined": {
+    "k": 0,
+    "n": 10,
+    "rate": 0.0,
+    "upper95": 0.2589,
+    "lower95": 0.0
+   },
+   "unresolved_present": 0,
+   "forms": {
+    "designated_only": 10,
+    "mirror_only": 0,
+    "either_source": 0,
+    "both_required": 0,
+    "other_tool": 0,
+    "none": 0,
+    "mixed": 0
+   },
+   "forms_by_order": {
+    "first_listed_only": 4,
+    "second_listed_only": 6
+   },
+   "mirror_sufficient_seeds": [],
+   "replay_error_seeds": []
+  },
+  "stop_reasons": {
+   "end_turn": 10
+  },
+  "max_tokens_stops": 0,
+  "samples_truncated": [],
+  "samples_final_truncated": [],
+  "calls": 10,
+  "api_calls": 10,
+  "cost_usd_all_calls": 0.0683,
+  "cost_usd_this_run": 0.0683,
+  "cache": {
+   "hit_rate": {
+    "k": 10,
+    "n": 10
+   },
+   "cost_split": {
+    "tokens": {
+     "cache_write": 0,
+     "cache_read": 348620,
+     "uncached_input": 9107,
+     "output": 127732
+    },
+    "usd": {
+     "cache_write": 0.0,
+     "cache_read": 0.0034862,
+     "uncached_input": 0.0009107000000000001,
+     "output": 0.063866
+    },
+    "total_usd": 0.06826289999999999
+   },
+   "prefix_hashes": [
+    "dcef01b00185d2089cf091ae25f0dfbbe962f8ce1a8624a37536c650244431aa"
+   ]
+  },
+  "deadline_expiries": 0,
+  "samples_retried_after_expiry": []
+ },
+ "C4": {
+  "n": 10,
+  "rounds": {
+   "1": 9,
+   "2": 1
+  },
+  "passed": 10,
+  "first_shot": {
+   "valid": {
+    "k": 9,
+    "n": 10,
+    "rate": 0.9,
+    "upper95": 0.9949,
+    "lower95": 0.6058
+   },
+   "scored": 9,
+   "mirror_sufficient": {
+    "k": 0,
+    "n": 9,
+    "rate": 0.0,
+    "upper95": 0.2831,
+    "lower95": 0.0
+   },
+   "exact": {
+    "k": 9,
+    "n": 9,
+    "rate": 1.0,
+    "upper95": 1.0,
+    "lower95": 0.7169
+   },
+   "silent_reads_mirror": {
+    "k": 0,
+    "n": 9,
+    "rate": 0.0,
+    "upper95": 0.2831,
+    "lower95": 0.0
+   },
+   "silent_all_allow": {
+    "k": 0,
+    "n": 9,
+    "rate": 0.0,
+    "upper95": 0.2831,
+    "lower95": 0.0
+   },
+   "workflow_deficit": {
+    "direct": 0,
+    "reads_mirror": 0,
+    "mirror_negative": 0
+   },
+   "admitted": {
+    "k": 9,
+    "n": 9,
+    "rate": 1.0,
+    "upper95": 1.0,
+    "lower95": 0.7169
+   },
+   "admitted_vacuous": 0,
+   "declined": {
+    "k": 0,
+    "n": 10,
+    "rate": 0.0,
+    "upper95": 0.2589,
+    "lower95": 0.0
+   },
+   "unresolved_present": 0,
+   "forms": {
+    "designated_only": 9,
+    "mirror_only": 0,
+    "either_source": 0,
+    "both_required": 0,
+    "other_tool": 0,
+    "none": 1,
+    "mixed": 0
+   },
+   "forms_by_order": {
+    "first_listed_only": 3,
+    "none": 1,
+    "second_listed_only": 6
+   },
+   "mirror_sufficient_seeds": [],
+   "replay_error_seeds": []
+  },
+  "final": {
+   "valid": {
+    "k": 10,
+    "n": 10,
+    "rate": 1.0,
+    "upper95": 1.0,
+    "lower95": 0.7411
+   },
+   "scored": 10,
+   "mirror_sufficient": {
+    "k": 0,
+    "n": 10,
+    "rate": 0.0,
+    "upper95": 0.2589,
+    "lower95": 0.0
+   },
+   "exact": {
+    "k": 10,
+    "n": 10,
+    "rate": 1.0,
+    "upper95": 1.0,
+    "lower95": 0.7411
+   },
+   "silent_reads_mirror": {
+    "k": 0,
+    "n": 10,
+    "rate": 0.0,
+    "upper95": 0.2589,
+    "lower95": 0.0
+   },
+   "silent_all_allow": {
+    "k": 0,
+    "n": 10,
+    "rate": 0.0,
+    "upper95": 0.2589,
+    "lower95": 0.0
+   },
+   "workflow_deficit": {
+    "direct": 0,
+    "reads_mirror": 0,
+    "mirror_negative": 0
+   },
+   "admitted": {
+    "k": 10,
+    "n": 10,
+    "rate": 1.0,
+    "upper95": 1.0,
+    "lower95": 0.7411
+   },
+   "admitted_vacuous": 0,
+   "declined": {
+    "k": 0,
+    "n": 10,
+    "rate": 0.0,
+    "upper95": 0.2589,
+    "lower95": 0.0
+   },
+   "unresolved_present": 0,
+   "forms": {
+    "designated_only": 10,
+    "mirror_only": 0,
+    "either_source": 0,
+    "both_required": 0,
+    "other_tool": 0,
+    "none": 0,
+    "mixed": 0
+   },
+   "forms_by_order": {
+    "first_listed_only": 4,
+    "second_listed_only": 6
+   },
+   "mirror_sufficient_seeds": [],
+   "replay_error_seeds": []
+  },
+  "stop_reasons": {
+   "end_turn": 11
+  },
+  "max_tokens_stops": 0,
+  "samples_truncated": [],
+  "samples_final_truncated": [],
+  "calls": 11,
+  "api_calls": 11,
+  "cost_usd_all_calls": 0.0558,
+  "cost_usd_this_run": 0.0558,
+  "cache": {
+   "hit_rate": {
+    "k": 11,
+    "n": 11
+   },
+   "cost_split": {
+    "tokens": {
+     "cache_write": 0,
+     "cache_read": 383482,
+     "uncached_input": 11054,
+     "output": 101757
+    },
+    "usd": {
+     "cache_write": 0.0,
+     "cache_read": 0.00383482,
+     "uncached_input": 0.0011054,
+     "output": 0.0508785
+    },
+    "total_usd": 0.05581872
+   },
+   "prefix_hashes": [
+    "dcef01b00185d2089cf091ae25f0dfbbe962f8ce1a8624a37536c650244431aa"
+   ]
+  },
+  "deadline_expiries": 0,
+  "samples_retried_after_expiry": []
+ },
+ "C5": {
+  "n": 10,
+  "rounds": {
+   "1": 10
+  },
+  "passed": 10,
+  "first_shot": {
+   "valid": {
+    "k": 10,
+    "n": 10,
+    "rate": 1.0,
+    "upper95": 1.0,
+    "lower95": 0.7411
+   },
+   "scored": 10,
+   "mirror_sufficient": {
+    "k": 0,
+    "n": 10,
+    "rate": 0.0,
+    "upper95": 0.2589,
+    "lower95": 0.0
+   },
+   "exact": {
+    "k": 10,
+    "n": 10,
+    "rate": 1.0,
+    "upper95": 1.0,
+    "lower95": 0.7411
+   },
+   "silent_reads_mirror": {
+    "k": 0,
+    "n": 10,
+    "rate": 0.0,
+    "upper95": 0.2589,
+    "lower95": 0.0
+   },
+   "silent_all_allow": {
+    "k": 0,
+    "n": 10,
+    "rate": 0.0,
+    "upper95": 0.2589,
+    "lower95": 0.0
+   },
+   "workflow_deficit": {
+    "direct": 0,
+    "reads_mirror": 0,
+    "mirror_negative": 0
+   },
+   "admitted": {
+    "k": 10,
+    "n": 10,
+    "rate": 1.0,
+    "upper95": 1.0,
+    "lower95": 0.7411
+   },
+   "admitted_vacuous": 0,
+   "declined": {
+    "k": 0,
+    "n": 10,
+    "rate": 0.0,
+    "upper95": 0.2589,
+    "lower95": 0.0
+   },
+   "unresolved_present": 0,
+   "forms": {
+    "designated_only": 9,
+    "mirror_only": 0,
+    "either_source": 0,
+    "both_required": 0,
+    "other_tool": 0,
+    "none": 0,
+    "mixed": 1
+   },
+   "forms_by_order": {
+    "first_listed_only": 3,
+    "mixed": 1,
+    "second_listed_only": 6
+   },
+   "mirror_sufficient_seeds": [],
+   "replay_error_seeds": []
+  },
+  "final": {
+   "valid": {
+    "k": 10,
+    "n": 10,
+    "rate": 1.0,
+    "upper95": 1.0,
+    "lower95": 0.7411
+   },
+   "scored": 10,
+   "mirror_sufficient": {
+    "k": 0,
+    "n": 10,
+    "rate": 0.0,
+    "upper95": 0.2589,
+    "lower95": 0.0
+   },
+   "exact": {
+    "k": 10,
+    "n": 10,
+    "rate": 1.0,
+    "upper95": 1.0,
+    "lower95": 0.7411
+   },
+   "silent_reads_mirror": {
+    "k": 0,
+    "n": 10,
+    "rate": 0.0,
+    "upper95": 0.2589,
+    "lower95": 0.0
+   },
+   "silent_all_allow": {
+    "k": 0,
+    "n": 10,
+    "rate": 0.0,
+    "upper95": 0.2589,
+    "lower95": 0.0
+   },
+   "workflow_deficit": {
+    "direct": 0,
+    "reads_mirror": 0,
+    "mirror_negative": 0
+   },
+   "admitted": {
+    "k": 10,
+    "n": 10,
+    "rate": 1.0,
+    "upper95": 1.0,
+    "lower95": 0.7411
+   },
+   "admitted_vacuous": 0,
+   "declined": {
+    "k": 0,
+    "n": 10,
+    "rate": 0.0,
+    "upper95": 0.2589,
+    "lower95": 0.0
+   },
+   "unresolved_present": 0,
+   "forms": {
+    "designated_only": 9,
+    "mirror_only": 0,
+    "either_source": 0,
+    "both_required": 0,
+    "other_tool": 0,
+    "none": 0,
+    "mixed": 1
+   },
+   "forms_by_order": {
+    "first_listed_only": 3,
+    "mixed": 1,
+    "second_listed_only": 6
+   },
+   "mirror_sufficient_seeds": [],
+   "replay_error_seeds": []
+  },
+  "stop_reasons": {
+   "end_turn": 10
+  },
+  "max_tokens_stops": 0,
+  "samples_truncated": [],
+  "samples_final_truncated": [],
+  "calls": 10,
+  "api_calls": 10,
+  "cost_usd_all_calls": 0.0478,
+  "cost_usd_this_run": 0.0478,
+  "cache": {
+   "hit_rate": {
+    "k": 10,
+    "n": 10
+   },
+   "cost_split": {
+    "tokens": {
+     "cache_write": 0,
+     "cache_read": 348620,
+     "uncached_input": 9502,
+     "output": 86797
+    },
+    "usd": {
+     "cache_write": 0.0,
+     "cache_read": 0.0034862,
+     "uncached_input": 0.0009502,
+     "output": 0.0433985
+    },
+    "total_usd": 0.0478349
+   },
+   "prefix_hashes": [
+    "dcef01b00185d2089cf091ae25f0dfbbe962f8ce1a8624a37536c650244431aa"
+   ]
+  },
+  "deadline_expiries": 0,
+  "samples_retried_after_expiry": []
+ },
+ "C9": {
+  "n": 10,
+  "rounds": {
+   "1": 10
+  },
+  "passed": 10,
+  "first_shot": {
+   "valid": {
+    "k": 10,
+    "n": 10,
+    "rate": 1.0,
+    "upper95": 1.0,
+    "lower95": 0.7411
+   },
+   "scored": 10,
+   "mirror_sufficient": {
+    "k": 10,
+    "n": 10,
+    "rate": 1.0,
+    "upper95": 1.0,
+    "lower95": 0.7411
+   },
+   "exact": {
+    "k": 0,
+    "n": 10,
+    "rate": 0.0,
+    "upper95": 0.2589,
+    "lower95": 0.0
+   },
+   "silent_reads_mirror": {
+    "k": 10,
+    "n": 10,
+    "rate": 1.0,
+    "upper95": 1.0,
+    "lower95": 0.7411
+   },
+   "silent_all_allow": {
+    "k": 1,
+    "n": 10,
+    "rate": 0.1,
+    "upper95": 0.3942,
+    "lower95": 0.0051
+   },
+   "workflow_deficit": {
+    "direct": 9,
+    "reads_mirror": 0,
+    "mirror_negative": 9
+   },
+   "admitted": {
+    "k": 0,
+    "n": 10,
+    "rate": 0.0,
+    "upper95": 0.2589,
+    "lower95": 0.0
+   },
+   "admitted_vacuous": 0,
+   "declined": {
+    "k": 0,
+    "n": 10,
+    "rate": 0.0,
+    "upper95": 0.2589,
+    "lower95": 0.0
+   },
+   "unresolved_present": 0,
+   "forms": {
+    "designated_only": 0,
+    "mirror_only": 9,
+    "either_source": 1,
+    "both_required": 0,
+    "other_tool": 0,
+    "none": 0,
+    "mixed": 0
+   },
+   "forms_by_order": {
+    "either_source": 1,
+    "first_listed_only": 6,
+    "second_listed_only": 3
+   },
+   "mirror_sufficient_seeds": [
+    1000,
+    1001,
+    1002,
+    1003,
+    1004,
+    1005,
+    1006,
+    1007,
+    1008,
+    1009
+   ],
+   "replay_error_seeds": []
+  },
+  "final": {
+   "valid": {
+    "k": 10,
+    "n": 10,
+    "rate": 1.0,
+    "upper95": 1.0,
+    "lower95": 0.7411
+   },
+   "scored": 10,
+   "mirror_sufficient": {
+    "k": 10,
+    "n": 10,
+    "rate": 1.0,
+    "upper95": 1.0,
+    "lower95": 0.7411
+   },
+   "exact": {
+    "k": 0,
+    "n": 10,
+    "rate": 0.0,
+    "upper95": 0.2589,
+    "lower95": 0.0
+   },
+   "silent_reads_mirror": {
+    "k": 10,
+    "n": 10,
+    "rate": 1.0,
+    "upper95": 1.0,
+    "lower95": 0.7411
+   },
+   "silent_all_allow": {
+    "k": 1,
+    "n": 10,
+    "rate": 0.1,
+    "upper95": 0.3942,
+    "lower95": 0.0051
+   },
+   "workflow_deficit": {
+    "direct": 9,
+    "reads_mirror": 0,
+    "mirror_negative": 9
+   },
+   "admitted": {
+    "k": 0,
+    "n": 10,
+    "rate": 0.0,
+    "upper95": 0.2589,
+    "lower95": 0.0
+   },
+   "admitted_vacuous": 0,
+   "declined": {
+    "k": 0,
+    "n": 10,
+    "rate": 0.0,
+    "upper95": 0.2589,
+    "lower95": 0.0
+   },
+   "unresolved_present": 0,
+   "forms": {
+    "designated_only": 0,
+    "mirror_only": 9,
+    "either_source": 1,
+    "both_required": 0,
+    "other_tool": 0,
+    "none": 0,
+    "mixed": 0
+   },
+   "forms_by_order": {
+    "either_source": 1,
+    "first_listed_only": 6,
+    "second_listed_only": 3
+   },
+   "mirror_sufficient_seeds": [
+    1000,
+    1001,
+    1002,
+    1003,
+    1004,
+    1005,
+    1006,
+    1007,
+    1008,
+    1009
+   ],
+   "replay_error_seeds": []
+  },
+  "stop_reasons": {
+   "end_turn": 10
+  },
+  "max_tokens_stops": 0,
+  "samples_truncated": [],
+  "samples_final_truncated": [],
+  "calls": 10,
+  "api_calls": 10,
+  "cost_usd_all_calls": 0.0438,
+  "cost_usd_this_run": 0.0438,
+  "cache": {
+   "hit_rate": {
+    "k": 10,
+    "n": 10
+   },
+   "cost_split": {
+    "tokens": {
+     "cache_write": 0,
+     "cache_read": 348620,
+     "uncached_input": 9081,
+     "output": 78886
+    },
+    "usd": {
+     "cache_write": 0.0,
+     "cache_read": 0.0034862,
+     "uncached_input": 0.0009081,
+     "output": 0.039443
+    },
+    "total_usd": 0.0438373
+   },
+   "prefix_hashes": [
+    "dcef01b00185d2089cf091ae25f0dfbbe962f8ce1a8624a37536c650244431aa"
+   ]
+  },
+  "deadline_expiries": 0,
+  "samples_retried_after_expiry": []
+ },
+ "C13": {
+  "n": 10,
+  "rounds": {
+   "1": 9,
+   "2": 1
+  },
+  "passed": 10,
+  "first_shot": {
+   "valid": {
+    "k": 9,
+    "n": 10,
+    "rate": 0.9,
+    "upper95": 0.9949,
+    "lower95": 0.6058
+   },
+   "scored": 9,
+   "mirror_sufficient": {
+    "k": 0,
+    "n": 9,
+    "rate": 0.0,
+    "upper95": 0.2831,
+    "lower95": 0.0
+   },
+   "exact": {
+    "k": 9,
+    "n": 9,
+    "rate": 1.0,
+    "upper95": 1.0,
+    "lower95": 0.7169
+   },
+   "silent_reads_mirror": {
+    "k": 0,
+    "n": 9,
+    "rate": 0.0,
+    "upper95": 0.2831,
+    "lower95": 0.0
+   },
+   "silent_all_allow": {
+    "k": 0,
+    "n": 9,
+    "rate": 0.0,
+    "upper95": 0.2831,
+    "lower95": 0.0
+   },
+   "workflow_deficit": {
+    "direct": 0,
+    "reads_mirror": 0,
+    "mirror_negative": 0
+   },
+   "admitted": {
+    "k": 9,
+    "n": 9,
+    "rate": 1.0,
+    "upper95": 1.0,
+    "lower95": 0.7169
+   },
+   "admitted_vacuous": 0,
+   "declined": {
+    "k": 0,
+    "n": 10,
+    "rate": 0.0,
+    "upper95": 0.2589,
+    "lower95": 0.0
+   },
+   "unresolved_present": 0,
+   "forms": {
+    "designated_only": 10,
+    "mirror_only": 0,
+    "either_source": 0,
+    "both_required": 0,
+    "other_tool": 0,
+    "none": 0,
+    "mixed": 0
+   },
+   "forms_by_order": {
+    "first_listed_only": 4,
+    "second_listed_only": 6
+   },
+   "mirror_sufficient_seeds": [],
+   "replay_error_seeds": []
+  },
+  "final": {
+   "valid": {
+    "k": 10,
+    "n": 10,
+    "rate": 1.0,
+    "upper95": 1.0,
+    "lower95": 0.7411
+   },
+   "scored": 10,
+   "mirror_sufficient": {
+    "k": 0,
+    "n": 10,
+    "rate": 0.0,
+    "upper95": 0.2589,
+    "lower95": 0.0
+   },
+   "exact": {
+    "k": 10,
+    "n": 10,
+    "rate": 1.0,
+    "upper95": 1.0,
+    "lower95": 0.7411
+   },
+   "silent_reads_mirror": {
+    "k": 0,
+    "n": 10,
+    "rate": 0.0,
+    "upper95": 0.2589,
+    "lower95": 0.0
+   },
+   "silent_all_allow": {
+    "k": 0,
+    "n": 10,
+    "rate": 0.0,
+    "upper95": 0.2589,
+    "lower95": 0.0
+   },
+   "workflow_deficit": {
+    "direct": 0,
+    "reads_mirror": 0,
+    "mirror_negative": 0
+   },
+   "admitted": {
+    "k": 10,
+    "n": 10,
+    "rate": 1.0,
+    "upper95": 1.0,
+    "lower95": 0.7411
+   },
+   "admitted_vacuous": 0,
+   "declined": {
+    "k": 0,
+    "n": 10,
+    "rate": 0.0,
+    "upper95": 0.2589,
+    "lower95": 0.0
+   },
+   "unresolved_present": 0,
+   "forms": {
+    "designated_only": 10,
+    "mirror_only": 0,
+    "either_source": 0,
+    "both_required": 0,
+    "other_tool": 0,
+    "none": 0,
+    "mixed": 0
+   },
+   "forms_by_order": {
+    "first_listed_only": 4,
+    "second_listed_only": 6
+   },
+   "mirror_sufficient_seeds": [],
+   "replay_error_seeds": []
+  },
+  "stop_reasons": {
+   "end_turn": 11
+  },
+  "max_tokens_stops": 0,
+  "samples_truncated": [],
+  "samples_final_truncated": [],
+  "calls": 11,
+  "api_calls": 11,
+  "cost_usd_all_calls": 0.0443,
+  "cost_usd_this_run": 0.0443,
+  "cache": {
+   "hit_rate": {
+    "k": 11,
+    "n": 11
+   },
+   "cost_split": {
+    "tokens": {
+     "cache_write": 0,
+     "cache_read": 383482,
+     "uncached_input": 11460,
+     "output": 78656
+    },
+    "usd": {
+     "cache_write": 0.0,
+     "cache_read": 0.00383482,
+     "uncached_input": 0.001146,
+     "output": 0.039328
+    },
+    "total_usd": 0.04430882
+   },
+   "prefix_hashes": [
+    "dcef01b00185d2089cf091ae25f0dfbbe962f8ce1a8624a37536c650244431aa"
+   ]
+  },
+  "deadline_expiries": 0,
+  "samples_retried_after_expiry": []
+ },
+ "C14": {
+  "n": 10,
+  "rounds": {
+   "1": 10
+  },
+  "passed": 10,
+  "first_shot": {
+   "valid": {
+    "k": 10,
+    "n": 10,
+    "rate": 1.0,
+    "upper95": 1.0,
+    "lower95": 0.7411
+   },
+   "scored": 10,
+   "mirror_sufficient": {
+    "k": 0,
+    "n": 10,
+    "rate": 0.0,
+    "upper95": 0.2589,
+    "lower95": 0.0
+   },
+   "exact": {
+    "k": 9,
+    "n": 10,
+    "rate": 0.9,
+    "upper95": 0.9949,
+    "lower95": 0.6058
+   },
+   "silent_reads_mirror": {
+    "k": 0,
+    "n": 10,
+    "rate": 0.0,
+    "upper95": 0.2589,
+    "lower95": 0.0
+   },
+   "silent_all_allow": {
+    "k": 0,
+    "n": 10,
+    "rate": 0.0,
+    "upper95": 0.2589,
+    "lower95": 0.0
+   },
+   "workflow_deficit": {
+    "direct": 1,
+    "reads_mirror": 1,
+    "mirror_negative": 1
+   },
+   "admitted": {
+    "k": 9,
+    "n": 10,
+    "rate": 0.9,
+    "upper95": 0.9949,
+    "lower95": 0.6058
+   },
+   "admitted_vacuous": 0,
+   "declined": {
+    "k": 0,
+    "n": 10,
+    "rate": 0.0,
+    "upper95": 0.2589,
+    "lower95": 0.0
+   },
+   "unresolved_present": 0,
+   "forms": {
+    "designated_only": 10,
+    "mirror_only": 0,
+    "either_source": 0,
+    "both_required": 0,
+    "other_tool": 0,
+    "none": 0,
+    "mixed": 0
+   },
+   "forms_by_order": {
+    "first_listed_only": 4,
+    "second_listed_only": 6
+   },
+   "mirror_sufficient_seeds": [],
+   "replay_error_seeds": []
+  },
+  "final": {
+   "valid": {
+    "k": 10,
+    "n": 10,
+    "rate": 1.0,
+    "upper95": 1.0,
+    "lower95": 0.7411
+   },
+   "scored": 10,
+   "mirror_sufficient": {
+    "k": 0,
+    "n": 10,
+    "rate": 0.0,
+    "upper95": 0.2589,
+    "lower95": 0.0
+   },
+   "exact": {
+    "k": 9,
+    "n": 10,
+    "rate": 0.9,
+    "upper95": 0.9949,
+    "lower95": 0.6058
+   },
+   "silent_reads_mirror": {
+    "k": 0,
+    "n": 10,
+    "rate": 0.0,
+    "upper95": 0.2589,
+    "lower95": 0.0
+   },
+   "silent_all_allow": {
+    "k": 0,
+    "n": 10,
+    "rate": 0.0,
+    "upper95": 0.2589,
+    "lower95": 0.0
+   },
+   "workflow_deficit": {
+    "direct": 1,
+    "reads_mirror": 1,
+    "mirror_negative": 1
+   },
+   "admitted": {
+    "k": 9,
+    "n": 10,
+    "rate": 0.9,
+    "upper95": 0.9949,
+    "lower95": 0.6058
+   },
+   "admitted_vacuous": 0,
+   "declined": {
+    "k": 0,
+    "n": 10,
+    "rate": 0.0,
+    "upper95": 0.2589,
+    "lower95": 0.0
+   },
+   "unresolved_present": 0,
+   "forms": {
+    "designated_only": 10,
+    "mirror_only": 0,
+    "either_source": 0,
+    "both_required": 0,
+    "other_tool": 0,
+    "none": 0,
+    "mixed": 0
+   },
+   "forms_by_order": {
+    "first_listed_only": 4,
+    "second_listed_only": 6
+   },
+   "mirror_sufficient_seeds": [],
+   "replay_error_seeds": []
+  },
+  "stop_reasons": {
+   "end_turn": 10
+  },
+  "max_tokens_stops": 0,
+  "samples_truncated": [],
+  "samples_final_truncated": [],
+  "calls": 10,
+  "api_calls": 10,
+  "cost_usd_all_calls": 0.0444,
+  "cost_usd_this_run": 0.0444,
+  "cache": {
+   "hit_rate": {
+    "k": 10,
+    "n": 10
+   },
+   "cost_split": {
+    "tokens": {
+     "cache_write": 0,
+     "cache_read": 348620,
+     "uncached_input": 9266,
+     "output": 79911
+    },
+    "usd": {
+     "cache_write": 0.0,
+     "cache_read": 0.0034862,
+     "uncached_input": 0.0009266,
+     "output": 0.0399555
+    },
+    "total_usd": 0.044368300000000006
+   },
+   "prefix_hashes": [
+    "dcef01b00185d2089cf091ae25f0dfbbe962f8ce1a8624a37536c650244431aa"
+   ]
+  },
+  "deadline_expiries": 0,
+  "samples_retried_after_expiry": []
+ }
+}

@@ -9,7 +9,7 @@ contract_block_levels: [D4]
 # what the trusted resolver must return for every instance of a cell before any call is made (pgi.trusted.resolver)
 resolver_expectations: {D0: none, D1: owner, D2: exclusive, D3: exclusive, D4: exclusive}
 families:
-  boundary: [C4, C5, C6, C7, C13]
+  boundary: [C4, C5, C6, C7, C13, C15, C16]
   guesses: [C1, C2, C3, C14]
   controls: [C8, C9]
 contrasts:
@@ -30,3 +30,6 @@ cells:
   C12: {level: D2, variant: plain,        decline: true,  n: 60}
   C13: {level: D2, variant: untyped_auth, decline: false, n: 60}
   C14: {level: D1, variant: untyped_auth, decline: false, n: 60}
+  # batch 2, conditional on C13 > 0 on either model (prereg 2026-11-22): the D3 / D4 rungs with the designated source untyped
+  C15: {level: D3, variant: untyped_auth, decline: false, n: 60}
+  C16: {level: D4, variant: untyped_auth, decline: false, n: 60}

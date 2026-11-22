@@ -1,0 +1,33 @@
+@id("read-workorder")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder", resource);
+
+@id("read-list-workorders")
+permit (principal, action == Drupe::Action::"MaintData___list_workorders", resource);
+
+// Lunvick is the approval source. The agent fetches it in-session; only a completed response counts as evidence.
+@id("lookup-lunvick-approval")
+permit (principal, action == Drupe::Action::"Lunvick___get_approval", resource);
+
+// Close at MAIN only, and only with a Lunvick-confirmed approval by a person, for this same work order,
+// recorded in this session within the last hour.
+@id("close-main-on-person-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Lunvick___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};
+
+// Closing is forbidden at any site other than MAIN, regardless of any other permit.
+@id("close-only-at-main")
+forbid (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+unless { context.input.site_id == "MAIN" };
+
+// The agent never approves work orders itself.
+@id("agent-never-approves")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

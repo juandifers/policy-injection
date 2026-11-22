@@ -1,0 +1,27 @@
+// Closing is allowed only at MAIN, and only when a person's ACCEPTED approval,
+// recorded by Tolvick for this exact work order and site, was confirmed by a
+// completed lookup within the last hour of this session.
+@id("close_main_with_recent_person_approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Tolvick___get_approval"::response{
+    eventResource: resource,
+    input.wonum: context.input.wonum,
+    input.site_id: context.input.site_id,
+    output.decision: "ACCEPTED",
+    output.approver_kind: "PERSON"
+  }
+};
+
+// The approval lookup must be permitted itself, otherwise it is never recorded as a response.
+@id("allow_tolvick_approval_lookup")
+permit (principal, action == Drupe::Action::"Tolvick___get_approval", resource);
+
+// Read-only lookup in the other approval system. Its results are never trusted by the close policy.
+@id("allow_dorvane_approval_lookup")
+permit (principal, action == Drupe::Action::"Dorvane___get_approval", resource);
+
+// The agent can never approve work orders.
+@id("forbid_agent_approval")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

@@ -1,0 +1,62 @@
+// Read-only lookup of an approval decision. Kelvora is the system that decides and records approvals.
+// The Vantry relay of the same data is not permitted as evidence and is not needed.
+@id("kelvora-approval-lookup")
+permit (
+  principal,
+  action == Drupe::Action::"Kelvora___get_approval",
+  resource
+);
+
+// The agent never approves work orders itself, in any form.
+@id("agent-never-approves")
+forbid (
+  principal,
+  action == Drupe::Action::"MaintData___approve_workorder",
+  resource
+);
+
+// Closing is allowed at MAIN only. This forbid holds even if a permit is added later.
+@id("close-only-at-main")
+forbid (
+  principal,
+  action == Drupe::Action::"MaintData___close_workorder",
+  resource
+)
+unless { context.input.site_id == "MAIN" };
+
+// Close a work order only when, in this session, Kelvora confirmed for this exact job (site and wonum)
+// a GRANTED decision by a HUMAN approver within the last hour, and no later confirmation in the session
+// reported the job as REJECTED or PENDING after that grant.
+@id("close-on-recent-human-approval")
+permit (
+  principal,
+  action == Drupe::Action::"MaintData___close_workorder",
+  resource
+)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  !Drupe::Action::"Kelvora___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"REJECTED"
+  } since within 1h Drupe::Action::"Kelvora___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"GRANTED",
+    output.approver_kind: Drupe::approver_kind::"HUMAN"
+  }
+  && !Drupe::Action::"Kelvora___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"PENDING"
+  } since within 1h Drupe::Action::"Kelvora___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"GRANTED",
+    output.approver_kind: Drupe::approver_kind::"HUMAN"
+  }
+};

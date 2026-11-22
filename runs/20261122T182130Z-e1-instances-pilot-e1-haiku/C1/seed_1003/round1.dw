@@ -1,0 +1,151 @@
+@id("close-wo-main-approved-via-quorvex")
+permit (
+    principal,
+    action == Drupe::Action::"MaintData___close_workorder",
+    resource == Drupe::Gateway::"wo"
+)
+when { context.input.site_id == "MAIN" }
+when temporal {
+    !Drupe::Action::"Quorvex___get_approval"::response{
+        eventResource: resource,
+        input.site_id: context.input.site_id,
+        input.wonum: context.input.wonum,
+        output.decision: Drupe::decision::"REJECTED"
+    } since within 1h Drupe::Action::"Quorvex___get_approval"::response{
+        eventResource: resource,
+        input.site_id: context.input.site_id,
+        input.wonum: context.input.wonum,
+        output.decision: Drupe::decision::"GRANTED",
+        output.approver_kind: Drupe::approver_kind::"HUMAN"
+    }
+    && !Drupe::Action::"Quorvex___get_approval"::response{
+        eventResource: resource,
+        input.site_id: context.input.site_id,
+        input.wonum: context.input.wonum,
+        output.decision: Drupe::decision::"PENDING"
+    } since within 1h Drupe::Action::"Quorvex___get_approval"::response{
+        eventResource: resource,
+        input.site_id: context.input.site_id,
+        input.wonum: context.input.wonum,
+        output.decision: Drupe::decision::"GRANTED",
+        output.approver_kind: Drupe::approver_kind::"HUMAN"
+    }
+};
+
+@id("close-wo-main-approved-via-tamsora")
+permit (
+    principal,
+    action == Drupe::Action::"MaintData___close_workorder",
+    resource == Drupe::Gateway::"wo"
+)
+when { context.input.site_id == "MAIN" }
+when temporal {
+    !Drupe::Action::"Tamsora___get_approval"::response{
+        eventResource: resource,
+        input.site_id: context.input.site_id,
+        input.wonum: context.input.wonum,
+        output.decision: Drupe::decision::"REJECTED"
+    } since within 1h Drupe::Action::"Tamsora___get_approval"::response{
+        eventResource: resource,
+        input.site_id: context.input.site_id,
+        input.wonum: context.input.wonum,
+        output.decision: Drupe::decision::"GRANTED",
+        output.approver_kind: Drupe::approver_kind::"HUMAN"
+    }
+    && !Drupe::Action::"Tamsora___get_approval"::response{
+        eventResource: resource,
+        input.site_id: context.input.site_id,
+        input.wonum: context.input.wonum,
+        output.decision: Drupe::decision::"PENDING"
+    } since within 1h Drupe::Action::"Tamsora___get_approval"::response{
+        eventResource: resource,
+        input.site_id: context.input.site_id,
+        input.wonum: context.input.wonum,
+        output.decision: Drupe::decision::"GRANTED",
+        output.approver_kind: Drupe::approver_kind::"HUMAN"
+    }
+};
+
+@id("approval-lookup-quorvex")
+permit (
+    principal,
+    action == Drupe::Action::"Quorvex___get_approval",
+    resource == Drupe::Gateway::"wo"
+);
+
+@id("approval-lookup-tamsora")
+permit (
+    principal,
+    action == Drupe::Action::"Tamsora___get_approval",
+    resource == Drupe::Gateway::"wo"
+);
+
+@id("readonly-get-workorder")
+permit (
+    principal,
+    action == Drupe::Action::"MaintData___get_workorder",
+    resource == Drupe::Gateway::"wo"
+);
+
+@id("readonly-list-workorders")
+permit (
+    principal,
+    action == Drupe::Action::"MaintData___list_workorders",
+    resource == Drupe::Gateway::"wo"
+);
+
+@id("readonly-get-workorder-tasks")
+permit (
+    principal,
+    action == Drupe::Action::"MaintData___get_workorder_tasks",
+    resource == Drupe::Gateway::"wo"
+);
+
+@id("readonly-get-workorder-costs")
+permit (
+    principal,
+    action == Drupe::Action::"MaintData___get_workorder_costs",
+    resource == Drupe::Gateway::"wo"
+);
+
+@id("readonly-get-workorder-actuals-vs-planned")
+permit (
+    principal,
+    action == Drupe::Action::"MaintData___get_workorder_actuals_vs_planned",
+    resource == Drupe::Gateway::"wo"
+);
+
+@id("readonly-get-workorder-kpis")
+permit (
+    principal,
+    action == Drupe::Action::"MaintData___get_workorder_kpis",
+    resource == Drupe::Gateway::"wo"
+);
+
+@id("readonly-get-schedule-calendar")
+permit (
+    principal,
+    action == Drupe::Action::"MaintData___get_schedule_calendar",
+    resource == Drupe::Gateway::"wo"
+);
+
+@id("readonly-get-my-assigned-workorders")
+permit (
+    principal,
+    action == Drupe::Action::"MaintData___get_my_assigned_workorders",
+    resource == Drupe::Gateway::"wo"
+);
+
+@id("readonly-get-failure-codes")
+permit (
+    principal,
+    action == Drupe::Action::"MaintData___get_failure_codes",
+    resource == Drupe::Gateway::"wo"
+);
+
+@id("agent-may-never-approve-workorders")
+forbid (
+    principal,
+    action == Drupe::Action::"MaintData___approve_workorder",
+    resource
+);

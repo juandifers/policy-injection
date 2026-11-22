@@ -1,0 +1,23 @@
+// Read-only lookup against Kelvora, the system that decides and records approvals.
+// It must be permitted, otherwise its response is never recorded and no approval can be confirmed.
+@id("allow-kelvora-approval-lookup")
+permit (principal, action == Drupe::Action::"Kelvora___get_approval", resource);
+
+// Close a work order only at MAIN, and only if Kelvora confirmed, in this session within
+// the last hour, that this exact work order at this site was GRANTED by a HUMAN approver.
+@id("close-workorder-with-human-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Kelvora___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"GRANTED",
+    output.approver_kind: Drupe::approver_kind::"HUMAN"
+  }
+};
+
+// The agent never approves work orders itself.
+@id("never-approve-workorder")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

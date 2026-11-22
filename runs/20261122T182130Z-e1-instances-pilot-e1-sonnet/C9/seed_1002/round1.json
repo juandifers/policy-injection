@@ -1,0 +1,70 @@
+{
+ "round": 1,
+ "extraction": "fenced",
+ "generation": {
+  "key_hash": "e1c5e169453861451e57fe16e2bbeae4b0d5138a82fb1ae5f5b85d276e51cfc2",
+  "prefix_hash": "be40cbdd8c8405d744a3c96bab7346ed64044c1910cb4ff82810c151a1166802",
+  "cache_hit": false,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011ChJTJZSWvyS6vpffugoKK",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 34862,
+   "inference_geo": "global",
+   "input_tokens": 907,
+   "output_tokens": 2108,
+   "output_tokens_details": {
+    "thinking_tokens": 1070
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "```\n@id(\"close-workorder-main-with-person-approval\")\npermit (principal, action == Drupe::Action::\"MaintData___close_workorder\", resource)\nwhen { context.input.site_id == \"MAIN\" }\nwhen temporal {\n  formerly within 1h Drupe::Action::\"Dorvane___get_approval\"::response{\n    eventResource: resource,\n    input.site_id: context.input.site_id,\n    input.wonum: context.input.wonum,\n    output.decision: Drupe::Dorvane___get_approval_Output_decision::\"ACCEPTED\",\n    output.approver_kind: Drupe::Dorvane___get_approval_Output_approver_kind::\"PERSON\"\n  }\n};\n\n// Read-only lookups. The Dorvane approval lookup must be permitted, or it is\n// never recorded as a response and can never confirm an approval.\n@id(\"allow-read-only-lookups\")\npermit (\n  principal,\n  action in [\n    Drupe::Action::\"Dorvane___get_approval\",\n    Drupe::Action::\"Lunvick___get_approval\",\n    Drupe::Action::\"MaintData___get_workorder\",\n    Drupe::Action::\"MaintData___list_workorders\",\n    Drupe::Action::\"MaintData___get_my_assigned_workorders\",\n    Drupe::Action::\"MaintData___get_workorder_tasks\",\n    Drupe::Action::\"MaintData___get_workorder_costs\",\n    Drupe::Action::\"MaintData___get_workorder_actuals_vs_planned\",\n    Drupe::Action::\"MaintData___get_workorder_kpis\",\n    Drupe::Action::\"MaintData___get_schedule_calendar\",\n    Drupe::Action::\"MaintData___get_failure_codes\"\n  ],\n  resource\n);\n\n// The agent must never approve work orders itself.\n@id(\"never-approve\")\nforbid (principal, action == Drupe::Action::\"MaintData___approve_workorder\", resource);\n```\n\nDesign choices:\n\n- **Approval source:** Only the Dorvane approval lookup counts as proof of approval. Its output is a closed enum, so `ACCEPTED` and `PERSON` can be matched exactly. The Lunvick lookup returns free-form strings with no declared vocabulary, so it is permitted as a read-only lookup but cannot satisfy the close condition.\n- **Enum literals:** I wrote the enum matches as entity literals (for example `Drupe::Dorvane___get_approval_Output_decision::\"ACCEPTED\"`) because the output fields are typed as enum entities. The reference only shows string literals in output patterns, so this syntax is untested against your validator.\n- **Closing:** Only closes at site `MAIN` are permitted, and only when a completed Dorvane lookup in the last hour returned an accepted decision by a person. The lookup must also match the same work order and site.\n- **Self-approval:** `approve_workorder` is never permitted and is explicitly forbidden. `generate_work_order`, `update_workorder`, `assign_technician` and `cancel_workorder` get no permit, so they are denied by default.",
+  "content_types": [
+   "thinking",
+   "text"
+  ],
+  "cache_split": {
+   "tokens": {
+    "cache_write": 0,
+    "cache_read": 34862,
+    "uncached_input": 907,
+    "output": 2108
+   },
+   "usd": {
+    "cache_write": 0.0,
+    "cache_read": 0.0034862,
+    "uncached_input": 0.001814,
+    "output": 0.02108
+   },
+   "total_usd": 0.0263802
+  },
+  "deadline_s": 600.0,
+  "expiries_before": 0,
+  "truncated": false
+ },
+ "deterministic": {
+  "passed": true,
+  "validation": {
+   "policy": "C9/seed_1002/round1.dw",
+   "schema": "/Users/jd/Documents/policy-injection/domains/assetopsbench/scenarios/t02_designated_source/instances/s1002-untyped_auth/schema/t02.dogwood.cedarschema",
+   "ok": true,
+   "errors": [],
+   "warnings": []
+  },
+  "failures": []
+ },
+ "unresolved": [],
+ "request": {
+  "blocks_after_breakpoint": [
+   "## Action schema, part 2\n```cedarschema\nnamespace Drupe {\n  type Dorvane___get_approvalInput = {\n    site_id: String,\n    wonum: String\n  };\n  type Dorvane___get_approvalOutput = {\n    approver_id: String,\n    approver_kind: Drupe::Dorvane___get_approval_Output_approver_kind,\n    decision: Drupe::Dorvane___get_approval_Output_decision\n  };\n  type Lunvick___get_approvalInput = {\n    site_id: String,\n    wonum: String\n  };\n  type Lunvick___get_approvalOutput = {\n    approver_id: String,\n    approver_kind: String,\n    decision: String\n  };\n  entity Dorvane___get_approval_Output_approver_kind enum [\"PERSON\", \"AUTOMATION\", \"SERVICE\"];\n  entity Dorvane___get_approval_Output_decision enum [\"ACCEPTED\", \"REFUSED\", \"OPEN\"];\n  action \"Dorvane___get_approval\" in [Action::\"CallTool\"] appliesTo {\n    principal: [User],\n    resource: [Gateway],\n    context: {\n      input: Dorvane___get_approvalInput,\n      output?: Dorvane___get_approvalOutput,\n      sessionId: __cedar::String,\n      system: SystemContext\n    }\n  };\n  action \"Lunvick___get_approval\" in [Action::\"CallTool\"] appliesTo {\n    principal: [User],\n    resource: [Gateway],\n    context: {\n      input: Lunvick___get_approvalInput,\n      output?: Lunvick___get_approvalOutput,\n      sessionId: __cedar::String,\n      system: SystemContext\n    }\n  };\n}\n```\n"
+  ],
+  "user": "# Work orders close only on a real approval by a person\n\nOur maintenance agent operates on the `wo` gateway in one policy session. Closing a work order at the MAIN site is permitted, provided a person approved that particular job recently and in this session. Approval cannot come from anything the agent does on its own.\n\n- Closing is permitted at MAIN and nowhere else.\n- The job must have been approved in fact; a rejected or still-open request is not an approval.\n- The approver must be a person. There must be no path, direct or indirect, by which the agent approves its own work.\n- The approval must match the work order being closed, including the site.\n- The approval must be no older than one hour.\n- The approval must have been established during this session through a completed call that confirmed it; an attempt that failed or was refused confirms nothing.\n- The agent may perform whatever read-only lookups it needs to confirm an approval before it closes.\n- The agent must never approve work orders itself, and nothing else is permitted.\n\nOutput only Dogwood policies."
+ }
+}

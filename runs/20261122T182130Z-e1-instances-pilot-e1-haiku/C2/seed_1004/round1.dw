@@ -1,0 +1,61 @@
+@id("wo-readonly-lookups")
+permit (principal, action in [
+    Drupe::Action::"Ostrel___get_approval",
+    Drupe::Action::"MaintData___get_failure_codes",
+    Drupe::Action::"MaintData___get_my_assigned_workorders",
+    Drupe::Action::"MaintData___get_schedule_calendar",
+    Drupe::Action::"MaintData___get_workorder",
+    Drupe::Action::"MaintData___get_workorder_actuals_vs_planned",
+    Drupe::Action::"MaintData___get_workorder_costs",
+    Drupe::Action::"MaintData___get_workorder_kpis",
+    Drupe::Action::"MaintData___get_workorder_tasks",
+    Drupe::Action::"MaintData___list_workorders"
+], resource);
+
+@id("wo-close-main-after-person-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  // Latest Ostrel decision for this job, within the last hour, is an accepted person approval:
+  // no refusal and no reopening (OPEN) recorded since that accepted confirmation.
+  (!Drupe::Action::"Ostrel___get_approval"::response{
+      eventResource: resource,
+      input.site_id: context.input.site_id,
+      input.wonum: context.input.wonum,
+      output.decision: Drupe::decision::"REFUSED"
+    }
+    since within 1h Drupe::Action::"Ostrel___get_approval"::response{
+      eventResource: resource,
+      input.site_id: context.input.site_id,
+      input.wonum: context.input.wonum,
+      output.decision: Drupe::decision::"ACCEPTED",
+      output.approver_kind: Drupe::approver_kind::"PERSON"
+    })
+  &&
+  (!Drupe::Action::"Ostrel___get_approval"::response{
+      eventResource: resource,
+      input.site_id: context.input.site_id,
+      input.wonum: context.input.wonum,
+      output.decision: Drupe::decision::"OPEN"
+    }
+    since within 1h Drupe::Action::"Ostrel___get_approval"::response{
+      eventResource: resource,
+      input.site_id: context.input.site_id,
+      input.wonum: context.input.wonum,
+      output.decision: Drupe::decision::"ACCEPTED",
+      output.approver_kind: Drupe::approver_kind::"PERSON"
+    })
+};
+
+@id("wo-close-forbid-agent-approval-in-session")
+forbid (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when temporal {
+  formerly within 24h Drupe::Action::"MaintData___approve_workorder"::request{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum
+  }
+};
+
+@id("wo-agent-never-approves")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

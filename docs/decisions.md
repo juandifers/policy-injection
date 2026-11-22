@@ -1324,3 +1324,30 @@ suite, the mutants and the intent levels). Reused from `7d90a39`, not rebuilt: `
 - **--plan.** Output tokens per call: recorded calls on the same prefix; else the mean over every recorded call of the same model in the runs
   folder (any prefix, one entry per cache key); else the Sonnet L1-S calibration. Both run layouts are read. With the smoke runs on disk,
   a Haiku plan now uses Haiku's recorded mean instead of Sonnet's 1,939.
+
+## 2026-11-22: E1 pilot (seeds 1000–1009) and the pre-registration draft; C15, C16; `--plan` and per-cell seeds in the instance runner
+
+- **Cells.** C15 (D3, untyped_auth) and C16 (D4, untyped_auth) added to `cells.yaml`, batch 2, conditional on C13 > 0 on either
+  model; both in the `boundary` family (every non-decline cell is in exactly one family, asserted). H-MIN extends to them.
+- **`--plan` for `pgi.runs.temporal_instances`** (the flag existed only on temporal_clean): reuses cache_watch's prefix report,
+  uncached sizes and recorded output means; calls = the seeds of each cell (min) to 3× (max); the prefix is written once and
+  read on every later call of the process; a repair round adds 1,800 uncached tokens (the smoke's observed repair overhead).
+  Nothing is sent and no run folder is written. Known imprecision: `recorded_prefix` counts a replayed call record once per run
+  folder that holds it (a re-score doubles the count; the mean is unchanged).
+- **Per-cell seeds.** A cell with a smaller planned n takes the first n seeds given instead of refusing the list, so one process
+  per model runs C8 at 20 beside the 60-seed cells; recorded in `config.json` `seeds_per_cell`; not-run (cell, seed) pairs
+  stay blank in results.csv (never NA, never 0). Scoring is untouched.
+- **Design document.** The specification refers to `docs/phase-3-authority-binding-design.md`; it is not in the repository, its
+  git history, Google Drive or the project's Claude Docs (the 2026-11-12 design doc there is the project-level one). The
+  pre-registration names H-SPEC … H-MIN without quoting them and builds the amendments list against `cells.yaml` and this log at
+  `81ff9e8`; both spots carry a drafting note for Juan to resolve before the commit.
+- **Pilot, instrument only** (`runs/20261122T182130Z-e1-instances-pilot-e1-sonnet`, `…-pilot-e1-haiku`; cells C1–C5, C9, C13,
+  C14; seeds 1000–1009; both started 18:21 UTC in two processes, one per model). Sonnet: 86 calls, 80/80 valid after the loop
+  (74/80 first shots), rounds {1: 74, 2: 6}, 0 max_tokens stops, 0 replay errors, precheck 80/80, cache 85/86 fresh calls read
+  the prefix (1 write, 0 misses), 0 expiries, $1.855 of the $5 cap (output $1.30 of it). Haiku (max_tokens 32000): 84 calls,
+  80/80 valid (76/80 first shots), rounds {1: 76, 2: 4}, 0 max_tokens stops (largest output 27,089 tokens, mean 9,551), 0
+  replay errors, precheck 80/80, cache 83/84 (1 write, 0 misses), 0 expiries, $0.413 of the $2 cap. C9 has a mirror-sufficient
+  sample on both models. All five freeze conditions hold. No other outcome was summarized; they stay in the run folders (disclosure: the first six C1 stdout lines of each log, which carry the sample's mirror_sufficient, were seen while checking progress; no other cell's).
+- **Batch 1 plan** (500–1,500 calls per model, C8 at 20): Sonnet $10.43–$34.72 with cache hits (output mean 1,532 recorded),
+  Haiku $2.49–$7.64 (output mean 9,059). Caps = the with-cache maximum × 1.3: Sonnet $45.20, Haiku $9.95.
+- **Not done, by instruction:** the pre-registration is drafted, not committed; batch 1 is printed, not run.

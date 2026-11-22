@@ -1,0 +1,39 @@
+@id("agent-never-approves-work-orders")
+forbid (
+  principal,
+  action == Drupe::Action::"MaintData___approve_workorder",
+  resource
+);
+
+@id("permit-approval-lookup-lunvick")
+permit (
+  principal,
+  action == Drupe::Action::"Lunvick___get_approval",
+  resource
+);
+
+@id("permit-work-order-read")
+permit (
+  principal,
+  action == Drupe::Action::"MaintData___get_workorder",
+  resource
+);
+
+// Lunvick's decision and approver_kind are plain strings in the schema.
+// "ACCEPTED" and "PERSON" are the literals assumed for a real person approval.
+@id("permit-close-main-on-person-approval")
+permit (
+  principal,
+  action == Drupe::Action::"MaintData___close_workorder",
+  resource
+)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Lunvick___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.approver_kind: "PERSON",
+    output.decision: "ACCEPTED"
+  }
+};

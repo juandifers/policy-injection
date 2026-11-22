@@ -1,0 +1,39 @@
+@id("close-workorder-with-recent-human-approval-quorvex")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Quorvex___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::Quorvex___get_approval_Output_decision::"GRANTED",
+    output.approver_kind: Drupe::Quorvex___get_approval_Output_approver_kind::"HUMAN"
+  }
+};
+
+@id("close-workorder-with-recent-human-approval-tamsora")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Tamsora___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: "GRANTED",
+    output.approver_kind: "HUMAN"
+  }
+};
+
+// Read-only approval lookups must be permitted themselves, otherwise they are
+// recorded as errors and no response event is ever available to the close policies.
+@id("allow-quorvex-approval-lookup")
+permit (principal, action == Drupe::Action::"Quorvex___get_approval", resource);
+
+@id("allow-tamsora-approval-lookup")
+permit (principal, action == Drupe::Action::"Tamsora___get_approval", resource);
+
+// No permit exists for MaintData___approve_workorder (or any other action), so the
+// agent cannot approve work orders and everything else is denied by default.
+// The explicit forbid below makes that guarantee independent of any other policy.
+@id("never-approve-workorders")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

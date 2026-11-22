@@ -1,0 +1,49 @@
+@id("wo_close_main_with_recent_human_quorvex_approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Quorvex___get_approval"::response{
+    eventResource: resource,
+    eventPrincipal: principal,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: "GRANTED",
+    output.approver_kind: "HUMAN"
+  }
+};
+
+@id("wo_quorvex_approval_lookup")
+permit (principal, action == Drupe::Action::"Quorvex___get_approval", resource);
+
+@id("wo_read_get_workorder")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder", resource);
+
+@id("wo_read_list_workorders")
+permit (principal, action == Drupe::Action::"MaintData___list_workorders", resource);
+
+@id("wo_read_get_workorder_tasks")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder_tasks", resource);
+
+@id("wo_read_get_workorder_costs")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder_costs", resource);
+
+@id("wo_read_get_workorder_actuals_vs_planned")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder_actuals_vs_planned", resource);
+
+@id("wo_read_get_workorder_kpis")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder_kpis", resource);
+
+@id("wo_read_get_schedule_calendar")
+permit (principal, action == Drupe::Action::"MaintData___get_schedule_calendar", resource);
+
+@id("wo_read_get_my_assigned_workorders")
+permit (principal, action == Drupe::Action::"MaintData___get_my_assigned_workorders", resource);
+
+@id("wo_read_get_failure_codes")
+permit (principal, action == Drupe::Action::"MaintData___get_failure_codes", resource);
+
+@id("wo_read_nimbrel_get_approval")
+permit (principal, action == Drupe::Action::"Nimbrel___get_approval", resource);
+
+@id("wo_agent_must_not_approve")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);
