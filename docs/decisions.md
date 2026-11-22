@@ -1194,3 +1194,38 @@ suite, the mutants and the intent levels). Reused from `7d90a39`, not rebuilt: `
 - **Accepted as written:** the contract block, the three D0 paraphrases, the D1 sentences, the exclusion sentences, the D3 sentences.
 - **For the pre-registration's limits:** the designation sentences (D1, D2, D3) are the last text of the intent, the most salient position;
   a null result at D1 or D2 is therefore not attributable to the sentence being buried.
+
+## 2026-11-22: Hard wall-clock deadline around every API call, retry-on-expiry, assumed cost (no API call)
+
+- **Why.** Three attempts hung on a call that never returned (2026-11-16 twice, 2026-11-18 L1-S); on the last one the SDK's 300 s
+  request timeout and its two retries did not fire, and the process was killed by hand. Nothing outside the SDK could give up.
+- **Deadline outside the SDK** (`pgi.llm.deadline.DeadlineProvider`): the provider call runs in a daemon thread; the caller waits at
+  most `deadline_s` and then raises the typed `CallDeadlineExceeded`. Python cannot stop the thread, so a hung socket leaks until the
+  SDK gives up or the process exits; the thread's result lands in a box nobody reads, so a late result is never returned and never
+  cached (CachedLLM writes only what `call` returns). Applied in temporal_clean, clean and probe.
+- **Default 600 s** (Juan): it must exceed the time a legitimate call needs to emit `max_tokens`, so the deadline never censors long
+  outputs, and it leaves room for one SDK timeout (300 s) plus a successful SDK retry. The SDK timeout and retries stay as the first
+  line; the deadline is the backstop. `--deadline-s` overrides; recorded in `request.transport.deadline_s` and `request.deadline`.
+- **Retry-on-expiry** (`pgi.runs.attempts.run_sample_with_retries`, shared so the Phase 3 instance runner reuses it): the sample is
+  attempted again with the same request up to twice; the cache key is identical, so the successful attempt is the one cache entry for
+  that sample index. After the third expiry the run stops with `DeadlineRunStopped`; the `.tmp-` folder stays with FAILED,
+  `deadline_events.json` and `spend.json`. Resume = rerun with the same arguments (finished samples replay from the cache). A sample
+  that succeeded after one or two expiries is a normal sample; summary.md reports expiry events and retried samples per generator so
+  a pre-registration can state the rule. No retries in clean or probe: an expiry fails those runs loudly.
+- **Cache watch:** an expired call is neither a hit nor a miss (no usage observed); `PrefixWatch.expired` releases the in-flight guard,
+  counts the expiry and resets the consecutive-miss counter, so the call after an expiry that writes the prefix again is one logged
+  miss and not a breaker event (Juan confirmed the reset).
+- **Assumed cost:** a timed-out call may still be billed. `cache_watch.assumed_call_cost` charges its worst case: every system and
+  message character at the schema rate (2.15 chars/token, the denser calibration, so prose is over-counted) priced as a cache write,
+  plus `max_tokens` priced as output (32,000 assumed if absent). The budget wrapper adds it to `spent_usd` (what the cap checks) and
+  keeps `observed_usd` and `assumed_usd` apart (`spend.json`, the final print line, each event's `assumed_usd`).
+- **Billing evidence, best effort:** if an abandoned call returns before the process ends, its usage is written into the expiry event
+  as `late_usage` (or `late_error`); it is still never returned or cached. The run-level `deadline_events.json` is written at the end of
+  the run, so it carries whatever arrived by then; the per-sample `deadline.json` is written right after the sample and may predate it.
+- **Records:** call records carry `deadline_s` and `expiries_before`; sample rows and `deadline.json` the events (attempt, elapsed, UTC
+  time, prefix hash, assumed USD, late usage); summary `deadline_expiries` and `samples_retried_after_expiry`; `cache_watch.json`
+  `expiries`.
+- **Tests** (`tests/test_deadline.py`, a provider stub that sleeps; deadlines of 50 ms): expiry raises the typed error near the deadline;
+  a late result is discarded and never cached while its usage lands in the event; watch state after an expiry; budget adds the assumed
+  cost and the cap sees it; the helper's attempts, stop and pass-through; the runner keeps a sample after two expiries and records
+  everything; three expiries stop the run and a resumed run makes no duplicate sample; cache-only runs record no deadline.

@@ -36,6 +36,7 @@ from pgi.analysis.provenance import Sources, provenance
 from pgi.generators import critic, naive
 from pgi.generators.inputs import ScenarioInputs, load_scenario_inputs
 from pgi.llm.cache import CachedLLM, Completion
+from pgi.llm.deadline import DeadlineProvider   # 600 s wall-clock deadline per call; an expiry fails the run loudly (no retry here)
 from pgi.llm.pricing import cost
 from pgi.mutators import load_mutations, mutate
 from pgi.oracle.causes import causes
@@ -447,7 +448,7 @@ def main() -> None:
     run_id = "-".join(x for x in (stamp, kind, args.label) if x)
     with atomic_run_dir(ROOT / "runs", run_id) as out:
         offline = bool(args.replay or args.cache_only)
-        llm = CachedLLM(_NoProvider() if offline else AnthropicProvider(), args.cache, allow_api=not offline)
+        llm = CachedLLM(_NoProvider() if offline else DeadlineProvider(AnthropicProvider()), args.cache, allow_api=not offline)
         ncfg = naive.NaiveConfig(args.model, include_descriptions=not args.no_descriptions)
         scfg = critic.SonderaConfig(args.model, include_descriptions=not args.no_descriptions,
                                     judge_sees_manifests=args.judge_sees_manifests)

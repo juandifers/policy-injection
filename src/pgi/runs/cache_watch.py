@@ -14,7 +14,14 @@ PrefixWatch (per process, keyed by pgi.llm.prefix.prefix_hash):
   other prefix BEFORE the call is sent (per-prefix counting cannot see a prefix that changes on every call);
 - sequential calls: `before` refuses a second call on a prefix whose first call is still in flight (ConcurrentPrefixCall);
 - counts and cost split (write, read, uncached input, output) read through the provider interface (`cache_usage`); a provider
-  that reports none disables all of this with a logged reason.
+  that reports none disables all of this with a logged reason;
+- deadline expiry (pgi.llm.deadline, 2026-11-22): an abandoned call is neither a hit nor a miss (no usage is observed); `expired`
+  releases the in-flight guard, counts the expiry and resets the consecutive-miss counter, so the next call that writes the
+  prefix again is one logged miss and not a breaker event.
+
+`assumed_call_cost` (budget wrapper): the worst case a timed-out call could be billed, every system and message character at the
+schema rate (the denser calibration) priced as a cache write plus `max_tokens` priced as output; added to the spend counter as
+`assumed` so the cap stays conservative.
 
 `plan` (no API call): generation and judge call counts (min / max over repair rounds), prefix hashes, the size of what is
 cached and of what is not (part 2 and the user message), and the expected cost with and without cache hits. Token sizes are
@@ -74,6 +81,32 @@ def _sum_usage(usages: list[dict]) -> dict:
     return {k: sum(int(u.get(k) or 0) for u in usages) for k in _CACHE_KEYS}
 
 
+def _chars(x) -> int:
+    """Characters of text in a system/messages value: a string, a block list ({"text": ...}), or a message list."""
+    if isinstance(x, str):
+        return len(x)
+    if isinstance(x, dict):
+        return _chars(x.get("text", "")) + _chars(x.get("content", ""))
+    return sum(_chars(i) for i in x)
+
+
+ASSUMED_OUTPUT_FALLBACK = 32000
+
+
+def assumed_call_cost(model: str, messages: list[dict], params: dict) -> dict:
+    """Worst-case cost of a call whose response never arrived (module doc): all input at the schema rate as a cache write, plus
+    `max_tokens` (fallback ASSUMED_OUTPUT_FALLBACK when absent) as output."""
+    chars = _chars(params.get("system", "")) + _chars(messages)
+    tokens_in = round(chars / CALIBRATION["schema_chars_per_token"])
+    max_tokens = params.get("max_tokens")
+    out = int(max_tokens) if max_tokens else ASSUMED_OUTPUT_FALLBACK
+    p = PRICES[model]
+    basis = ("worst case: every input character at the schema rate (%.2f chars/token) priced as a cache write, plus max_tokens as output"
+             % CALIBRATION["schema_chars_per_token"]) + ("" if max_tokens else f" (max_tokens absent: {ASSUMED_OUTPUT_FALLBACK} assumed)")
+    return {"chars": chars, "input_tokens_assumed": tokens_in, "output_tokens_assumed": out,
+            "usd": (tokens_in * p["cache_write_5m"] + out * p["output"]) / 1e6, "basis": basis}
+
+
 class PrefixWatch:
     """Per-prefix cache telemetry and the circuit breaker (module doc). `expected`: name -> prefix hash the run registered."""
 
@@ -109,12 +142,28 @@ class PrefixWatch:
         """The call failed in transport: no usage to observe."""
         self.in_flight.discard(prefix)
 
+    def _state(self, prefix: str) -> dict:
+        return self.prefixes.setdefault(prefix, {"calls": 0, "writes": 0, "reads": 0, "misses": 0, "consecutive_misses": 0,
+                                                 "max_consecutive_misses": 0, "written": False, "expiries": 0, "after_expiry": False})
+
+    def expired(self, prefix: str) -> None:
+        """The call hit the wall-clock deadline and was abandoned: no usage to observe, neither hit nor miss. Releases the
+        in-flight guard; resets the consecutive-miss counter so the next write of the prefix is one logged miss, not a trip."""
+        self.in_flight.discard(prefix)
+        st = self._state(prefix)
+        st["expiries"] += 1
+        st["consecutive_misses"] = 0
+        st["after_expiry"] = True
+        log.warning("prefix %s: call abandoned at the deadline (expiry %d; neither hit nor miss; consecutive-miss counter reset)",
+                    prefix[:12], st["expiries"])
+
     def after(self, prefix: str, cache_usage: dict | None) -> dict:
         """Observe one completed fresh call. Raises CacheBreakerTripped on the third consecutive miss."""
         self.in_flight.discard(prefix)
-        st = self.prefixes.setdefault(prefix, {"calls": 0, "writes": 0, "reads": 0, "misses": 0, "consecutive_misses": 0,
-                                               "max_consecutive_misses": 0, "written": False})
+        st = self._state(prefix)
         st["calls"] += 1
+        after_expiry = st["after_expiry"]
+        st["after_expiry"] = False
         if cache_usage is None:
             self.disable("provider reports no cache usage fields")
         if not self.enabled:
@@ -131,8 +180,9 @@ class PrefixWatch:
             st["misses"] += 1
             st["consecutive_misses"] += 1
             st["max_consecutive_misses"] = max(st["max_consecutive_misses"], st["consecutive_misses"])
-            log.warning("cache miss on prefix %s: call %d read 0 cached tokens (%s); %d consecutive", prefix[:12], st["calls"],
-                        f"re-wrote {write}" if write else "no write either", st["consecutive_misses"])
+            log.warning("cache miss on prefix %s: call %d read 0 cached tokens (%s); %d consecutive%s", prefix[:12], st["calls"],
+                        f"re-wrote {write}" if write else "no write either", st["consecutive_misses"],
+                        " (first call after an expiry; expected, not a breaker event by itself)" if after_expiry else "")
         elif write == 0:
             log.warning("prefix %s: no cache write and no cache read on call %d (prefix never written; not counted as a miss)",
                         prefix[:12], st["calls"])
@@ -148,7 +198,7 @@ class PrefixWatch:
     def summary(self) -> dict:
         reads = sum(1 for u in self._usages if int(u.get("cache_read_input_tokens") or 0) > 0)
         return {"enabled": self.enabled, "disabled_reason": self.disabled_reason, "expected": self.expected, "threshold": self.threshold,
-                "hit_rate": {"k": reads, "n": len(self._usages)},
+                "hit_rate": {"k": reads, "n": len(self._usages)}, "expiries": sum(st["expiries"] for st in self.prefixes.values()),
                 "cost_split": cost_split(self.model, _sum_usage(self._usages)) if self.model else None,
                 "prefixes": {h: dict(st) for h, st in self.prefixes.items()}}
 

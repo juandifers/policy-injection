@@ -258,7 +258,7 @@ def test_main_with_arm_and_spend_cap_records_arm_files_and_transport(tmp_path, m
     assert cfg["arm"]["name"] == "L2" and cfg["intent"]["arm"] == "goal-level" and cfg["spend_cap_usd"] == 1.0
     assert cfg["arm"]["files"]["manifests"]["wo"].endswith("arms/L2/manifests/wo.tools.json")
     assert cfg["arm"]["files"]["manifests"]["authority"].endswith("arms/v2/manifests/authority.tools.json")
-    assert cfg["request"]["transport"] == {"timeout_s": 300.0, "max_retries": 2}
+    assert cfg["request"]["transport"] == {"timeout_s": 300.0, "max_retries": 2, "deadline_s": 600.0}   # SDK settings + the wall-clock deadline
     assert cfg["frame"]["vendor_only_traces"] == ["t08_vendor_flag_only", "t15_vendor_enum_only"]
     assert json.loads((run / "inputs" / "t01_close_after_approval" / "inputs.json").read_text())["arm_name"] == "L2"
     s = json.loads((run / "summary.json").read_text())["naive"]

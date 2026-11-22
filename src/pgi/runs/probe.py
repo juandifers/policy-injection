@@ -55,6 +55,7 @@ from pgi.analysis.stats import fisher_less, fisher_two_sided
 from pgi.generators import critic, naive
 from pgi.generators.inputs import ScenarioInputs, load_scenario_inputs, sha256
 from pgi.llm.cache import CachedLLM
+from pgi.llm.deadline import DeadlineProvider   # 600 s wall-clock deadline per call; an expiry fails the run loudly (no retry here)
 from pgi.mutators import Mutation, mutate
 from pgi.mutators import schema_effect
 from pgi.mutators.edit import EditRecord, EditSpec, apply, text_target
@@ -426,7 +427,7 @@ def main() -> None:
         llm = CachedLLM(_NoProvider(), args.cache, allow_api=False)
     else:
         from pgi.llm.anthropic_provider import AnthropicProvider
-        llm = CachedLLM(AnthropicProvider(), args.cache, allow_api=True)
+        llm = CachedLLM(DeadlineProvider(AnthropicProvider()), args.cache, allow_api=True)
     if args.replay:
         if args.spec or args.model or args.n:
             p.error("--replay takes spec, model and N from the source run")

@@ -10,6 +10,17 @@ scenario's trace suite, written to runs/<id>/.
     ... --layout split          # Phase 3: one cached prefix shared by every instance/cell/round (scenario needs `prompt_schema_base`)
     ... --contract-block        # Phase 3 D4: the trusted evidence-authority contract as the last system block (split layout only)
     ... --plan                  # no API call, no run folder: call counts, prefix hashes, sizes and expected cost (pgi.runs.cache_watch)
+    ... --deadline-s 600        # wall-clock deadline around every API call, enforced outside the SDK (pgi.llm.deadline; default 600)
+
+Deadline (2026-11-22; pgi.llm.deadline, pgi.runs.attempts): every provider call runs under a wall-clock deadline outside the SDK.
+An expired call raises; the sample is attempted again with the same request up to twice; after the third expiry the run stops
+(DeadlineRunStopped; the `.tmp-` folder stays with FAILED and `deadline_events.json`; a rerun with the same arguments replays every
+finished sample from the cache). A late result is never returned and never cached, so every sample index has exactly one
+generation; if it does arrive its usage is written into the event (`late_usage`, best effort). A sample that succeeded after one
+or two expiries is a normal sample. Recorded: config `request.transport.deadline_s` and `request.deadline`; call records
+`deadline_s` and `expiries_before`; per sample `deadline.json`; run-level `deadline_events.json` and `spend.json` (observed vs
+assumed USD: an abandoned call is charged its worst case, pgi.runs.cache_watch.assumed_call_cost); summary `deadline_expiries`.
+For the PrefixWatch an expiry is neither hit nor miss (cache_watch module doc).
 
 Phase 3 additions (2026-11-20; pgi.runs.cache_watch): every call record carries `prefix_hash` (pgi.llm.prefix: model + system
 blocks up to the cache breakpoint + thinking + effort) and `cache_split` (tokens and USD by cache write / cache read / uncached
@@ -65,9 +76,11 @@ from pgi.analysis.dogwood_text import close_binding_report, vocabulary_report
 from pgi.generators import dogwood
 from pgi.generators.dogwood_inputs import DogwoodInputs, Requirements, load_dogwood_inputs, load_requirements, snapshot
 from pgi.llm.cache import CachedLLM
+from pgi.llm.deadline import DEFAULT_DEADLINE_S, CallDeadlineExceeded, DeadlineProvider
 from pgi.llm.prefix import prefix_hash
 from pgi.llm.pricing import cost
-from pgi.runs.cache_watch import PrefixWatch, cost_split, plan, plan_text
+from pgi.runs.attempts import DEFAULT_MAX_RETRIES, DeadlineRunStopped, run_sample_with_retries
+from pgi.runs.cache_watch import PrefixWatch, assumed_call_cost, cost_split, plan, plan_text
 from pgi.oracle import temporal
 from pgi.oracle.errors import OracleError
 from pgi.runs.clean import _call_record, _dump, _NoProvider, atomic_run_dir, wilson
@@ -85,10 +98,13 @@ class _Budget:
     is reached (`cap_usd` None = no cap). Cached hits never reach it. The first call always goes through (the cap is
     checked before each call). With a `watch` (PrefixWatch) it also runs the prompt-cache checks: the registered-prefix
     rule and the in-flight guard before the call, the circuit breaker after it, reading the cache counts through the
-    provider's `cache_usage`; a provider without it disables the watch with a logged reason."""
+    provider's `cache_usage`; a provider without it disables the watch with a logged reason. A call that hits the wall-clock
+    deadline (CallDeadlineExceeded from the DeadlineProvider underneath) is charged its worst case as `assumed_usd` (it may still
+    be billed), marks the watch as expired (neither hit nor miss, guard released) and re-raises; `spent_usd` = observed + assumed."""
 
     def __init__(self, provider, model: str, cap_usd: float | None = None, watch: PrefixWatch | None = None) -> None:
         self.provider, self.model, self.cap_usd, self.spent_usd, self.calls = provider, model, cap_usd, 0.0, 0
+        self.observed_usd, self.assumed_usd, self.expiries = 0.0, 0.0, 0
         self.watch, self.name = watch, provider.name
         if watch is not None and getattr(provider, "cache_usage", None) is None:
             watch.disable(f"provider {provider.name} reports no cache usage fields (no cache_usage method)")
@@ -101,12 +117,23 @@ class _Budget:
             self.watch.before(h)
         try:
             raw = self.provider.call(model, messages, temperature, params)
+        except CallDeadlineExceeded as e:
+            assumed = assumed_call_cost(model, messages, params)
+            e.event["assumed_usd"], e.event["assumed_basis"] = assumed["usd"], assumed["basis"]
+            self.expiries += 1
+            self.assumed_usd += assumed["usd"]
+            self.spent_usd += assumed["usd"]
+            if h is not None:
+                self.watch.expired(h)
+            raise
         except BaseException:
             if h is not None:
                 self.watch.abort(h)
             raise
         self.calls += 1
-        self.spent_usd += cost(model, self.provider.usage(raw) or {})
+        observed = cost(model, self.provider.usage(raw) or {})
+        self.observed_usd += observed
+        self.spent_usd += observed
         if h is not None:
             cache_usage = getattr(self.provider, "cache_usage", None)
             cu = cache_usage(raw) if cache_usage is not None else None
@@ -123,6 +150,11 @@ class _Budget:
 
     def usage(self, raw):
         return self.provider.usage(raw)
+
+    def spend(self) -> dict:
+        """What the run records about money: observed from usage fields, assumed for abandoned calls, and their sum (the cap's view)."""
+        return {"spent_usd": self.spent_usd, "observed_usd": self.observed_usd, "assumed_usd": self.assumed_usd, "calls": self.calls,
+                "expiries": self.expiries}
 
 
 @dataclass(frozen=True)
@@ -213,30 +245,34 @@ def score(policy: Path, fr: Frame) -> dict:
     return out
 
 
-def _record(c, model: str) -> dict:
-    """A call record with the Phase 3 cache telemetry: prefix hash (from the completion) and the cost split of its usage."""
-    return _call_record(c) | {"cache_split": cost_split(model, c.usage or {})}
+def _record(c, model: str, deadline_s: float | None = None, expiries_before: int = 0) -> dict:
+    """A call record with the Phase 3 cache telemetry (prefix hash from the completion, cost split of its usage) and the
+    deadline: the seconds in force (None in a cache-only run) and how many attempts on this sample expired before this call."""
+    return _call_record(c) | {"cache_split": cost_split(model, c.usage or {}), "deadline_s": deadline_s, "expiries_before": expiries_before}
 
 
-def run_naive(llm: CachedLLM, fr: Frame, cfg: dogwood.NaiveDogwoodConfig, i: int, d: Path) -> dict:
+def run_naive(llm: CachedLLM, fr: Frame, cfg: dogwood.NaiveDogwoodConfig, i: int, d: Path, deadline_s: float | None = None,
+              expiries_before: int = 0) -> dict:
     """One naive sample: generate, write, score."""
     s = dogwood.generate(llm, fr.inputs, cfg, i)
     d.mkdir(parents=True, exist_ok=True)
     (d / "policy.dw").write_text(_policy_file_text(s.policy_text))
-    _dump(d / "response.json", _record(s.completion, cfg.model) | {"extraction": s.extraction})
+    rec = _record(s.completion, cfg.model, deadline_s, expiries_before)
+    _dump(d / "response.json", rec | {"extraction": s.extraction})
     oracle = score(d / "policy.dw", fr)
     _dump(d / "oracle.json", oracle)
-    return {"sample": i, "calls": [_record(s.completion, cfg.model)], "oracle": oracle,
+    return {"sample": i, "calls": [rec], "oracle": oracle,
             "first_shot": _first_shot(_policy_file_text(s.policy_text), s.completion.key_hash, oracle["valid"], fr)}
 
 
-def run_sondera(llm: CachedLLM, fr: Frame, cfg: dogwood.SonderaDogwoodConfig, i: int, d: Path) -> dict:
+def run_sondera(llm: CachedLLM, fr: Frame, cfg: dogwood.SonderaDogwoodConfig, i: int, d: Path, deadline_s: float | None = None,
+                expiries_before: int = 0) -> dict:
     """One Sondera-style sample: up to max_rounds of generate + critics, then score the final policy."""
     res = dogwood.run(llm, fr.inputs, cfg, i, d)
     calls = []
     for r in res.rounds:
-        rec = {"round": r.index, "extraction": r.extraction, "generation": _record(r.completion, cfg.model),
-               "deterministic": r.deterministic.as_dict(), "judge": _record(r.judge_completion, cfg.model),
+        rec = {"round": r.index, "extraction": r.extraction, "generation": _record(r.completion, cfg.model, deadline_s, expiries_before),
+               "deterministic": r.deterministic.as_dict(), "judge": _record(r.judge_completion, cfg.model, deadline_s, expiries_before),
                "judge_passed": r.judge_passed, "passed": r.passed}
         _dump(d / f"round{r.index}.json", rec)
         calls += [rec["generation"], rec["judge"]]
@@ -284,6 +320,9 @@ def summarize(model: str, results: list[dict], fr: Frame) -> dict:
                   for k in ("input_tokens", "cache_creation_input_tokens", "cache_read_input_tokens", "output_tokens")},
         "cost_usd_all_calls": round(sum(cost(model, c["usage"] or {}) for c in calls), 4),
         "cost_usd_this_run": round(sum(cost(model, c["usage"] or {}) for c in fresh), 4),
+        # deadline expiries (abandoned calls, retried with the same request); the samples kept after a successful retry
+        "deadline_expiries": sum(len(r.get("deadline_expiries") or []) for r in results),
+        "samples_retried_after_expiry": [r["sample"] for r in results if r.get("deadline_expiries")],
         # Phase 3 prompt-cache telemetry over this run's fresh calls: hit = cache_read_input_tokens > 0
         "cache": {"hit_rate": {"k": sum(1 for c in fresh if ((c["usage"] or {}).get("cache_read_input_tokens") or 0) > 0), "n": len(fresh)},
                   "cost_split": cost_split(model, {k: sum(((c["usage"] or {}).get(k) or 0) for c in fresh)
@@ -440,6 +479,13 @@ def markdown(config: dict, summary: dict) -> str:
         usd = c["cost_split"]["usd"]
         lines.append(f"| {g} | {c['hit_rate']['n']} | {c['hit_rate']['k']}/{c['hit_rate']['n']} | {usd['cache_write']:.3f} | {usd['cache_read']:.3f} "
                      f"| {usd['uncached_input']:.3f} | {usd['output']:.3f} | {c['cost_split']['total_usd']:.3f} | {', '.join(h[:12] for h in c['prefix_hashes'])} |")
+    dl = config.get("request", {}).get("deadline") or {}
+    lines += ["", f"## Deadline ({dl.get('seconds')} s per call, {dl.get('retries_on_expiry')} retries on expiry)", "",
+              "| generator | expiry events | samples retried after an expiry |", "|---|---|---|"]
+    for g, s in summary.items():
+        lines.append(f"| {g} | {s.get('deadline_expiries', 0)} | {len(s.get('samples_retried_after_expiry') or [])} |")
+    lines += ["", "An expired call is abandoned and never cached; the sample is retried with the same request (up to twice) and, if a retry "
+                  "succeeds, kept as a normal sample. After the third expiry the run stops."]
     lines += ["", "## Validity: first-shot vs post-repair", "", "| generator | first-shot valid | post-repair (final) valid |", "|---|---|---|"]
     for g, s in summary.items():
         lines.append(f"| {g} | {s['first_shot_valid']}/{s['n']} {s['first_shot_valid_ci95']} | {s['post_repair_valid']}/{s['n']} {s['validity_ci95']} |")
@@ -498,6 +544,8 @@ def main() -> None:
     p.add_argument("--contract-block", action="store_true", help="Phase 3 D4: append the trusted evidence-authority contract (catalogue) as the last system block; split layout only")
     p.add_argument("--plan", action="store_true", help="no API call and no run folder: print call counts, prefix hashes, sizes and the expected cost")
     p.add_argument("--runs-dir", type=Path, default=ROOT / "runs", help="where run folders are written and, for --plan, where recorded token counts are looked up")
+    p.add_argument("--deadline-s", type=float, default=DEFAULT_DEADLINE_S,
+                   help="wall-clock deadline around every API call, enforced outside the SDK; an expired call is abandoned and the sample retried (default 600)")
     args = p.parse_args()
     ncfg = dogwood.NaiveDogwoodConfig(args.model, include_descriptions=not args.no_descriptions, input_mode=args.input_mode,
                                       layout=args.layout, contract_block=args.contract_block)
@@ -523,7 +571,7 @@ def main() -> None:
             telemetry = {"enabled": False, "reason": "cache-only run: no API call, nothing to observe"}
             rule = "off (cache-only run)"
         else:
-            provider = AnthropicProvider()
+            provider = DeadlineProvider(AnthropicProvider(), seconds=args.deadline_s)
             transport = provider.request_settings()
             rule = "on" if args.layout == "split" else "off (default layout)"
             watch = PrefixWatch(expected={k: v for k, v in prefixes.items() if v} if args.layout == "split" else None, model=args.model)
@@ -549,7 +597,10 @@ def main() -> None:
                                                               "ephemeral breakpoint on block 4 (action schema part 1 = prompt_schema_base); part 2 and the contract block after it"),
                                                "prefix_hashes": prefixes, "telemetry": telemetry, "run_level_prefix_rule": rule,
                                                "circuit_breaker": "3 consecutive zero-read fresh calls on a written prefix stop the run" if watch else None},
-                              "transport": transport},
+                              "transport": transport,
+                              "deadline": {"seconds": args.deadline_s if not args.cache_only else None, "retries_on_expiry": DEFAULT_MAX_RETRIES,
+                                           "rule": "a sample whose call expires is retried with the same request up to twice; after the third expiry the run stops; "
+                                                   "a sample that succeeded after one or two expiries is a normal sample; a late result is never cached"}},
                   "frame": {"schema": str(inp.schema_path.relative_to(out)), "event_schema": str(inp.event_schema_path.relative_to(out)),
                             "traces": sorted(fr.suite.ids), "gold_allow_set": sorted(fr.gold_allowed),
                             "requirements": fr.requirements.witnesses if fr.requirements else None,
@@ -561,16 +612,36 @@ def main() -> None:
         _dump(out / "config.json", config)
         _dump(out / inp.name / "prompt_static.json", dogwood.build_request(inp, ncfg)[1]["system"])
         results: dict[str, list[dict]] = {}
-        for gen in args.generators:
-            rows = []
-            for i in range(args.n):
-                d = out / inp.name / gen / f"sample_{i:02d}"
-                row = run_naive(llm, fr, ncfg, i, d) if gen == "naive" else run_sondera(llm, fr, scfg, i, d)
-                rows.append(row)
-                o = row["oracle"]
-                print(f"{gen} sample {i}: valid={o['valid']} scored={o.get('scored')} surplus={o.get('surplus')} "
-                      f"deficit={o.get('deficit')} replay_errors={len(o.get('replay_errors', {}))}", flush=True)
-            results[gen] = rows
+        deadline_s = None if args.cache_only else args.deadline_s
+        events: list[dict] = []   # every expiry event of the run, in order
+        try:
+            for gen in args.generators:
+                rows = []
+                for i in range(args.n):
+                    d = out / inp.name / gen / f"sample_{i:02d}"
+
+                    def one(attempt: int, gen=gen, i=i, d=d) -> dict:
+                        before = attempt - 1
+                        return run_naive(llm, fr, ncfg, i, d, deadline_s, before) if gen == "naive" else run_sondera(llm, fr, scfg, i, d, deadline_s, before)
+                    try:
+                        row, ev = run_sample_with_retries(one, generator=gen, sample=i)
+                    except DeadlineRunStopped as e:
+                        events += e.events
+                        raise
+                    events += ev
+                    row["deadline_expiries"] = ev
+                    if ev:
+                        _dump(d / "deadline.json", ev)
+                        print(f"{gen} sample {i}: {len(ev)} call(s) expired at the {deadline_s:g} s deadline before a retry succeeded", flush=True)
+                    rows.append(row)
+                    o = row["oracle"]
+                    print(f"{gen} sample {i}: valid={o['valid']} scored={o.get('scored')} surplus={o.get('surplus')} "
+                          f"deficit={o.get('deficit')} replay_errors={len(o.get('replay_errors', {}))}", flush=True)
+                results[gen] = rows
+        finally:   # on a stop (or any failure) the events and the spend so far are still written next to FAILED
+            _dump(out / "deadline_events.json", events)
+            if isinstance(provider, _Budget):
+                _dump(out / "spend.json", provider.spend() | {"cap_usd": provider.cap_usd, "assumed": "an abandoned call is charged its worst case (cache_watch.assumed_call_cost)"})
         summary = {g: summarize(args.model, results[g], fr) for g in results}
         if {"naive", "sondera"} <= set(results):   # A0: the first shot is one generation per sample, shared through the cache
             shared = sum(a["first_shot"]["key_hash"] == b["first_shot"]["key_hash"] and a["first_shot"]["policy_sha256"] == b["first_shot"]["policy_sha256"]
@@ -583,6 +654,8 @@ def main() -> None:
     spent = ""
     if isinstance(provider, _Budget):
         spent = f"; spent ${provider.spent_usd:.4f}" + (f" of cap ${provider.cap_usd:.2f}" if provider.cap_usd is not None else "")
+        if provider.expiries:
+            spent += f" (observed ${provider.observed_usd:.4f} + assumed ${provider.assumed_usd:.4f} for {provider.expiries} abandoned call(s))"
         if watch is not None and watch.enabled:
             hr = watch.summary()["hit_rate"]
             spent += f"; cache hits {hr['k']}/{hr['n']} fresh calls"
