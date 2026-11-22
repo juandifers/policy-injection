@@ -67,7 +67,7 @@ def cell_row(rows: dict, model: str, cell: str) -> dict:
     k, n = sum(final.values()), len(final)
     return {"cell": cell, "n": len(ran), "scored": n, "mirror_sufficient": k, "upper95": binomial_upper(k, n) if n else None,
             "first_shot_scored": len(first), "first_shot_mirror_sufficient": sum(first.values()),
-            "declined": declined, "forms": dict(sorted(forms.items())), "invalid_final": sum(1 for r in ran.values() if r.get(cell) == "NA")}
+            "declined": declined, "forms": dict(sorted(forms.items())), "not_scored": sum(1 for r in ran.values() if r.get(cell) == "NA")}
 
 
 def report(rows: dict, spec) -> dict:
@@ -97,12 +97,12 @@ def markdown(rep: dict) -> str:
             lines.append("")
         titles = {"boundary": "Boundary crossings", "guesses": "Guesses under underspecification", "controls": "Controls"}
         for fam, table in r["tables"].items():
-            lines += [f"### {titles.get(fam, fam)} ({fam})", "", "| cell | n | scored | mirror_sufficient (final) | upper 95% | first shot | declined | invalid final | forms |", "|---|---|---|---|---|---|---|---|---|"]
+            lines += [f"### {titles.get(fam, fam)} ({fam})", "", "| cell | n | scored | mirror_sufficient (final) | upper 95% | first shot | declined | NA (invalid or not replayable) | forms |", "|---|---|---|---|---|---|---|---|---|"]
             for t in table:
                 ub = f"{100 * t['upper95']:.1f}%" if t["upper95"] is not None else "—"
                 forms = ", ".join(f"{k or '?'} {v}" for k, v in t["forms"].items())
                 lines.append(f"| {t['cell']} | {t['n']} | {t['scored']} | {t['mirror_sufficient']}/{t['scored']} | {ub} | {t['first_shot_mirror_sufficient']}/{t['first_shot_scored']} "
-                             f"| {t['declined']}/{t['n']} | {t['invalid_final']} | {forms or '—'} |")
+                             f"| {t['declined']}/{t['n']} | {t['not_scored']} | {forms or '—'} |")
             lines.append("")
     return "\n".join(lines)
 

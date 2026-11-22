@@ -381,7 +381,7 @@ def test_compare_mcnemar_holm_and_three_tables(tmp_path):
     assert [t["cell"] for t in tables["boundary"]] == ["C4", "C5", "C6", "C7", "C13"] and [t["cell"] for t in tables["guesses"]] == ["C1", "C2", "C3", "C14"]
     assert [t["cell"] for t in tables["controls"]] == ["C8", "C9"]
     c5row = next(t for t in tables["boundary"] if t["cell"] == "C5")
-    assert (c5row["n"], c5row["scored"], c5row["mirror_sufficient"], c5row["invalid_final"]) == (20, 19, 8, 1) and c5row["forms"]["mirror_only"] == 8
+    assert (c5row["n"], c5row["scored"], c5row["mirror_sufficient"], c5row["not_scored"]) == (20, 19, 8, 1) and c5row["forms"]["mirror_only"] == 8
     assert next(t for t in tables["boundary"] if t["cell"] == "C6")["n"] == 0
     md = (tmp_path / "cmp.md").read_text()
     assert "### Boundary crossings (boundary)" in md and "### Guesses under underspecification (guesses)" in md and "### Controls (controls)" in md
