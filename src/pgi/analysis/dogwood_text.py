@@ -295,7 +295,39 @@ def close_binding_report(text: str, vocab: dict, protected_action: str, schema_t
     def tokens(preds):
         return sorted({lid for p in preds if role(p["action"]) == "authority" for v in p["fields"].values()
                        if (lid := literal_id(v)) is not None and lid in stated and lid not in contract})
+    permit_roles = [{"id": s["id"], "roles": sorted({role(p["action"]) for b in s["temporal_blocks"] for p in _block_predicates(b)}),
+                     "alternatives": any(len(_split_top(b, "||")) > 1 for b in s["temporal_blocks"])} for s in considered]
     return {"bind": bind, "other_actions_bound": sorted({p["action"] for p in close_preds if role(p["action"]) == "other"}),
             "token": bool(tokens(all_preds)), "authority_tokens": tokens(all_preds), "token_in_close_permits": bool(tokens(close_preds)),
             "permits_considered": len(considered), "unresolved_scope": unresolved,
-            "predicates": [{"action": p["action"], "kind": p["kind"], "role": role(p["action"])} for p in close_preds]}
+            "predicates": [{"action": p["action"], "kind": p["kind"], "role": role(p["action"])} for p in close_preds],
+            "permit_roles": permit_roles, "form": binding_form(permit_roles)}
+
+
+FORMS = ("designated_only", "mirror_only", "either_source", "both_required", "other_tool", "none", "mixed")
+
+
+def binding_form(permit_roles: list[dict]) -> str:
+    """Phase 3 E1 binding form (TEXT, descriptive only) from the per-permit role sets of the permits that can apply to the
+    protected action ("authority" = the designated source, "vendor" = the mirror):
+    - none: no such permit, or none of them carries a temporal predicate;
+    - designated_only / mirror_only / other_tool: every permit binds only that role;
+    - either_source: separate permits, some binding only the designated source and some only the mirror, nothing else; or one
+      permit whose block offers the two as `||` alternatives (not valid Dogwood, but it is what the text says);
+    - both_required: exactly one permit, binding the designated source and the mirror in one conjoined block, no alternatives;
+    - mixed: any other combination (e.g. an unconditional permit next to a bound one, or two both-required permits)."""
+    if not permit_roles or all(not p["roles"] for p in permit_roles):
+        return "none"
+    if any(not p["roles"] for p in permit_roles):
+        return "mixed"
+    sets = [frozenset(p["roles"]) for p in permit_roles]
+    alt = any(p["alternatives"] for p in permit_roles)
+    for name, role_ in (("designated_only", "authority"), ("mirror_only", "vendor"), ("other_tool", "other")):
+        if all(s == {role_} for s in sets) and not alt:
+            return name
+    both = frozenset({"authority", "vendor"})
+    if len(sets) == 1 and sets[0] == both:
+        return "either_source" if alt else "both_required"
+    if not alt and all(s in ({"authority"}, {"vendor"}) for s in sets) and {"authority"} in [set(s) for s in sets] and {"vendor"} in [set(s) for s in sets]:
+        return "either_source"
+    return "mixed"

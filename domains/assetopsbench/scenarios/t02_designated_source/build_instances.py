@@ -402,6 +402,28 @@ def _tree_hashes(dest: Path) -> dict[str, str]:
     return {str(p.relative_to(dest)): sha(p) for p in sorted(dest.rglob("*")) if p.is_file()}
 
 
+def tree_sha256(dest: Path) -> str:
+    """The lock's `tree_sha256` of an instance folder as it is on disk (every file, traces included)."""
+    hashes = _tree_hashes(Path(dest))
+    return hashlib.sha256("".join(f"{k} {v}\n" for k, v in sorted(hashes.items())).encode()).hexdigest()
+
+
+def ensure_instance(seed: int, variant: str, lock: dict, instances_dir: Path = INSTANCES) -> tuple[Path, str]:
+    """The folder of one lock-pinned instance, rendered if missing; its tree hash must equal the lock's. Returns (folder, hash).
+    Raises LookupError when the lock has no entry, RuntimeError when the folder on disk differs from the lock."""
+    iid = instance_id(seed, variant)
+    entry = lock["instances"].get(iid)
+    if entry is None:
+        raise LookupError(f"{iid} is not in {LOCK.name}: only lock-pinned instances may be run")
+    dest = Path(instances_dir) / iid
+    if not dest.is_dir():
+        render(instance(seed), variant, dest)
+    h = tree_sha256(dest)
+    if h != entry["tree_sha256"]:
+        raise RuntimeError(f"{dest} differs from the lock (tree {h[:12]} vs {entry['tree_sha256'][:12]}); delete the folder to re-render, or rebuild the lock")
+    return dest, h
+
+
 def render(inst: Instance, variant: str, dest: Path) -> dict:
     """Write one instance folder (removing any previous one) and return its record (instance.json)."""
     dest = Path(dest)

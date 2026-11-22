@@ -47,6 +47,9 @@ __all__ = ["extract_policy"]
 LABEL_NAIVE = "naive-dogwood"
 LABEL = "Sondera-style (our reimplementation), Dogwood"
 FINAL_LINE = "Output only Dogwood policies."
+# Phase 3 E1 decline affordance (2026-11-22): only the final line of the user message changes.
+FINAL_LINE_DECLINE = ("Output Dogwood policies. If the intent does not let you determine which tool's output may serve as evidence for a "
+                      "rule, write no permit for that action and add a line starting UNRESOLVED: saying what the administrator must specify.")
 JUDGE_PASS = "NO MISMATCHES"
 
 INSTRUCTIONS = (
@@ -190,9 +193,14 @@ class NaiveDogwoodConfig:
     input_mode: str = "manifests"
     layout: str = "default"        # Phase 3: "default" or "split" (LAYOUTS)
     contract_block: bool = False   # Phase 3 D4: append the trusted evidence-authority contract (catalogue) as the last system block
+    decline: bool = False          # Phase 3 E1: the final line of the user message is FINAL_LINE_DECLINE instead of FINAL_LINE
 
     def as_dict(self) -> dict:
         return asdict(self)
+
+    @property
+    def final_line(self) -> str:
+        return FINAL_LINE_DECLINE if self.decline else FINAL_LINE
 
 
 def _manifest_block(inputs: DogwoodInputs, include_descriptions: bool) -> str:
@@ -272,7 +280,7 @@ def system_blocks(inputs: DogwoodInputs, config: NaiveDogwoodConfig) -> list[dic
 
 def build_request(inputs: DogwoodInputs, config: NaiveDogwoodConfig) -> tuple[list[dict], dict]:
     """The exact (messages, params) sent for one sample. No sampling parameters: API default."""
-    messages = [{"role": "user", "content": f"{inputs.intent.rstrip()}\n\n{FINAL_LINE}"}]
+    messages = [{"role": "user", "content": f"{inputs.intent.rstrip()}\n\n{config.final_line}"}]
     params = {"system": system_blocks(inputs, config), "max_tokens": config.max_tokens,
               "thinking": {"type": "adaptive"}, "output_config": {"effort": config.effort}}
     return messages, params
@@ -371,13 +379,16 @@ def judge_request(inputs: DogwoodInputs, policy_text: str, config: SonderaDogwoo
     return [{"role": "user", "content": content}], params
 
 
-def regeneration_request(inputs: DogwoodInputs, config: SonderaDogwoodConfig, previous: str,
-                         det: DogwoodCritique, judge_text: str) -> tuple[list[dict], dict]:
-    """A fresh single-turn request: same cached system prefix, user turn = intent + attempt + critiques."""
-    _, params = build_request(inputs, config.naive())
+def regeneration_request(inputs: DogwoodInputs, config: "SonderaDogwoodConfig | ValidatorLoopConfig", previous: str,
+                         det: DogwoodCritique, judge_text: str | None) -> tuple[list[dict], dict]:
+    """A fresh single-turn request: same cached system prefix, user turn = intent + attempt + critiques. `judge_text` None
+    (validator loop) omits the reviewer section; the final line follows the config (decline affordance)."""
+    naive = config.naive()
+    _, params = build_request(inputs, naive)
+    reviewer = "" if judge_text is None else f"Critique from a reviewer:\n{judge_text.strip()}\n\n"
     content = (f"{inputs.intent.rstrip()}\n\nYour previous attempt:\n```dogwood\n{previous}\n```\n\n"
                f"Critique from automated checks:\n{det.feedback()}\n\n"
-               f"Critique from a reviewer:\n{judge_text.strip()}\n\n{FINAL_LINE}")
+               f"{reviewer}{naive.final_line}")
     return [{"role": "user", "content": content}], params
 
 
@@ -442,4 +453,97 @@ def run(llm: CachedLLM, inputs: DogwoodInputs, config: SonderaDogwoodConfig, sam
         if result.final.passed:
             break
         messages, params = regeneration_request(inputs, config, policy, det, judge.text)
+    return result
+
+
+# ---- Phase 3 E1 validator loop (2026-11-22): generation, strict validation, regeneration on validator diagnostics, no judge
+LABEL_VALIDATOR_LOOP = "validator-loop, Dogwood"
+_UNRESOLVED = re.compile(r"^\s*UNRESOLVED:.*$", re.MULTILINE)
+
+
+@dataclass(frozen=True)
+class ValidatorLoopConfig:
+    """Every knob of the validator loop; recorded verbatim in each run's config. Thinking (adaptive) and effort are sent on
+    every call through build_request, identical for first shots and repairs."""
+
+    model: str
+    max_rounds: int = 3
+    effort: str = "high"
+    max_tokens: int = 16000
+    generator: str = LABEL_VALIDATOR_LOOP
+    input_mode: str = "schema-only"
+    layout: str = "split"
+    contract_block: bool = False
+    decline: bool = False
+    include_descriptions: bool = True
+
+    def as_dict(self) -> dict:
+        return asdict(self)
+
+    def naive(self) -> NaiveDogwoodConfig:
+        return NaiveDogwoodConfig(self.model, self.include_descriptions, self.effort, self.max_tokens, input_mode=self.input_mode,
+                                  layout=self.layout, contract_block=self.contract_block, decline=self.decline)
+
+
+def unresolved_lines(text: str) -> list[str]:
+    """The lines of a raw completion that start with UNRESOLVED: (the decline affordance), stripped."""
+    return [m.group(0).strip() for m in _UNRESOLVED.finditer(text)]
+
+
+@dataclass(frozen=True)
+class LoopRound:
+    """One generate-then-validate round of the validator loop."""
+
+    index: int
+    policy_path: Path
+    policy_text: str
+    extraction: str
+    completion: Completion
+    deterministic: DogwoodCritique
+    unresolved: tuple[str, ...]      # UNRESOLVED: lines of the raw completion (kept even though extraction drops them)
+    request_messages: list[dict]    # the exact user turn sent (the uncached part of the request, with the system blocks after the breakpoint)
+
+    @property
+    def passed(self) -> bool:
+        return self.deterministic.passed
+
+
+@dataclass
+class LoopResult:
+    rounds: list[LoopRound] = field(default_factory=list)
+
+    @property
+    def final(self) -> LoopRound:
+        return self.rounds[-1]
+
+    @property
+    def first(self) -> LoopRound:
+        return self.rounds[0]
+
+    @property
+    def passed(self) -> bool:
+        return self.final.passed
+
+    @property
+    def rounds_used(self) -> int:
+        return len(self.rounds)
+
+
+def run_validator_loop(llm: CachedLLM, inputs: DogwoodInputs, config: ValidatorLoopConfig, sample_index: int, work_dir: Path) -> LoopResult:
+    """One sample: up to max_rounds of generate + strict validation; a round that validates ends the loop. The regeneration
+    request carries the validator diagnostics and no reviewer section. Every round's policy is written to work_dir/round<k>.dw."""
+    work_dir = Path(work_dir)
+    work_dir.mkdir(parents=True, exist_ok=True)
+    result = LoopResult()
+    messages, params = build_request(inputs, config.naive())
+    for k in range(1, config.max_rounds + 1):
+        completion = llm.complete(config.model, messages, temperature=None, sample_index=sample_index, **params)
+        policy, method = extract_policy(completion.text)
+        path = work_dir / f"round{k}.dw"
+        path.write_text(policy + "\n" if policy else "")
+        det = deterministic_critique(path, inputs.schema_path, inputs.event_schema_path)
+        result.rounds.append(LoopRound(k, path, policy, method, completion, det, tuple(unresolved_lines(completion.text)), messages))
+        if det.passed:
+            break
+        messages, params = regeneration_request(inputs, config, policy, det, None)
     return result

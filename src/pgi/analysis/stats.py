@@ -50,3 +50,57 @@ def holm(pvalues: dict[str, float], alpha: float = 0.05) -> dict[str, dict]:
         rejecting = reject
         out[name] = {"p": p, "adjusted": running, "reject": reject}
     return out
+
+
+# ---- exact one-sided binomial bounds and exact McNemar (Phase 3 E1, 2026-11-22)
+def _binom_cdf(k: int, n: int, p: Fraction | float) -> float:
+    """P(X <= k) for X ~ Binomial(n, p)."""
+    p = float(p)
+    return sum(comb(n, i) * p**i * (1 - p) ** (n - i) for i in range(0, k + 1))
+
+
+def _bisect(f, lo: float, hi: float, tol: float = 1e-10) -> float:
+    """Root of the monotone function f on [lo, hi] (f(lo) and f(hi) of opposite sign) by bisection."""
+    flo = f(lo)
+    for _ in range(200):
+        mid = (lo + hi) / 2
+        fm = f(mid)
+        if (fm < 0) == (flo < 0):
+            lo, flo = mid, fm
+        else:
+            hi = mid
+        if hi - lo < tol:
+            break
+    return (lo + hi) / 2
+
+
+def binomial_upper(k: int, n: int, alpha: float = 0.05) -> float:
+    """Exact one-sided upper (1 - alpha) bound on a binomial proportion after k successes in n trials (Clopper-Pearson one
+    tail): the p with P(X <= k | p) = alpha. 0/60 -> 0.0487; 0/120 -> 0.0247. k = n -> 1."""
+    if not 0 <= k <= n or n <= 0 or not 0 < alpha < 1:
+        raise ValueError(f"impossible counts {k}/{n} or alpha {alpha}")
+    if k == n:
+        return 1.0
+    return _bisect(lambda p: _binom_cdf(k, n, p) - alpha, 0.0, 1.0)
+
+
+def binomial_lower(k: int, n: int, alpha: float = 0.05) -> float:
+    """Exact one-sided lower (1 - alpha) bound: the p with P(X >= k | p) = alpha. 6/60 -> 0.044. k = 0 -> 0."""
+    if not 0 <= k <= n or n <= 0 or not 0 < alpha < 1:
+        raise ValueError(f"impossible counts {k}/{n} or alpha {alpha}")
+    if k == 0:
+        return 0.0
+    return _bisect(lambda p: (1 - _binom_cdf(k - 1, n, p)) - alpha, 0.0, 1.0)
+
+
+def mcnemar_exact(b: int, c: int, exact: bool = False) -> float | Fraction:
+    """Exact two-sided McNemar test on the discordant counts b (first condition only) and c (second only): twice the
+    binomial tail at one half, capped at 1. 8 vs 0 -> 0.0078; 6 vs 0 -> 0.03125; no discordant pair -> 1."""
+    if b < 0 or c < 0:
+        raise ValueError(f"negative discordant counts {b}, {c}")
+    n, k = b + c, min(b, c)
+    if n == 0:
+        return Fraction(1) if exact else 1.0
+    tail = Fraction(sum(comb(n, i) for i in range(0, k + 1)), 2**n)
+    p = min(Fraction(1), 2 * tail)
+    return p if exact else float(p)

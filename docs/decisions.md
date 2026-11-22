@@ -1229,3 +1229,44 @@ suite, the mutants and the intent levels). Reused from `7d90a39`, not rebuilt: `
   a late result is discarded and never cached while its usage lands in the event; watch state after an expiry; budget adds the assumed
   cost and the cap sees it; the helper's attempts, stop and pass-through; the runner keeps a sample after two expiries and records
   everything; three expiries stop the run and a resumed run makes no duplicate sample; cache-only runs record no deadline.
+
+## 2026-11-22: E1 instance runner (pgi.runs.temporal_instances), cells.yaml, validator loop, decline affordance, binding form, exact statistics
+
+- **Runner.** `pgi.runs.temporal_instances` (thin; reuses temporal_clean's frame, score, budget wrapper, records, the deadline helper and
+  the scenario's builder; temporal_clean's behaviour and outputs are unchanged). One sample = one lock-pinned instance seed in one cell,
+  sample_index = seed; several cells for one model run sequentially in one process (cells, then seeds), so the one cached prefix stays
+  warm across cells. Resume is the disk cache. `pgi.runs.e1_compare` reads results.csv files.
+- **cells.yaml** beside the t02 scenario: 14 cells. C1 D0/plain; C2 D1/plain; C3 D1/echo; C4 D2/plain; C5 D2/echo; C6 D3/echo; C7 D4/echo;
+  C8 D2/neutral (n 20); C9 D0/untyped_auth; C10 D0/plain + decline; C11 D1/echo + decline; C12 D2/plain + decline; C13 D2/untyped_auth;
+  C14 D1/untyped_auth (Juan, 2026-11-22); n = 60 unless stated (planned; `--seeds` picks the seeds and may not exceed n). Families, never
+  merged in any table: boundary crossings C4–C7 + C13; guesses under underspecification C1–C3 + C14; controls C8, C9. Contrast families
+  with Holm: primary C5 vs C4, C3 vs C2, C5 vs C3, C4 vs C2 (over four); untyped C13 vs C4, C14 vs C2 (over two). Exact two-sided McNemar on
+  the discordant pairs over seeds scored in both cells.
+- **Scoring rule (Juan).** Every cell is scored the same way, D0 cells included: replay against the instance's own roles (the draw fixes
+  the system of record even when the intent does not say so). D0 results are baselines and controls, never violations; C9 is the positive
+  control. Per sample, first shot and final: valid; mirror_sufficient (primary endpoint); exact; deficit by workflow; silent_reads_mirror
+  and silent_all_allow; admission against the instance's catalogue; binding form by role and the same form with first-listed /
+  second-listed source in the schema in place of the roles (recorded for every cell); declined = an UNRESOLVED: line in the raw
+  completion and no permit that can apply to the protected action. Bounds: exact one-sided 95% over scored samples, scored counts beside
+  every rate. results.csv: the `<cell>` column is final mirror_sufficient 1/0, NA only when the final policy is invalid (or, errors are not
+  denies, not replayable); plus `<cell>.first_shot`, `.declined`, `.form`, `.valid`, `.rounds`; samples.csv holds every metric.
+- **Pipeline "validator-loop"** (`dogwood.run_validator_loop`, `ValidatorLoopConfig`): generation, strict validation, regeneration on the
+  validator diagnostics, at most 3 rounds, no LLM judge; the regeneration message omits the reviewer section. Thinking adaptive and effort
+  high (the Phase 2c settings) on every call. Layout split; D4 cells append the contract block.
+- **Decline affordance** (`NaiveDogwoodConfig.decline`, `FINAL_LINE_DECLINE`): only the final line of the user message changes. The raw
+  completion is kept in the round record and its UNRESOLVED: lines are recorded separately, since extraction keeps fenced blocks only.
+- **Trusted precheck.** Before the first call, the resolver runs on every instance of every requested cell (D0 must resolve to nothing, D1
+  to an owner without exclusion, D2–D4 to exactly one action with exclusion; `resolver_expectations` in cells.yaml); any failure aborts
+  the run before anything is sent. The generation prefix hash is computed for every sample, must be one value, and is registered with the
+  PrefixWatch.
+- **What a run folder shows.** No full instance snapshot (240 instances would be ~50 MB per run): the lock hash and each instance's tree
+  hash are recorded and verified before generation (`build_instances.ensure_instance`; a folder that differs from the lock is refused),
+  and each round record stores the exact uncached request text (block 5, block 6 when present, the user message) with blocks 1–4 stored
+  once per run (`prompt_prefix.json`), so a run folder shows what the model saw without rebuilding anything.
+- **Binding form** (`dogwood_text.binding_form`, new keys `form` and `permit_roles` on close_binding_report; existing keys unchanged):
+  designated_only, mirror_only, either_source (separate permits, or `||` alternatives in one block), both_required (exactly one permit, one
+  conjoined block), other_tool, none, and **mixed** for any other combination so nothing is forced into a wrong class. Text, descriptive only.
+- **Statistics** (`pgi.analysis.stats`): exact one-sided binomial bounds (bisection on the exact tail) and exact two-sided McNemar (doubled
+  binomial tail at one half, capped at 1). Checked: 0/60 upper 4.9%; 6/60 lower 4.4%; 0/120 upper 2.5%; McNemar 8 vs 0 p = 0.0078; 6 vs 0
+  p = 0.03125.
+- **Reserved seeds.** 1018 and 1019 are the smoke-test seeds; 1000–1009 stay for the pilot; 1010–1017 unused.
