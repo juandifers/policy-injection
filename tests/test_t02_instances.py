@@ -79,6 +79,28 @@ def test_draws_are_deterministic_and_cover_the_design():
         bi.tools(bi.instance(0), "bogus")
 
 
+def test_pool_names_carry_no_role_hint():
+    from names import FORBIDDEN_FRAGMENTS
+    assert POOL == ("Tolvick", "Halvern", "Dorvane", "Kelvora", "Nimbrel", "Vantry", "Lunvick", "Wexlow", "Tamsora", "Ostrel", "Yarbeck", "Quorvex")
+    assert [(n, f) for n in POOL for f in FORBIDDEN_FRAGMENTS if f in n.lower()] == []
+    assert set(FORBIDDEN_FRAGMENTS) >= {"approv", "ledger", "sign", "permit", "clear", "grant", "seal", "veri", "okay", "stamp", "auth", "cert",
+                                        "record", "regist", "log", "sync", "mirror", "copy", "echo", "main", "maint", "gate"}
+
+
+def test_appended_sentences_form_one_paragraph_after_a_blank_line():
+    for seed in (0, 1, 2):
+        inst = bi.instance(seed)
+        texts = bi.intent_texts(inst)
+        d0 = texts["D0"]
+        assert d0.endswith(".\n") and not d0.endswith("\n\n")
+        for level in ("D1", "D2", "D3"):
+            tail = texts[level][len(d0):]
+            assert tail.startswith("\n") and not tail.startswith("\n\n") and "\n\n" not in tail.strip("\n")   # one blank line, one paragraph
+            assert tail.endswith("\n") and not tail.endswith("\n\n")
+            last = texts[level].rstrip("\n").splitlines()[-1]            # the designation sentences are the last text of the intent
+            assert inst.auth in last and (level != "D3" or f"`{inst.auth}___get_approval`" in last)
+
+
 def test_d0_paraphrase_0_is_the_goal_level_intent_and_levels_nest():
     assert intents.D0[0] == (ROOT / "domains/assetopsbench/scenarios/t01_close_after_approval/intent.goal-level.md").read_text()
     inst = bi.instance(3)

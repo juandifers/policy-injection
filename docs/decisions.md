@@ -1180,3 +1180,17 @@ suite, the mutants and the intent levels). Reused from `7d90a39`, not rebuilt: `
   (its `intents_sha256` changes with the file).
 - **Levels are cumulative in prose:** D1 = D0 + one sentence; D2 = D1 + the registered exclusion sentence; D3 = D2 + the action sentence
   and the values sentence; D4 = D0 + the contract block only (checked on seed 0: each level is byte-identical to D0 up to D0's length).
+
+## 2026-11-22: t02 wording decisions (names, paragraph form, accepted texts)
+
+- **Names replaced in place** (list positions kept, so every draw's pair indices, role flip, vocabulary and paraphrase are unchanged):
+  Approvia→Tolvick, Ledgerly→Halvern, Signova→Dorvane, Permitrix→Kelvora, Clearwyn→Nimbrel, Grantwell→Lunvick, Sealix→Wexlow,
+  Veridon→Tamsora, Okaylo→Ostrel, Stampire→Yarbeck; Vantry and Quorvex kept. Reason: the old names hinted at approving, signing or
+  record-keeping, so a name could suggest a role the trusted intent did not assign. `names.FORBIDDEN_FRAGMENTS` (approv, ledger, sign,
+  permit, clear, grant, seal, veri, okay, stamp, auth, cert, record, regist, log, sync, mirror, copy, echo, main, maint, gate) is checked
+  case-insensitively at import and by a test. The lock file is rebuilt (`names_sha256` and every instance's bytes change; draws do not).
+- **Appended sentences** already render as one separate paragraph after one blank line following the last bullet (D1 one sentence; D2 two;
+  D3 four); nothing changed, a test pins the form.
+- **Accepted as written:** the contract block, the three D0 paraphrases, the D1 sentences, the exclusion sentences, the D3 sentences.
+- **For the pre-registration's limits:** the designation sentences (D1, D2, D3) are the last text of the intent, the most salient position;
+  a null result at D1 or D2 is therefore not attributable to the sentence being buried.
