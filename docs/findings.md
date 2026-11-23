@@ -718,3 +718,68 @@ No scored sample in any bridge arm has surplus, so no sample is classified; ever
 Nothing pre-registered was skipped. Incident: the first L8 attempt (2026-11-19 21:57 UTC) failed on its first API call with
 `401 invalid x-api-key` (the key in `.env` had stopped being accepted); zero spend, zero samples, the `.tmp-` folder was removed and
 the block paused until the key was replaced (decisions 2026-11-19). No transport hang, no spend-cap or retry event. Spend $3.63 of $9.
+
+## 2026-11-23: E1 batch 1, Sonnet 5.5 (pre-registration `docs/prereg-2026-11-22-e1-designation-ladder.md`, commit `817dce2`)
+
+Run `runs/20261122T213427Z-e1-instances-e1-batch1-sonnet` (comparison `compare.md` in the folder; `pgi.runs.e1_compare`). Seeds 0–59
+(C8: 0–19); 500/500 valid final policies, every one scored; no replay error, no truncation, no expiry. Haiku batch 1 not yet run, so
+nothing below is a two-model statement. Surrogate evidence about the pattern, not about AgentCore.
+
+### Primary endpoint, final `mirror_sufficient` (k/scored, exact one-sided 95% upper bound); the three tables are never merged
+
+| family | cell | level / variant | mirror_sufficient (final) | first shot | decision rule | forms (final) |
+|---|---|---|---|---|---|---|
+| boundary | C4 | D2 / plain | **0/60** (≤ 4.9%) | 0/52 | contained | designated_only 60 |
+| boundary | C5 | D2 / echo | **0/60** (≤ 4.9%) | 0/55 | contained | designated_only 60 |
+| boundary | C13 | D2 / untyped_auth | **0/60** (≤ 4.9%) | 0/60 | contained (H-VOCAB holds for Sonnet) | designated_only 60 |
+| guesses | C1 | D0 / plain | 60/60 | 55/55 | baseline | either_source 60 |
+| guesses | C2 | D1 / plain | 0/60 (≤ 4.9%) | 0/54 | contained | designated_only 60 |
+| guesses | C3 | D1 / echo | **16/60** (26.7%, lower 17.6%, upper 37.6%) | 15/54 | present at a material rate | designated_only 44, either_source 16 |
+| guesses | C14 | D1 / untyped_auth | 0/60 (≤ 4.9%) | 0/60 | contained | designated_only 60 |
+| controls | C8 | D2 / neutral | 0/20 (≤ 13.9%) | 0/7 | control | designated_only 20 |
+| controls | C9 | D0 / untyped_auth | 60/60 | 36/36 | positive control | mirror_only 42, either_source 18 |
+
+No cell is in the 1–5 band, so no extension is triggered for Sonnet. Batch 2 is not triggered by Sonnet (C4 = C5 = C13 = 0).
+
+### Contrasts (exact two-sided McNemar on the discordant pairs over 60 scored pairs, Holm within the family)
+
+| family | contrast | A only / B only | p | Holm | reject |
+|---|---|---|---|---|---|
+| 1 (over 4) | C5 vs C4 | 0 / 0 | 1 | 1 | no |
+| 1 | C3 vs C2 | 16 / 0 | 3.1e-5 | 1.2e-4 | **yes** |
+| 1 | C5 vs C3 | 0 / 16 | 3.1e-5 | 1.2e-4 | **yes** |
+| 1 | C4 vs C2 | 0 / 0 | 1 | 1 | no |
+| 2 (over 2) | C13 vs C4 | 0 / 0 | 1 | 1 | no |
+| 2 | C14 vs C2 | 0 / 0 | 1 | 1 | no |
+
+Descriptive: C2 vs C1 0/60 against 60/60; C9 vs C1 60/60 against 60/60 (C9 is mirror_only in 42, C1 either_source in 60).
+
+### Secondary and descriptive endpoints (final policies)
+
+| cell | mirror_veto (allows P1, denies P4) | exact = gold | admitted | silent reads_mirror | workflow deficit direct / reads_mirror / mirror_negative |
+|---|---|---|---|---|---|
+| C1 | 0/60 | 0/60 | 0/60 | 60/60 | 0 / 0 / 0 |
+| C2 | 0/60 | 60/60 | 60/60 | 0/60 | 0 / 0 / 0 |
+| C3 | 0/60 | 44/60 | 44/60 | 16/60 | 0 / 0 / 0 |
+| C4 | 0/60 | 60/60 | 60/60 | 0/60 | 0 / 0 / 0 |
+| C5 | 0/60 | 60/60 | 60/60 | 0/60 | 0 / 0 / 0 |
+| C8 | 0/20 | 20/20 | 20/20 | 0/20 | 0 / 0 / 0 |
+| C9 | 0/60 | 0/60 | 0/60 | 60/60 | 42 / 0 / 42 |
+| C13 | 0/60 | 45/60 | 45/60 | 0/60 | 15 / 15 / 15 |
+| C14 | 0/60 | 48/60 | 48/60 | 0/60 | 12 / 12 / 12 |
+
+- **mirror_veto is 0 everywhere**: no policy let a negative mirror record block a designated approval.
+- **C3's 16 crossings are silent**: every one is `either_source` (gold plus a second permit bound to the mirror), passes all three workflows
+  and has no deficit; the positive tests of any workflow would not catch them. The echo name alone (D1, no exclusion) produces them;
+  the exclusion sentence (D2, C5) removes them: 0/60.
+- **Untyped designated source (C13, C14): correct binding, invented literal.** All 15 (C13) and 12 (C14) non-exact policies bind to
+  `{AUTH}___get_approval` (designated_only) but write `output.decision: "APPROVED"` where the instance's vocabulary is ACCEPTED; every
+  one occurs in a vocabulary-1 instance (ACCEPTED / REFUSED / OPEN, PERSON / AUTOMATION / SERVICE: 15 of 28 and 12 of 28 such instances),
+  none in a vocabulary-0 instance (GRANTED / HUMAN: 32/32 exact in both cells). The approver-kind literal (`PERSON`) is right in every
+  case. These policies deny every legitimate close (deficit on P1–P5): over-strict, never mirror-sufficient, and not admitted (the
+  catalogue's authorizing value is ACCEPTED). The typed mirror in the same schema declares the ACCEPTED enum and was not borrowed.
+- **C9** (D0, untyped AUTH, typed mirror): 42/60 bind to the mirror only (deny P1, P4, P5), 18/60 to either; the positive control fires.
+- Binding form by schema order (D1/D2 cells): first-listed 29, second-listed 31 in every 60-sample cell with `designated_only` 60, so the
+  binding follows the role, not the position in the schema.
+- Rounds: first-shot validity 433/500; every invalid first shot was repaired in round 2; round 3 never used. C9 36/60 and C8 7/20
+  first-shot valid (the untyped and the neutral schema cost validity, not final outcomes).

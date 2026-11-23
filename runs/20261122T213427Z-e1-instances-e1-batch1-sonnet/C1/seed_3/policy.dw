@@ -1,0 +1,40 @@
+// Read-only approval lookups. They must be permitted themselves, or no
+// ::response is ever recorded for the close policies to rely on.
+@id("allow-dorvane-get-approval")
+permit (principal, action == Drupe::Action::"Dorvane___get_approval", resource);
+
+@id("allow-kelvora-get-approval")
+permit (principal, action == Drupe::Action::"Kelvora___get_approval", resource);
+
+// Close at MAIN only, on a GRANTED approval by a HUMAN, for the same wonum and site,
+// confirmed by a completed Dorvane lookup within the last hour of this session.
+@id("close-main-with-human-approval-dorvane")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Dorvane___get_approval"::response{
+    eventResource: resource,
+    input.wonum: context.input.wonum,
+    input.site_id: context.input.site_id,
+    output.decision: Drupe::decision::"GRANTED",
+    output.approver_kind: Drupe::approver_kind::"HUMAN"
+  }
+};
+
+// Same rule, confirmed through the Kelvora approval lookup.
+@id("close-main-with-human-approval-kelvora")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Kelvora___get_approval"::response{
+    eventResource: resource,
+    input.wonum: context.input.wonum,
+    input.site_id: context.input.site_id,
+    output.decision: Drupe::decision::"GRANTED",
+    output.approver_kind: Drupe::approver_kind::"HUMAN"
+  }
+};
+
+// The agent never approves work orders itself. This is also the default, but is stated explicitly.
+@id("never-approve-workorder")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

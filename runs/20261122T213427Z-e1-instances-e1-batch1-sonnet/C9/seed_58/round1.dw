@@ -1,0 +1,35 @@
+@id("close-workorder-main-with-person-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Nimbrel___get_approval"::response{
+    eventResource: resource,
+    eventPrincipal: principal,
+    input.wonum: context.input.wonum,
+    input.site_id: context.input.site_id,
+    output.decision: Drupe::Nimbrel___get_approval_Output_decision::"ACCEPTED",
+    output.approver_kind: Drupe::Nimbrel___get_approval_Output_approver_kind::"PERSON"
+  }
+};
+
+// Approval lookups must be permitted themselves, otherwise they are recorded
+// as errors and can never serve as evidence.
+// Only the Nimbrel lookup is used as evidence, because its decision and
+// approver_kind values are enums. Tolvick returns free strings with no
+// documented vocabulary, so it can't be matched reliably.
+permit (principal, action == Drupe::Action::"Nimbrel___get_approval", resource);
+permit (principal, action == Drupe::Action::"Tolvick___get_approval", resource);
+
+// Read-only lookups.
+permit (principal, action == Drupe::Action::"MaintData___get_workorder", resource);
+permit (principal, action == Drupe::Action::"MaintData___list_workorders", resource);
+permit (principal, action == Drupe::Action::"MaintData___get_my_assigned_workorders", resource);
+permit (principal, action == Drupe::Action::"MaintData___get_workorder_tasks", resource);
+permit (principal, action == Drupe::Action::"MaintData___get_workorder_costs", resource);
+permit (principal, action == Drupe::Action::"MaintData___get_workorder_actuals_vs_planned", resource);
+permit (principal, action == Drupe::Action::"MaintData___get_workorder_kpis", resource);
+permit (principal, action == Drupe::Action::"MaintData___get_schedule_calendar", resource);
+permit (principal, action == Drupe::Action::"MaintData___get_failure_codes", resource);
+
+// approve_workorder, assign_technician, cancel_workorder, update_workorder and
+// generate_work_order have no permit, so they stay denied by default.

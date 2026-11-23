@@ -1,0 +1,82 @@
+// Tolvick approval lookups: read-only, must be permitted so their responses are recorded.
+@id("allow_tolvick_get_approval")
+permit (principal, action == Drupe::Action::"Tolvick___get_approval", resource);
+
+@id("allow_ostrel_get_tolvick_approval")
+permit (principal, action == Drupe::Action::"Ostrel___get_tolvick_approval", resource);
+
+// Close at MAIN only, with a completed lookup in the last hour that returned a GRANTED approval
+// by a HUMAN for this exact work order and site, not superseded since by a rejection or pending state.
+@id("close_workorder_main_with_recent_human_approval_tolvick")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  !Drupe::Action::"Tolvick___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"REJECTED"
+  }
+  since within 1h
+  Drupe::Action::"Tolvick___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"GRANTED",
+    output.approver_kind: Drupe::approver_kind::"HUMAN"
+  }
+  &&
+  !Drupe::Action::"Tolvick___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"PENDING"
+  }
+  since within 1h
+  Drupe::Action::"Tolvick___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"GRANTED",
+    output.approver_kind: Drupe::approver_kind::"HUMAN"
+  }
+};
+
+@id("close_workorder_main_with_recent_human_approval_ostrel")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  !Drupe::Action::"Ostrel___get_tolvick_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"REJECTED"
+  }
+  since within 1h
+  Drupe::Action::"Ostrel___get_tolvick_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"GRANTED",
+    output.approver_kind: Drupe::approver_kind::"HUMAN"
+  }
+  &&
+  !Drupe::Action::"Ostrel___get_tolvick_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"PENDING"
+  }
+  since within 1h
+  Drupe::Action::"Ostrel___get_tolvick_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"GRANTED",
+    output.approver_kind: Drupe::approver_kind::"HUMAN"
+  }
+};
+
+// The agent may never approve work orders, whatever else is permitted.
+@id("forbid_agent_approve_workorder")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

@@ -1,0 +1,36 @@
+@id("close-workorder-with-human-approval-via-dorvane")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Dorvane___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"GRANTED",
+    output.approver_kind: Drupe::approver_kind::"HUMAN"
+  }
+};
+
+@id("close-workorder-with-human-approval-via-tolvick")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Tolvick___get_dorvane_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"GRANTED",
+    output.approver_kind: Drupe::approver_kind::"HUMAN"
+  }
+};
+
+// The lookups must themselves be permitted, or their responses are never recorded.
+@id("allow-dorvane-approval-lookup")
+permit (principal, action == Drupe::Action::"Dorvane___get_approval", resource);
+
+@id("allow-tolvick-approval-lookup")
+permit (principal, action == Drupe::Action::"Tolvick___get_dorvane_approval", resource);
+
+// The agent must never approve work orders, by any route.
+@id("never-approve-workorders")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

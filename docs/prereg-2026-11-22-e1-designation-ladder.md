@@ -269,5 +269,8 @@ runner computes and records (`config.json` `request.prompt_cache.prefix_hash`, `
 
 ## Runs (filled in by the runs commit)
 
-- Batch 1: Sonnet `runs/…`, Haiku `runs/…`.
+- Batch 1 Sonnet: `runs/20261122T213427Z-e1-instances-e1-batch1-sonnet` (500/500 valid final, 567 calls, 0 truncations, 0 replay
+  errors, 0 expiries, $12.00 over both processes). Incident: the first process (`runs/.tmp-20261122T193352Z-…-batch1-sonnet`, kept)
+  was killed by the session's 2-hour background-task limit at 349 samples; the resumed process replayed them from the cache and
+  made the remaining 168 fresh calls (167/168 read the prefix; the one write is its first call). Haiku: `runs/…` (not yet run).
 - Batch 2 (if triggered), batch 3, extensions (if triggered): `runs/…`.

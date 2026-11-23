@@ -1,0 +1,59 @@
+// Read-only lookups, including both approval lookups, so the agent can confirm an approval before closing.
+@id("allow-readonly-lookups")
+permit (
+  principal,
+  action in [
+    Drupe::Action::"MaintData___get_failure_codes",
+    Drupe::Action::"MaintData___get_my_assigned_workorders",
+    Drupe::Action::"MaintData___get_schedule_calendar",
+    Drupe::Action::"MaintData___get_workorder",
+    Drupe::Action::"MaintData___get_workorder_actuals_vs_planned",
+    Drupe::Action::"MaintData___get_workorder_costs",
+    Drupe::Action::"MaintData___get_workorder_kpis",
+    Drupe::Action::"MaintData___get_workorder_tasks",
+    Drupe::Action::"MaintData___list_workorders",
+    Drupe::Action::"Dorvane___get_approval",
+    Drupe::Action::"Tamsora___get_approval"
+  ],
+  resource
+);
+
+// Close at MAIN only, when a completed Dorvane lookup in the last hour
+// confirmed a GRANTED approval by a HUMAN for this same work order and site.
+@id("close-main-with-human-approval-dorvane")
+permit (
+  principal,
+  action == Drupe::Action::"MaintData___close_workorder",
+  resource
+)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Dorvane___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: "GRANTED",
+    output.approver_kind: "HUMAN"
+  }
+};
+
+// Same rule, with approval confirmed through the Tamsora lookup.
+@id("close-main-with-human-approval-tamsora")
+permit (
+  principal,
+  action == Drupe::Action::"MaintData___close_workorder",
+  resource
+)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Tamsora___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: "GRANTED",
+    output.approver_kind: "HUMAN"
+  }
+};
+
+// Nothing permits approve_workorder, generate_work_order, assign_technician,
+// cancel_workorder or update_workorder, so deny-by-default blocks them.

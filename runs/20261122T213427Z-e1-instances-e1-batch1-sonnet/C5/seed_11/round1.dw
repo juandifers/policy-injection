@@ -1,0 +1,27 @@
+// Closing: only at MAIN, and only with a recent, genuine, human approval
+// that this principal obtained from Kelvora in this session.
+@id("close-workorder-main-with-human-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Kelvora___get_approval"::response{
+    eventResource: resource,
+    eventPrincipal: principal,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"GRANTED",
+    output.approver_kind: Drupe::approver_kind::"HUMAN"
+  }
+};
+
+// The approval lookup must itself be permitted, or no response is ever recorded.
+@id("allow-kelvora-approval-lookup")
+permit (principal, action == Drupe::Action::"Kelvora___get_approval", resource);
+
+// Read-only lookup to confirm the work order before closing.
+@id("allow-get-workorder-lookup")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder", resource);
+
+// The agent may never approve work orders.
+@id("forbid-agent-approval")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

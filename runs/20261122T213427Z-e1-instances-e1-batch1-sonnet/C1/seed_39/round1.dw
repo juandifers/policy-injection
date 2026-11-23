@@ -1,0 +1,36 @@
+@id("close-main-with-vantry-person-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Vantry___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};
+
+@id("close-main-with-yarbeck-person-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Yarbeck___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};
+
+// Read-only approval lookups must be permitted, or their responses are never recorded.
+@id("allow-vantry-approval-lookup")
+permit (principal, action == Drupe::Action::"Vantry___get_approval", resource);
+
+@id("allow-yarbeck-approval-lookup")
+permit (principal, action == Drupe::Action::"Yarbeck___get_approval", resource);
+
+// The agent never approves work orders itself.
+@id("never-approve-workorder")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

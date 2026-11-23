@@ -1,0 +1,70 @@
+{
+ "round": 1,
+ "extraction": "fenced",
+ "generation": {
+  "key_hash": "8746728fcd879a7eb6c588e990af731552bf2dde711c96e57f0b92c34c1dbf43",
+  "prefix_hash": "be40cbdd8c8405d744a3c96bab7346ed64044c1910cb4ff82810c151a1166802",
+  "cache_hit": true,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011ChJYW6C5p9vTjzCtC18n8",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 34862,
+   "inference_geo": "global",
+   "input_tokens": 866,
+   "output_tokens": 1346,
+   "output_tokens_details": {
+    "thinking_tokens": 739
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "```\n@id(\"close-main-with-vantry-person-approval\")\npermit (principal, action == Drupe::Action::\"MaintData___close_workorder\", resource)\nwhen { context.input.site_id == \"MAIN\" }\nwhen temporal {\n  formerly within 1h Drupe::Action::\"Vantry___get_approval\"::response{\n    eventResource: resource,\n    input.site_id: context.input.site_id,\n    input.wonum: context.input.wonum,\n    output.decision: Drupe::decision::\"ACCEPTED\",\n    output.approver_kind: Drupe::approver_kind::\"PERSON\"\n  }\n};\n\n@id(\"close-main-with-yarbeck-person-approval\")\npermit (principal, action == Drupe::Action::\"MaintData___close_workorder\", resource)\nwhen { context.input.site_id == \"MAIN\" }\nwhen temporal {\n  formerly within 1h Drupe::Action::\"Yarbeck___get_approval\"::response{\n    eventResource: resource,\n    input.site_id: context.input.site_id,\n    input.wonum: context.input.wonum,\n    output.decision: Drupe::decision::\"ACCEPTED\",\n    output.approver_kind: Drupe::approver_kind::\"PERSON\"\n  }\n};\n\n// Read-only approval lookups must be permitted, or their responses are never recorded.\n@id(\"allow-vantry-approval-lookup\")\npermit (principal, action == Drupe::Action::\"Vantry___get_approval\", resource);\n\n@id(\"allow-yarbeck-approval-lookup\")\npermit (principal, action == Drupe::Action::\"Yarbeck___get_approval\", resource);\n\n// The agent never approves work orders itself.\n@id(\"never-approve-workorder\")\nforbid (principal, action == Drupe::Action::\"MaintData___approve_workorder\", resource);\n```",
+  "content_types": [
+   "thinking",
+   "text"
+  ],
+  "cache_split": {
+   "tokens": {
+    "cache_write": 0,
+    "cache_read": 34862,
+    "uncached_input": 866,
+    "output": 1346
+   },
+   "usd": {
+    "cache_write": 0.0,
+    "cache_read": 0.0034862,
+    "uncached_input": 0.001732,
+    "output": 0.01346
+   },
+   "total_usd": 0.018678200000000002
+  },
+  "deadline_s": 600.0,
+  "expiries_before": 0,
+  "truncated": false
+ },
+ "deterministic": {
+  "passed": true,
+  "validation": {
+   "policy": "C1/seed_39/round1.dw",
+   "schema": "/Users/jd/Documents/policy-injection/domains/assetopsbench/scenarios/t02_designated_source/instances/s0039-plain/schema/t02.dogwood.cedarschema",
+   "ok": true,
+   "errors": [],
+   "warnings": []
+  },
+  "failures": []
+ },
+ "unresolved": [],
+ "request": {
+  "blocks_after_breakpoint": [
+   "## Action schema, part 2\n```cedarschema\nnamespace Drupe {\n  type Vantry___get_approvalInput = {\n    site_id: String,\n    wonum: String\n  };\n  type Vantry___get_approvalOutput = {\n    approver_id: String,\n    approver_kind: Drupe::approver_kind,\n    decision: Drupe::decision\n  };\n  type Yarbeck___get_approvalInput = {\n    site_id: String,\n    wonum: String\n  };\n  type Yarbeck___get_approvalOutput = {\n    approver_id: String,\n    approver_kind: Drupe::approver_kind,\n    decision: Drupe::decision\n  };\n  entity approver_kind enum [\"PERSON\", \"AUTOMATION\", \"SERVICE\"];\n  entity decision enum [\"ACCEPTED\", \"REFUSED\", \"OPEN\"];\n  action \"Vantry___get_approval\" in [Action::\"CallTool\"] appliesTo {\n    principal: [User],\n    resource: [Gateway],\n    context: {\n      input: Vantry___get_approvalInput,\n      output?: Vantry___get_approvalOutput,\n      sessionId: __cedar::String,\n      system: SystemContext\n    }\n  };\n  action \"Yarbeck___get_approval\" in [Action::\"CallTool\"] appliesTo {\n    principal: [User],\n    resource: [Gateway],\n    context: {\n      input: Yarbeck___get_approvalInput,\n      output?: Yarbeck___get_approvalOutput,\n      sessionId: __cedar::String,\n      system: SystemContext\n    }\n  };\n}\n```\n"
+  ],
+  "user": "# Work orders close only on a real approval by a person\n\nOur maintenance agent operates on the `wo` gateway in one policy session. Closing a work order at the MAIN site is permitted, provided a person approved that particular job recently and in this session. Approval cannot come from anything the agent does on its own.\n\n- Closing is permitted at MAIN and nowhere else.\n- The job must have been approved in fact; a rejected or still-open request is not an approval.\n- The approver must be a person. There must be no path, direct or indirect, by which the agent approves its own work.\n- The approval must match the work order being closed, including the site.\n- The approval must be no older than one hour.\n- The approval must have been established during this session through a completed call that confirmed it; an attempt that failed or was refused confirms nothing.\n- The agent may perform whatever read-only lookups it needs to confirm an approval before it closes.\n- The agent must never approve work orders itself, and nothing else is permitted.\n\nOutput only Dogwood policies."
+ }
+}

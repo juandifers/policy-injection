@@ -1,0 +1,47 @@
+@id("close-workorder-main-after-person-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Vantry___get_approval"::response{
+    eventResource: resource,
+    input.wonum: context.input.wonum,
+    input.site_id: context.input.site_id,
+    output.decision: Drupe::Vantry___get_approval_Output_decision::"ACCEPTED",
+    output.approver_kind: Drupe::Vantry___get_approval_Output_approver_kind::"PERSON"
+  }
+};
+
+// The approval lookup must itself be permitted, or its response is never recorded.
+@id("allow-approval-lookup")
+permit (principal, action == Drupe::Action::"Vantry___get_approval", resource);
+
+// Other read-only lookups.
+@id("allow-read-only-lookups")
+permit (principal, action == Drupe::Action::"Lunvick___get_approval", resource);
+
+@id("allow-get-workorder")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder", resource);
+
+@id("allow-get-workorder-tasks")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder_tasks", resource);
+
+@id("allow-get-workorder-costs")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder_costs", resource);
+
+@id("allow-get-workorder-actuals-vs-planned")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder_actuals_vs_planned", resource);
+
+@id("allow-get-workorder-kpis")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder_kpis", resource);
+
+@id("allow-list-workorders")
+permit (principal, action == Drupe::Action::"MaintData___list_workorders", resource);
+
+@id("allow-get-my-assigned-workorders")
+permit (principal, action == Drupe::Action::"MaintData___get_my_assigned_workorders", resource);
+
+@id("allow-get-schedule-calendar")
+permit (principal, action == Drupe::Action::"MaintData___get_schedule_calendar", resource);
+
+@id("allow-get-failure-codes")
+permit (principal, action == Drupe::Action::"MaintData___get_failure_codes", resource);

@@ -1,0 +1,53 @@
+// Read-only lookups, including the two approval lookups. These need plain
+// permits so their responses are recorded and can serve as evidence.
+@id("allow-readonly-lookups")
+permit (
+  principal,
+  action in [
+    Drupe::Action::"Halvern___get_approval",
+    Drupe::Action::"Quorvex___get_halvern_approval",
+    Drupe::Action::"MaintData___get_failure_codes",
+    Drupe::Action::"MaintData___get_my_assigned_workorders",
+    Drupe::Action::"MaintData___get_schedule_calendar",
+    Drupe::Action::"MaintData___get_workorder",
+    Drupe::Action::"MaintData___get_workorder_actuals_vs_planned",
+    Drupe::Action::"MaintData___get_workorder_costs",
+    Drupe::Action::"MaintData___get_workorder_kpis",
+    Drupe::Action::"MaintData___get_workorder_tasks",
+    Drupe::Action::"MaintData___list_workorders"
+  ],
+  resource
+);
+
+// Close at MAIN only, after a completed Halvern approval lookup in the last
+// hour showing that a PERSON ACCEPTED this exact work order at this site.
+@id("close-main-with-halvern-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Halvern___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};
+
+// Same, with the approval confirmed through the Quorvex lookup of Halvern.
+@id("close-main-with-quorvex-halvern-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Quorvex___get_halvern_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};
+
+// The agent can never approve work orders.
+@id("never-approve-workorder")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

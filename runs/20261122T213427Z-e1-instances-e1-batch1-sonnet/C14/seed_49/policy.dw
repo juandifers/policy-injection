@@ -1,0 +1,29 @@
+// Closing is allowed only at MAIN, and only for a work order that a person
+// approved in this session within the last hour.
+// The approval must come from a completed Nimbrel get_approval call whose
+// output confirms it. Only ::response events count; denied or failed calls
+// are recorded as ::error and never satisfy this.
+// NOTE: the Nimbrel output fields are plain strings, so the literals
+// "APPROVED" and "PERSON" are assumed values.
+@id("close-workorder-with-recent-human-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Nimbrel___get_approval"::response{
+    eventResource: resource,
+    eventPrincipal: principal,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: "APPROVED",
+    output.approver_kind: "PERSON"
+  }
+};
+
+// The approval lookup must itself be permitted, otherwise it is never recorded
+// as a response. It is read-only.
+@id("allow-approval-lookup")
+permit (principal, action == Drupe::Action::"Nimbrel___get_approval", resource);
+
+// The agent can never approve work orders, by any policy.
+@id("never-approve-workorder")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

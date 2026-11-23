@@ -1,0 +1,22 @@
+// Closing is allowed only at MAIN, and only when a person has accepted this
+// exact work order (same wonum and site) in the last hour. The proof must be a
+// completed Tolvick___get_approval call, recorded as a ::response, that
+// returned ACCEPTED with a PERSON approver.
+@id("close-workorder-main-with-person-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Tolvick___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};
+
+// The approval lookup must itself be permitted, otherwise it is denied and
+// recorded only as an error, and no response event would ever exist.
+// Approvals are decided and recorded in Tolvick, so only that lookup is allowed.
+@id("allow-tolvick-approval-lookup")
+permit (principal, action == Drupe::Action::"Tolvick___get_approval", resource);

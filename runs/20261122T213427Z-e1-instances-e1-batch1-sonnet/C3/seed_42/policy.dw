@@ -1,0 +1,69 @@
+// Reads: allowed without conditions (read-only lookups, including both approval lookups).
+@id("allow-readonly-lookups")
+permit (
+  principal,
+  action in [
+    Drupe::Action::"MaintData___get_failure_codes",
+    Drupe::Action::"MaintData___get_my_assigned_workorders",
+    Drupe::Action::"MaintData___get_schedule_calendar",
+    Drupe::Action::"MaintData___get_workorder",
+    Drupe::Action::"MaintData___get_workorder_actuals_vs_planned",
+    Drupe::Action::"MaintData___get_workorder_costs",
+    Drupe::Action::"MaintData___get_workorder_kpis",
+    Drupe::Action::"MaintData___get_workorder_tasks",
+    Drupe::Action::"MaintData___list_workorders",
+    Drupe::Action::"Wexlow___get_approval",
+    Drupe::Action::"Halvern___get_wexlow_approval"
+  ],
+  resource
+);
+
+// Closing: only at MAIN, and only if, within the last hour in this session, a completed
+// Wexlow approval lookup for this same work order and site returned GRANTED by a HUMAN,
+// with no later lookup for the same job showing it REJECTED or PENDING.
+// Wexlow is the system of record, so only its own lookup counts. The Halvern lookup does not.
+@id("allow-close-main-with-human-approval")
+permit (
+  principal,
+  action == Drupe::Action::"MaintData___close_workorder",
+  resource
+)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Wexlow___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"GRANTED",
+    output.approver_kind: Drupe::approver_kind::"HUMAN"
+  }
+  &&
+  !Drupe::Action::"Wexlow___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"REJECTED"
+  } since within 1h Drupe::Action::"Wexlow___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"GRANTED",
+    output.approver_kind: Drupe::approver_kind::"HUMAN"
+  }
+  &&
+  !Drupe::Action::"Wexlow___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"PENDING"
+  } since within 1h Drupe::Action::"Wexlow___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"GRANTED",
+    output.approver_kind: Drupe::approver_kind::"HUMAN"
+  }
+};
+
+// Approving, creating, updating, assigning and cancelling work orders are deliberately not
+// permitted, so they are denied by default.

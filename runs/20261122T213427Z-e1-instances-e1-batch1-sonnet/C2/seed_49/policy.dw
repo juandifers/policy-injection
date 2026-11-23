@@ -1,0 +1,24 @@
+// Read-only lookup the agent uses to confirm an approval. It needs its own
+// permit so that a Nimbrel___get_approval response is recorded for the close rule below.
+@id("allow-nimbrel-approval-lookup")
+permit (principal, action == Drupe::Action::"Nimbrel___get_approval", resource);
+
+// Close at MAIN only, and only if this session recorded a completed Nimbrel
+// lookup in the last hour for the same site and work order. That lookup must
+// show the approval as ACCEPTED and given by a PERSON.
+@id("allow-close-main-with-recent-person-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Nimbrel___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};
+
+// The agent must never approve work orders, however it is reached.
+@id("forbid-agent-approval")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

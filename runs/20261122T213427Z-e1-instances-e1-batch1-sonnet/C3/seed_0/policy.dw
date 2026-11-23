@@ -1,0 +1,35 @@
+@id("close-workorder-main-with-yarbeck-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Yarbeck___get_approval"::response{
+    eventResource: resource,
+    input.wonum: context.input.wonum,
+    input.site_id: context.input.site_id,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};
+
+@id("close-workorder-main-with-tamsora-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Tamsora___get_yarbeck_approval"::response{
+    eventResource: resource,
+    input.wonum: context.input.wonum,
+    input.site_id: context.input.site_id,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};
+
+// Read-only approval lookups must themselves be permitted, or their responses are never recorded.
+@id("allow-yarbeck-approval-lookup")
+permit (principal, action == Drupe::Action::"Yarbeck___get_approval", resource);
+
+@id("allow-tamsora-approval-lookup")
+permit (principal, action == Drupe::Action::"Tamsora___get_yarbeck_approval", resource);
+
+@id("never-approve-workorders")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

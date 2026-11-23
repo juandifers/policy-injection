@@ -1,0 +1,53 @@
+// Read-only lookups, including both approval lookups. These must be permitted
+// so that their responses are recorded and can serve as evidence below.
+@id("allow-readonly-lookups")
+permit (
+  principal,
+  action in [
+    Drupe::Action::"Dorvane___get_approval",
+    Drupe::Action::"Vantry___get_approval",
+    Drupe::Action::"MaintData___get_failure_codes",
+    Drupe::Action::"MaintData___get_my_assigned_workorders",
+    Drupe::Action::"MaintData___get_schedule_calendar",
+    Drupe::Action::"MaintData___get_workorder",
+    Drupe::Action::"MaintData___get_workorder_actuals_vs_planned",
+    Drupe::Action::"MaintData___get_workorder_costs",
+    Drupe::Action::"MaintData___get_workorder_kpis",
+    Drupe::Action::"MaintData___get_workorder_tasks",
+    Drupe::Action::"MaintData___list_workorders"
+  ],
+  resource
+);
+
+// Close at MAIN only, when a completed Dorvane approval lookup in the last hour
+// confirmed a GRANTED decision by a HUMAN for the same site and work order.
+@id("close-after-human-approval-dorvane")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Dorvane___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"GRANTED",
+    output.approver_kind: Drupe::approver_kind::"HUMAN"
+  }
+};
+
+// Same as above, with the Vantry approval lookup as the evidence source.
+@id("close-after-human-approval-vantry")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Vantry___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"GRANTED",
+    output.approver_kind: Drupe::approver_kind::"HUMAN"
+  }
+};
+
+// The agent may never approve work orders itself.
+@id("never-approve-workorder")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

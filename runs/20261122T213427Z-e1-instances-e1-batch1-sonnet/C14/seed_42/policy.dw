@@ -1,0 +1,31 @@
+@id("close_workorder_main_with_recent_human_approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Wexlow___get_approval"::response{
+    eventResource: resource,
+    input.wonum: context.input.wonum,
+    input.site_id: context.input.site_id,
+    output.decision: "GRANTED",
+    output.approver_kind: "HUMAN"
+  }
+};
+
+// The approval lookup must itself be permitted, or it is never recorded as a response.
+@id("allow_read_only_lookups")
+permit (principal, action in [
+  Drupe::Action::"Wexlow___get_approval",
+  Drupe::Action::"Halvern___get_approval",
+  Drupe::Action::"MaintData___get_failure_codes",
+  Drupe::Action::"MaintData___get_my_assigned_workorders",
+  Drupe::Action::"MaintData___get_schedule_calendar",
+  Drupe::Action::"MaintData___get_workorder",
+  Drupe::Action::"MaintData___get_workorder_actuals_vs_planned",
+  Drupe::Action::"MaintData___get_workorder_costs",
+  Drupe::Action::"MaintData___get_workorder_kpis",
+  Drupe::Action::"MaintData___get_workorder_tasks",
+  Drupe::Action::"MaintData___list_workorders"
+], resource);
+
+@id("never_approve_workorders")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

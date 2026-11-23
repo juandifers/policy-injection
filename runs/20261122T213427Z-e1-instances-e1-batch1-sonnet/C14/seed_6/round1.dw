@@ -1,0 +1,47 @@
+// Read-only lookups. Kelvora___get_approval must be permitted, otherwise its
+// response is never recorded and the close policy below could never be satisfied.
+@id("allow_read_only_lookups")
+permit (
+  principal,
+  action in [
+    Drupe::Action::"Kelvora___get_approval",
+    Drupe::Action::"Yarbeck___get_approval",
+    Drupe::Action::"MaintData___get_failure_codes",
+    Drupe::Action::"MaintData___get_my_assigned_workorders",
+    Drupe::Action::"MaintData___get_schedule_calendar",
+    Drupe::Action::"MaintData___get_workorder",
+    Drupe::Action::"MaintData___get_workorder_actuals_vs_planned",
+    Drupe::Action::"MaintData___get_workorder_costs",
+    Drupe::Action::"MaintData___get_workorder_kpis",
+    Drupe::Action::"MaintData___get_workorder_tasks",
+    Drupe::Action::"MaintData___list_workorders"
+  ],
+  resource
+);
+
+// Closing is allowed only at MAIN, and only when a completed Kelvora lookup
+// in the last hour confirmed that a person accepted this exact work order.
+@id("allow_close_with_recent_human_approval")
+permit (
+  principal,
+  action == Drupe::Action::"MaintData___close_workorder",
+  resource
+)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Kelvora___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: "ACCEPTED",
+    output.approver_kind: "PERSON"
+  }
+};
+
+// The agent may never approve work orders.
+@id("forbid_agent_approval")
+forbid (
+  principal,
+  action == Drupe::Action::"MaintData___approve_workorder",
+  resource
+);

@@ -1,0 +1,49 @@
+// Assumption: the Ostrel schema declares approver_kind and decision as plain
+// strings and does not list their values. I use "PERSON" for a human approver
+// and "APPROVED" for an approved decision. Adjust these literals if Ostrel
+// reports different values.
+
+// Closing: MAIN site only, and only when this session holds a completed Ostrel
+// lookup from the last hour. That lookup must show an approved decision from a
+// person for the same work order at the same site.
+@id("close-workorder-main-with-recent-human-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Ostrel___get_approval"::response{
+    eventResource: resource,
+    eventPrincipal: principal,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: "APPROVED",
+    output.approver_kind: "PERSON"
+  }
+};
+
+// The Ostrel lookup needs its own permit. A denied call is recorded only as an
+// error event, so the close policy could never be satisfied without it.
+@id("allow-ostrel-approval-lookup")
+permit (principal, action == Drupe::Action::"Ostrel___get_approval", resource);
+
+// Other read-only lookups. Tolvick___get_approval is allowed for information
+// only. The close policy never reads its events, so it cannot count as approval.
+@id("allow-read-only-lookups")
+permit (
+  principal,
+  action in [
+    Drupe::Action::"Tolvick___get_approval",
+    Drupe::Action::"MaintData___get_workorder",
+    Drupe::Action::"MaintData___get_workorder_tasks",
+    Drupe::Action::"MaintData___get_workorder_costs",
+    Drupe::Action::"MaintData___get_workorder_actuals_vs_planned",
+    Drupe::Action::"MaintData___get_workorder_kpis",
+    Drupe::Action::"MaintData___list_workorders",
+    Drupe::Action::"MaintData___get_my_assigned_workorders",
+    Drupe::Action::"MaintData___get_schedule_calendar",
+    Drupe::Action::"MaintData___get_failure_codes"
+  ],
+  resource
+);
+
+// approve_workorder, assign_technician, cancel_workorder, update_workorder and
+// generate_work_order have no permit, so they are denied by default.

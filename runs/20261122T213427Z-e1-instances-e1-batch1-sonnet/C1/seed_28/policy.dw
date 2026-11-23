@@ -1,0 +1,38 @@
+// Read-only approval lookups. They must be permitted themselves, otherwise
+// their calls are recorded as errors and can never serve as evidence.
+permit (principal, action == Drupe::Action::"Halvern___get_approval", resource);
+permit (principal, action == Drupe::Action::"Kelvora___get_approval", resource);
+
+// Close at MAIN only, backed by a completed Halvern approval lookup
+// from the last hour for the same work order and site that shows an
+// ACCEPTED decision by a PERSON.
+@id("close_main_with_halvern_person_approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Halvern___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};
+
+// The same, backed by a completed Kelvora approval lookup.
+@id("close_main_with_kelvora_person_approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Kelvora___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};
+
+// The agent can never approve work orders itself.
+@id("never_self_approve")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

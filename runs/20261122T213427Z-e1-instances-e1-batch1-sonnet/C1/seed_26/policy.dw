@@ -1,0 +1,64 @@
+@id("close-workorder-main-tamsora-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Tamsora___get_approval"::response{
+    eventResource: resource,
+    input.wonum: context.input.wonum,
+    input.site_id: context.input.site_id,
+    output.decision: Drupe::decision::"GRANTED",
+    output.approver_kind: Drupe::approver_kind::"HUMAN"
+  }
+};
+
+@id("close-workorder-main-tolvick-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Tolvick___get_approval"::response{
+    eventResource: resource,
+    input.wonum: context.input.wonum,
+    input.site_id: context.input.site_id,
+    output.decision: Drupe::decision::"GRANTED",
+    output.approver_kind: Drupe::approver_kind::"HUMAN"
+  }
+};
+
+// Read-only lookups, including the approval lookups, must be permitted so their
+// responses are recorded and can serve as evidence.
+@id("allow-approval-lookup-tamsora")
+permit (principal, action == Drupe::Action::"Tamsora___get_approval", resource);
+
+@id("allow-approval-lookup-tolvick")
+permit (principal, action == Drupe::Action::"Tolvick___get_approval", resource);
+
+@id("allow-read-get-workorder")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder", resource);
+
+@id("allow-read-list-workorders")
+permit (principal, action == Drupe::Action::"MaintData___list_workorders", resource);
+
+@id("allow-read-get-workorder-tasks")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder_tasks", resource);
+
+@id("allow-read-get-workorder-costs")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder_costs", resource);
+
+@id("allow-read-get-workorder-actuals-vs-planned")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder_actuals_vs_planned", resource);
+
+@id("allow-read-get-workorder-kpis")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder_kpis", resource);
+
+@id("allow-read-get-schedule-calendar")
+permit (principal, action == Drupe::Action::"MaintData___get_schedule_calendar", resource);
+
+@id("allow-read-get-my-assigned-workorders")
+permit (principal, action == Drupe::Action::"MaintData___get_my_assigned_workorders", resource);
+
+@id("allow-read-get-failure-codes")
+permit (principal, action == Drupe::Action::"MaintData___get_failure_codes", resource);
+
+// The agent must never approve work orders itself.
+@id("forbid-agent-approve-workorder")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

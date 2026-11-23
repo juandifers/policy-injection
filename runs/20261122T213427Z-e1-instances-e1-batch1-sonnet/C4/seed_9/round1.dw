@@ -1,0 +1,36 @@
+// Close only at MAIN, and only after a completed Lunvick lookup in this session
+// showed a human GRANTED the same work order at the same site within the last hour.
+// Wexlow approvals, agent or system approvers, REJECTED/PENDING decisions, and
+// failed or denied calls never match.
+@id("close-workorder-with-recent-human-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Lunvick___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"GRANTED",
+    output.approver_kind: Drupe::approver_kind::"HUMAN"
+  }
+};
+
+// The Lunvick approval lookup needs its own permit. Otherwise it is denied,
+// recorded only as an error, and no response event is ever produced.
+@id("allow-lunvick-approval-lookup")
+permit (principal, action == Drupe::Action::"Lunvick___get_approval", resource);
+
+// Other read-only lookups. These do not count as approval evidence.
+@id("allow-read-only-lookups")
+permit (principal, action in [
+  Drupe::Action::"Wexlow___get_approval",
+  Drupe::Action::"MaintData___get_workorder",
+  Drupe::Action::"MaintData___list_workorders",
+  Drupe::Action::"MaintData___get_workorder_tasks",
+  Drupe::Action::"MaintData___get_workorder_costs",
+  Drupe::Action::"MaintData___get_workorder_actuals_vs_planned",
+  Drupe::Action::"MaintData___get_workorder_kpis",
+  Drupe::Action::"MaintData___get_schedule_calendar",
+  Drupe::Action::"MaintData___get_my_assigned_workorders",
+  Drupe::Action::"MaintData___get_failure_codes"
+], resource);

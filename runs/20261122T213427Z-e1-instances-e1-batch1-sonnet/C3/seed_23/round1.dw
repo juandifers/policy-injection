@@ -1,0 +1,42 @@
+// Read-only approval lookups. They need their own permits: a denied call is
+// recorded only as ::error, so it could never serve as evidence of an approval.
+@id("allow_dorvane_get_approval")
+permit (principal, action == Drupe::Action::"Dorvane___get_approval", resource);
+
+@id("allow_lunvick_get_dorvane_approval")
+permit (principal, action == Drupe::Action::"Lunvick___get_dorvane_approval", resource);
+
+// Close at MAIN only. Needs a completed Dorvane lookup within the last hour
+// that returned GRANTED from a HUMAN approver for this exact wonum and site.
+@id("close_workorder_with_recent_human_approval_via_dorvane")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Dorvane___get_approval"::response{
+    eventResource: resource,
+    eventPrincipal: principal,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"GRANTED",
+    output.approver_kind: Drupe::approver_kind::"HUMAN"
+  }
+};
+
+// Same requirement, with the approval confirmed through the Lunvick route to Dorvane's records.
+@id("close_workorder_with_recent_human_approval_via_lunvick")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Lunvick___get_dorvane_approval"::response{
+    eventResource: resource,
+    eventPrincipal: principal,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"GRANTED",
+    output.approver_kind: Drupe::approver_kind::"HUMAN"
+  }
+};
+
+// The agent may never approve work orders, however a session unfolds.
+@id("forbid_agent_approve_workorder")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

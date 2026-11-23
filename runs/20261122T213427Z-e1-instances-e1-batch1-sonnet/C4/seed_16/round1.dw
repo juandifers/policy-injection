@@ -1,0 +1,25 @@
+// Read-only approval lookup against Tolvick. It needs its own permit so that
+// its completed calls are recorded as responses that the close policy can use.
+@id("allow-tolvick-approval-lookup")
+permit (principal, action == Drupe::Action::"Tolvick___get_approval", resource);
+
+// Close a MAIN work order only if, within the last hour of this session, this
+// principal's own Tolvick lookup for the same site and work order returned an
+// ACCEPTED decision made by a PERSON.
+@id("allow-close-main-with-recent-person-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Tolvick___get_approval"::response{
+    eventResource: resource,
+    eventPrincipal: principal,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};
+
+// The agent must never approve work orders (explicit backstop on top of deny-by-default).
+@id("forbid-agent-approval")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

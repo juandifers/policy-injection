@@ -1,0 +1,18 @@
+// Closing is allowed only at MAIN, and only if, within the last hour of this session, a
+// completed Quorvex approval lookup returned a human-granted decision for the same work order and site.
+@id("close-workorder-requires-human-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Quorvex___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"GRANTED",
+    output.approver_kind: Drupe::approver_kind::"HUMAN"
+  }
+};
+
+// The approval lookup must itself be permitted; otherwise it is never recorded as a response.
+@id("allow-quorvex-approval-lookup")
+permit (principal, action == Drupe::Action::"Quorvex___get_approval", resource);

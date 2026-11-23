@@ -1,0 +1,39 @@
+// Approval lookups (read-only). These need their own permits so that
+// their responses are recorded and can serve as evidence.
+@id("allow-quorvex-approval-lookup")
+permit (principal, action == Drupe::Action::"Quorvex___get_approval", resource);
+
+@id("allow-yarbeck-approval-lookup")
+permit (principal, action == Drupe::Action::"Yarbeck___get_approval", resource);
+
+// Close at MAIN only, with a completed lookup in the last hour that confirmed
+// a GRANTED decision by a HUMAN for this same work order and site.
+@id("close-main-with-human-approval-quorvex")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Quorvex___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::Quorvex___get_approval_Output_decision::"GRANTED",
+    output.approver_kind: Drupe::Quorvex___get_approval_Output_approver_kind::"HUMAN"
+  }
+};
+
+@id("close-main-with-human-approval-yarbeck")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Yarbeck___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: "GRANTED",
+    output.approver_kind: "HUMAN"
+  }
+};
+
+// The agent may never approve work orders (explicit guard; also denied by default).
+@id("never-approve-workorder")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

@@ -1,0 +1,30 @@
+// Close: MAIN site only, and only with a recent, genuine, person-given
+// approval that this principal obtained from Dorvane in this session.
+@id("close_main_with_person_approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Dorvane___get_approval"::response{
+    eventResource: resource,
+    eventPrincipal: principal,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: "APPROVED",
+    output.approver_kind: "PERSON"
+  }
+};
+
+// Read-only lookup that must itself be permitted so its response is recorded.
+@id("allow_dorvane_approval_lookup")
+permit (principal, action == Drupe::Action::"Dorvane___get_approval", resource);
+
+// Other read-only lookups (they establish nothing for closing).
+@id("allow_halvern_approval_lookup")
+permit (principal, action == Drupe::Action::"Halvern___get_approval", resource);
+
+@id("allow_get_workorder")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder", resource);
+
+// The agent may never approve work orders.
+@id("never_approve_workorder")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

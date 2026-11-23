@@ -1,0 +1,30 @@
+// Assumption: Dorvane's decision and approver_kind are plain strings, and I'm
+// using "APPROVED" and "PERSON" as its literals. Confirm both against Dorvane.
+// Lunvick___get_approval is not the system of record and is deliberately not
+// permitted or referenced.
+
+// Read-only lookup against Dorvane. It must be permitted so that its response
+// is recorded and can serve as evidence for the close.
+@id("allow-dorvane-approval-lookup")
+permit (principal, action == Drupe::Action::"Dorvane___get_approval", resource);
+
+// Close only at MAIN, and only if in this session, within the last hour, a
+// completed Dorvane lookup for this same site and work order returned an
+// approved decision made by a person.
+@id("close-main-with-recent-person-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Dorvane___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: "APPROVED",
+    output.approver_kind: "PERSON"
+  }
+};
+
+// The agent must never approve work orders itself. Deny-by-default already
+// covers this, and this forbid makes it explicit and permanent.
+@id("never-self-approve")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

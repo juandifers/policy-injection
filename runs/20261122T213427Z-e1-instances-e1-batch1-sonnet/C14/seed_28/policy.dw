@@ -1,0 +1,23 @@
+// Closing a work order: MAIN site only, and only with a recent, in-session,
+// person-made, accepted approval for the same site and work order.
+@id("close-workorder-main-with-person-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Kelvora___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: "ACCEPTED",
+    output.approver_kind: "PERSON"
+  }
+};
+
+// Read-only approval lookup. It must be permitted so that its completed
+// response is recorded and can serve as evidence for closing.
+@id("allow-kelvora-approval-lookup")
+permit (principal, action == Drupe::Action::"Kelvora___get_approval", resource);
+
+// The agent never approves work orders itself.
+@id("never-approve-workorder")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

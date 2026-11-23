@@ -1,0 +1,25 @@
+// Closing is allowed only at MAIN, and only when this session holds a completed
+// Vantry lookup, no older than 1h, for the same site and work order that returned
+// an ACCEPTED decision from a PERSON approver.
+@id("close-workorder-main-with-person-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Vantry___get_approval"::response{
+    eventResource: resource,
+    eventPrincipal: principal,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};
+
+// The approval lookup must itself be permitted, or no ::response is ever recorded.
+// It is read-only. Vantry is the only system of record for approvals.
+@id("allow-vantry-approval-lookup")
+permit (principal, action == Drupe::Action::"Vantry___get_approval", resource);
+
+// The agent never approves work orders itself.
+@id("never-self-approve")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

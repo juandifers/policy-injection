@@ -1,0 +1,40 @@
+// Read-only approval lookups. They need their own permits, otherwise they are
+// denied, recorded as ::error, and never produce the ::response that close depends on.
+@id("allow_nimbrel_get_approval")
+permit (principal, action == Drupe::Action::"Nimbrel___get_approval", resource);
+
+@id("allow_tolvick_get_approval")
+permit (principal, action == Drupe::Action::"Tolvick___get_approval", resource);
+
+// Close at MAIN, backed by a completed Nimbrel lookup within the last hour that
+// confirmed an ACCEPTED approval by a PERSON for this same site and work order.
+@id("close_workorder_main_with_nimbrel_person_approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Nimbrel___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::Nimbrel___get_approval_Output_decision::"ACCEPTED",
+    output.approver_kind: Drupe::Nimbrel___get_approval_Output_approver_kind::"PERSON"
+  }
+};
+
+// Same condition, backed by a completed Tolvick lookup.
+@id("close_workorder_main_with_tolvick_person_approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Tolvick___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: "ACCEPTED",
+    output.approver_kind: "PERSON"
+  }
+};
+
+// The agent may never approve work orders itself.
+@id("never_approve_workorder")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

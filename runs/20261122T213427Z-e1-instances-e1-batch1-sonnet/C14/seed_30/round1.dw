@@ -1,0 +1,20 @@
+// Read-only lookup of the approval record in Tamsora. It needs its own permit,
+// otherwise the call is recorded as an error and never as a response.
+@id("allow-tamsora-get-approval")
+permit (principal, action == Drupe::Action::"Tamsora___get_approval", resource);
+
+// Closing is allowed only at MAIN, and only if this session recently saw a
+// completed Tamsora lookup showing that this exact work order (same site and
+// wonum) was ACCEPTED by a PERSON within the last hour.
+@id("allow-close-main-with-human-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Tamsora___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: "ACCEPTED",
+    output.approver_kind: "PERSON"
+  }
+};

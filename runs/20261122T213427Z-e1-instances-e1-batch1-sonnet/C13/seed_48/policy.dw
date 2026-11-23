@@ -1,0 +1,38 @@
+// Closing: MAIN site only, and only with a recent, same-session, human-granted
+// approval for this exact work order and site, confirmed by a successful Dorvane lookup.
+@id("close_workorder_main_with_human_approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Dorvane___get_approval"::response{
+    eventResource: resource,
+    input.wonum: context.input.wonum,
+    input.site_id: context.input.site_id,
+    output.decision: "GRANTED",
+    output.approver_kind: "HUMAN"
+  }
+};
+
+// The approval lookup must itself be permitted, otherwise its response is never recorded.
+@id("allow_dorvane_get_approval")
+permit (principal, action == Drupe::Action::"Dorvane___get_approval", resource);
+
+// Other read-only lookups.
+@id("allow_read_only_lookups")
+permit (principal, action in [
+  Drupe::Action::"MaintData___get_failure_codes",
+  Drupe::Action::"MaintData___get_my_assigned_workorders",
+  Drupe::Action::"MaintData___get_schedule_calendar",
+  Drupe::Action::"MaintData___get_workorder",
+  Drupe::Action::"MaintData___get_workorder_actuals_vs_planned",
+  Drupe::Action::"MaintData___get_workorder_costs",
+  Drupe::Action::"MaintData___get_workorder_kpis",
+  Drupe::Action::"MaintData___get_workorder_tasks",
+  Drupe::Action::"MaintData___list_workorders",
+  Drupe::Action::"Halvern___get_approval"
+], resource);
+
+// Approving is never permitted for the agent, so the explicit forbid below
+// holds even if another permit is added later.
+@id("forbid_agent_approval")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

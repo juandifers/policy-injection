@@ -1,0 +1,40 @@
+// Dorvane's decision field is a free-form String in the schema. "GRANTED" and "HUMAN"
+// are assumed to be the values Dorvane uses for a real human approval. If Dorvane uses
+// different strings, change the two output literals below.
+
+@id("close-main-with-recent-human-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Dorvane___get_approval"::response{
+    eventResource: resource,
+    eventPrincipal: principal,
+    input.wonum: context.input.wonum,
+    input.site_id: context.input.site_id,
+    output.decision: "GRANTED",
+    output.approver_kind: "HUMAN"
+  }
+};
+
+// The approval lookup must itself be permitted, otherwise its response is never recorded.
+@id("allow-dorvane-approval-lookup")
+permit (principal, action == Drupe::Action::"Dorvane___get_approval", resource);
+
+// Other read-only lookups
+@id("allow-readonly-lookups")
+permit (principal, action in [
+  Drupe::Action::"Vantry___get_approval",
+  Drupe::Action::"MaintData___get_workorder",
+  Drupe::Action::"MaintData___list_workorders",
+  Drupe::Action::"MaintData___get_workorder_tasks",
+  Drupe::Action::"MaintData___get_workorder_costs",
+  Drupe::Action::"MaintData___get_workorder_actuals_vs_planned",
+  Drupe::Action::"MaintData___get_workorder_kpis",
+  Drupe::Action::"MaintData___get_my_assigned_workorders",
+  Drupe::Action::"MaintData___get_schedule_calendar",
+  Drupe::Action::"MaintData___get_failure_codes"
+], resource);
+
+// The agent must never approve work orders itself.
+@id("never-approve")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

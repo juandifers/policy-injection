@@ -1,0 +1,36 @@
+@id("close-workorder-main-approved-via-tamsora")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Tamsora___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};
+
+@id("close-workorder-main-approved-via-vantry")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Vantry___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};
+
+// Read-only approval lookups must themselves be permitted so their responses are recorded.
+@id("allow-tamsora-get-approval")
+permit (principal, action == Drupe::Action::"Tamsora___get_approval", resource);
+
+@id("allow-vantry-get-approval")
+permit (principal, action == Drupe::Action::"Vantry___get_approval", resource);
+
+// The agent never approves work orders itself.
+@id("forbid-agent-approve-workorder")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

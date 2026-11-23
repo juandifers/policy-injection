@@ -1,0 +1,31 @@
+@id("close-workorder-main-with-vantry-person-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Vantry___get_approval"::response{
+    eventResource: resource,
+    eventPrincipal: principal,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};
+
+// The approval lookup must itself be permitted, or it is never recorded as a response.
+@id("allow-vantry-approval-lookup")
+permit (principal, action == Drupe::Action::"Vantry___get_approval", resource);
+
+// Read-only lookups for confirming a job before closing it.
+@id("allow-readonly-workorder-lookups")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder", resource);
+
+@id("allow-readonly-workorder-tasks")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder_tasks", resource);
+
+@id("allow-readonly-list-workorders")
+permit (principal, action == Drupe::Action::"MaintData___list_workorders", resource);
+
+// The agent never approves work orders itself.
+@id("never-approve-workorder")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

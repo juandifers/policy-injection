@@ -1,0 +1,47 @@
+// Closing: only at MAIN, only with a recent, matching, completed approval lookup
+// that showed an ACCEPTED decision by a PERSON (Kelvora source).
+@id("close-workorder-main-kelvora-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Kelvora___get_approval"::response{
+    eventResource: resource,
+    input.wonum: context.input.wonum,
+    input.site_id: context.input.site_id,
+    output.decision: Drupe::Kelvora___get_approval_Output_decision::"ACCEPTED",
+    output.approver_kind: Drupe::Kelvora___get_approval_Output_approver_kind::"PERSON"
+  }
+};
+
+// Same rule, with the approval confirmed through the Lunvick source.
+@id("close-workorder-main-lunvick-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Lunvick___get_approval"::response{
+    eventResource: resource,
+    input.wonum: context.input.wonum,
+    input.site_id: context.input.site_id,
+    output.decision: "ACCEPTED",
+    output.approver_kind: "PERSON"
+  }
+};
+
+// The approval lookups must themselves be permitted, otherwise their
+// completions are never recorded as responses.
+@id("allow-kelvora-get-approval")
+permit (principal, action == Drupe::Action::"Kelvora___get_approval", resource);
+
+@id("allow-lunvick-get-approval")
+permit (principal, action == Drupe::Action::"Lunvick___get_approval", resource);
+
+// Read-only lookups for confirming a work order before closing.
+@id("allow-get-workorder")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder", resource);
+
+@id("allow-list-workorders")
+permit (principal, action == Drupe::Action::"MaintData___list_workorders", resource);
+
+// The agent can never approve work orders itself.
+@id("never-approve-workorder")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

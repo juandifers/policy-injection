@@ -1,0 +1,42 @@
+// Read-only lookups the agent may use to confirm an approval.
+// These need their own permits: a denied call is recorded only as ::error,
+// and the close policies below depend on the ::response event.
+@id("allow_ostrel_get_approval")
+permit (principal, action == Drupe::Action::"Ostrel___get_approval", resource);
+
+@id("allow_tamsora_get_approval")
+permit (principal, action == Drupe::Action::"Tamsora___get_approval", resource);
+
+// Close at MAIN only, when an Ostrel lookup completed in this session within
+// the last hour and confirmed an ACCEPTED approval by a PERSON for this same
+// site and work order.
+@id("close_main_with_person_approval_ostrel")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Ostrel___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};
+
+// Same condition, with the approval confirmed through the Tamsora lookup.
+@id("close_main_with_person_approval_tamsora")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Tamsora___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};
+
+// The agent must never approve work orders itself.
+@id("never_approve_workorder")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

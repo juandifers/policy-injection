@@ -1,0 +1,24 @@
+// Read-only lookup of the approval record in Dorvane. It needs its own permit,
+// otherwise it is recorded as an error and no response event ever exists.
+@id("allow_dorvane_approval_lookup")
+permit (principal, action == Drupe::Action::"Dorvane___get_approval", resource);
+
+// Close a work order only at MAIN, and only when, in this session within the last hour,
+// a completed Dorvane lookup for the same site and work order confirmed an ACCEPTED
+// decision made by a PERSON.
+@id("allow_close_main_with_person_approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Dorvane___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};
+
+// The agent must never approve work orders itself.
+@id("forbid_agent_approval")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

@@ -1,0 +1,41 @@
+@id("close-workorder-main-with-recent-human-approval")
+permit (
+  principal,
+  action == Drupe::Action::"MaintData___close_workorder",
+  resource
+)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Vantry___get_approval"::response{
+    eventResource: resource,
+    eventPrincipal: principal,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"GRANTED",
+    output.approver_kind: Drupe::approver_kind::"HUMAN"
+  }
+};
+
+// Read-only lookups. Vantry approval lookups must be permitted, or the close condition could never hold.
+@id("permit-vantry-get-approval")
+permit (principal, action == Drupe::Action::"Vantry___get_approval", resource);
+
+@id("permit-dorvane-get-approval-readonly")
+permit (principal, action == Drupe::Action::"Dorvane___get_approval", resource);
+
+@id("permit-get-workorder")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder", resource);
+
+@id("permit-get-workorder-tasks")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder_tasks", resource);
+
+@id("permit-get-workorder-costs")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder_costs", resource);
+
+@id("permit-get-workorder-actuals-vs-planned")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder_actuals_vs_planned", resource);
+
+@id("permit-list-workorders")
+permit (principal, action == Drupe::Action::"MaintData___list_workorders", resource);
+
+// No permit exists for MaintData___approve_workorder, so the agent cannot approve work orders.

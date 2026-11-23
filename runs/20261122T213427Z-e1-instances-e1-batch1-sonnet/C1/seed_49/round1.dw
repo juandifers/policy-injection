@@ -1,0 +1,36 @@
+// Read-only approval lookups: the agent needs these permitted so that
+// their responses get recorded and can serve as evidence.
+permit (principal, action == Drupe::Action::"Nimbrel___get_approval", resource);
+permit (principal, action == Drupe::Action::"Tolvick___get_approval", resource);
+
+// Close at MAIN, backed by a PERSON's ACCEPTED decision confirmed via Nimbrel within the last hour.
+@id("close_with_person_approval_nimbrel")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Nimbrel___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};
+
+// Same, with the approval confirmed via Tolvick.
+@id("close_with_person_approval_tolvick")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Tolvick___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};
+
+// The agent must never approve work orders.
+@id("never_approve_workorder")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

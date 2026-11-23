@@ -1,0 +1,40 @@
+// Closing is allowed only at MAIN, and only with a recent approval from Tolvick:
+// a completed Tolvick get_approval call, within the last hour, for this exact
+// site and work order, whose decision is ACCEPTED and whose approver is a PERSON.
+@id("close-main-with-person-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Tolvick___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};
+
+// Read-only lookups. The Tolvick lookup must be permitted so its response is
+// recorded. Wexlow lookups are allowed but never count as an approval.
+@id("allow-read-only-lookups")
+permit (
+  principal,
+  action in [
+    Drupe::Action::"Tolvick___get_approval",
+    Drupe::Action::"Wexlow___get_approval",
+    Drupe::Action::"MaintData___get_workorder",
+    Drupe::Action::"MaintData___get_workorder_tasks",
+    Drupe::Action::"MaintData___get_workorder_costs",
+    Drupe::Action::"MaintData___get_workorder_actuals_vs_planned",
+    Drupe::Action::"MaintData___get_workorder_kpis",
+    Drupe::Action::"MaintData___list_workorders",
+    Drupe::Action::"MaintData___get_my_assigned_workorders",
+    Drupe::Action::"MaintData___get_schedule_calendar",
+    Drupe::Action::"MaintData___get_failure_codes"
+  ],
+  resource
+);
+
+// The agent may never approve work orders.
+@id("never-approve-workorders")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

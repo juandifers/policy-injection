@@ -1,0 +1,49 @@
+// Read-only lookups, including both approval lookups. These need a plain
+// permit so their responses are recorded and the close policies can rely on them.
+@id("allow-readonly-lookups")
+permit (principal, action in [
+    Drupe::Action::"MaintData___get_workorder",
+    Drupe::Action::"MaintData___list_workorders",
+    Drupe::Action::"MaintData___get_failure_codes",
+    Drupe::Action::"MaintData___get_my_assigned_workorders",
+    Drupe::Action::"MaintData___get_schedule_calendar",
+    Drupe::Action::"MaintData___get_workorder_actuals_vs_planned",
+    Drupe::Action::"MaintData___get_workorder_costs",
+    Drupe::Action::"MaintData___get_workorder_kpis",
+    Drupe::Action::"MaintData___get_workorder_tasks",
+    Drupe::Action::"Vantry___get_approval",
+    Drupe::Action::"Wexlow___get_approval"
+], resource);
+
+// Close at MAIN, backed by an ACCEPTED approval from a PERSON, confirmed by a
+// successful Vantry lookup within the last hour for this exact work order and site.
+@id("close-main-with-person-approval-vantry")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Vantry___get_approval"::response{
+    eventResource: resource,
+    input.wonum: context.input.wonum,
+    input.site_id: context.input.site_id,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};
+
+// Same condition, confirmed through the Wexlow approval lookup.
+@id("close-main-with-person-approval-wexlow")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Wexlow___get_approval"::response{
+    eventResource: resource,
+    input.wonum: context.input.wonum,
+    input.site_id: context.input.site_id,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};
+
+// The agent may never approve work orders (also denied by default; stated explicitly).
+@id("never-approve-workorders")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

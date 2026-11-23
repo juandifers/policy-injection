@@ -1,0 +1,26 @@
+// Lookups: the agent may read approvals. Without a plain permit these calls would be
+// denied and recorded as ::error, so no ::response would exist to satisfy the close policy.
+@id("allow-vantry-approval-lookup")
+permit (principal, action == Drupe::Action::"Vantry___get_approval", resource);
+
+@id("allow-ostrel-approval-lookup")
+permit (principal, action == Drupe::Action::"Ostrel___get_approval", resource);
+
+// Close is allowed only at MAIN, and only when a completed Vantry approval lookup in the
+// last hour confirmed a GRANTED decision by a HUMAN approver for this exact site and work order.
+@id("close-main-with-recent-human-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Vantry___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::Vantry___get_approval_Output_decision::"GRANTED",
+    output.approver_kind: Drupe::Vantry___get_approval_Output_approver_kind::"HUMAN"
+  }
+};
+
+// The agent can never approve work orders, whatever other policies exist.
+@id("never-approve-workorder")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

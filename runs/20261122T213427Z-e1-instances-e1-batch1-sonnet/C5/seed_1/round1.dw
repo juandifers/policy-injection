@@ -1,0 +1,37 @@
+@id("close-workorder-at-main-with-recent-human-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Vantry___get_approval"::response{
+    eventResource: resource,
+    input.wonum: context.input.wonum,
+    input.site_id: context.input.site_id,
+    output.decision: Drupe::decision::"GRANTED",
+    output.approver_kind: Drupe::approver_kind::"HUMAN"
+  }
+};
+
+// Vantry is the system of record, so the agent must query it to establish the approval.
+@id("allow-vantry-approval-lookup")
+permit (principal, action == Drupe::Action::"Vantry___get_approval", resource);
+
+// Read-only lookups. The Dorvane mirror is readable, but only Vantry responses count as approval.
+@id("allow-dorvane-mirror-lookup")
+permit (principal, action == Drupe::Action::"Dorvane___get_vantry_approval", resource);
+
+@id("allow-read-only-workorder-lookups")
+permit (principal, action in [
+  Drupe::Action::"MaintData___get_workorder",
+  Drupe::Action::"MaintData___list_workorders",
+  Drupe::Action::"MaintData___get_failure_codes",
+  Drupe::Action::"MaintData___get_my_assigned_workorders",
+  Drupe::Action::"MaintData___get_schedule_calendar",
+  Drupe::Action::"MaintData___get_workorder_actuals_vs_planned",
+  Drupe::Action::"MaintData___get_workorder_costs",
+  Drupe::Action::"MaintData___get_workorder_kpis",
+  Drupe::Action::"MaintData___get_workorder_tasks"
+], resource);
+
+// The agent must never approve work orders itself.
+@id("forbid-agent-approval")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

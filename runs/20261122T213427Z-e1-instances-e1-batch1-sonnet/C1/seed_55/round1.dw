@@ -1,0 +1,34 @@
+@id("allow-kelvora-approval-lookup")
+permit (principal, action == Drupe::Action::"Kelvora___get_approval", resource);
+
+@id("allow-lunvick-approval-lookup")
+permit (principal, action == Drupe::Action::"Lunvick___get_approval", resource);
+
+@id("close-main-with-kelvora-person-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Kelvora___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};
+
+@id("close-main-with-lunvick-person-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Lunvick___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};
+
+@id("agent-never-approves")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

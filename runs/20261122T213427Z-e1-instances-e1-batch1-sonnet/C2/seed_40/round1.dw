@@ -1,0 +1,36 @@
+// Closing: only at MAIN, and only after a completed Lunvick approval lookup in this session,
+// within the last hour, for the same work order and site, showing the job ACCEPTED by a PERSON.
+@id("close-workorder-with-person-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Lunvick___get_approval"::response{
+    eventResource: resource,
+    input.wonum: context.input.wonum,
+    input.site_id: context.input.site_id,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};
+
+// The Lunvick approval lookup must itself be permitted, or no ::response is ever recorded.
+// The other read-only lookups are permitted too. Approval, assignment, cancel, update and
+// generate tools are not permitted, so the agent cannot approve work itself.
+@id("allow-read-only-lookups")
+permit (
+  principal,
+  action in [
+    Drupe::Action::"Lunvick___get_approval",
+    Drupe::Action::"Vantry___get_approval",
+    Drupe::Action::"MaintData___get_failure_codes",
+    Drupe::Action::"MaintData___get_my_assigned_workorders",
+    Drupe::Action::"MaintData___get_schedule_calendar",
+    Drupe::Action::"MaintData___get_workorder",
+    Drupe::Action::"MaintData___get_workorder_actuals_vs_planned",
+    Drupe::Action::"MaintData___get_workorder_costs",
+    Drupe::Action::"MaintData___get_workorder_kpis",
+    Drupe::Action::"MaintData___get_workorder_tasks",
+    Drupe::Action::"MaintData___list_workorders"
+  ],
+  resource
+);

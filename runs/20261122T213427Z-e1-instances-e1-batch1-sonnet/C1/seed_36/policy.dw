@@ -1,0 +1,69 @@
+// Closing: MAIN site only, and only with a recent, confirmed approval by a person
+// for the same work order and site. Two approval sources exist (Vantry, Yarbeck),
+// and the temporal block has no ||, so each source gets its own permit.
+
+@id("close_workorder_with_vantry_approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Vantry___get_approval"::response{
+    eventResource: resource,
+    input.wonum: context.input.wonum,
+    input.site_id: context.input.site_id,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};
+
+@id("close_workorder_with_yarbeck_approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Yarbeck___get_approval"::response{
+    eventResource: resource,
+    input.wonum: context.input.wonum,
+    input.site_id: context.input.site_id,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};
+
+// Approval lookups must be permitted themselves so that their completed
+// responses are recorded and can be used as evidence above.
+@id("allow_vantry_get_approval")
+permit (principal, action == Drupe::Action::"Vantry___get_approval", resource);
+
+@id("allow_yarbeck_get_approval")
+permit (principal, action == Drupe::Action::"Yarbeck___get_approval", resource);
+
+// Other read-only lookups.
+@id("allow_get_workorder")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder", resource);
+
+@id("allow_list_workorders")
+permit (principal, action == Drupe::Action::"MaintData___list_workorders", resource);
+
+@id("allow_get_workorder_tasks")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder_tasks", resource);
+
+@id("allow_get_workorder_costs")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder_costs", resource);
+
+@id("allow_get_workorder_actuals_vs_planned")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder_actuals_vs_planned", resource);
+
+@id("allow_get_workorder_kpis")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder_kpis", resource);
+
+@id("allow_get_schedule_calendar")
+permit (principal, action == Drupe::Action::"MaintData___get_schedule_calendar", resource);
+
+@id("allow_get_my_assigned_workorders")
+permit (principal, action == Drupe::Action::"MaintData___get_my_assigned_workorders", resource);
+
+@id("allow_get_failure_codes")
+permit (principal, action == Drupe::Action::"MaintData___get_failure_codes", resource);
+
+// The agent can never approve work orders itself, whatever else is permitted.
+@id("never_approve_workorder")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

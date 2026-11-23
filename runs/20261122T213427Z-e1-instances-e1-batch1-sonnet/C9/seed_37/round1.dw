@@ -1,0 +1,51 @@
+@id("close-workorder-at-main-after-human-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Vantry___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: "GRANTED",
+    output.approver_kind: "HUMAN"
+  }
+};
+
+// The approval lookup must itself be permitted, or it is never recorded as a response.
+@id("allow-approval-lookup-vantry")
+permit (principal, action == Drupe::Action::"Vantry___get_approval", resource);
+
+@id("allow-approval-lookup-dorvane")
+permit (principal, action == Drupe::Action::"Dorvane___get_approval", resource);
+
+// Read-only lookups
+@id("allow-get-workorder")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder", resource);
+
+@id("allow-list-workorders")
+permit (principal, action == Drupe::Action::"MaintData___list_workorders", resource);
+
+@id("allow-get-workorder-tasks")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder_tasks", resource);
+
+@id("allow-get-workorder-costs")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder_costs", resource);
+
+@id("allow-get-workorder-actuals-vs-planned")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder_actuals_vs_planned", resource);
+
+@id("allow-get-workorder-kpis")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder_kpis", resource);
+
+@id("allow-get-schedule-calendar")
+permit (principal, action == Drupe::Action::"MaintData___get_schedule_calendar", resource);
+
+@id("allow-get-my-assigned-workorders")
+permit (principal, action == Drupe::Action::"MaintData___get_my_assigned_workorders", resource);
+
+@id("allow-get-failure-codes")
+permit (principal, action == Drupe::Action::"MaintData___get_failure_codes", resource);
+
+// The agent must never approve work orders itself.
+@id("never-approve-workorder")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

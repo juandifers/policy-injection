@@ -1,0 +1,41 @@
+{
+ "enabled": true,
+ "disabled_reason": null,
+ "expected": {
+  "generation": "be40cbdd8c8405d744a3c96bab7346ed64044c1910cb4ff82810c151a1166802"
+ },
+ "threshold": 3,
+ "hit_rate": {
+  "k": 167,
+  "n": 168
+ },
+ "expiries": 0,
+ "cost_split": {
+  "tokens": {
+   "cache_write": 34862,
+   "cache_read": 5821954,
+   "uncached_input": 172087,
+   "output": 243001
+  },
+  "usd": {
+   "cache_write": 0.087155,
+   "cache_read": 0.5821954,
+   "uncached_input": 0.344174,
+   "output": 2.43001
+  },
+  "total_usd": 3.4435344
+ },
+ "prefixes": {
+  "be40cbdd8c8405d744a3c96bab7346ed64044c1910cb4ff82810c151a1166802": {
+   "calls": 168,
+   "writes": 1,
+   "reads": 167,
+   "misses": 0,
+   "consecutive_misses": 0,
+   "max_consecutive_misses": 0,
+   "written": true,
+   "expiries": 0,
+   "after_expiry": false
+  }
+ }
+}

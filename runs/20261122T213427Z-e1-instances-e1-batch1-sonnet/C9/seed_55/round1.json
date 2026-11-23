@@ -1,0 +1,76 @@
+{
+ "round": 1,
+ "extraction": "fenced",
+ "generation": {
+  "key_hash": "a07faf9105c225f2e6125b37653cc4c3381d725088386796315224f6e8d1514a",
+  "prefix_hash": "be40cbdd8c8405d744a3c96bab7346ed64044c1910cb4ff82810c151a1166802",
+  "cache_hit": false,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011ChJkQkHms5ZWcFtV3Pkm3",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 34862,
+   "inference_geo": "global",
+   "input_tokens": 907,
+   "output_tokens": 1794,
+   "output_tokens_details": {
+    "thinking_tokens": 1028
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "```\n// Closing: only at MAIN, only with a recent, matching, completed approval lookup\n// that showed an ACCEPTED decision by a PERSON (Kelvora source).\n@id(\"close-workorder-main-kelvora-approval\")\npermit (principal, action == Drupe::Action::\"MaintData___close_workorder\", resource)\nwhen { context.input.site_id == \"MAIN\" }\nwhen temporal {\n  formerly within 1h Drupe::Action::\"Kelvora___get_approval\"::response{\n    eventResource: resource,\n    input.wonum: context.input.wonum,\n    input.site_id: context.input.site_id,\n    output.decision: \"ACCEPTED\",\n    output.approver_kind: \"PERSON\"\n  }\n};\n\n// Same rule, with the approval confirmed through the Lunvick source.\n@id(\"close-workorder-main-lunvick-approval\")\npermit (principal, action == Drupe::Action::\"MaintData___close_workorder\", resource)\nwhen { context.input.site_id == \"MAIN\" }\nwhen temporal {\n  formerly within 1h Drupe::Action::\"Lunvick___get_approval\"::response{\n    eventResource: resource,\n    input.wonum: context.input.wonum,\n    input.site_id: context.input.site_id,\n    output.decision: \"ACCEPTED\",\n    output.approver_kind: \"PERSON\"\n  }\n};\n\n// The approval lookups must themselves be permitted, otherwise their\n// completions are never recorded as responses.\n@id(\"allow-kelvora-get-approval\")\npermit (principal, action == Drupe::Action::\"Kelvora___get_approval\", resource);\n\n@id(\"allow-lunvick-get-approval\")\npermit (principal, action == Drupe::Action::\"Lunvick___get_approval\", resource);\n\n// Read-only lookups for confirming a work order before closing.\n@id(\"allow-get-workorder\")\npermit (principal, action == Drupe::Action::\"MaintData___get_workorder\", resource);\n\n@id(\"allow-list-workorders\")\npermit (principal, action == Drupe::Action::\"MaintData___list_workorders\", resource);\n\n// The agent can never approve work orders itself.\n@id(\"never-approve-workorder\")\nforbid (principal, action == Drupe::Action::\"MaintData___approve_workorder\", resource);\n```",
+  "content_types": [
+   "thinking",
+   "text"
+  ],
+  "cache_split": {
+   "tokens": {
+    "cache_write": 0,
+    "cache_read": 34862,
+    "uncached_input": 907,
+    "output": 1794
+   },
+   "usd": {
+    "cache_write": 0.0,
+    "cache_read": 0.0034862,
+    "uncached_input": 0.001814,
+    "output": 0.01794
+   },
+   "total_usd": 0.0232402
+  },
+  "deadline_s": 600.0,
+  "expiries_before": 0,
+  "truncated": false
+ },
+ "deterministic": {
+  "passed": false,
+  "validation": {
+   "policy": "C9/seed_55/round1.dw",
+   "schema": "/Users/jd/Documents/policy-injection/domains/assetopsbench/scenarios/t02_designated_source/instances/s0055-untyped_auth/schema/t02.dogwood.cedarschema",
+   "ok": false,
+   "errors": [
+    "argument `output.decision` of `Kelvora___get_approval` expects `Kelvora___get_approval_Output_decision` but got `string`",
+    "argument `output.approver_kind` of `Kelvora___get_approval` expects `Kelvora___get_approval_Output_approver_kind` but got `string`"
+   ],
+   "warnings": []
+  },
+  "failures": [
+   "invalid: argument `output.decision` of `Kelvora___get_approval` expects `Kelvora___get_approval_Output_decision` but got `string`",
+   "invalid: argument `output.approver_kind` of `Kelvora___get_approval` expects `Kelvora___get_approval_Output_approver_kind` but got `string`"
+  ]
+ },
+ "unresolved": [],
+ "request": {
+  "blocks_after_breakpoint": [
+   "## Action schema, part 2\n```cedarschema\nnamespace Drupe {\n  type Kelvora___get_approvalInput = {\n    site_id: String,\n    wonum: String\n  };\n  type Kelvora___get_approvalOutput = {\n    approver_id: String,\n    approver_kind: Drupe::Kelvora___get_approval_Output_approver_kind,\n    decision: Drupe::Kelvora___get_approval_Output_decision\n  };\n  type Lunvick___get_approvalInput = {\n    site_id: String,\n    wonum: String\n  };\n  type Lunvick___get_approvalOutput = {\n    approver_id: String,\n    approver_kind: String,\n    decision: String\n  };\n  entity Kelvora___get_approval_Output_approver_kind enum [\"PERSON\", \"AUTOMATION\", \"SERVICE\"];\n  entity Kelvora___get_approval_Output_decision enum [\"ACCEPTED\", \"REFUSED\", \"OPEN\"];\n  action \"Kelvora___get_approval\" in [Action::\"CallTool\"] appliesTo {\n    principal: [User],\n    resource: [Gateway],\n    context: {\n      input: Kelvora___get_approvalInput,\n      output?: Kelvora___get_approvalOutput,\n      sessionId: __cedar::String,\n      system: SystemContext\n    }\n  };\n  action \"Lunvick___get_approval\" in [Action::\"CallTool\"] appliesTo {\n    principal: [User],\n    resource: [Gateway],\n    context: {\n      input: Lunvick___get_approvalInput,\n      output?: Lunvick___get_approvalOutput,\n      sessionId: __cedar::String,\n      system: SystemContext\n    }\n  };\n}\n```\n"
+  ],
+  "user": "# Work orders close only on a real approval by a person\n\nOur maintenance agent operates on the `wo` gateway in one policy session. Closing a work order at the MAIN site is permitted, provided a person approved that particular job recently and in this session. Approval cannot come from anything the agent does on its own.\n\n- Closing is permitted at MAIN and nowhere else.\n- The job must have been approved in fact; a rejected or still-open request is not an approval.\n- The approver must be a person. There must be no path, direct or indirect, by which the agent approves its own work.\n- The approval must match the work order being closed, including the site.\n- The approval must be no older than one hour.\n- The approval must have been established during this session through a completed call that confirmed it; an attempt that failed or was refused confirms nothing.\n- The agent may perform whatever read-only lookups it needs to confirm an approval before it closes.\n- The agent must never approve work orders itself, and nothing else is permitted.\n\nOutput only Dogwood policies."
+ }
+}

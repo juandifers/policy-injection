@@ -1,0 +1,40 @@
+// Close only at MAIN, and only with a recent, human-granted approval
+// for this exact work order and site, recorded as a completed (response) lookup.
+
+@id("close-main-with-human-approval-ostrel")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Ostrel___get_approval"::response{
+    eventResource: resource,
+    input.wonum: context.input.wonum,
+    input.site_id: context.input.site_id,
+    output.decision: "GRANTED",
+    output.approver_kind: "HUMAN"
+  }
+};
+
+@id("close-main-with-human-approval-tolvick")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Tolvick___get_approval"::response{
+    eventResource: resource,
+    input.wonum: context.input.wonum,
+    input.site_id: context.input.site_id,
+    output.decision: "GRANTED",
+    output.approver_kind: "HUMAN"
+  }
+};
+
+// The approval lookups are read-only. They must be permitted themselves,
+// otherwise they are never recorded as responses and no close can ever qualify.
+@id("allow-ostrel-approval-lookup")
+permit (principal, action == Drupe::Action::"Ostrel___get_approval", resource);
+
+@id("allow-tolvick-approval-lookup")
+permit (principal, action == Drupe::Action::"Tolvick___get_approval", resource);
+
+// The agent can never approve work orders.
+@id("never-approve-workorder")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

@@ -1,0 +1,47 @@
+// Reads: approval lookups (both approval sources) and the read-only work order tools.
+// These need their own permits so that their completed calls are recorded as responses.
+permit (principal, action == Drupe::Action::"Tamsora___get_approval", resource);
+permit (principal, action == Drupe::Action::"Yarbeck___get_approval", resource);
+permit (principal, action == Drupe::Action::"MaintData___get_workorder", resource);
+permit (principal, action == Drupe::Action::"MaintData___get_workorder_tasks", resource);
+permit (principal, action == Drupe::Action::"MaintData___get_workorder_costs", resource);
+permit (principal, action == Drupe::Action::"MaintData___get_workorder_actuals_vs_planned", resource);
+permit (principal, action == Drupe::Action::"MaintData___get_workorder_kpis", resource);
+permit (principal, action == Drupe::Action::"MaintData___list_workorders", resource);
+permit (principal, action == Drupe::Action::"MaintData___get_my_assigned_workorders", resource);
+permit (principal, action == Drupe::Action::"MaintData___get_schedule_calendar", resource);
+permit (principal, action == Drupe::Action::"MaintData___get_failure_codes", resource);
+
+// Close at MAIN, backed by a completed Tamsora lookup within the last hour that confirmed
+// an ACCEPTED decision by a PERSON for this exact work order and site.
+@id("close_main_with_tamsora_person_approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Tamsora___get_approval"::response{
+    eventResource: resource,
+    input.wonum: context.input.wonum,
+    input.site_id: context.input.site_id,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};
+
+// Same, with an approval confirmed through the Yarbeck lookup.
+@id("close_main_with_yarbeck_person_approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Yarbeck___get_approval"::response{
+    eventResource: resource,
+    input.wonum: context.input.wonum,
+    input.site_id: context.input.site_id,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};
+
+// The agent may never approve work orders, however it tries.
+// Every other tool (approve, update, assign, cancel, generate) has no permit and is denied by default.
+@id("never_approve_workorders")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

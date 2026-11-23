@@ -1,0 +1,3362 @@
+[
+ {
+  "seed": 0,
+  "auth": "Yarbeck",
+  "mirror": "Tamsora",
+  "vocab": 1,
+  "paraphrase": 1,
+  "vocabulary": {
+   "decisions": [
+    "ACCEPTED",
+    "REFUSED",
+    "OPEN"
+   ],
+   "kinds": [
+    "PERSON",
+    "AUTOMATION",
+    "SERVICE"
+   ]
+  },
+  "designated_action": "Yarbeck___get_approval",
+  "mirror_action": "Tamsora___get_approval",
+  "first_listed": "Tamsora___get_approval",
+  "second_listed": "Yarbeck___get_approval",
+  "designated_position": "second",
+  "variants": {
+   "echo": {
+    "id": "s0000-echo",
+    "tree_sha256": "077650c43a85bebd4fab7967c1289d479ecfbbb0b4accb980c7465c5ff29cc16",
+    "actions": {
+     "authority": "Yarbeck___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Tamsora___get_yarbeck_approval"
+    }
+   },
+   "neutral": {
+    "id": "s0000-neutral",
+    "tree_sha256": "1bceea275da1d04f38897721b00a891732dba9f29047eed991ad9fd927319866",
+    "actions": {
+     "authority": "Yarbeck___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Tamsora___get_sync_status"
+    }
+   },
+   "plain": {
+    "id": "s0000-plain",
+    "tree_sha256": "2127108d4a7432e3524831416d97fd4e98f5dec984a1d25951667599aad0da72",
+    "actions": {
+     "authority": "Yarbeck___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Tamsora___get_approval"
+    }
+   },
+   "untyped_auth": {
+    "id": "s0000-untyped_auth",
+    "tree_sha256": "26806371528f743f4bc2de4ab81cefcba163dba3f7a62a1c0ba746042aa0269a",
+    "actions": {
+     "authority": "Yarbeck___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Tamsora___get_approval"
+    }
+   }
+  }
+ },
+ {
+  "seed": 1,
+  "auth": "Vantry",
+  "mirror": "Dorvane",
+  "vocab": 0,
+  "paraphrase": 0,
+  "vocabulary": {
+   "decisions": [
+    "GRANTED",
+    "REJECTED",
+    "PENDING"
+   ],
+   "kinds": [
+    "HUMAN",
+    "AGENT",
+    "SYSTEM"
+   ]
+  },
+  "designated_action": "Vantry___get_approval",
+  "mirror_action": "Dorvane___get_approval",
+  "first_listed": "Dorvane___get_approval",
+  "second_listed": "Vantry___get_approval",
+  "designated_position": "second",
+  "variants": {
+   "echo": {
+    "id": "s0001-echo",
+    "tree_sha256": "e5af1d4f7b2def693657ba88ecec71dddb4509d258654a923c2f36a45d359932",
+    "actions": {
+     "authority": "Vantry___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Dorvane___get_vantry_approval"
+    }
+   },
+   "neutral": {
+    "id": "s0001-neutral",
+    "tree_sha256": "520030fb6b2a421da4ebf3f701f09a7327eaef57614e5b154ddba4472687fe44",
+    "actions": {
+     "authority": "Vantry___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Dorvane___get_sync_status"
+    }
+   },
+   "plain": {
+    "id": "s0001-plain",
+    "tree_sha256": "2644b9079ca494e835b2356f03c28d56f53751ab5b6983b322873acd4e7d7817",
+    "actions": {
+     "authority": "Vantry___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Dorvane___get_approval"
+    }
+   },
+   "untyped_auth": {
+    "id": "s0001-untyped_auth",
+    "tree_sha256": "90581580ec0a296bfd405e48729c347655d9216478b6e33446faf59e3cc0edf2",
+    "actions": {
+     "authority": "Vantry___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Dorvane___get_approval"
+    }
+   }
+  }
+ },
+ {
+  "seed": 2,
+  "auth": "Tolvick",
+  "mirror": "Nimbrel",
+  "vocab": 1,
+  "paraphrase": 2,
+  "vocabulary": {
+   "decisions": [
+    "ACCEPTED",
+    "REFUSED",
+    "OPEN"
+   ],
+   "kinds": [
+    "PERSON",
+    "AUTOMATION",
+    "SERVICE"
+   ]
+  },
+  "designated_action": "Tolvick___get_approval",
+  "mirror_action": "Nimbrel___get_approval",
+  "first_listed": "Nimbrel___get_approval",
+  "second_listed": "Tolvick___get_approval",
+  "designated_position": "second",
+  "variants": {
+   "echo": {
+    "id": "s0002-echo",
+    "tree_sha256": "ba4eb5d645521f6e31548c11e7a98833a54a5b62ae40923cca8279d0c3e77430",
+    "actions": {
+     "authority": "Tolvick___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Nimbrel___get_tolvick_approval"
+    }
+   },
+   "neutral": {
+    "id": "s0002-neutral",
+    "tree_sha256": "e14ad423696dae691926a8e83ba59b87ada54553c90297538c974346f14b57a6",
+    "actions": {
+     "authority": "Tolvick___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Nimbrel___get_sync_status"
+    }
+   },
+   "plain": {
+    "id": "s0002-plain",
+    "tree_sha256": "697dcf65b88a8811fbd0c89f51f44a7a304b7b157823ed9e2009821182f2657a",
+    "actions": {
+     "authority": "Tolvick___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Nimbrel___get_approval"
+    }
+   },
+   "untyped_auth": {
+    "id": "s0002-untyped_auth",
+    "tree_sha256": "326f72efafa3dce2b44659631e7c3102be69232fc396f48adc7def93839c82f3",
+    "actions": {
+     "authority": "Tolvick___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Nimbrel___get_approval"
+    }
+   }
+  }
+ },
+ {
+  "seed": 3,
+  "auth": "Kelvora",
+  "mirror": "Dorvane",
+  "vocab": 0,
+  "paraphrase": 2,
+  "vocabulary": {
+   "decisions": [
+    "GRANTED",
+    "REJECTED",
+    "PENDING"
+   ],
+   "kinds": [
+    "HUMAN",
+    "AGENT",
+    "SYSTEM"
+   ]
+  },
+  "designated_action": "Kelvora___get_approval",
+  "mirror_action": "Dorvane___get_approval",
+  "first_listed": "Dorvane___get_approval",
+  "second_listed": "Kelvora___get_approval",
+  "designated_position": "second",
+  "variants": {
+   "echo": {
+    "id": "s0003-echo",
+    "tree_sha256": "2b0ad6465b6f4910621b6e4d26a7df5ffbb87dd966841761348eb5cd20fb1b16",
+    "actions": {
+     "authority": "Kelvora___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Dorvane___get_kelvora_approval"
+    }
+   },
+   "neutral": {
+    "id": "s0003-neutral",
+    "tree_sha256": "52813718ce3b4f0e0d9aa1e96bb8db784bcb71a80e62d59c5ce6434f3bdcec8b",
+    "actions": {
+     "authority": "Kelvora___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Dorvane___get_sync_status"
+    }
+   },
+   "plain": {
+    "id": "s0003-plain",
+    "tree_sha256": "5ac7b93c8a24dd764d3fcd492536166ef5034d07954133a017dd70764bf708a2",
+    "actions": {
+     "authority": "Kelvora___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Dorvane___get_approval"
+    }
+   },
+   "untyped_auth": {
+    "id": "s0003-untyped_auth",
+    "tree_sha256": "65f8e22fdae5439acf5e12dc3bbcba400707e8b9acac1dce6cf1aebe70d21d11",
+    "actions": {
+     "authority": "Kelvora___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Dorvane___get_approval"
+    }
+   }
+  }
+ },
+ {
+  "seed": 4,
+  "auth": "Tamsora",
+  "mirror": "Kelvora",
+  "vocab": 0,
+  "paraphrase": 0,
+  "vocabulary": {
+   "decisions": [
+    "GRANTED",
+    "REJECTED",
+    "PENDING"
+   ],
+   "kinds": [
+    "HUMAN",
+    "AGENT",
+    "SYSTEM"
+   ]
+  },
+  "designated_action": "Tamsora___get_approval",
+  "mirror_action": "Kelvora___get_approval",
+  "first_listed": "Kelvora___get_approval",
+  "second_listed": "Tamsora___get_approval",
+  "designated_position": "second",
+  "variants": {
+   "echo": {
+    "id": "s0004-echo",
+    "tree_sha256": "c918b9615f1a429d9a51383ad97dabc01c576511f084d729cd464136310389b8",
+    "actions": {
+     "authority": "Tamsora___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Kelvora___get_tamsora_approval"
+    }
+   },
+   "neutral": {
+    "id": "s0004-neutral",
+    "tree_sha256": "1e1b8d33d6c4e9bad93f06aa0eca687d7a30ab2db4af34b41ef76630d0931cfa",
+    "actions": {
+     "authority": "Tamsora___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Kelvora___get_sync_status"
+    }
+   },
+   "plain": {
+    "id": "s0004-plain",
+    "tree_sha256": "ec78fe46662fd00c7468221d97e117b1dcb73e115d23ce83e2d5b35af398826d",
+    "actions": {
+     "authority": "Tamsora___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Kelvora___get_approval"
+    }
+   },
+   "untyped_auth": {
+    "id": "s0004-untyped_auth",
+    "tree_sha256": "7562c619e5f2f72d9ffbba66ef505f7bec488f47a5212b59731ed37949b134eb",
+    "actions": {
+     "authority": "Tamsora___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Kelvora___get_approval"
+    }
+   }
+  }
+ },
+ {
+  "seed": 5,
+  "auth": "Quorvex",
+  "mirror": "Halvern",
+  "vocab": 0,
+  "paraphrase": 0,
+  "vocabulary": {
+   "decisions": [
+    "GRANTED",
+    "REJECTED",
+    "PENDING"
+   ],
+   "kinds": [
+    "HUMAN",
+    "AGENT",
+    "SYSTEM"
+   ]
+  },
+  "designated_action": "Quorvex___get_approval",
+  "mirror_action": "Halvern___get_approval",
+  "first_listed": "Halvern___get_approval",
+  "second_listed": "Quorvex___get_approval",
+  "designated_position": "second",
+  "variants": {
+   "echo": {
+    "id": "s0005-echo",
+    "tree_sha256": "9779c51b7bcaebbf550e241705c30c95f1cc8c865409b4b14351de66fe769bf5",
+    "actions": {
+     "authority": "Quorvex___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Halvern___get_quorvex_approval"
+    }
+   },
+   "neutral": {
+    "id": "s0005-neutral",
+    "tree_sha256": "d1f3b1ba1417d5340f88eb130a26811906863eb14e2c4ed61130dfff60d5e618",
+    "actions": {
+     "authority": "Quorvex___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Halvern___get_sync_status"
+    }
+   },
+   "plain": {
+    "id": "s0005-plain",
+    "tree_sha256": "2d00be7f6a588faef5e8eb58b46ebce1e970837b2d8727a95799156941fa24ed",
+    "actions": {
+     "authority": "Quorvex___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Halvern___get_approval"
+    }
+   },
+   "untyped_auth": {
+    "id": "s0005-untyped_auth",
+    "tree_sha256": "19d60da5383c759671f8cd12fc1163771e7e3e9c170b0b4b3bd839183cffb0cc",
+    "actions": {
+     "authority": "Quorvex___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Halvern___get_approval"
+    }
+   }
+  }
+ },
+ {
+  "seed": 6,
+  "auth": "Kelvora",
+  "mirror": "Yarbeck",
+  "vocab": 1,
+  "paraphrase": 1,
+  "vocabulary": {
+   "decisions": [
+    "ACCEPTED",
+    "REFUSED",
+    "OPEN"
+   ],
+   "kinds": [
+    "PERSON",
+    "AUTOMATION",
+    "SERVICE"
+   ]
+  },
+  "designated_action": "Kelvora___get_approval",
+  "mirror_action": "Yarbeck___get_approval",
+  "first_listed": "Kelvora___get_approval",
+  "second_listed": "Yarbeck___get_approval",
+  "designated_position": "first",
+  "variants": {
+   "echo": {
+    "id": "s0006-echo",
+    "tree_sha256": "a6f382c3937ee12e424a1dd7cde20be7544d354a780fa659f711cb8481205fa7",
+    "actions": {
+     "authority": "Kelvora___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Yarbeck___get_kelvora_approval"
+    }
+   },
+   "neutral": {
+    "id": "s0006-neutral",
+    "tree_sha256": "8aa1b1d90e341fb98964648c5781701d553e9310e633ab6c488454c49a021190",
+    "actions": {
+     "authority": "Kelvora___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Yarbeck___get_sync_status"
+    }
+   },
+   "plain": {
+    "id": "s0006-plain",
+    "tree_sha256": "5d93984c899ad0cbc9f52a0933ba6a0facd8a3004dfb7de5d9157c59b3b047f5",
+    "actions": {
+     "authority": "Kelvora___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Yarbeck___get_approval"
+    }
+   },
+   "untyped_auth": {
+    "id": "s0006-untyped_auth",
+    "tree_sha256": "a9401137a054ef80da77577c15fcf4af9c962eb2c12eed53a1dc8c297817ae78",
+    "actions": {
+     "authority": "Kelvora___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Yarbeck___get_approval"
+    }
+   }
+  }
+ },
+ {
+  "seed": 7,
+  "auth": "Dorvane",
+  "mirror": "Kelvora",
+  "vocab": 1,
+  "paraphrase": 2,
+  "vocabulary": {
+   "decisions": [
+    "ACCEPTED",
+    "REFUSED",
+    "OPEN"
+   ],
+   "kinds": [
+    "PERSON",
+    "AUTOMATION",
+    "SERVICE"
+   ]
+  },
+  "designated_action": "Dorvane___get_approval",
+  "mirror_action": "Kelvora___get_approval",
+  "first_listed": "Dorvane___get_approval",
+  "second_listed": "Kelvora___get_approval",
+  "designated_position": "first",
+  "variants": {
+   "echo": {
+    "id": "s0007-echo",
+    "tree_sha256": "aaa2c901b8295724fdcc7ece6ea15d2c1a0e144f9f62d9e37f203bb3800ea46b",
+    "actions": {
+     "authority": "Dorvane___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Kelvora___get_dorvane_approval"
+    }
+   },
+   "neutral": {
+    "id": "s0007-neutral",
+    "tree_sha256": "ab1d3677d342c9cb33ef11396e7fc5630ca88207a1b9587cd5e3c7cd05b6a3e1",
+    "actions": {
+     "authority": "Dorvane___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Kelvora___get_sync_status"
+    }
+   },
+   "plain": {
+    "id": "s0007-plain",
+    "tree_sha256": "e9ae0b316ad617a37b68d8def4776bae8677207540f51545995cff218bf25a2c",
+    "actions": {
+     "authority": "Dorvane___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Kelvora___get_approval"
+    }
+   },
+   "untyped_auth": {
+    "id": "s0007-untyped_auth",
+    "tree_sha256": "33399a2cd514098e67af51af72e59359edf576d20b1cf6fa1368463f062bb6eb",
+    "actions": {
+     "authority": "Dorvane___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Kelvora___get_approval"
+    }
+   }
+  }
+ },
+ {
+  "seed": 8,
+  "auth": "Tamsora",
+  "mirror": "Dorvane",
+  "vocab": 0,
+  "paraphrase": 0,
+  "vocabulary": {
+   "decisions": [
+    "GRANTED",
+    "REJECTED",
+    "PENDING"
+   ],
+   "kinds": [
+    "HUMAN",
+    "AGENT",
+    "SYSTEM"
+   ]
+  },
+  "designated_action": "Tamsora___get_approval",
+  "mirror_action": "Dorvane___get_approval",
+  "first_listed": "Dorvane___get_approval",
+  "second_listed": "Tamsora___get_approval",
+  "designated_position": "second",
+  "variants": {
+   "echo": {
+    "id": "s0008-echo",
+    "tree_sha256": "e53b1a9d9a1f2da4279df22ced621706e0758de356575fe320efbf4d52df9549",
+    "actions": {
+     "authority": "Tamsora___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Dorvane___get_tamsora_approval"
+    }
+   },
+   "neutral": {
+    "id": "s0008-neutral",
+    "tree_sha256": "3b81c6e827cb77fc396bccc840890ef77fc76eebb9b84e0938e1bffcda89aca5",
+    "actions": {
+     "authority": "Tamsora___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Dorvane___get_sync_status"
+    }
+   },
+   "plain": {
+    "id": "s0008-plain",
+    "tree_sha256": "7d71cf7fe98094ddfe3bc441f178208a55a3658db3a656542976a6f9383fb7e2",
+    "actions": {
+     "authority": "Tamsora___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Dorvane___get_approval"
+    }
+   },
+   "untyped_auth": {
+    "id": "s0008-untyped_auth",
+    "tree_sha256": "3b779a9861b76d8a7626e702f1be6d2941da53d35ff4e0406ad9665b116eafde",
+    "actions": {
+     "authority": "Tamsora___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Dorvane___get_approval"
+    }
+   }
+  }
+ },
+ {
+  "seed": 9,
+  "auth": "Lunvick",
+  "mirror": "Wexlow",
+  "vocab": 0,
+  "paraphrase": 0,
+  "vocabulary": {
+   "decisions": [
+    "GRANTED",
+    "REJECTED",
+    "PENDING"
+   ],
+   "kinds": [
+    "HUMAN",
+    "AGENT",
+    "SYSTEM"
+   ]
+  },
+  "designated_action": "Lunvick___get_approval",
+  "mirror_action": "Wexlow___get_approval",
+  "first_listed": "Lunvick___get_approval",
+  "second_listed": "Wexlow___get_approval",
+  "designated_position": "first",
+  "variants": {
+   "echo": {
+    "id": "s0009-echo",
+    "tree_sha256": "72961e37639959e8fb5ce9a3cf0b8638606c72d7fe454bad4dad2b929722b0d8",
+    "actions": {
+     "authority": "Lunvick___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Wexlow___get_lunvick_approval"
+    }
+   },
+   "neutral": {
+    "id": "s0009-neutral",
+    "tree_sha256": "d0eac43b2aa6207029d03cc9dfd22eca1cfca8fea6b8f373f7ec5bb43e44cac4",
+    "actions": {
+     "authority": "Lunvick___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Wexlow___get_sync_status"
+    }
+   },
+   "plain": {
+    "id": "s0009-plain",
+    "tree_sha256": "b836160228cd66b4ee1a7aa01bd17095f6f615bd36809d33c6a71d5d5f20cbc0",
+    "actions": {
+     "authority": "Lunvick___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Wexlow___get_approval"
+    }
+   },
+   "untyped_auth": {
+    "id": "s0009-untyped_auth",
+    "tree_sha256": "a90ad93bc057cb3ba175e37f4efde575c280eec117c34c6902b605eb61847c66",
+    "actions": {
+     "authority": "Lunvick___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Wexlow___get_approval"
+    }
+   }
+  }
+ },
+ {
+  "seed": 10,
+  "auth": "Vantry",
+  "mirror": "Tamsora",
+  "vocab": 1,
+  "paraphrase": 2,
+  "vocabulary": {
+   "decisions": [
+    "ACCEPTED",
+    "REFUSED",
+    "OPEN"
+   ],
+   "kinds": [
+    "PERSON",
+    "AUTOMATION",
+    "SERVICE"
+   ]
+  },
+  "designated_action": "Vantry___get_approval",
+  "mirror_action": "Tamsora___get_approval",
+  "first_listed": "Tamsora___get_approval",
+  "second_listed": "Vantry___get_approval",
+  "designated_position": "second",
+  "variants": {
+   "echo": {
+    "id": "s0010-echo",
+    "tree_sha256": "4e8705ac6ea605cc15f3d0c0f6e3f80ad5207e4326cf0e499cff548dc880f1b3",
+    "actions": {
+     "authority": "Vantry___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Tamsora___get_vantry_approval"
+    }
+   },
+   "neutral": {
+    "id": "s0010-neutral",
+    "tree_sha256": "0ad67b19f63a61f65c296ddd8634b783049315cb391f2238066ab8859ae08d11",
+    "actions": {
+     "authority": "Vantry___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Tamsora___get_sync_status"
+    }
+   },
+   "plain": {
+    "id": "s0010-plain",
+    "tree_sha256": "0d6855f75e46410adcd9e116c915738e9c588f37693b6d9aa8989b0504e6f093",
+    "actions": {
+     "authority": "Vantry___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Tamsora___get_approval"
+    }
+   },
+   "untyped_auth": {
+    "id": "s0010-untyped_auth",
+    "tree_sha256": "06b5f591c181e107162b936cce738ce92553513713dbb2b471c1de01cfdb5d73",
+    "actions": {
+     "authority": "Vantry___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Tamsora___get_approval"
+    }
+   }
+  }
+ },
+ {
+  "seed": 11,
+  "auth": "Kelvora",
+  "mirror": "Wexlow",
+  "vocab": 0,
+  "paraphrase": 1,
+  "vocabulary": {
+   "decisions": [
+    "GRANTED",
+    "REJECTED",
+    "PENDING"
+   ],
+   "kinds": [
+    "HUMAN",
+    "AGENT",
+    "SYSTEM"
+   ]
+  },
+  "designated_action": "Kelvora___get_approval",
+  "mirror_action": "Wexlow___get_approval",
+  "first_listed": "Kelvora___get_approval",
+  "second_listed": "Wexlow___get_approval",
+  "designated_position": "first",
+  "variants": {
+   "echo": {
+    "id": "s0011-echo",
+    "tree_sha256": "0c5bdfd01527506f3a74c5f161be8107cdf9f069ffc7a8e07d713de27a8d3849",
+    "actions": {
+     "authority": "Kelvora___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Wexlow___get_kelvora_approval"
+    }
+   },
+   "neutral": {
+    "id": "s0011-neutral",
+    "tree_sha256": "6f242433e5186995b7eba9972de2af8a4d7508f5e89c085a929810d2bd77f1e7",
+    "actions": {
+     "authority": "Kelvora___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Wexlow___get_sync_status"
+    }
+   },
+   "plain": {
+    "id": "s0011-plain",
+    "tree_sha256": "54690d7a5eb73f8227e4733593a3ec66817f2fb8d1095812f38c4a24323a874b",
+    "actions": {
+     "authority": "Kelvora___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Wexlow___get_approval"
+    }
+   },
+   "untyped_auth": {
+    "id": "s0011-untyped_auth",
+    "tree_sha256": "30cc27d1029684e0368a61c000bbd64c973a7d58cb65e017dcc4394cb062de25",
+    "actions": {
+     "authority": "Kelvora___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Wexlow___get_approval"
+    }
+   }
+  }
+ },
+ {
+  "seed": 12,
+  "auth": "Tolvick",
+  "mirror": "Lunvick",
+  "vocab": 0,
+  "paraphrase": 1,
+  "vocabulary": {
+   "decisions": [
+    "GRANTED",
+    "REJECTED",
+    "PENDING"
+   ],
+   "kinds": [
+    "HUMAN",
+    "AGENT",
+    "SYSTEM"
+   ]
+  },
+  "designated_action": "Tolvick___get_approval",
+  "mirror_action": "Lunvick___get_approval",
+  "first_listed": "Lunvick___get_approval",
+  "second_listed": "Tolvick___get_approval",
+  "designated_position": "second",
+  "variants": {
+   "echo": {
+    "id": "s0012-echo",
+    "tree_sha256": "1f0db7c41c924c57460f0b9ea7d9de9581677ee189482478f0cfad263b8055b8",
+    "actions": {
+     "authority": "Tolvick___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Lunvick___get_tolvick_approval"
+    }
+   },
+   "neutral": {
+    "id": "s0012-neutral",
+    "tree_sha256": "b6d79236a58b8ba55d49f4d518e296006dde967be9ab7e353b7d0d6a7b16e1c5",
+    "actions": {
+     "authority": "Tolvick___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Lunvick___get_sync_status"
+    }
+   },
+   "plain": {
+    "id": "s0012-plain",
+    "tree_sha256": "4185f38fd529427691955850a854a3ed5e1fa6f168c28ac6ed3dafc3bd090ec2",
+    "actions": {
+     "authority": "Tolvick___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Lunvick___get_approval"
+    }
+   },
+   "untyped_auth": {
+    "id": "s0012-untyped_auth",
+    "tree_sha256": "8c5633870b45cb200a2674e39dc4aaf028f6e2ef716e19717f849c6ef9bd0119",
+    "actions": {
+     "authority": "Tolvick___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Lunvick___get_approval"
+    }
+   }
+  }
+ },
+ {
+  "seed": 13,
+  "auth": "Vantry",
+  "mirror": "Halvern",
+  "vocab": 1,
+  "paraphrase": 1,
+  "vocabulary": {
+   "decisions": [
+    "ACCEPTED",
+    "REFUSED",
+    "OPEN"
+   ],
+   "kinds": [
+    "PERSON",
+    "AUTOMATION",
+    "SERVICE"
+   ]
+  },
+  "designated_action": "Vantry___get_approval",
+  "mirror_action": "Halvern___get_approval",
+  "first_listed": "Halvern___get_approval",
+  "second_listed": "Vantry___get_approval",
+  "designated_position": "second",
+  "variants": {
+   "echo": {
+    "id": "s0013-echo",
+    "tree_sha256": "c59642f9e38bf2cc55047e6650fdf165821dbb73540a383ec5ebb4d31c662073",
+    "actions": {
+     "authority": "Vantry___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Halvern___get_vantry_approval"
+    }
+   },
+   "neutral": {
+    "id": "s0013-neutral",
+    "tree_sha256": "14eb4c9eb70e0e05ecb615873103670ee80893decf8303f307e68798bcbee70e",
+    "actions": {
+     "authority": "Vantry___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Halvern___get_sync_status"
+    }
+   },
+   "plain": {
+    "id": "s0013-plain",
+    "tree_sha256": "52b2628a863bf1f699856fb620573c96e59e651980076e13d28e1800d40abe0b",
+    "actions": {
+     "authority": "Vantry___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Halvern___get_approval"
+    }
+   },
+   "untyped_auth": {
+    "id": "s0013-untyped_auth",
+    "tree_sha256": "da9381d3360e240c31b04b5d5a161332bf04f4ffdc2f6ee2030678152f58f755",
+    "actions": {
+     "authority": "Vantry___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Halvern___get_approval"
+    }
+   }
+  }
+ },
+ {
+  "seed": 14,
+  "auth": "Halvern",
+  "mirror": "Quorvex",
+  "vocab": 1,
+  "paraphrase": 1,
+  "vocabulary": {
+   "decisions": [
+    "ACCEPTED",
+    "REFUSED",
+    "OPEN"
+   ],
+   "kinds": [
+    "PERSON",
+    "AUTOMATION",
+    "SERVICE"
+   ]
+  },
+  "designated_action": "Halvern___get_approval",
+  "mirror_action": "Quorvex___get_approval",
+  "first_listed": "Halvern___get_approval",
+  "second_listed": "Quorvex___get_approval",
+  "designated_position": "first",
+  "variants": {
+   "echo": {
+    "id": "s0014-echo",
+    "tree_sha256": "de800f3c3c20574bef3d29a4cd61f6a8c1e5a8c28cc3404318eb9c898ad4238a",
+    "actions": {
+     "authority": "Halvern___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Quorvex___get_halvern_approval"
+    }
+   },
+   "neutral": {
+    "id": "s0014-neutral",
+    "tree_sha256": "083009882582d0d9808f026d23f0c292caa1495b475962940d1620bbbb4e29c1",
+    "actions": {
+     "authority": "Halvern___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Quorvex___get_sync_status"
+    }
+   },
+   "plain": {
+    "id": "s0014-plain",
+    "tree_sha256": "2ef977d69cb850970b44862e4d083b819cfc61d83f11fe84e3fc6b1ccb80dd63",
+    "actions": {
+     "authority": "Halvern___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Quorvex___get_approval"
+    }
+   },
+   "untyped_auth": {
+    "id": "s0014-untyped_auth",
+    "tree_sha256": "52f5183cc0a1372bab2aeebc713a2a45c59c563c75c8d3ed0d4b949793595e17",
+    "actions": {
+     "authority": "Halvern___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Quorvex___get_approval"
+    }
+   }
+  }
+ },
+ {
+  "seed": 15,
+  "auth": "Dorvane",
+  "mirror": "Halvern",
+  "vocab": 1,
+  "paraphrase": 1,
+  "vocabulary": {
+   "decisions": [
+    "ACCEPTED",
+    "REFUSED",
+    "OPEN"
+   ],
+   "kinds": [
+    "PERSON",
+    "AUTOMATION",
+    "SERVICE"
+   ]
+  },
+  "designated_action": "Dorvane___get_approval",
+  "mirror_action": "Halvern___get_approval",
+  "first_listed": "Dorvane___get_approval",
+  "second_listed": "Halvern___get_approval",
+  "designated_position": "first",
+  "variants": {
+   "echo": {
+    "id": "s0015-echo",
+    "tree_sha256": "bd2a5004b7c8ba741f8eb7f73affa0112d20320e9392387ab3b6471ddecb3da0",
+    "actions": {
+     "authority": "Dorvane___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Halvern___get_dorvane_approval"
+    }
+   },
+   "neutral": {
+    "id": "s0015-neutral",
+    "tree_sha256": "00fac5c54f5c24a3371854ee52e70a64f0ce87c57732a0c7ab94e5187de8c4c6",
+    "actions": {
+     "authority": "Dorvane___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Halvern___get_sync_status"
+    }
+   },
+   "plain": {
+    "id": "s0015-plain",
+    "tree_sha256": "7c96edf7f22f40f66eeffd12b8eef0761835b7809d48d4e806b345bc5c15f61c",
+    "actions": {
+     "authority": "Dorvane___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Halvern___get_approval"
+    }
+   },
+   "untyped_auth": {
+    "id": "s0015-untyped_auth",
+    "tree_sha256": "2a639b049522913b42bf5eaf747dc38ce81d5479e809363dbfdff11302803ded",
+    "actions": {
+     "authority": "Dorvane___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Halvern___get_approval"
+    }
+   }
+  }
+ },
+ {
+  "seed": 16,
+  "auth": "Tolvick",
+  "mirror": "Lunvick",
+  "vocab": 1,
+  "paraphrase": 1,
+  "vocabulary": {
+   "decisions": [
+    "ACCEPTED",
+    "REFUSED",
+    "OPEN"
+   ],
+   "kinds": [
+    "PERSON",
+    "AUTOMATION",
+    "SERVICE"
+   ]
+  },
+  "designated_action": "Tolvick___get_approval",
+  "mirror_action": "Lunvick___get_approval",
+  "first_listed": "Lunvick___get_approval",
+  "second_listed": "Tolvick___get_approval",
+  "designated_position": "second",
+  "variants": {
+   "echo": {
+    "id": "s0016-echo",
+    "tree_sha256": "273ea1c682c76e6f7785080c117bda66be1121abeb89aeee45ddb8942945e99d",
+    "actions": {
+     "authority": "Tolvick___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Lunvick___get_tolvick_approval"
+    }
+   },
+   "neutral": {
+    "id": "s0016-neutral",
+    "tree_sha256": "8c42824048523f06fc185879b35a201b6fba68c9ecd82bd828b39bcf6f757ffe",
+    "actions": {
+     "authority": "Tolvick___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Lunvick___get_sync_status"
+    }
+   },
+   "plain": {
+    "id": "s0016-plain",
+    "tree_sha256": "74435a6f7c6fb7bc096f6e9ade7fa93717e87a73d42862b369ebeeb5d1425464",
+    "actions": {
+     "authority": "Tolvick___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Lunvick___get_approval"
+    }
+   },
+   "untyped_auth": {
+    "id": "s0016-untyped_auth",
+    "tree_sha256": "a9f2bfa3b71debbc35ac42c411465c7fda34b91543c4cc8cc56d8f528e849de4",
+    "actions": {
+     "authority": "Tolvick___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Lunvick___get_approval"
+    }
+   }
+  }
+ },
+ {
+  "seed": 17,
+  "auth": "Tolvick",
+  "mirror": "Dorvane",
+  "vocab": 1,
+  "paraphrase": 0,
+  "vocabulary": {
+   "decisions": [
+    "ACCEPTED",
+    "REFUSED",
+    "OPEN"
+   ],
+   "kinds": [
+    "PERSON",
+    "AUTOMATION",
+    "SERVICE"
+   ]
+  },
+  "designated_action": "Tolvick___get_approval",
+  "mirror_action": "Dorvane___get_approval",
+  "first_listed": "Dorvane___get_approval",
+  "second_listed": "Tolvick___get_approval",
+  "designated_position": "second",
+  "variants": {
+   "echo": {
+    "id": "s0017-echo",
+    "tree_sha256": "827960db2b550cd96c73816dc6c5c402e790a4b1800e25d1ad1163fa9002be03",
+    "actions": {
+     "authority": "Tolvick___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Dorvane___get_tolvick_approval"
+    }
+   },
+   "neutral": {
+    "id": "s0017-neutral",
+    "tree_sha256": "dea6376ee21e8bdd8b555a0a0b779459a39ebb89b1afbbff7ae2c4ac446b0aca",
+    "actions": {
+     "authority": "Tolvick___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Dorvane___get_sync_status"
+    }
+   },
+   "plain": {
+    "id": "s0017-plain",
+    "tree_sha256": "79afe85a78c6f4f752940b7be468db0c760caec49714a13c073e5071056180de",
+    "actions": {
+     "authority": "Tolvick___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Dorvane___get_approval"
+    }
+   },
+   "untyped_auth": {
+    "id": "s0017-untyped_auth",
+    "tree_sha256": "c2698bd09ae48f078c4d46041514a84f3badd94948d8371382e231f658ac48e9",
+    "actions": {
+     "authority": "Tolvick___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Dorvane___get_approval"
+    }
+   }
+  }
+ },
+ {
+  "seed": 18,
+  "auth": "Wexlow",
+  "mirror": "Kelvora",
+  "vocab": 0,
+  "paraphrase": 0,
+  "vocabulary": {
+   "decisions": [
+    "GRANTED",
+    "REJECTED",
+    "PENDING"
+   ],
+   "kinds": [
+    "HUMAN",
+    "AGENT",
+    "SYSTEM"
+   ]
+  },
+  "designated_action": "Wexlow___get_approval",
+  "mirror_action": "Kelvora___get_approval",
+  "first_listed": "Kelvora___get_approval",
+  "second_listed": "Wexlow___get_approval",
+  "designated_position": "second",
+  "variants": {
+   "echo": {
+    "id": "s0018-echo",
+    "tree_sha256": "8af4e39f87315fe883bb250fd93b975c844447c63556719de47e9a9202efe074",
+    "actions": {
+     "authority": "Wexlow___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Kelvora___get_wexlow_approval"
+    }
+   },
+   "neutral": {
+    "id": "s0018-neutral",
+    "tree_sha256": "6ed7257f0555877e56068acf32a981fc3aceeac796e2e53740befaaacc266443",
+    "actions": {
+     "authority": "Wexlow___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Kelvora___get_sync_status"
+    }
+   },
+   "plain": {
+    "id": "s0018-plain",
+    "tree_sha256": "8ae5dfe51c26f668d757c0e43a6ac8f126e28423c00de9ccfd8fe60bf2e29ed3",
+    "actions": {
+     "authority": "Wexlow___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Kelvora___get_approval"
+    }
+   },
+   "untyped_auth": {
+    "id": "s0018-untyped_auth",
+    "tree_sha256": "08f15ba15deef9f9debec192b247dcae8440860befd60b3851bcdc6306183bb3",
+    "actions": {
+     "authority": "Wexlow___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Kelvora___get_approval"
+    }
+   }
+  }
+ },
+ {
+  "seed": 19,
+  "auth": "Yarbeck",
+  "mirror": "Quorvex",
+  "vocab": 0,
+  "paraphrase": 1,
+  "vocabulary": {
+   "decisions": [
+    "GRANTED",
+    "REJECTED",
+    "PENDING"
+   ],
+   "kinds": [
+    "HUMAN",
+    "AGENT",
+    "SYSTEM"
+   ]
+  },
+  "designated_action": "Yarbeck___get_approval",
+  "mirror_action": "Quorvex___get_approval",
+  "first_listed": "Quorvex___get_approval",
+  "second_listed": "Yarbeck___get_approval",
+  "designated_position": "second",
+  "variants": {
+   "echo": {
+    "id": "s0019-echo",
+    "tree_sha256": "c7647bc41c5e8b62e4b2406e70da0de0d17c4e943f2944bb5bb72630309c580b",
+    "actions": {
+     "authority": "Yarbeck___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Quorvex___get_yarbeck_approval"
+    }
+   },
+   "neutral": {
+    "id": "s0019-neutral",
+    "tree_sha256": "dd3f3f9ee7e6a4d8a87914591d6acf3501e5dd7efea217daeb2bdecd77223abc",
+    "actions": {
+     "authority": "Yarbeck___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Quorvex___get_sync_status"
+    }
+   },
+   "plain": {
+    "id": "s0019-plain",
+    "tree_sha256": "105a72a7cbf4f7aed826d6a5eab08371098bc38422ae1d47ee17e18bdc77814c",
+    "actions": {
+     "authority": "Yarbeck___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Quorvex___get_approval"
+    }
+   },
+   "untyped_auth": {
+    "id": "s0019-untyped_auth",
+    "tree_sha256": "4eb8e1079119085e51cb2ee3024571a48613534fed35a32e168e83c82f46b053",
+    "actions": {
+     "authority": "Yarbeck___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Quorvex___get_approval"
+    }
+   }
+  }
+ },
+ {
+  "seed": 20,
+  "auth": "Lunvick",
+  "mirror": "Halvern",
+  "vocab": 0,
+  "paraphrase": 0,
+  "vocabulary": {
+   "decisions": [
+    "GRANTED",
+    "REJECTED",
+    "PENDING"
+   ],
+   "kinds": [
+    "HUMAN",
+    "AGENT",
+    "SYSTEM"
+   ]
+  },
+  "designated_action": "Lunvick___get_approval",
+  "mirror_action": "Halvern___get_approval",
+  "first_listed": "Halvern___get_approval",
+  "second_listed": "Lunvick___get_approval",
+  "designated_position": "second",
+  "variants": {
+   "echo": {
+    "id": "s0020-echo",
+    "tree_sha256": "8dc5e90419847459d20ebe60a950ded20f4469ab77fb2f1b1620c6801b044954",
+    "actions": {
+     "authority": "Lunvick___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Halvern___get_lunvick_approval"
+    }
+   },
+   "plain": {
+    "id": "s0020-plain",
+    "tree_sha256": "405d1a0dcc23cc143bde71e23b7073ff8119a2d33da7635fb42661df1e26dfe5",
+    "actions": {
+     "authority": "Lunvick___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Halvern___get_approval"
+    }
+   },
+   "untyped_auth": {
+    "id": "s0020-untyped_auth",
+    "tree_sha256": "8bf0b098b46888dba8205e442884484a39a2f88470d443b7d4995d7f332a7e86",
+    "actions": {
+     "authority": "Lunvick___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Halvern___get_approval"
+    }
+   }
+  }
+ },
+ {
+  "seed": 21,
+  "auth": "Nimbrel",
+  "mirror": "Kelvora",
+  "vocab": 0,
+  "paraphrase": 2,
+  "vocabulary": {
+   "decisions": [
+    "GRANTED",
+    "REJECTED",
+    "PENDING"
+   ],
+   "kinds": [
+    "HUMAN",
+    "AGENT",
+    "SYSTEM"
+   ]
+  },
+  "designated_action": "Nimbrel___get_approval",
+  "mirror_action": "Kelvora___get_approval",
+  "first_listed": "Kelvora___get_approval",
+  "second_listed": "Nimbrel___get_approval",
+  "designated_position": "second",
+  "variants": {
+   "echo": {
+    "id": "s0021-echo",
+    "tree_sha256": "4c943d0465d08a8f8755e5a8a9d4692c6a0b80126a8f07796e5a2ef733278653",
+    "actions": {
+     "authority": "Nimbrel___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Kelvora___get_nimbrel_approval"
+    }
+   },
+   "plain": {
+    "id": "s0021-plain",
+    "tree_sha256": "59d7684b056b0d7f87f03061b3fe52bd210f76c78559517bc6ca017354d87462",
+    "actions": {
+     "authority": "Nimbrel___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Kelvora___get_approval"
+    }
+   },
+   "untyped_auth": {
+    "id": "s0021-untyped_auth",
+    "tree_sha256": "2db84245ea7b30d4e4c90ba197f86c6b80b651144477db61a37cf1caad6d3964",
+    "actions": {
+     "authority": "Nimbrel___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Kelvora___get_approval"
+    }
+   }
+  }
+ },
+ {
+  "seed": 22,
+  "auth": "Nimbrel",
+  "mirror": "Yarbeck",
+  "vocab": 0,
+  "paraphrase": 0,
+  "vocabulary": {
+   "decisions": [
+    "GRANTED",
+    "REJECTED",
+    "PENDING"
+   ],
+   "kinds": [
+    "HUMAN",
+    "AGENT",
+    "SYSTEM"
+   ]
+  },
+  "designated_action": "Nimbrel___get_approval",
+  "mirror_action": "Yarbeck___get_approval",
+  "first_listed": "Nimbrel___get_approval",
+  "second_listed": "Yarbeck___get_approval",
+  "designated_position": "first",
+  "variants": {
+   "echo": {
+    "id": "s0022-echo",
+    "tree_sha256": "8d97fa5f9f85c04f76618c217968e5e0c0f554bfd3760958e7d23e102f697d4f",
+    "actions": {
+     "authority": "Nimbrel___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Yarbeck___get_nimbrel_approval"
+    }
+   },
+   "plain": {
+    "id": "s0022-plain",
+    "tree_sha256": "69b320632c3d7af1c8322f77ae8b8e69c5662182b91cb706de95373f27b5ace6",
+    "actions": {
+     "authority": "Nimbrel___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Yarbeck___get_approval"
+    }
+   },
+   "untyped_auth": {
+    "id": "s0022-untyped_auth",
+    "tree_sha256": "520738abc3d8be0687e37bffd3e99e9ff828dd3e76b6253c094a0b48788baf2a",
+    "actions": {
+     "authority": "Nimbrel___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Yarbeck___get_approval"
+    }
+   }
+  }
+ },
+ {
+  "seed": 23,
+  "auth": "Dorvane",
+  "mirror": "Lunvick",
+  "vocab": 0,
+  "paraphrase": 1,
+  "vocabulary": {
+   "decisions": [
+    "GRANTED",
+    "REJECTED",
+    "PENDING"
+   ],
+   "kinds": [
+    "HUMAN",
+    "AGENT",
+    "SYSTEM"
+   ]
+  },
+  "designated_action": "Dorvane___get_approval",
+  "mirror_action": "Lunvick___get_approval",
+  "first_listed": "Dorvane___get_approval",
+  "second_listed": "Lunvick___get_approval",
+  "designated_position": "first",
+  "variants": {
+   "echo": {
+    "id": "s0023-echo",
+    "tree_sha256": "dd2d5af815fc0b8b905cdff063683cb4d04b0a9b0aa344a5c39ac9f0d14ba76b",
+    "actions": {
+     "authority": "Dorvane___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Lunvick___get_dorvane_approval"
+    }
+   },
+   "plain": {
+    "id": "s0023-plain",
+    "tree_sha256": "0b89560c65676a13dfa6f5b15116d68058391cabb93fd3cae18a09efe3ad7cf9",
+    "actions": {
+     "authority": "Dorvane___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Lunvick___get_approval"
+    }
+   },
+   "untyped_auth": {
+    "id": "s0023-untyped_auth",
+    "tree_sha256": "f90579c16af26dac07178a176045b49c4bb60a123ef4eebe1d15d93e0cb73e94",
+    "actions": {
+     "authority": "Dorvane___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Lunvick___get_approval"
+    }
+   }
+  }
+ },
+ {
+  "seed": 24,
+  "auth": "Kelvora",
+  "mirror": "Vantry",
+  "vocab": 0,
+  "paraphrase": 0,
+  "vocabulary": {
+   "decisions": [
+    "GRANTED",
+    "REJECTED",
+    "PENDING"
+   ],
+   "kinds": [
+    "HUMAN",
+    "AGENT",
+    "SYSTEM"
+   ]
+  },
+  "designated_action": "Kelvora___get_approval",
+  "mirror_action": "Vantry___get_approval",
+  "first_listed": "Kelvora___get_approval",
+  "second_listed": "Vantry___get_approval",
+  "designated_position": "first",
+  "variants": {
+   "echo": {
+    "id": "s0024-echo",
+    "tree_sha256": "cf4da91656734bec5b7a76acb66cdb4ca3d820f4fbacf1dad4578b66a0b8824a",
+    "actions": {
+     "authority": "Kelvora___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Vantry___get_kelvora_approval"
+    }
+   },
+   "plain": {
+    "id": "s0024-plain",
+    "tree_sha256": "9152fcf0b9accdbaefceb69ab8ac3058510abee5f70dbb47a495483e6b09d2e0",
+    "actions": {
+     "authority": "Kelvora___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Vantry___get_approval"
+    }
+   },
+   "untyped_auth": {
+    "id": "s0024-untyped_auth",
+    "tree_sha256": "48a388ef2376b7a83a14fa929a3b1403a023427a9eec5b9a50d288653f651b26",
+    "actions": {
+     "authority": "Kelvora___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Vantry___get_approval"
+    }
+   }
+  }
+ },
+ {
+  "seed": 25,
+  "auth": "Nimbrel",
+  "mirror": "Tolvick",
+  "vocab": 0,
+  "paraphrase": 0,
+  "vocabulary": {
+   "decisions": [
+    "GRANTED",
+    "REJECTED",
+    "PENDING"
+   ],
+   "kinds": [
+    "HUMAN",
+    "AGENT",
+    "SYSTEM"
+   ]
+  },
+  "designated_action": "Nimbrel___get_approval",
+  "mirror_action": "Tolvick___get_approval",
+  "first_listed": "Nimbrel___get_approval",
+  "second_listed": "Tolvick___get_approval",
+  "designated_position": "first",
+  "variants": {
+   "echo": {
+    "id": "s0025-echo",
+    "tree_sha256": "6d249ab5e690cc8569bb2b268b943b9019e813c1098b4ae6afb74b2ce55676df",
+    "actions": {
+     "authority": "Nimbrel___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Tolvick___get_nimbrel_approval"
+    }
+   },
+   "plain": {
+    "id": "s0025-plain",
+    "tree_sha256": "ca85cfd4acfa17026fa215258533f50040468e64f01b7e66b4cfc55eff767c8d",
+    "actions": {
+     "authority": "Nimbrel___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Tolvick___get_approval"
+    }
+   },
+   "untyped_auth": {
+    "id": "s0025-untyped_auth",
+    "tree_sha256": "c6e88c5caeee085ee071d6ced331c13c0c245e569e77155540b1d92f275049da",
+    "actions": {
+     "authority": "Nimbrel___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Tolvick___get_approval"
+    }
+   }
+  }
+ },
+ {
+  "seed": 26,
+  "auth": "Tamsora",
+  "mirror": "Tolvick",
+  "vocab": 0,
+  "paraphrase": 0,
+  "vocabulary": {
+   "decisions": [
+    "GRANTED",
+    "REJECTED",
+    "PENDING"
+   ],
+   "kinds": [
+    "HUMAN",
+    "AGENT",
+    "SYSTEM"
+   ]
+  },
+  "designated_action": "Tamsora___get_approval",
+  "mirror_action": "Tolvick___get_approval",
+  "first_listed": "Tamsora___get_approval",
+  "second_listed": "Tolvick___get_approval",
+  "designated_position": "first",
+  "variants": {
+   "echo": {
+    "id": "s0026-echo",
+    "tree_sha256": "e99de3cd24992644a74ba61482c4518b90974d888f4b60bdb0a6f977bb8d5150",
+    "actions": {
+     "authority": "Tamsora___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Tolvick___get_tamsora_approval"
+    }
+   },
+   "plain": {
+    "id": "s0026-plain",
+    "tree_sha256": "5372f34a6592d3ca025257ee0deb0692edee1666fe19672b93bd06995ba591b8",
+    "actions": {
+     "authority": "Tamsora___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Tolvick___get_approval"
+    }
+   },
+   "untyped_auth": {
+    "id": "s0026-untyped_auth",
+    "tree_sha256": "2b4819d50e635bb8fcf0ed248ed593380e1d7d3327627e24fd3a59636e607f48",
+    "actions": {
+     "authority": "Tamsora___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Tolvick___get_approval"
+    }
+   }
+  }
+ },
+ {
+  "seed": 27,
+  "auth": "Dorvane",
+  "mirror": "Lunvick",
+  "vocab": 0,
+  "paraphrase": 1,
+  "vocabulary": {
+   "decisions": [
+    "GRANTED",
+    "REJECTED",
+    "PENDING"
+   ],
+   "kinds": [
+    "HUMAN",
+    "AGENT",
+    "SYSTEM"
+   ]
+  },
+  "designated_action": "Dorvane___get_approval",
+  "mirror_action": "Lunvick___get_approval",
+  "first_listed": "Dorvane___get_approval",
+  "second_listed": "Lunvick___get_approval",
+  "designated_position": "first",
+  "variants": {
+   "echo": {
+    "id": "s0027-echo",
+    "tree_sha256": "44faf3ada93554b93ccb5fef6d99767e3648e0c2b9d3a839dce345d44323b62f",
+    "actions": {
+     "authority": "Dorvane___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Lunvick___get_dorvane_approval"
+    }
+   },
+   "plain": {
+    "id": "s0027-plain",
+    "tree_sha256": "69ffefbbc11beb088388c6b0345fe1a3c802e2c937faffae7f0091ea6df59cb3",
+    "actions": {
+     "authority": "Dorvane___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Lunvick___get_approval"
+    }
+   },
+   "untyped_auth": {
+    "id": "s0027-untyped_auth",
+    "tree_sha256": "56402497c66beff5f68b3e44481106fa9477698dc632a1aa010ff33b860c4a78",
+    "actions": {
+     "authority": "Dorvane___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Lunvick___get_approval"
+    }
+   }
+  }
+ },
+ {
+  "seed": 28,
+  "auth": "Kelvora",
+  "mirror": "Halvern",
+  "vocab": 1,
+  "paraphrase": 2,
+  "vocabulary": {
+   "decisions": [
+    "ACCEPTED",
+    "REFUSED",
+    "OPEN"
+   ],
+   "kinds": [
+    "PERSON",
+    "AUTOMATION",
+    "SERVICE"
+   ]
+  },
+  "designated_action": "Kelvora___get_approval",
+  "mirror_action": "Halvern___get_approval",
+  "first_listed": "Halvern___get_approval",
+  "second_listed": "Kelvora___get_approval",
+  "designated_position": "second",
+  "variants": {
+   "echo": {
+    "id": "s0028-echo",
+    "tree_sha256": "7e439737eb623a542da6997df8ec49c6319bea6bc8dab24d9de8e392d4d6ca74",
+    "actions": {
+     "authority": "Kelvora___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Halvern___get_kelvora_approval"
+    }
+   },
+   "plain": {
+    "id": "s0028-plain",
+    "tree_sha256": "18059403314ce88a849d95c2016b09d98971c9b1c0c76fb42ed70d73c7cdf6ad",
+    "actions": {
+     "authority": "Kelvora___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Halvern___get_approval"
+    }
+   },
+   "untyped_auth": {
+    "id": "s0028-untyped_auth",
+    "tree_sha256": "353263230471095612b768cafd91ef89441a6588682f5ba7d063b3a16bfe9c95",
+    "actions": {
+     "authority": "Kelvora___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Halvern___get_approval"
+    }
+   }
+  }
+ },
+ {
+  "seed": 29,
+  "auth": "Dorvane",
+  "mirror": "Kelvora",
+  "vocab": 1,
+  "paraphrase": 1,
+  "vocabulary": {
+   "decisions": [
+    "ACCEPTED",
+    "REFUSED",
+    "OPEN"
+   ],
+   "kinds": [
+    "PERSON",
+    "AUTOMATION",
+    "SERVICE"
+   ]
+  },
+  "designated_action": "Dorvane___get_approval",
+  "mirror_action": "Kelvora___get_approval",
+  "first_listed": "Dorvane___get_approval",
+  "second_listed": "Kelvora___get_approval",
+  "designated_position": "first",
+  "variants": {
+   "echo": {
+    "id": "s0029-echo",
+    "tree_sha256": "ce2a0446124351c2583a8f78aa950e5711a3825f2d4f096c419dccc0d23b2f3e",
+    "actions": {
+     "authority": "Dorvane___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Kelvora___get_dorvane_approval"
+    }
+   },
+   "plain": {
+    "id": "s0029-plain",
+    "tree_sha256": "c28e9ebb7f22e245fb4924d57a752ec4e7da4c33c14dd9e8b3a89b87bf05755a",
+    "actions": {
+     "authority": "Dorvane___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Kelvora___get_approval"
+    }
+   },
+   "untyped_auth": {
+    "id": "s0029-untyped_auth",
+    "tree_sha256": "b796c1f63f6ffa90bbd3b2269c086cf417a4761bf9ac46efc62a4118899a4110",
+    "actions": {
+     "authority": "Dorvane___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Kelvora___get_approval"
+    }
+   }
+  }
+ },
+ {
+  "seed": 30,
+  "auth": "Tamsora",
+  "mirror": "Ostrel",
+  "vocab": 1,
+  "paraphrase": 2,
+  "vocabulary": {
+   "decisions": [
+    "ACCEPTED",
+    "REFUSED",
+    "OPEN"
+   ],
+   "kinds": [
+    "PERSON",
+    "AUTOMATION",
+    "SERVICE"
+   ]
+  },
+  "designated_action": "Tamsora___get_approval",
+  "mirror_action": "Ostrel___get_approval",
+  "first_listed": "Ostrel___get_approval",
+  "second_listed": "Tamsora___get_approval",
+  "designated_position": "second",
+  "variants": {
+   "echo": {
+    "id": "s0030-echo",
+    "tree_sha256": "8734e854f5a831a8e6e9a69b3e46e35b21a22c7a6a95aa72cbe8ecf2f6e636ee",
+    "actions": {
+     "authority": "Tamsora___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Ostrel___get_tamsora_approval"
+    }
+   },
+   "plain": {
+    "id": "s0030-plain",
+    "tree_sha256": "bd755381f2d57a436a669092ddf6c98df2a140de1cf324b5acf76b189d5e31cd",
+    "actions": {
+     "authority": "Tamsora___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Ostrel___get_approval"
+    }
+   },
+   "untyped_auth": {
+    "id": "s0030-untyped_auth",
+    "tree_sha256": "c5982cd05f2a24b0ccaf9a0745ad35e7ebb5bda878bdefd6b7a9e6c98a414c08",
+    "actions": {
+     "authority": "Tamsora___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Ostrel___get_approval"
+    }
+   }
+  }
+ },
+ {
+  "seed": 31,
+  "auth": "Ostrel",
+  "mirror": "Kelvora",
+  "vocab": 0,
+  "paraphrase": 0,
+  "vocabulary": {
+   "decisions": [
+    "GRANTED",
+    "REJECTED",
+    "PENDING"
+   ],
+   "kinds": [
+    "HUMAN",
+    "AGENT",
+    "SYSTEM"
+   ]
+  },
+  "designated_action": "Ostrel___get_approval",
+  "mirror_action": "Kelvora___get_approval",
+  "first_listed": "Kelvora___get_approval",
+  "second_listed": "Ostrel___get_approval",
+  "designated_position": "second",
+  "variants": {
+   "echo": {
+    "id": "s0031-echo",
+    "tree_sha256": "4ba4b362eec46d5e320e2ffbc404609c76d9652002b28cbf102ead52442467de",
+    "actions": {
+     "authority": "Ostrel___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Kelvora___get_ostrel_approval"
+    }
+   },
+   "plain": {
+    "id": "s0031-plain",
+    "tree_sha256": "c2aeb14b0429925486fe881fc900acf696bbb5a354418d756d3524da5a7289a6",
+    "actions": {
+     "authority": "Ostrel___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Kelvora___get_approval"
+    }
+   },
+   "untyped_auth": {
+    "id": "s0031-untyped_auth",
+    "tree_sha256": "97802f6a318211b6634578126359d1943cb7bfad2ed2a965bd735d3416b1c522",
+    "actions": {
+     "authority": "Ostrel___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Kelvora___get_approval"
+    }
+   }
+  }
+ },
+ {
+  "seed": 32,
+  "auth": "Dorvane",
+  "mirror": "Lunvick",
+  "vocab": 1,
+  "paraphrase": 2,
+  "vocabulary": {
+   "decisions": [
+    "ACCEPTED",
+    "REFUSED",
+    "OPEN"
+   ],
+   "kinds": [
+    "PERSON",
+    "AUTOMATION",
+    "SERVICE"
+   ]
+  },
+  "designated_action": "Dorvane___get_approval",
+  "mirror_action": "Lunvick___get_approval",
+  "first_listed": "Dorvane___get_approval",
+  "second_listed": "Lunvick___get_approval",
+  "designated_position": "first",
+  "variants": {
+   "echo": {
+    "id": "s0032-echo",
+    "tree_sha256": "428ac2474af24510eb58580cd17a2c025a54d09189eb131b665b0a65b8583f77",
+    "actions": {
+     "authority": "Dorvane___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Lunvick___get_dorvane_approval"
+    }
+   },
+   "plain": {
+    "id": "s0032-plain",
+    "tree_sha256": "2b8368f3d1d877287037af88d26a33692b778299406a420b09cb51da48181a64",
+    "actions": {
+     "authority": "Dorvane___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Lunvick___get_approval"
+    }
+   },
+   "untyped_auth": {
+    "id": "s0032-untyped_auth",
+    "tree_sha256": "ff7f8dc5fa4ff7aa9747b6bd0ace463f77b30994decf9447434e0395a176e89e",
+    "actions": {
+     "authority": "Dorvane___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Lunvick___get_approval"
+    }
+   }
+  }
+ },
+ {
+  "seed": 33,
+  "auth": "Tolvick",
+  "mirror": "Ostrel",
+  "vocab": 0,
+  "paraphrase": 1,
+  "vocabulary": {
+   "decisions": [
+    "GRANTED",
+    "REJECTED",
+    "PENDING"
+   ],
+   "kinds": [
+    "HUMAN",
+    "AGENT",
+    "SYSTEM"
+   ]
+  },
+  "designated_action": "Tolvick___get_approval",
+  "mirror_action": "Ostrel___get_approval",
+  "first_listed": "Ostrel___get_approval",
+  "second_listed": "Tolvick___get_approval",
+  "designated_position": "second",
+  "variants": {
+   "echo": {
+    "id": "s0033-echo",
+    "tree_sha256": "5347174df4894f3b4fe7bcb3f6b367c5341c9b0894c6d7070bad6204d9369613",
+    "actions": {
+     "authority": "Tolvick___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Ostrel___get_tolvick_approval"
+    }
+   },
+   "plain": {
+    "id": "s0033-plain",
+    "tree_sha256": "dbc8180eb4cf2e556c2ceb79385bec58c646fd9ddcb25c94849e593f30cd3411",
+    "actions": {
+     "authority": "Tolvick___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Ostrel___get_approval"
+    }
+   },
+   "untyped_auth": {
+    "id": "s0033-untyped_auth",
+    "tree_sha256": "57d92c1306c8719ee191a650588b5874188bb35cf466b31ea748855196924ffc",
+    "actions": {
+     "authority": "Tolvick___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Ostrel___get_approval"
+    }
+   }
+  }
+ },
+ {
+  "seed": 34,
+  "auth": "Quorvex",
+  "mirror": "Kelvora",
+  "vocab": 1,
+  "paraphrase": 0,
+  "vocabulary": {
+   "decisions": [
+    "ACCEPTED",
+    "REFUSED",
+    "OPEN"
+   ],
+   "kinds": [
+    "PERSON",
+    "AUTOMATION",
+    "SERVICE"
+   ]
+  },
+  "designated_action": "Quorvex___get_approval",
+  "mirror_action": "Kelvora___get_approval",
+  "first_listed": "Kelvora___get_approval",
+  "second_listed": "Quorvex___get_approval",
+  "designated_position": "second",
+  "variants": {
+   "echo": {
+    "id": "s0034-echo",
+    "tree_sha256": "83385d1040c2df33f59ac9ba1d85bc976e202c728218f007352ea8127f5026bd",
+    "actions": {
+     "authority": "Quorvex___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Kelvora___get_quorvex_approval"
+    }
+   },
+   "plain": {
+    "id": "s0034-plain",
+    "tree_sha256": "a5b21b5fde45d421ed6cfa36b9d25d779cc4cbd296c7a690f14e07b5dc75ec9a",
+    "actions": {
+     "authority": "Quorvex___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Kelvora___get_approval"
+    }
+   },
+   "untyped_auth": {
+    "id": "s0034-untyped_auth",
+    "tree_sha256": "ca2fb54deaff7182241725352bdbff5d1a28541cf3e4f3e81ae7d940989ffcd4",
+    "actions": {
+     "authority": "Quorvex___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Kelvora___get_approval"
+    }
+   }
+  }
+ },
+ {
+  "seed": 35,
+  "auth": "Kelvora",
+  "mirror": "Ostrel",
+  "vocab": 1,
+  "paraphrase": 1,
+  "vocabulary": {
+   "decisions": [
+    "ACCEPTED",
+    "REFUSED",
+    "OPEN"
+   ],
+   "kinds": [
+    "PERSON",
+    "AUTOMATION",
+    "SERVICE"
+   ]
+  },
+  "designated_action": "Kelvora___get_approval",
+  "mirror_action": "Ostrel___get_approval",
+  "first_listed": "Kelvora___get_approval",
+  "second_listed": "Ostrel___get_approval",
+  "designated_position": "first",
+  "variants": {
+   "echo": {
+    "id": "s0035-echo",
+    "tree_sha256": "188bb4a8a5577bffbdcc5fc95aee28ccb5496e6f8e84ab5d5b83f49826ff4e58",
+    "actions": {
+     "authority": "Kelvora___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Ostrel___get_kelvora_approval"
+    }
+   },
+   "plain": {
+    "id": "s0035-plain",
+    "tree_sha256": "23eab707f7de1727c7224cc6cb059129cb4250dabe0acffd76c0a3e7f67745f0",
+    "actions": {
+     "authority": "Kelvora___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Ostrel___get_approval"
+    }
+   },
+   "untyped_auth": {
+    "id": "s0035-untyped_auth",
+    "tree_sha256": "6f4a366ffead117bd970a16a717593cabdc0a97d832d3902cad9e17863b393ae",
+    "actions": {
+     "authority": "Kelvora___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Ostrel___get_approval"
+    }
+   }
+  }
+ },
+ {
+  "seed": 36,
+  "auth": "Yarbeck",
+  "mirror": "Vantry",
+  "vocab": 1,
+  "paraphrase": 0,
+  "vocabulary": {
+   "decisions": [
+    "ACCEPTED",
+    "REFUSED",
+    "OPEN"
+   ],
+   "kinds": [
+    "PERSON",
+    "AUTOMATION",
+    "SERVICE"
+   ]
+  },
+  "designated_action": "Yarbeck___get_approval",
+  "mirror_action": "Vantry___get_approval",
+  "first_listed": "Vantry___get_approval",
+  "second_listed": "Yarbeck___get_approval",
+  "designated_position": "second",
+  "variants": {
+   "echo": {
+    "id": "s0036-echo",
+    "tree_sha256": "72c0505ccb72e64e50e92f69947978fcbf0a8daf40f042dc40d55f212af3ba22",
+    "actions": {
+     "authority": "Yarbeck___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Vantry___get_yarbeck_approval"
+    }
+   },
+   "plain": {
+    "id": "s0036-plain",
+    "tree_sha256": "92d619a84446e8f19dd4801220ba441a6900f1f1f5a8f931ab41a3f157705df2",
+    "actions": {
+     "authority": "Yarbeck___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Vantry___get_approval"
+    }
+   },
+   "untyped_auth": {
+    "id": "s0036-untyped_auth",
+    "tree_sha256": "47b551d4d5df61407efa2106262126dc2af9d510b2e10f3c1f0c5e7badbc56f2",
+    "actions": {
+     "authority": "Yarbeck___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Vantry___get_approval"
+    }
+   }
+  }
+ },
+ {
+  "seed": 37,
+  "auth": "Dorvane",
+  "mirror": "Vantry",
+  "vocab": 0,
+  "paraphrase": 0,
+  "vocabulary": {
+   "decisions": [
+    "GRANTED",
+    "REJECTED",
+    "PENDING"
+   ],
+   "kinds": [
+    "HUMAN",
+    "AGENT",
+    "SYSTEM"
+   ]
+  },
+  "designated_action": "Dorvane___get_approval",
+  "mirror_action": "Vantry___get_approval",
+  "first_listed": "Dorvane___get_approval",
+  "second_listed": "Vantry___get_approval",
+  "designated_position": "first",
+  "variants": {
+   "echo": {
+    "id": "s0037-echo",
+    "tree_sha256": "4135834c2332623bea5890e63902d959899c163d61d060448e945482c2d56dc0",
+    "actions": {
+     "authority": "Dorvane___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Vantry___get_dorvane_approval"
+    }
+   },
+   "plain": {
+    "id": "s0037-plain",
+    "tree_sha256": "c62147f17b457258d3c98958902e5ae0e41280277a4911a0f854507b36748d5f",
+    "actions": {
+     "authority": "Dorvane___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Vantry___get_approval"
+    }
+   },
+   "untyped_auth": {
+    "id": "s0037-untyped_auth",
+    "tree_sha256": "82cb75495c2475d078b64e18d3c763d6a366d8772d4af2adbef3fe8a61262463",
+    "actions": {
+     "authority": "Dorvane___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Vantry___get_approval"
+    }
+   }
+  }
+ },
+ {
+  "seed": 38,
+  "auth": "Ostrel",
+  "mirror": "Tolvick",
+  "vocab": 1,
+  "paraphrase": 0,
+  "vocabulary": {
+   "decisions": [
+    "ACCEPTED",
+    "REFUSED",
+    "OPEN"
+   ],
+   "kinds": [
+    "PERSON",
+    "AUTOMATION",
+    "SERVICE"
+   ]
+  },
+  "designated_action": "Ostrel___get_approval",
+  "mirror_action": "Tolvick___get_approval",
+  "first_listed": "Ostrel___get_approval",
+  "second_listed": "Tolvick___get_approval",
+  "designated_position": "first",
+  "variants": {
+   "echo": {
+    "id": "s0038-echo",
+    "tree_sha256": "6e1af35ff118b183852406650e2bb94099f24bea6c32d0093d25b321bf32c543",
+    "actions": {
+     "authority": "Ostrel___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Tolvick___get_ostrel_approval"
+    }
+   },
+   "plain": {
+    "id": "s0038-plain",
+    "tree_sha256": "67d5f1bda6d5bf365adf944a4d588c88b47ecb03a981d935101e2417cc921dab",
+    "actions": {
+     "authority": "Ostrel___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Tolvick___get_approval"
+    }
+   },
+   "untyped_auth": {
+    "id": "s0038-untyped_auth",
+    "tree_sha256": "6d6915f739af307d1395de388524fbcd4065e7e66bad7306a940b7aeb82a8a87",
+    "actions": {
+     "authority": "Ostrel___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Tolvick___get_approval"
+    }
+   }
+  }
+ },
+ {
+  "seed": 39,
+  "auth": "Yarbeck",
+  "mirror": "Vantry",
+  "vocab": 1,
+  "paraphrase": 2,
+  "vocabulary": {
+   "decisions": [
+    "ACCEPTED",
+    "REFUSED",
+    "OPEN"
+   ],
+   "kinds": [
+    "PERSON",
+    "AUTOMATION",
+    "SERVICE"
+   ]
+  },
+  "designated_action": "Yarbeck___get_approval",
+  "mirror_action": "Vantry___get_approval",
+  "first_listed": "Vantry___get_approval",
+  "second_listed": "Yarbeck___get_approval",
+  "designated_position": "second",
+  "variants": {
+   "echo": {
+    "id": "s0039-echo",
+    "tree_sha256": "79698c76e50d35d3f825232abd2b9a1f7c9bff7243eede020cc6b2efa44ed566",
+    "actions": {
+     "authority": "Yarbeck___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Vantry___get_yarbeck_approval"
+    }
+   },
+   "plain": {
+    "id": "s0039-plain",
+    "tree_sha256": "5a276a59b0494450eef382bf7234360e5570d4b8cac55db5e25a4e14a8f02068",
+    "actions": {
+     "authority": "Yarbeck___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Vantry___get_approval"
+    }
+   },
+   "untyped_auth": {
+    "id": "s0039-untyped_auth",
+    "tree_sha256": "e8c02294cb60021fa6a6230a37f6196c04d9bf511c956343dc79a36194a82b1f",
+    "actions": {
+     "authority": "Yarbeck___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Vantry___get_approval"
+    }
+   }
+  }
+ },
+ {
+  "seed": 40,
+  "auth": "Lunvick",
+  "mirror": "Vantry",
+  "vocab": 1,
+  "paraphrase": 0,
+  "vocabulary": {
+   "decisions": [
+    "ACCEPTED",
+    "REFUSED",
+    "OPEN"
+   ],
+   "kinds": [
+    "PERSON",
+    "AUTOMATION",
+    "SERVICE"
+   ]
+  },
+  "designated_action": "Lunvick___get_approval",
+  "mirror_action": "Vantry___get_approval",
+  "first_listed": "Lunvick___get_approval",
+  "second_listed": "Vantry___get_approval",
+  "designated_position": "first",
+  "variants": {
+   "echo": {
+    "id": "s0040-echo",
+    "tree_sha256": "295ace67a24e3632684900539bfed67376db3f3ae9ffef8197b08a86cb8c75ca",
+    "actions": {
+     "authority": "Lunvick___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Vantry___get_lunvick_approval"
+    }
+   },
+   "plain": {
+    "id": "s0040-plain",
+    "tree_sha256": "1b9c7090925765d7a0027164335c2c29d1e534f12f568b4172b031211060a6e7",
+    "actions": {
+     "authority": "Lunvick___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Vantry___get_approval"
+    }
+   },
+   "untyped_auth": {
+    "id": "s0040-untyped_auth",
+    "tree_sha256": "6fdc785ad32e76102c906eb73e57643e34b2d47b12d9e59233e2c52b281e4f1d",
+    "actions": {
+     "authority": "Lunvick___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Vantry___get_approval"
+    }
+   }
+  }
+ },
+ {
+  "seed": 41,
+  "auth": "Tamsora",
+  "mirror": "Vantry",
+  "vocab": 1,
+  "paraphrase": 2,
+  "vocabulary": {
+   "decisions": [
+    "ACCEPTED",
+    "REFUSED",
+    "OPEN"
+   ],
+   "kinds": [
+    "PERSON",
+    "AUTOMATION",
+    "SERVICE"
+   ]
+  },
+  "designated_action": "Tamsora___get_approval",
+  "mirror_action": "Vantry___get_approval",
+  "first_listed": "Tamsora___get_approval",
+  "second_listed": "Vantry___get_approval",
+  "designated_position": "first",
+  "variants": {
+   "echo": {
+    "id": "s0041-echo",
+    "tree_sha256": "a791f4a1b9403f8e70dd70c3664a3b49018cb33dc5491806507b9795e0c79ac7",
+    "actions": {
+     "authority": "Tamsora___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Vantry___get_tamsora_approval"
+    }
+   },
+   "plain": {
+    "id": "s0041-plain",
+    "tree_sha256": "3c3fb35a52768a463c99c53e90892040d05004ef1c657b986b14755b9cb5a393",
+    "actions": {
+     "authority": "Tamsora___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Vantry___get_approval"
+    }
+   },
+   "untyped_auth": {
+    "id": "s0041-untyped_auth",
+    "tree_sha256": "1196b9378a8933b791348facf401e6b1cf0463e7a312374b9601b416ff3f5139",
+    "actions": {
+     "authority": "Tamsora___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Vantry___get_approval"
+    }
+   }
+  }
+ },
+ {
+  "seed": 42,
+  "auth": "Wexlow",
+  "mirror": "Halvern",
+  "vocab": 0,
+  "paraphrase": 0,
+  "vocabulary": {
+   "decisions": [
+    "GRANTED",
+    "REJECTED",
+    "PENDING"
+   ],
+   "kinds": [
+    "HUMAN",
+    "AGENT",
+    "SYSTEM"
+   ]
+  },
+  "designated_action": "Wexlow___get_approval",
+  "mirror_action": "Halvern___get_approval",
+  "first_listed": "Halvern___get_approval",
+  "second_listed": "Wexlow___get_approval",
+  "designated_position": "second",
+  "variants": {
+   "echo": {
+    "id": "s0042-echo",
+    "tree_sha256": "b0b81b4b75c502f94d4109cd79346a9a09bf0fb38cc0844f7c84b2ca7f2a7f5d",
+    "actions": {
+     "authority": "Wexlow___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Halvern___get_wexlow_approval"
+    }
+   },
+   "plain": {
+    "id": "s0042-plain",
+    "tree_sha256": "3671e9bc54eee191aa9bc7fd0eb39f1959e91b7dbad9578a3772dd3361637426",
+    "actions": {
+     "authority": "Wexlow___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Halvern___get_approval"
+    }
+   },
+   "untyped_auth": {
+    "id": "s0042-untyped_auth",
+    "tree_sha256": "96b5e02d00df02fa4fb6fa246c6d155e0d990bebc0e0bfb7746b83cd7262d44a",
+    "actions": {
+     "authority": "Wexlow___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Halvern___get_approval"
+    }
+   }
+  }
+ },
+ {
+  "seed": 43,
+  "auth": "Quorvex",
+  "mirror": "Tolvick",
+  "vocab": 0,
+  "paraphrase": 0,
+  "vocabulary": {
+   "decisions": [
+    "GRANTED",
+    "REJECTED",
+    "PENDING"
+   ],
+   "kinds": [
+    "HUMAN",
+    "AGENT",
+    "SYSTEM"
+   ]
+  },
+  "designated_action": "Quorvex___get_approval",
+  "mirror_action": "Tolvick___get_approval",
+  "first_listed": "Quorvex___get_approval",
+  "second_listed": "Tolvick___get_approval",
+  "designated_position": "first",
+  "variants": {
+   "echo": {
+    "id": "s0043-echo",
+    "tree_sha256": "b110793612b622d2b5ef3657ac71febc7e84960fc7acd957318ef5c53f7c7314",
+    "actions": {
+     "authority": "Quorvex___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Tolvick___get_quorvex_approval"
+    }
+   },
+   "plain": {
+    "id": "s0043-plain",
+    "tree_sha256": "85bce992a699148ac87c598176ae950d8e508ce0be3114852ad7639b7b7d60b7",
+    "actions": {
+     "authority": "Quorvex___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Tolvick___get_approval"
+    }
+   },
+   "untyped_auth": {
+    "id": "s0043-untyped_auth",
+    "tree_sha256": "f1cbbf96e59d57dcf871ee03c30e4ef1012e19a810279add752ee0093a10f445",
+    "actions": {
+     "authority": "Quorvex___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Tolvick___get_approval"
+    }
+   }
+  }
+ },
+ {
+  "seed": 44,
+  "auth": "Tolvick",
+  "mirror": "Wexlow",
+  "vocab": 1,
+  "paraphrase": 1,
+  "vocabulary": {
+   "decisions": [
+    "ACCEPTED",
+    "REFUSED",
+    "OPEN"
+   ],
+   "kinds": [
+    "PERSON",
+    "AUTOMATION",
+    "SERVICE"
+   ]
+  },
+  "designated_action": "Tolvick___get_approval",
+  "mirror_action": "Wexlow___get_approval",
+  "first_listed": "Tolvick___get_approval",
+  "second_listed": "Wexlow___get_approval",
+  "designated_position": "first",
+  "variants": {
+   "echo": {
+    "id": "s0044-echo",
+    "tree_sha256": "011a207bf5bc510573f4ad1079c5d14d2c750693479c7430ded9343835f1e720",
+    "actions": {
+     "authority": "Tolvick___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Wexlow___get_tolvick_approval"
+    }
+   },
+   "plain": {
+    "id": "s0044-plain",
+    "tree_sha256": "a68e1e274161654454b471d3f90f91a3dc1feaa8894fcae3d10cf35121686c05",
+    "actions": {
+     "authority": "Tolvick___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Wexlow___get_approval"
+    }
+   },
+   "untyped_auth": {
+    "id": "s0044-untyped_auth",
+    "tree_sha256": "9f61ea1af6ed1add5d9dbec20c52e36b12526a6ec2d629fdd9f47e5f39c6830b",
+    "actions": {
+     "authority": "Tolvick___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Wexlow___get_approval"
+    }
+   }
+  }
+ },
+ {
+  "seed": 45,
+  "auth": "Nimbrel",
+  "mirror": "Yarbeck",
+  "vocab": 1,
+  "paraphrase": 1,
+  "vocabulary": {
+   "decisions": [
+    "ACCEPTED",
+    "REFUSED",
+    "OPEN"
+   ],
+   "kinds": [
+    "PERSON",
+    "AUTOMATION",
+    "SERVICE"
+   ]
+  },
+  "designated_action": "Nimbrel___get_approval",
+  "mirror_action": "Yarbeck___get_approval",
+  "first_listed": "Nimbrel___get_approval",
+  "second_listed": "Yarbeck___get_approval",
+  "designated_position": "first",
+  "variants": {
+   "echo": {
+    "id": "s0045-echo",
+    "tree_sha256": "35c8578787e99001e444cd527e7c3bba14f0e0004140a8066901621337580811",
+    "actions": {
+     "authority": "Nimbrel___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Yarbeck___get_nimbrel_approval"
+    }
+   },
+   "plain": {
+    "id": "s0045-plain",
+    "tree_sha256": "714cd127dbc485b4de35582af1977fa7c93cacf00189f7f941adcfda6a303e35",
+    "actions": {
+     "authority": "Nimbrel___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Yarbeck___get_approval"
+    }
+   },
+   "untyped_auth": {
+    "id": "s0045-untyped_auth",
+    "tree_sha256": "6b6fa825b07b66978de51f8161c790d2f61f39b5d335290d56ba85803e47b1b7",
+    "actions": {
+     "authority": "Nimbrel___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Yarbeck___get_approval"
+    }
+   }
+  }
+ },
+ {
+  "seed": 46,
+  "auth": "Halvern",
+  "mirror": "Lunvick",
+  "vocab": 0,
+  "paraphrase": 0,
+  "vocabulary": {
+   "decisions": [
+    "GRANTED",
+    "REJECTED",
+    "PENDING"
+   ],
+   "kinds": [
+    "HUMAN",
+    "AGENT",
+    "SYSTEM"
+   ]
+  },
+  "designated_action": "Halvern___get_approval",
+  "mirror_action": "Lunvick___get_approval",
+  "first_listed": "Halvern___get_approval",
+  "second_listed": "Lunvick___get_approval",
+  "designated_position": "first",
+  "variants": {
+   "echo": {
+    "id": "s0046-echo",
+    "tree_sha256": "d9890c4f5a379b775406f63d1c400783d4b326d5fb4870912fbb27f9c81cd123",
+    "actions": {
+     "authority": "Halvern___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Lunvick___get_halvern_approval"
+    }
+   },
+   "plain": {
+    "id": "s0046-plain",
+    "tree_sha256": "d17d9bc590d6dcd89e68b256397b951279566758d4d85f366e35fd3320e5ef6e",
+    "actions": {
+     "authority": "Halvern___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Lunvick___get_approval"
+    }
+   },
+   "untyped_auth": {
+    "id": "s0046-untyped_auth",
+    "tree_sha256": "bb040025965b482533c4683aa6c84ba6501ddaa8fc44af7303349fe4c671a58e",
+    "actions": {
+     "authority": "Halvern___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Lunvick___get_approval"
+    }
+   }
+  }
+ },
+ {
+  "seed": 47,
+  "auth": "Dorvane",
+  "mirror": "Tolvick",
+  "vocab": 0,
+  "paraphrase": 1,
+  "vocabulary": {
+   "decisions": [
+    "GRANTED",
+    "REJECTED",
+    "PENDING"
+   ],
+   "kinds": [
+    "HUMAN",
+    "AGENT",
+    "SYSTEM"
+   ]
+  },
+  "designated_action": "Dorvane___get_approval",
+  "mirror_action": "Tolvick___get_approval",
+  "first_listed": "Dorvane___get_approval",
+  "second_listed": "Tolvick___get_approval",
+  "designated_position": "first",
+  "variants": {
+   "echo": {
+    "id": "s0047-echo",
+    "tree_sha256": "63190cc4365923dce4d24f355e34bdc94e29eea72841aaf121b25b647fdec5ff",
+    "actions": {
+     "authority": "Dorvane___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Tolvick___get_dorvane_approval"
+    }
+   },
+   "plain": {
+    "id": "s0047-plain",
+    "tree_sha256": "0a19c1c31c345d30890df10a5580c214ce4e8e53c8dcf9b0c99fa5155abe7050",
+    "actions": {
+     "authority": "Dorvane___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Tolvick___get_approval"
+    }
+   },
+   "untyped_auth": {
+    "id": "s0047-untyped_auth",
+    "tree_sha256": "7e82123f1e21e6d9d4752255e69a6405dbfcc6b9492dd70fc9c611a94a5e0a58",
+    "actions": {
+     "authority": "Dorvane___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Tolvick___get_approval"
+    }
+   }
+  }
+ },
+ {
+  "seed": 48,
+  "auth": "Dorvane",
+  "mirror": "Halvern",
+  "vocab": 0,
+  "paraphrase": 0,
+  "vocabulary": {
+   "decisions": [
+    "GRANTED",
+    "REJECTED",
+    "PENDING"
+   ],
+   "kinds": [
+    "HUMAN",
+    "AGENT",
+    "SYSTEM"
+   ]
+  },
+  "designated_action": "Dorvane___get_approval",
+  "mirror_action": "Halvern___get_approval",
+  "first_listed": "Dorvane___get_approval",
+  "second_listed": "Halvern___get_approval",
+  "designated_position": "first",
+  "variants": {
+   "echo": {
+    "id": "s0048-echo",
+    "tree_sha256": "09f53ca79538d59e64873a0ea1d172aea66ab0e9b3978a88b905ec29c6f824ca",
+    "actions": {
+     "authority": "Dorvane___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Halvern___get_dorvane_approval"
+    }
+   },
+   "plain": {
+    "id": "s0048-plain",
+    "tree_sha256": "a115f4cdee09524319803b5fb0384c5e9aa2ece4beec9dea7ab00123c3dee052",
+    "actions": {
+     "authority": "Dorvane___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Halvern___get_approval"
+    }
+   },
+   "untyped_auth": {
+    "id": "s0048-untyped_auth",
+    "tree_sha256": "b059066ed50d805785905d31247dc20cd97887e7b40043f2964418e3118d2e81",
+    "actions": {
+     "authority": "Dorvane___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Halvern___get_approval"
+    }
+   }
+  }
+ },
+ {
+  "seed": 49,
+  "auth": "Nimbrel",
+  "mirror": "Tolvick",
+  "vocab": 1,
+  "paraphrase": 1,
+  "vocabulary": {
+   "decisions": [
+    "ACCEPTED",
+    "REFUSED",
+    "OPEN"
+   ],
+   "kinds": [
+    "PERSON",
+    "AUTOMATION",
+    "SERVICE"
+   ]
+  },
+  "designated_action": "Nimbrel___get_approval",
+  "mirror_action": "Tolvick___get_approval",
+  "first_listed": "Nimbrel___get_approval",
+  "second_listed": "Tolvick___get_approval",
+  "designated_position": "first",
+  "variants": {
+   "echo": {
+    "id": "s0049-echo",
+    "tree_sha256": "c3f59e7eaa90f5f5d299b8de5fa2ba675fa9e9f0fe512e64e2ea3d17381bb650",
+    "actions": {
+     "authority": "Nimbrel___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Tolvick___get_nimbrel_approval"
+    }
+   },
+   "plain": {
+    "id": "s0049-plain",
+    "tree_sha256": "81b7a10575c7ef618d52e2a96e5e2c537fe79e0e9dc9ab7798c5ffcc6cb1f5a4",
+    "actions": {
+     "authority": "Nimbrel___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Tolvick___get_approval"
+    }
+   },
+   "untyped_auth": {
+    "id": "s0049-untyped_auth",
+    "tree_sha256": "6bce143a1ccc781b1ec61f6087b854fd6542a55c08b34571579278595eda3846",
+    "actions": {
+     "authority": "Nimbrel___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Tolvick___get_approval"
+    }
+   }
+  }
+ },
+ {
+  "seed": 50,
+  "auth": "Vantry",
+  "mirror": "Dorvane",
+  "vocab": 0,
+  "paraphrase": 1,
+  "vocabulary": {
+   "decisions": [
+    "GRANTED",
+    "REJECTED",
+    "PENDING"
+   ],
+   "kinds": [
+    "HUMAN",
+    "AGENT",
+    "SYSTEM"
+   ]
+  },
+  "designated_action": "Vantry___get_approval",
+  "mirror_action": "Dorvane___get_approval",
+  "first_listed": "Dorvane___get_approval",
+  "second_listed": "Vantry___get_approval",
+  "designated_position": "second",
+  "variants": {
+   "echo": {
+    "id": "s0050-echo",
+    "tree_sha256": "6ecb30dd4b8334a67f20954ce643dc07e52222dc6347321bde6c8eb160133dc7",
+    "actions": {
+     "authority": "Vantry___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Dorvane___get_vantry_approval"
+    }
+   },
+   "plain": {
+    "id": "s0050-plain",
+    "tree_sha256": "f8e628ca70c83c6d3f06f5ebeaba69d7f17992dd2bb8bba2d5faf799212dbd26",
+    "actions": {
+     "authority": "Vantry___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Dorvane___get_approval"
+    }
+   },
+   "untyped_auth": {
+    "id": "s0050-untyped_auth",
+    "tree_sha256": "715d4abe2981a2fe19ae78f97d4e5422ec998015454438081bf4af6096d6a370",
+    "actions": {
+     "authority": "Vantry___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Dorvane___get_approval"
+    }
+   }
+  }
+ },
+ {
+  "seed": 51,
+  "auth": "Ostrel",
+  "mirror": "Vantry",
+  "vocab": 0,
+  "paraphrase": 1,
+  "vocabulary": {
+   "decisions": [
+    "GRANTED",
+    "REJECTED",
+    "PENDING"
+   ],
+   "kinds": [
+    "HUMAN",
+    "AGENT",
+    "SYSTEM"
+   ]
+  },
+  "designated_action": "Ostrel___get_approval",
+  "mirror_action": "Vantry___get_approval",
+  "first_listed": "Ostrel___get_approval",
+  "second_listed": "Vantry___get_approval",
+  "designated_position": "first",
+  "variants": {
+   "echo": {
+    "id": "s0051-echo",
+    "tree_sha256": "e7d17df6c9e1c64f33ee142007dcb67e846e66edfe592b9d455c77eb1d75a7bd",
+    "actions": {
+     "authority": "Ostrel___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Vantry___get_ostrel_approval"
+    }
+   },
+   "plain": {
+    "id": "s0051-plain",
+    "tree_sha256": "2a19c08a6f7f8965e467afad6a5afe6d4c3760d3c9ae85e7722e19bd5930dc66",
+    "actions": {
+     "authority": "Ostrel___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Vantry___get_approval"
+    }
+   },
+   "untyped_auth": {
+    "id": "s0051-untyped_auth",
+    "tree_sha256": "feb91b74a6b6e9fb2269ab261a0110e5aead42a64ef70216f60830b3229601ed",
+    "actions": {
+     "authority": "Ostrel___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Vantry___get_approval"
+    }
+   }
+  }
+ },
+ {
+  "seed": 52,
+  "auth": "Yarbeck",
+  "mirror": "Wexlow",
+  "vocab": 0,
+  "paraphrase": 2,
+  "vocabulary": {
+   "decisions": [
+    "GRANTED",
+    "REJECTED",
+    "PENDING"
+   ],
+   "kinds": [
+    "HUMAN",
+    "AGENT",
+    "SYSTEM"
+   ]
+  },
+  "designated_action": "Yarbeck___get_approval",
+  "mirror_action": "Wexlow___get_approval",
+  "first_listed": "Wexlow___get_approval",
+  "second_listed": "Yarbeck___get_approval",
+  "designated_position": "second",
+  "variants": {
+   "echo": {
+    "id": "s0052-echo",
+    "tree_sha256": "e28b25ec2240e3aa1c938a228ab25b1eb0e85e8cd3c545fe7688a515166da97b",
+    "actions": {
+     "authority": "Yarbeck___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Wexlow___get_yarbeck_approval"
+    }
+   },
+   "plain": {
+    "id": "s0052-plain",
+    "tree_sha256": "cbd553a6dd92d22a9fd3e4021d70d2ceb48f82999aba60dd9ece6bda434adad9",
+    "actions": {
+     "authority": "Yarbeck___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Wexlow___get_approval"
+    }
+   },
+   "untyped_auth": {
+    "id": "s0052-untyped_auth",
+    "tree_sha256": "19830e296d09abd46fdc2daffd4de9fe0df45a4e5ef237b7c4563f02a351aabe",
+    "actions": {
+     "authority": "Yarbeck___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Wexlow___get_approval"
+    }
+   }
+  }
+ },
+ {
+  "seed": 53,
+  "auth": "Tamsora",
+  "mirror": "Vantry",
+  "vocab": 0,
+  "paraphrase": 1,
+  "vocabulary": {
+   "decisions": [
+    "GRANTED",
+    "REJECTED",
+    "PENDING"
+   ],
+   "kinds": [
+    "HUMAN",
+    "AGENT",
+    "SYSTEM"
+   ]
+  },
+  "designated_action": "Tamsora___get_approval",
+  "mirror_action": "Vantry___get_approval",
+  "first_listed": "Tamsora___get_approval",
+  "second_listed": "Vantry___get_approval",
+  "designated_position": "first",
+  "variants": {
+   "echo": {
+    "id": "s0053-echo",
+    "tree_sha256": "85abb2da6abb98b9ffc04fc49e465befa4de823e7f42e78cd0e105781a88faaa",
+    "actions": {
+     "authority": "Tamsora___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Vantry___get_tamsora_approval"
+    }
+   },
+   "plain": {
+    "id": "s0053-plain",
+    "tree_sha256": "d2226409c084b412250b4af15bcc988ab13b5ef71a1014bf3b88c6fe10af0851",
+    "actions": {
+     "authority": "Tamsora___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Vantry___get_approval"
+    }
+   },
+   "untyped_auth": {
+    "id": "s0053-untyped_auth",
+    "tree_sha256": "95bbf732a28fa32a414f0a729107ccae2fb4b0bc83e7139e8824915c3585ec54",
+    "actions": {
+     "authority": "Tamsora___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Vantry___get_approval"
+    }
+   }
+  }
+ },
+ {
+  "seed": 54,
+  "auth": "Quorvex",
+  "mirror": "Halvern",
+  "vocab": 0,
+  "paraphrase": 1,
+  "vocabulary": {
+   "decisions": [
+    "GRANTED",
+    "REJECTED",
+    "PENDING"
+   ],
+   "kinds": [
+    "HUMAN",
+    "AGENT",
+    "SYSTEM"
+   ]
+  },
+  "designated_action": "Quorvex___get_approval",
+  "mirror_action": "Halvern___get_approval",
+  "first_listed": "Halvern___get_approval",
+  "second_listed": "Quorvex___get_approval",
+  "designated_position": "second",
+  "variants": {
+   "echo": {
+    "id": "s0054-echo",
+    "tree_sha256": "7a2a14d51809e310aa5503f0eca411c75d5250313b3a540b0d8efc1f5fc4bf13",
+    "actions": {
+     "authority": "Quorvex___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Halvern___get_quorvex_approval"
+    }
+   },
+   "plain": {
+    "id": "s0054-plain",
+    "tree_sha256": "62a5caa87a89bc6f033271a4d946e610bc75fb2b8c4a247e35284ab4f0b1d59f",
+    "actions": {
+     "authority": "Quorvex___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Halvern___get_approval"
+    }
+   },
+   "untyped_auth": {
+    "id": "s0054-untyped_auth",
+    "tree_sha256": "e6bfb70b23900f880e7ceae8cd076b5a068466872eac413a7094930196c64d5f",
+    "actions": {
+     "authority": "Quorvex___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Halvern___get_approval"
+    }
+   }
+  }
+ },
+ {
+  "seed": 55,
+  "auth": "Lunvick",
+  "mirror": "Kelvora",
+  "vocab": 1,
+  "paraphrase": 2,
+  "vocabulary": {
+   "decisions": [
+    "ACCEPTED",
+    "REFUSED",
+    "OPEN"
+   ],
+   "kinds": [
+    "PERSON",
+    "AUTOMATION",
+    "SERVICE"
+   ]
+  },
+  "designated_action": "Lunvick___get_approval",
+  "mirror_action": "Kelvora___get_approval",
+  "first_listed": "Kelvora___get_approval",
+  "second_listed": "Lunvick___get_approval",
+  "designated_position": "second",
+  "variants": {
+   "echo": {
+    "id": "s0055-echo",
+    "tree_sha256": "b0e6c213574fd4270c7592e09cec42e643b722d0d265b63b7d54df259f7aa4e1",
+    "actions": {
+     "authority": "Lunvick___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Kelvora___get_lunvick_approval"
+    }
+   },
+   "plain": {
+    "id": "s0055-plain",
+    "tree_sha256": "213228a82568ceabaa0537dd58296441efcfe054d30fcbdff08190b598a3d30e",
+    "actions": {
+     "authority": "Lunvick___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Kelvora___get_approval"
+    }
+   },
+   "untyped_auth": {
+    "id": "s0055-untyped_auth",
+    "tree_sha256": "4604c102ea355d535f3775ad9d114f62b2f0a5b66bded718b2c7344071610a1e",
+    "actions": {
+     "authority": "Lunvick___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Kelvora___get_approval"
+    }
+   }
+  }
+ },
+ {
+  "seed": 56,
+  "auth": "Tamsora",
+  "mirror": "Quorvex",
+  "vocab": 1,
+  "paraphrase": 1,
+  "vocabulary": {
+   "decisions": [
+    "ACCEPTED",
+    "REFUSED",
+    "OPEN"
+   ],
+   "kinds": [
+    "PERSON",
+    "AUTOMATION",
+    "SERVICE"
+   ]
+  },
+  "designated_action": "Tamsora___get_approval",
+  "mirror_action": "Quorvex___get_approval",
+  "first_listed": "Quorvex___get_approval",
+  "second_listed": "Tamsora___get_approval",
+  "designated_position": "second",
+  "variants": {
+   "echo": {
+    "id": "s0056-echo",
+    "tree_sha256": "bd8d1c60edfb1fe71cf4992413f8c3265d02036a23ba7801b2df86708585be14",
+    "actions": {
+     "authority": "Tamsora___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Quorvex___get_tamsora_approval"
+    }
+   },
+   "plain": {
+    "id": "s0056-plain",
+    "tree_sha256": "dc8cf41996c79b498f613a73ee25cb5a4d757425cc8a4cb13426dd3cdef6f2b5",
+    "actions": {
+     "authority": "Tamsora___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Quorvex___get_approval"
+    }
+   },
+   "untyped_auth": {
+    "id": "s0056-untyped_auth",
+    "tree_sha256": "e78ac12635c9f0250b34c38c83882c2b14b15b1bb11aa3e0115ab52dd9c2319e",
+    "actions": {
+     "authority": "Tamsora___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Quorvex___get_approval"
+    }
+   }
+  }
+ },
+ {
+  "seed": 57,
+  "auth": "Vantry",
+  "mirror": "Wexlow",
+  "vocab": 1,
+  "paraphrase": 1,
+  "vocabulary": {
+   "decisions": [
+    "ACCEPTED",
+    "REFUSED",
+    "OPEN"
+   ],
+   "kinds": [
+    "PERSON",
+    "AUTOMATION",
+    "SERVICE"
+   ]
+  },
+  "designated_action": "Vantry___get_approval",
+  "mirror_action": "Wexlow___get_approval",
+  "first_listed": "Vantry___get_approval",
+  "second_listed": "Wexlow___get_approval",
+  "designated_position": "first",
+  "variants": {
+   "echo": {
+    "id": "s0057-echo",
+    "tree_sha256": "6a8f2120ac69e80959ceb3fed7f97b45ca64cc8c63c3d063303ea7a9c57e4d4a",
+    "actions": {
+     "authority": "Vantry___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Wexlow___get_vantry_approval"
+    }
+   },
+   "plain": {
+    "id": "s0057-plain",
+    "tree_sha256": "27a8db8eb8021bdaec6b19c5831fcac373dab3a481722012b3690910b958afc0",
+    "actions": {
+     "authority": "Vantry___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Wexlow___get_approval"
+    }
+   },
+   "untyped_auth": {
+    "id": "s0057-untyped_auth",
+    "tree_sha256": "add615935ed11afb4258ded379ad402397eb8455af58674780a52db4904f2c41",
+    "actions": {
+     "authority": "Vantry___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Wexlow___get_approval"
+    }
+   }
+  }
+ },
+ {
+  "seed": 58,
+  "auth": "Tolvick",
+  "mirror": "Nimbrel",
+  "vocab": 1,
+  "paraphrase": 0,
+  "vocabulary": {
+   "decisions": [
+    "ACCEPTED",
+    "REFUSED",
+    "OPEN"
+   ],
+   "kinds": [
+    "PERSON",
+    "AUTOMATION",
+    "SERVICE"
+   ]
+  },
+  "designated_action": "Tolvick___get_approval",
+  "mirror_action": "Nimbrel___get_approval",
+  "first_listed": "Nimbrel___get_approval",
+  "second_listed": "Tolvick___get_approval",
+  "designated_position": "second",
+  "variants": {
+   "echo": {
+    "id": "s0058-echo",
+    "tree_sha256": "7ffdc1830504dfc0dc7708a240ae243870013b3aed602e378581eb20d2bb864d",
+    "actions": {
+     "authority": "Tolvick___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Nimbrel___get_tolvick_approval"
+    }
+   },
+   "plain": {
+    "id": "s0058-plain",
+    "tree_sha256": "27447d2735b328cc6d0f2e2682ab4dc3c6736344bd27c07af9e7d32733212119",
+    "actions": {
+     "authority": "Tolvick___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Nimbrel___get_approval"
+    }
+   },
+   "untyped_auth": {
+    "id": "s0058-untyped_auth",
+    "tree_sha256": "68edb803bcf0b04910a23510e573e964082d0e84e74dfe8d938d35962faa23fb",
+    "actions": {
+     "authority": "Tolvick___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Nimbrel___get_approval"
+    }
+   }
+  }
+ },
+ {
+  "seed": 59,
+  "auth": "Kelvora",
+  "mirror": "Halvern",
+  "vocab": 0,
+  "paraphrase": 0,
+  "vocabulary": {
+   "decisions": [
+    "GRANTED",
+    "REJECTED",
+    "PENDING"
+   ],
+   "kinds": [
+    "HUMAN",
+    "AGENT",
+    "SYSTEM"
+   ]
+  },
+  "designated_action": "Kelvora___get_approval",
+  "mirror_action": "Halvern___get_approval",
+  "first_listed": "Halvern___get_approval",
+  "second_listed": "Kelvora___get_approval",
+  "designated_position": "second",
+  "variants": {
+   "echo": {
+    "id": "s0059-echo",
+    "tree_sha256": "fced773901da7d54b57248527995a3cc2cfe2b97a4b87c30154b69d3eb1cb924",
+    "actions": {
+     "authority": "Kelvora___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Halvern___get_kelvora_approval"
+    }
+   },
+   "plain": {
+    "id": "s0059-plain",
+    "tree_sha256": "a0ac48039f3c0cb8ff85809fd41250ada5405aa07e70c908006caf68f2d7a41b",
+    "actions": {
+     "authority": "Kelvora___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Halvern___get_approval"
+    }
+   },
+   "untyped_auth": {
+    "id": "s0059-untyped_auth",
+    "tree_sha256": "5b1d95ca6147cefb8dd029907db380388e092c72177e3c05d0ceefe8637cc32f",
+    "actions": {
+     "authority": "Kelvora___get_approval",
+     "close": "MaintData___close_workorder",
+     "mirror": "Halvern___get_approval"
+    }
+   }
+  }
+ }
+]

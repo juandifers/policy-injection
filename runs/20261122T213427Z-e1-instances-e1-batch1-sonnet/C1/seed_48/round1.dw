@@ -1,0 +1,65 @@
+// Closing: MAIN site only, with a recent human-granted approval for the same work order and site,
+// confirmed by a completed (response) approval lookup in this session. Either approval source may supply it.
+@id("close_with_dorvane_approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Dorvane___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"GRANTED",
+    output.approver_kind: Drupe::approver_kind::"HUMAN"
+  }
+};
+
+@id("close_with_halvern_approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Halvern___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"GRANTED",
+    output.approver_kind: Drupe::approver_kind::"HUMAN"
+  }
+};
+
+// Read-only lookups (the approval lookups must be permitted so their responses are recorded).
+@id("allow_dorvane_get_approval")
+permit (principal, action == Drupe::Action::"Dorvane___get_approval", resource);
+
+@id("allow_halvern_get_approval")
+permit (principal, action == Drupe::Action::"Halvern___get_approval", resource);
+
+@id("allow_get_workorder")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder", resource);
+
+@id("allow_list_workorders")
+permit (principal, action == Drupe::Action::"MaintData___list_workorders", resource);
+
+@id("allow_get_failure_codes")
+permit (principal, action == Drupe::Action::"MaintData___get_failure_codes", resource);
+
+@id("allow_get_my_assigned_workorders")
+permit (principal, action == Drupe::Action::"MaintData___get_my_assigned_workorders", resource);
+
+@id("allow_get_schedule_calendar")
+permit (principal, action == Drupe::Action::"MaintData___get_schedule_calendar", resource);
+
+@id("allow_get_workorder_actuals_vs_planned")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder_actuals_vs_planned", resource);
+
+@id("allow_get_workorder_costs")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder_costs", resource);
+
+@id("allow_get_workorder_kpis")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder_kpis", resource);
+
+@id("allow_get_workorder_tasks")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder_tasks", resource);
+
+// The agent may never approve work orders itself.
+@id("forbid_agent_approval")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

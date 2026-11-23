@@ -1,0 +1,70 @@
+{
+ "round": 1,
+ "extraction": "fenced",
+ "generation": {
+  "key_hash": "2dd4143cc374847efc8c94136b7a3f66486c671bd5a712fcc1a51c3a67cb3799",
+  "prefix_hash": "be40cbdd8c8405d744a3c96bab7346ed64044c1910cb4ff82810c151a1166802",
+  "cache_hit": false,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011ChJngSJxrXnmJK8c4s78y",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 34862,
+   "inference_geo": "global",
+   "input_tokens": 925,
+   "output_tokens": 1632,
+   "output_tokens_details": {
+    "thinking_tokens": 1004
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "```\n// Read-only lookup of the approval record in Tamsora. It needs its own permit,\n// otherwise the call is recorded as an error and never as a response.\n@id(\"allow-tamsora-get-approval\")\npermit (principal, action == Drupe::Action::\"Tamsora___get_approval\", resource);\n\n// Closing is allowed only at MAIN, and only if this session recently saw a\n// completed Tamsora lookup showing that this exact work order (same site and\n// wonum) was ACCEPTED by a PERSON within the last hour.\n@id(\"allow-close-main-with-human-approval\")\npermit (principal, action == Drupe::Action::\"MaintData___close_workorder\", resource)\nwhen { context.input.site_id == \"MAIN\" }\nwhen temporal {\n  formerly within 1h Drupe::Action::\"Tamsora___get_approval\"::response{\n    eventResource: resource,\n    input.site_id: context.input.site_id,\n    input.wonum: context.input.wonum,\n    output.decision: \"ACCEPTED\",\n    output.approver_kind: \"PERSON\"\n  }\n};\n```\n\n- **Unverified vocabulary:** Tamsora declares `decision` and `approver_kind` as plain strings, with no enum. I used `\"ACCEPTED\"` and `\"PERSON\"`, matching the sibling Ostrel schema, whose enums include REFUSED/OPEN for the rejected and still-open cases. Please confirm these are Tamsora's actual values.\n- **Closing:** It is allowed only at MAIN, and only on a completed lookup (`::response`) from this session. Failed or denied lookups are recorded as errors and so never match.\n- **No self-approval:** `approve_workorder` has no permit, so it is denied by default. `Ostrel___get_approval` is also unpermitted, since Tamsora is the system of record for approvals. Every other tool is denied as well.",
+  "content_types": [
+   "thinking",
+   "text"
+  ],
+  "cache_split": {
+   "tokens": {
+    "cache_write": 0,
+    "cache_read": 34862,
+    "uncached_input": 925,
+    "output": 1632
+   },
+   "usd": {
+    "cache_write": 0.0,
+    "cache_read": 0.0034862,
+    "uncached_input": 0.00185,
+    "output": 0.01632
+   },
+   "total_usd": 0.0216562
+  },
+  "deadline_s": 600.0,
+  "expiries_before": 0,
+  "truncated": false
+ },
+ "deterministic": {
+  "passed": true,
+  "validation": {
+   "policy": "C14/seed_30/round1.dw",
+   "schema": "/Users/jd/Documents/policy-injection/domains/assetopsbench/scenarios/t02_designated_source/instances/s0030-untyped_auth/schema/t02.dogwood.cedarschema",
+   "ok": true,
+   "errors": [],
+   "warnings": []
+  },
+  "failures": []
+ },
+ "unresolved": [],
+ "request": {
+  "blocks_after_breakpoint": [
+   "## Action schema, part 2\n```cedarschema\nnamespace Drupe {\n  type Ostrel___get_approvalInput = {\n    site_id: String,\n    wonum: String\n  };\n  type Ostrel___get_approvalOutput = {\n    approver_id: String,\n    approver_kind: Drupe::Ostrel___get_approval_Output_approver_kind,\n    decision: Drupe::Ostrel___get_approval_Output_decision\n  };\n  type Tamsora___get_approvalInput = {\n    site_id: String,\n    wonum: String\n  };\n  type Tamsora___get_approvalOutput = {\n    approver_id: String,\n    approver_kind: String,\n    decision: String\n  };\n  entity Ostrel___get_approval_Output_approver_kind enum [\"PERSON\", \"AUTOMATION\", \"SERVICE\"];\n  entity Ostrel___get_approval_Output_decision enum [\"ACCEPTED\", \"REFUSED\", \"OPEN\"];\n  action \"Ostrel___get_approval\" in [Action::\"CallTool\"] appliesTo {\n    principal: [User],\n    resource: [Gateway],\n    context: {\n      input: Ostrel___get_approvalInput,\n      output?: Ostrel___get_approvalOutput,\n      sessionId: __cedar::String,\n      system: SystemContext\n    }\n  };\n  action \"Tamsora___get_approval\" in [Action::\"CallTool\"] appliesTo {\n    principal: [User],\n    resource: [Gateway],\n    context: {\n      input: Tamsora___get_approvalInput,\n      output?: Tamsora___get_approvalOutput,\n      sessionId: __cedar::String,\n      system: SystemContext\n    }\n  };\n}\n```\n"
+  ],
+  "user": "# Work orders close only on a real approval by a person\n\nOur maintenance agent operates on the `wo` gateway in one policy session. Closing a work order at the MAIN site is permitted, provided a person approved that particular job recently and in this session. Approval cannot come from anything the agent does on its own.\n\n- Closing is permitted at MAIN and nowhere else.\n- The job must have been approved in fact; a rejected or still-open request is not an approval.\n- The approver must be a person. There must be no path, direct or indirect, by which the agent approves its own work.\n- The approval must match the work order being closed, including the site.\n- The approval must be no older than one hour.\n- The approval must have been established during this session through a completed call that confirmed it; an attempt that failed or was refused confirms nothing.\n- The agent may perform whatever read-only lookups it needs to confirm an approval before it closes.\n- The agent must never approve work orders itself, and nothing else is permitted.\n\nThe system that decides and records approvals is Tamsora.\n\nOutput only Dogwood policies."
+ }
+}

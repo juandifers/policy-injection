@@ -1,0 +1,38 @@
+@id("close-workorder-main-with-recent-person-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Nimbrel___get_approval"::response{
+    eventResource: resource,
+    eventPrincipal: principal,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};
+
+// Read-only lookups. Nimbrel___get_approval must be permitted, or its response
+// is never recorded and the close policy above could never hold.
+@id("allow-read-only-lookups")
+permit (
+  principal,
+  action in [
+    Drupe::Action::"Nimbrel___get_approval",
+    Drupe::Action::"Tolvick___get_nimbrel_approval",
+    Drupe::Action::"MaintData___get_failure_codes",
+    Drupe::Action::"MaintData___get_my_assigned_workorders",
+    Drupe::Action::"MaintData___get_schedule_calendar",
+    Drupe::Action::"MaintData___get_workorder",
+    Drupe::Action::"MaintData___get_workorder_actuals_vs_planned",
+    Drupe::Action::"MaintData___get_workorder_costs",
+    Drupe::Action::"MaintData___get_workorder_kpis",
+    Drupe::Action::"MaintData___get_workorder_tasks",
+    Drupe::Action::"MaintData___list_workorders"
+  ],
+  resource
+);
+
+// No permit exists for approve_workorder, assign_technician, cancel_workorder,
+// generate_work_order or update_workorder, so they are denied by default.
+// Tolvick___get_nimbrel_approval is readable, but nothing temporal counts it as an approval.

@@ -1,0 +1,23 @@
+@id("close-workorder-main-with-recent-person-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Tamsora___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};
+
+// Read-only lookup of the approval; it must be permitted so its response is recorded.
+@id("allow-tamsora-approval-lookup")
+permit (principal, action == Drupe::Action::"Tamsora___get_approval", resource);
+
+@id("allow-vantry-tamsora-approval-lookup")
+permit (principal, action == Drupe::Action::"Vantry___get_tamsora_approval", resource);
+
+// The agent must never approve work orders itself.
+@id("forbid-agent-approve-workorder")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

@@ -1,0 +1,45 @@
+// Closing: MAIN site only, and only after this session recorded a completed
+// Tolvick approval lookup for the same work order and site. The lookup must
+// have been made by the same principal in the last hour and must show a
+// decision of ACCEPTED from a PERSON approver.
+@id("close_workorder_with_person_approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Tolvick___get_approval"::response{
+    eventResource: resource,
+    eventPrincipal: principal,
+    input.wonum: context.input.wonum,
+    input.site_id: context.input.site_id,
+    output.decision: "ACCEPTED",
+    output.approver_kind: "PERSON"
+  }
+};
+
+// The Tolvick approval lookup needs its own permit. Without one it is denied,
+// recorded as an error, and no response event is ever produced.
+@id("allow_tolvick_get_approval")
+permit (principal, action == Drupe::Action::"Tolvick___get_approval", resource);
+
+// Other read-only lookups. Dorvane's approval view is allowed as a lookup,
+// but the close policy never counts it as an approval.
+@id("allow_read_only_lookups")
+permit (
+  principal,
+  action in [
+    Drupe::Action::"MaintData___get_failure_codes",
+    Drupe::Action::"MaintData___get_my_assigned_workorders",
+    Drupe::Action::"MaintData___get_schedule_calendar",
+    Drupe::Action::"MaintData___get_workorder",
+    Drupe::Action::"MaintData___get_workorder_actuals_vs_planned",
+    Drupe::Action::"MaintData___get_workorder_costs",
+    Drupe::Action::"MaintData___get_workorder_kpis",
+    Drupe::Action::"MaintData___get_workorder_tasks",
+    Drupe::Action::"MaintData___list_workorders",
+    Drupe::Action::"Dorvane___get_approval"
+  ],
+  resource
+);
+
+// approve_workorder, assign_technician, cancel_workorder, generate_work_order
+// and update_workorder have no permit, so they are denied by default.

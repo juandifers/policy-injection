@@ -1,0 +1,29 @@
+// Read-only approval lookup. It needs its own permit so that its completed
+// calls are recorded as ::response events that the close policy can rely on.
+@id("allow-dorvane-approval-lookup")
+permit (principal, action == Drupe::Action::"Dorvane___get_approval", resource);
+
+// Close a work order only at MAIN, and only with a Dorvane approval from this
+// session that is at most 1h old, comes from a person, and matches the same
+// site and work order. A failed or denied lookup records only an ::error
+// event, so it can never satisfy this condition.
+// Assumption: Dorvane reports decision "APPROVED" and approver_kind "PERSON".
+// The schema declares these fields as plain strings, so these literals are not
+// confirmed by it.
+@id("allow-close-main-with-person-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Dorvane___get_approval"::response{
+    eventResource: resource,
+    eventPrincipal: principal,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: "APPROVED",
+    output.approver_kind: "PERSON"
+  }
+};
+
+// The agent must never approve work orders itself.
+@id("forbid-agent-approve-workorder")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

@@ -1,0 +1,38 @@
+// Closing: only at MAIN, and only with a recent, person-made, accepted approval
+// that this agent obtained from Tolvick in this session for the same work order and site.
+@id("close-workorder-with-person-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Tolvick___get_approval"::response{
+    eventResource: resource,
+    eventPrincipal: principal,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::Tolvick___get_approval_Output_decision::"ACCEPTED",
+    output.approver_kind: Drupe::Tolvick___get_approval_Output_approver_kind::"PERSON"
+  }
+};
+
+// The approval lookup must itself be permitted, otherwise it is never recorded as a response.
+@id("allow-approval-lookup")
+permit (principal, action == Drupe::Action::"Tolvick___get_approval", resource);
+
+// Other read-only lookups.
+@id("allow-read-only-lookups")
+permit (
+  principal,
+  action in [
+    Drupe::Action::"MaintData___get_workorder",
+    Drupe::Action::"MaintData___list_workorders",
+    Drupe::Action::"MaintData___get_workorder_tasks",
+    Drupe::Action::"MaintData___get_workorder_costs",
+    Drupe::Action::"MaintData___get_workorder_actuals_vs_planned",
+    Drupe::Action::"MaintData___get_workorder_kpis",
+    Drupe::Action::"MaintData___get_schedule_calendar",
+    Drupe::Action::"MaintData___get_my_assigned_workorders",
+    Drupe::Action::"MaintData___get_failure_codes",
+    Drupe::Action::"Dorvane___get_sync_status"
+  ],
+  resource
+);

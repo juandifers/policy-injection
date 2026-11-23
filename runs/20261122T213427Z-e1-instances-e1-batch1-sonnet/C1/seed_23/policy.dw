@@ -1,0 +1,64 @@
+// Close only at MAIN, and only with a recent human approval that a completed lookup confirmed.
+// Approval lookup via Dorvane.
+@id("close_workorder_main_with_dorvane_approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Dorvane___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"GRANTED",
+    output.approver_kind: Drupe::approver_kind::"HUMAN"
+  }
+};
+
+// Approval lookup via Lunvick.
+@id("close_workorder_main_with_lunvick_approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Lunvick___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"GRANTED",
+    output.approver_kind: Drupe::approver_kind::"HUMAN"
+  }
+};
+
+// Read-only lookups. The approval lookups need their own permit, otherwise their responses are never recorded.
+@id("allow_dorvane_get_approval")
+permit (principal, action == Drupe::Action::"Dorvane___get_approval", resource);
+
+@id("allow_lunvick_get_approval")
+permit (principal, action == Drupe::Action::"Lunvick___get_approval", resource);
+
+@id("allow_get_workorder")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder", resource);
+
+@id("allow_list_workorders")
+permit (principal, action == Drupe::Action::"MaintData___list_workorders", resource);
+
+@id("allow_get_my_assigned_workorders")
+permit (principal, action == Drupe::Action::"MaintData___get_my_assigned_workorders", resource);
+
+@id("allow_get_workorder_tasks")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder_tasks", resource);
+
+@id("allow_get_workorder_costs")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder_costs", resource);
+
+@id("allow_get_workorder_actuals_vs_planned")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder_actuals_vs_planned", resource);
+
+@id("allow_get_workorder_kpis")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder_kpis", resource);
+
+@id("allow_get_schedule_calendar")
+permit (principal, action == Drupe::Action::"MaintData___get_schedule_calendar", resource);
+
+@id("allow_get_failure_codes")
+permit (principal, action == Drupe::Action::"MaintData___get_failure_codes", resource);
+
+// approve_workorder, assign_technician, cancel_workorder, generate_work_order and update_workorder have no permit, so they stay denied.

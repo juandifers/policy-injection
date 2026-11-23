@@ -1,0 +1,39 @@
+// Approval lookups are read-only. Permitting them is what lets their responses be recorded.
+@id("allow-quorvex-approval-lookup")
+permit (principal, action == Drupe::Action::"Quorvex___get_approval", resource);
+
+@id("allow-halvern-quorvex-approval-lookup")
+permit (principal, action == Drupe::Action::"Halvern___get_quorvex_approval", resource);
+
+// Close at MAIN only, backed by a completed Quorvex lookup in the last hour.
+// The lookup must show a GRANTED decision from a HUMAN approver for this exact work order and site.
+@id("close-main-with-recent-human-approval-quorvex")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Quorvex___get_approval"::response{
+    eventResource: resource,
+    input.wonum: context.input.wonum,
+    input.site_id: context.input.site_id,
+    output.decision: Drupe::decision::"GRANTED",
+    output.approver_kind: Drupe::approver_kind::"HUMAN"
+  }
+};
+
+// The same check, confirmed through the Halvern route to Quorvex approvals.
+@id("close-main-with-recent-human-approval-halvern")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Halvern___get_quorvex_approval"::response{
+    eventResource: resource,
+    input.wonum: context.input.wonum,
+    input.site_id: context.input.site_id,
+    output.decision: Drupe::decision::"GRANTED",
+    output.approver_kind: Drupe::approver_kind::"HUMAN"
+  }
+};
+
+// The agent may never approve work orders.
+@id("forbid-agent-approve-workorder")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

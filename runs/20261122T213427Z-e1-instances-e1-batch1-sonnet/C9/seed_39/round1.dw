@@ -1,0 +1,35 @@
+@id("close-workorder-main-vantry-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Vantry___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::Vantry___get_approval_Output_decision::"ACCEPTED",
+    output.approver_kind: Drupe::Vantry___get_approval_Output_approver_kind::"PERSON"
+  }
+};
+
+@id("close-workorder-main-yarbeck-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Yarbeck___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: "ACCEPTED",
+    output.approver_kind: "PERSON"
+  }
+};
+
+// Read-only approval lookups must be permitted themselves, otherwise they are never recorded as responses.
+@id("allow-vantry-get-approval")
+permit (principal, action == Drupe::Action::"Vantry___get_approval", resource);
+
+@id("allow-yarbeck-get-approval")
+permit (principal, action == Drupe::Action::"Yarbeck___get_approval", resource);
+
+@id("never-approve-workorder")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

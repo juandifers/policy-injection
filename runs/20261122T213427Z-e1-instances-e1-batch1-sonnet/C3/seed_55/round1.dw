@@ -1,0 +1,20 @@
+// Read-only approval lookup against Lunvick, the system of record for approvals.
+// It needs its own permit so that its completed calls are recorded as responses.
+@id("allow-lunvick-approval-lookup")
+permit (principal, action == Drupe::Action::"Lunvick___get_approval", resource);
+
+// Closing is allowed only at MAIN, and only when a completed Lunvick lookup in this
+// session within the last hour showed an ACCEPTED approval by a PERSON for the same
+// site and work order.
+@id("close-workorder-main-with-person-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Lunvick___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};

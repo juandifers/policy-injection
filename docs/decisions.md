@@ -1351,3 +1351,20 @@ suite, the mutants and the intent levels). Reused from `7d90a39`, not rebuilt: `
 - **Batch 1 plan** (500–1,500 calls per model, C8 at 20): Sonnet $10.43–$34.72 with cache hits (output mean 1,532 recorded),
   Haiku $2.49–$7.64 (output mean 9,059). Caps = the with-cache maximum × 1.3: Sonnet $45.20, Haiku $9.95.
 - **Not done, by instruction:** the pre-registration is drafted, not committed; batch 1 is printed, not run.
+
+## 2026-11-23: E1 batch 1, Sonnet (confirmatory, seeds 0–59; instrument notes only)
+
+- **Run of record** `runs/20261122T213427Z-e1-instances-e1-batch1-sonnet`: cells C1–C5, C9, C13, C14 at 60 and C8 at 20 (seeds 0–19), one
+  process, `--spend-cap-usd 45.20` (the plan's with-cache maximum × 1.3). Started right after the pre-registration commit `817dce2`.
+- **Incident, transport only.** The first process (`runs/.tmp-20261122T193352Z-e1-instances-e1-batch1-sonnet`, kept, gitignored) was
+  killed after exactly 2 hours by the Claude Code background-task time limit (the harness, not the runner, the API or the breaker)
+  with 349 samples finished and one call possibly in flight; it wrote no spend, cache-watch or deadline files. The rerun with
+  identical arguments replayed the 349 samples from the disk cache (about 8 s each) and sent the remaining 168 fresh calls; a call
+  lost in flight, if any, is unrecorded and may have been billed. Lesson: a 500-sample Sonnet batch needs about 3 h in one process;
+  start it detached from the tool harness (or accept one resume).
+- **Instrument health:** 500/500 valid after the loop (first shots 433/500; rounds 2 in 67 samples, 3 never), 567 calls, 0 stopped at
+  max_tokens, 0 replay errors, resolver precheck 500/500, 0 deadline expiries; the resumed process read the prefix on 167/168 fresh
+  calls (1 write, 0 misses). Cost from usage over both processes $12.00 (plan: $10.43–$34.72). C9's first-shot validity is the
+  lowest (36/60, every one repaired in round 2); C8's 7/20.
+- **Nothing scored or read.** The run's summary and results.csv were not opened beyond the instrument fields above; comparison
+  waits for Juan (`pgi.runs.e1_compare`) and for the Haiku batch, which has not been run.

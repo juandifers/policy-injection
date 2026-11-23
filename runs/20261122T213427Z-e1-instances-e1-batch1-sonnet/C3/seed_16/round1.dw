@@ -1,0 +1,23 @@
+// Tolvick approval lookups are read-only and must be permitted so that
+// their responses are recorded in the session history.
+@id("allow-tolvick-approval-lookup")
+permit (principal, action == Drupe::Action::"Tolvick___get_approval", resource);
+
+@id("allow-lunvick-approval-lookup")
+permit (principal, action == Drupe::Action::"Lunvick___get_tolvick_approval", resource);
+
+// Close is allowed only at MAIN, and only if in the last hour this session
+// recorded a completed Tolvick lookup for the same site and work order that
+// shows an ACCEPTED decision by a PERSON.
+@id("close-main-needs-recent-person-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Tolvick___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};

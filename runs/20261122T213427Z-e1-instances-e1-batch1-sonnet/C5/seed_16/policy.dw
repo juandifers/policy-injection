@@ -1,0 +1,34 @@
+@id("close-workorder-at-main-with-recent-person-approval")
+permit (
+  principal,
+  action == Drupe::Action::"MaintData___close_workorder",
+  resource
+)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Tolvick___get_approval"::response{
+    eventResource: resource,
+    eventPrincipal: principal,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};
+
+// Read-only lookup against Tolvick, the system of record for approvals.
+// It must be permitted so that its completed responses are recorded and can be used as evidence above.
+@id("allow-tolvick-approval-lookup")
+permit (
+  principal,
+  action == Drupe::Action::"Tolvick___get_approval",
+  resource
+);
+
+// The agent may never approve work orders, whatever else is permitted.
+@id("never-approve-workorders")
+forbid (
+  principal,
+  action == Drupe::Action::"MaintData___approve_workorder",
+  resource
+);

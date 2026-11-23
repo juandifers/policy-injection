@@ -1,0 +1,44 @@
+// Read-only lookups, including the Nimbrel approval lookup. The lookup must be
+// permitted itself, otherwise its response is never recorded and the close
+// policy below could never be satisfied.
+permit (
+  principal,
+  action in [
+    Drupe::Action::"Nimbrel___get_approval",
+    Drupe::Action::"Yarbeck___get_nimbrel_approval",
+    Drupe::Action::"MaintData___get_failure_codes",
+    Drupe::Action::"MaintData___get_my_assigned_workorders",
+    Drupe::Action::"MaintData___get_schedule_calendar",
+    Drupe::Action::"MaintData___get_workorder",
+    Drupe::Action::"MaintData___get_workorder_actuals_vs_planned",
+    Drupe::Action::"MaintData___get_workorder_costs",
+    Drupe::Action::"MaintData___get_workorder_kpis",
+    Drupe::Action::"MaintData___get_workorder_tasks",
+    Drupe::Action::"MaintData___list_workorders"
+  ],
+  resource
+);
+
+// Close only at MAIN, and only if this session recorded a completed Nimbrel
+// lookup within the last hour for the same site and work order that returned
+// an ACCEPTED decision made by a PERSON.
+@id("close_requires_recent_person_approval")
+permit (
+  principal,
+  action == Drupe::Action::"MaintData___close_workorder",
+  resource
+)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Nimbrel___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: "ACCEPTED",
+    output.approver_kind: "PERSON"
+  }
+};
+
+// MaintData___approve_workorder and all other write tools (assign, cancel,
+// generate, update) get no permit, so they are denied by default. The Yarbeck
+// lookup is permitted for reading but is not accepted as proof of approval.

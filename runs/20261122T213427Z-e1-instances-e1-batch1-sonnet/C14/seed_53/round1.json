@@ -1,0 +1,70 @@
+{
+ "round": 1,
+ "extraction": "fenced",
+ "generation": {
+  "key_hash": "359de925ee1f4e2bc480dad0b6e92cae52c270a053c6f938913b55bfdc3213c4",
+  "prefix_hash": "be40cbdd8c8405d744a3c96bab7346ed64044c1910cb4ff82810c151a1166802",
+  "cache_hit": false,
+  "model_version": "claude-sonnet-5-5",
+  "request_id": "req_011ChJoF4Ko6SVapjJ6qg3Zo",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 34862,
+   "inference_geo": "global",
+   "input_tokens": 917,
+   "output_tokens": 1545,
+   "output_tokens_details": {
+    "thinking_tokens": 869
+   },
+   "service_tier": "standard",
+   "speed": "standard"
+  },
+  "text": "```cedar\n// Close: only at MAIN, and only with a recent human approval from Tamsora (the system of record)\n// for this exact work order and site, confirmed by a completed (response) lookup in this session.\n@id(\"close-main-with-recent-human-approval\")\npermit (principal, action == Drupe::Action::\"MaintData___close_workorder\", resource)\nwhen { context.input.site_id == \"MAIN\" }\nwhen temporal {\n  formerly within 1h Drupe::Action::\"Tamsora___get_approval\"::response{\n    eventResource: resource,\n    input.site_id: context.input.site_id,\n    input.wonum: context.input.wonum,\n    output.decision: \"GRANTED\",\n    output.approver_kind: \"HUMAN\"\n  }\n};\n\n// The lookup must itself be permitted, otherwise it is never recorded as a response.\n// Read-only lookups are allowed.\n@id(\"allow-read-only-lookups\")\npermit (principal, action in [\n  Drupe::Action::\"Tamsora___get_approval\",\n  Drupe::Action::\"Vantry___get_approval\",\n  Drupe::Action::\"MaintData___get_workorder\",\n  Drupe::Action::\"MaintData___list_workorders\",\n  Drupe::Action::\"MaintData___get_workorder_tasks\",\n  Drupe::Action::\"MaintData___get_workorder_costs\",\n  Drupe::Action::\"MaintData___get_workorder_actuals_vs_planned\",\n  Drupe::Action::\"MaintData___get_workorder_kpis\",\n  Drupe::Action::\"MaintData___get_schedule_calendar\",\n  Drupe::Action::\"MaintData___get_my_assigned_workorders\",\n  Drupe::Action::\"MaintData___get_failure_codes\"\n], resource);\n\n// The agent must never approve work orders. This forbid is explicit and overrides any permit.\n@id(\"never-approve-workorders\")\nforbid (principal, action == Drupe::Action::\"MaintData___approve_workorder\", resource);\n```",
+  "content_types": [
+   "thinking",
+   "text"
+  ],
+  "cache_split": {
+   "tokens": {
+    "cache_write": 0,
+    "cache_read": 34862,
+    "uncached_input": 917,
+    "output": 1545
+   },
+   "usd": {
+    "cache_write": 0.0,
+    "cache_read": 0.0034862,
+    "uncached_input": 0.001834,
+    "output": 0.01545
+   },
+   "total_usd": 0.0207702
+  },
+  "deadline_s": 600.0,
+  "expiries_before": 0,
+  "truncated": false
+ },
+ "deterministic": {
+  "passed": true,
+  "validation": {
+   "policy": "C14/seed_53/round1.dw",
+   "schema": "/Users/jd/Documents/policy-injection/domains/assetopsbench/scenarios/t02_designated_source/instances/s0053-untyped_auth/schema/t02.dogwood.cedarschema",
+   "ok": true,
+   "errors": [],
+   "warnings": []
+  },
+  "failures": []
+ },
+ "unresolved": [],
+ "request": {
+  "blocks_after_breakpoint": [
+   "## Action schema, part 2\n```cedarschema\nnamespace Drupe {\n  type Tamsora___get_approvalInput = {\n    site_id: String,\n    wonum: String\n  };\n  type Tamsora___get_approvalOutput = {\n    approver_id: String,\n    approver_kind: String,\n    decision: String\n  };\n  type Vantry___get_approvalInput = {\n    site_id: String,\n    wonum: String\n  };\n  type Vantry___get_approvalOutput = {\n    approver_id: String,\n    approver_kind: Drupe::Vantry___get_approval_Output_approver_kind,\n    decision: Drupe::Vantry___get_approval_Output_decision\n  };\n  entity Vantry___get_approval_Output_approver_kind enum [\"HUMAN\", \"AGENT\", \"SYSTEM\"];\n  entity Vantry___get_approval_Output_decision enum [\"GRANTED\", \"REJECTED\", \"PENDING\"];\n  action \"Tamsora___get_approval\" in [Action::\"CallTool\"] appliesTo {\n    principal: [User],\n    resource: [Gateway],\n    context: {\n      input: Tamsora___get_approvalInput,\n      output?: Tamsora___get_approvalOutput,\n      sessionId: __cedar::String,\n      system: SystemContext\n    }\n  };\n  action \"Vantry___get_approval\" in [Action::\"CallTool\"] appliesTo {\n    principal: [User],\n    resource: [Gateway],\n    context: {\n      input: Vantry___get_approvalInput,\n      output?: Vantry___get_approvalOutput,\n      sessionId: __cedar::String,\n      system: SystemContext\n    }\n  };\n}\n```\n"
+  ],
+  "user": "# Closing a work order needs a genuine, recent approval\n\nThe maintenance agent acts through the `wo` gateway within a single policy session. It is allowed to close work orders at the MAIN site, and only those a person has actually approved a short time earlier in this same session. The agent cannot supply that approval itself.\n\n- Only closes at MAIN are allowed.\n- There has to be a real approval. A refusal, or a decision still pending, is not one.\n- A person has to have given it. The agent must have no way to approve its own work, directly or through some other route.\n- The approval has to be for exactly the work order being closed, at that site.\n- It has to be recent, within the last hour.\n- It has to have been established in this session by a completed call that confirmed it. A call that was tried but failed or was denied establishes nothing.\n- The agent may run whatever read-only lookups it needs to confirm an approval before it closes.\n- The agent must not approve work orders. Nothing beyond this is allowed.\n\nTamsora is where approvals are decided and recorded.\n\nOutput only Dogwood policies."
+ }
+}

@@ -1,0 +1,44 @@
+// Closing is allowed only at MAIN, and only with a recent approval that this
+// principal obtained from Tamsora in this session.
+// The approval must be a completed (response) call, for the same site and work
+// order, accepted by a PERSON, and made within the last hour.
+@id("close-workorder-with-person-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Tamsora___get_approval"::response{
+    eventResource: resource,
+    eventPrincipal: principal,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};
+
+// Read-only lookups. Tamsora___get_approval must be permitted so that its
+// response is recorded and can serve as the prerequisite above. The Quorvex
+// lookup is allowed as a read, but it is never referenced by the close policy,
+// so it cannot establish an approval.
+@id("read-only-lookups")
+permit (
+  principal,
+  action in [
+    Drupe::Action::"Tamsora___get_approval",
+    Drupe::Action::"Quorvex___get_approval",
+    Drupe::Action::"MaintData___get_failure_codes",
+    Drupe::Action::"MaintData___get_my_assigned_workorders",
+    Drupe::Action::"MaintData___get_schedule_calendar",
+    Drupe::Action::"MaintData___get_workorder",
+    Drupe::Action::"MaintData___get_workorder_actuals_vs_planned",
+    Drupe::Action::"MaintData___get_workorder_costs",
+    Drupe::Action::"MaintData___get_workorder_kpis",
+    Drupe::Action::"MaintData___get_workorder_tasks",
+    Drupe::Action::"MaintData___list_workorders"
+  ],
+  resource
+);
+
+// The agent must never approve work orders, whatever other policies exist.
+@id("never-approve")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

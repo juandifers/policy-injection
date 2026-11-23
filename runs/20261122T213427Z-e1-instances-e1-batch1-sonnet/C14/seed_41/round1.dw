@@ -1,0 +1,23 @@
+// Read-only lookup. It must be permitted so that its completed response is recorded.
+@id("allow_tamsora_approval_lookup")
+permit (principal, action == Drupe::Action::"Tamsora___get_approval", resource);
+
+// Close only at MAIN, and only with a Tamsora approval from the last hour in this session.
+// The approval must be a completed lookup for the same site and work order,
+// with decision APPROVED and approver_kind PERSON.
+@id("close_workorder_main_with_person_approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Tamsora___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: "APPROVED",
+    output.approver_kind: "PERSON"
+  }
+};
+
+// The agent never approves work orders itself.
+@id("never_approve_workorder")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

@@ -1,0 +1,39 @@
+// Read-only approval lookups. These must be permitted so their responses are recorded.
+@id("allow_tamsora_get_approval")
+permit (principal, action == Drupe::Action::"Tamsora___get_approval", resource);
+
+@id("allow_vantry_get_approval")
+permit (principal, action == Drupe::Action::"Vantry___get_approval", resource);
+
+// Close at MAIN only, and only after a completed Tamsora lookup in this session within the
+// last hour confirmed that a PERSON ACCEPTED this exact work order at this site.
+@id("close_workorder_main_with_tamsora_person_approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Tamsora___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};
+
+// Same condition, confirmed through the Vantry approval source.
+@id("close_workorder_main_with_vantry_person_approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Vantry___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};
+
+// The agent may never approve work orders itself.
+@id("never_approve_workorder")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

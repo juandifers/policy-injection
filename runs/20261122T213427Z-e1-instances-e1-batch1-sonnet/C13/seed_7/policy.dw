@@ -1,0 +1,31 @@
+// Assumption: the Dorvane schema declares decision and approver_kind only as String.
+// I use "APPROVED" and "PERSON" as the literal values for an approved decision and a human approver.
+
+// Closing is permitted only at MAIN, and only when this session holds a completed Dorvane
+// approval lookup from the last hour. The lookup must be for the same work order and site,
+// show an approved decision, and name a person as the approver.
+@id("close_workorder_requires_person_approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Dorvane___get_approval"::response{
+    eventResource: resource,
+    eventPrincipal: principal,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: "APPROVED",
+    output.approver_kind: "PERSON"
+  }
+};
+
+// The approval lookup is read-only and must itself be permitted, otherwise it is never recorded as a response.
+@id("allow_dorvane_approval_lookup")
+permit (principal, action == Drupe::Action::"Dorvane___get_approval", resource);
+
+// Read-only lookup of the work order itself.
+@id("allow_get_workorder")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder", resource);
+
+// Safety net: the agent may never approve work orders itself.
+@id("forbid_agent_approval")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

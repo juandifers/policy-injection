@@ -1,0 +1,20 @@
+@id("close-workorder-main-with-human-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Yarbeck___get_approval"::response{
+    eventResource: resource,
+    eventPrincipal: principal,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"GRANTED",
+    output.approver_kind: Drupe::approver_kind::"HUMAN"
+  }
+};
+
+// The approval lookup must itself be permitted, or no response is ever recorded.
+@id("allow-yarbeck-approval-lookup")
+permit (principal, action == Drupe::Action::"Yarbeck___get_approval", resource);
+
+@id("never-approve-workorders")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

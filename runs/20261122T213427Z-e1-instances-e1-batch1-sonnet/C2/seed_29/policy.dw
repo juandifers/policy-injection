@@ -1,0 +1,37 @@
+// Read-only lookups, including the Dorvane approval lookup. Its completed
+// response is what the close policy below relies on.
+@id("allow_readonly_lookups")
+permit (
+  principal,
+  action in [
+    Drupe::Action::"Dorvane___get_approval",
+    Drupe::Action::"Kelvora___get_approval",
+    Drupe::Action::"MaintData___get_failure_codes",
+    Drupe::Action::"MaintData___get_my_assigned_workorders",
+    Drupe::Action::"MaintData___get_schedule_calendar",
+    Drupe::Action::"MaintData___get_workorder",
+    Drupe::Action::"MaintData___get_workorder_actuals_vs_planned",
+    Drupe::Action::"MaintData___get_workorder_costs",
+    Drupe::Action::"MaintData___get_workorder_kpis",
+    Drupe::Action::"MaintData___get_workorder_tasks",
+    Drupe::Action::"MaintData___list_workorders"
+  ],
+  resource
+);
+
+// Closing is allowed only at MAIN, and only if Dorvane (the system of record
+// for approvals) returned a completed response within the last hour. That
+// response must show an ACCEPTED decision by a PERSON for this exact site and
+// work order.
+@id("allow_close_with_recent_person_approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Dorvane___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};

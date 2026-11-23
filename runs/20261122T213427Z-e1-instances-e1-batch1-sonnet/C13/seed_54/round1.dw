@@ -1,0 +1,52 @@
+@id("close-workorder-main-with-recent-human-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Quorvex___get_approval"::response{
+    eventResource: resource,
+    eventPrincipal: principal,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: "GRANTED",
+    output.approver_kind: "HUMAN"
+  }
+};
+
+// The Quorvex lookup must itself be permitted, otherwise it is never recorded as a response.
+@id("allow-quorvex-get-approval")
+permit (principal, action == Drupe::Action::"Quorvex___get_approval", resource);
+
+// Read-only lookups.
+@id("allow-halvern-get-approval-readonly")
+permit (principal, action == Drupe::Action::"Halvern___get_approval", resource);
+
+@id("allow-get-failure-codes")
+permit (principal, action == Drupe::Action::"MaintData___get_failure_codes", resource);
+
+@id("allow-get-my-assigned-workorders")
+permit (principal, action == Drupe::Action::"MaintData___get_my_assigned_workorders", resource);
+
+@id("allow-get-schedule-calendar")
+permit (principal, action == Drupe::Action::"MaintData___get_schedule_calendar", resource);
+
+@id("allow-get-workorder")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder", resource);
+
+@id("allow-get-workorder-actuals-vs-planned")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder_actuals_vs_planned", resource);
+
+@id("allow-get-workorder-costs")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder_costs", resource);
+
+@id("allow-get-workorder-kpis")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder_kpis", resource);
+
+@id("allow-get-workorder-tasks")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder_tasks", resource);
+
+@id("allow-list-workorders")
+permit (principal, action == Drupe::Action::"MaintData___list_workorders", resource);
+
+// The agent must never approve work orders.
+@id("forbid-approve-workorder")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

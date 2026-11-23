@@ -1,0 +1,68 @@
+// Reads: every read-only lookup is permitted. The two get_approval tools must
+// be permitted so that their responses are recorded and can be used as evidence.
+@id("allow-get-approval-nimbrel")
+permit (principal, action == Drupe::Action::"Nimbrel___get_approval", resource);
+
+@id("allow-get-approval-yarbeck")
+permit (principal, action == Drupe::Action::"Yarbeck___get_approval", resource);
+
+@id("allow-get-workorder")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder", resource);
+
+@id("allow-list-workorders")
+permit (principal, action == Drupe::Action::"MaintData___list_workorders", resource);
+
+@id("allow-get-workorder-tasks")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder_tasks", resource);
+
+@id("allow-get-workorder-costs")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder_costs", resource);
+
+@id("allow-get-workorder-actuals-vs-planned")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder_actuals_vs_planned", resource);
+
+@id("allow-get-workorder-kpis")
+permit (principal, action == Drupe::Action::"MaintData___get_workorder_kpis", resource);
+
+@id("allow-get-schedule-calendar")
+permit (principal, action == Drupe::Action::"MaintData___get_schedule_calendar", resource);
+
+@id("allow-get-my-assigned-workorders")
+permit (principal, action == Drupe::Action::"MaintData___get_my_assigned_workorders", resource);
+
+@id("allow-get-failure-codes")
+permit (principal, action == Drupe::Action::"MaintData___get_failure_codes", resource);
+
+// Closing: only at MAIN, and only with a completed, in-session approval lookup
+// within the last hour. The lookup must report an ACCEPTED decision by a PERSON
+// for this exact site and work order. Temporal blocks have no `||`, so there is
+// one policy per approval tool.
+@id("close-main-with-person-approval-nimbrel")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Nimbrel___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};
+
+@id("close-main-with-person-approval-yarbeck")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Yarbeck___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};
+
+// Nothing else is permitted, so these stay denied by default:
+// approve_workorder, cancel_workorder, update_workorder, assign_technician,
+// generate_work_order, and close_workorder outside MAIN or without a valid approval.

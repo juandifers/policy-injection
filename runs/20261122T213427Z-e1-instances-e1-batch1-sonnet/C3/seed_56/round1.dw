@@ -1,0 +1,38 @@
+@id("approval-lookup-tamsora")
+permit (principal, action == Drupe::Action::"Tamsora___get_approval", resource);
+
+@id("approval-lookup-quorvex")
+permit (principal, action == Drupe::Action::"Quorvex___get_tamsora_approval", resource);
+
+@id("close-main-with-recent-person-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  // A completed Tamsora lookup in the last hour shows ACCEPTED by a PERSON for this exact site and work order,
+  // and no later completed lookup for the same work order showed REFUSED.
+  !Drupe::Action::"Tamsora___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"REFUSED"
+  } since within 1h Drupe::Action::"Tamsora___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+  // The same approval has not been followed by a lookup that came back OPEN.
+  && !Drupe::Action::"Tamsora___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"OPEN"
+  } since within 1h Drupe::Action::"Tamsora___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};

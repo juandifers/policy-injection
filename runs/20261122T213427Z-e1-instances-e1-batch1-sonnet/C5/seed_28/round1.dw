@@ -1,0 +1,26 @@
+// Read-only lookup the agent needs to confirm an approval in Kelvora.
+// It needs its own permit; otherwise the call is denied, recorded as an error,
+// and no response event is ever recorded for it.
+@id("allow-kelvora-approval-lookup")
+permit (principal, action == Drupe::Action::"Kelvora___get_approval", resource);
+
+// Close a work order only at MAIN, and only if Kelvora confirmed in this session,
+// within the last hour, that this exact work order (site and wonum) was ACCEPTED
+// by a PERSON.
+@id("close-main-with-person-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Kelvora___get_approval"::response{
+    eventResource: resource,
+    eventPrincipal: principal,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};
+
+// The agent must never approve work orders itself.
+@id("never-approve-workorder")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

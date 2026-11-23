@@ -1,0 +1,26 @@
+// Read-only lookup against Dorvane, the system of record for approvals.
+// It needs its own permit: a denied call is recorded only as an error and can never serve as evidence.
+@id("allow-dorvane-approval-lookup")
+permit (principal, action == Drupe::Action::"Dorvane___get_approval", resource);
+
+// Close a work order only at MAIN, and only after this session's own completed
+// Dorvane lookup within the last hour showed that a person accepted that same
+// work order at that same site.
+// Kelvora___get_dorvane_approval is a copy shown by another system, so it never
+// counts and is deliberately not referenced or permitted.
+@id("allow-close-with-recent-person-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Dorvane___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};
+
+// The agent must never approve work orders itself.
+@id("forbid-agent-approve-workorder")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

@@ -1,0 +1,54 @@
+// Closing: MAIN site only, and only after a completed approval lookup in the last hour
+// that confirmed a GRANTED decision by a HUMAN for this same work order and site.
+// One policy per approval source; either one can establish the approval.
+
+@id("close_after_human_approval_nimbrel")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Nimbrel___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"GRANTED",
+    output.approver_kind: Drupe::approver_kind::"HUMAN"
+  }
+};
+
+@id("close_after_human_approval_tolvick")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Tolvick___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"GRANTED",
+    output.approver_kind: Drupe::approver_kind::"HUMAN"
+  }
+};
+
+// Read-only lookups, including the approval lookups, which must be permitted
+// so that their responses are recorded and can satisfy the conditions above.
+@id("allow_read_only_lookups")
+permit (
+  principal,
+  action in [
+    Drupe::Action::"Nimbrel___get_approval",
+    Drupe::Action::"Tolvick___get_approval",
+    Drupe::Action::"MaintData___get_workorder",
+    Drupe::Action::"MaintData___list_workorders",
+    Drupe::Action::"MaintData___get_workorder_tasks",
+    Drupe::Action::"MaintData___get_workorder_costs",
+    Drupe::Action::"MaintData___get_workorder_actuals_vs_planned",
+    Drupe::Action::"MaintData___get_workorder_kpis",
+    Drupe::Action::"MaintData___get_schedule_calendar",
+    Drupe::Action::"MaintData___get_my_assigned_workorders",
+    Drupe::Action::"MaintData___get_failure_codes"
+  ],
+  resource
+);
+
+// The agent may never approve work orders itself (explicit guard on top of default deny).
+@id("never_self_approve")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

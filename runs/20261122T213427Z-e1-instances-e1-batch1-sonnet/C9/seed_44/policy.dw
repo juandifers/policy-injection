@@ -1,0 +1,42 @@
+// Close only at MAIN, and only with a recent, completed approval lookup showing
+// a person ACCEPTED this exact work order at this site.
+// Only the Wexlow lookup is used as evidence: its decision and approver_kind
+// values are a declared enum (ACCEPTED / PERSON). The Tolvick lookup returns
+// free strings with no declared vocabulary, so it cannot establish approval.
+@id("close-main-with-recent-person-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Wexlow___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::Wexlow___get_approval_Output_decision::"ACCEPTED",
+    output.approver_kind: Drupe::Wexlow___get_approval_Output_approver_kind::"PERSON"
+  }
+};
+
+// Read-only lookups. The Wexlow approval lookup must be permitted so that its
+// completion is recorded as a response event.
+@id("allow-read-only-lookups")
+permit (
+  principal,
+  action in [
+    Drupe::Action::"Wexlow___get_approval",
+    Drupe::Action::"Tolvick___get_approval",
+    Drupe::Action::"MaintData___get_workorder",
+    Drupe::Action::"MaintData___list_workorders",
+    Drupe::Action::"MaintData___get_workorder_tasks",
+    Drupe::Action::"MaintData___get_workorder_costs",
+    Drupe::Action::"MaintData___get_workorder_actuals_vs_planned",
+    Drupe::Action::"MaintData___get_workorder_kpis",
+    Drupe::Action::"MaintData___get_schedule_calendar",
+    Drupe::Action::"MaintData___get_my_assigned_workorders",
+    Drupe::Action::"MaintData___get_failure_codes"
+  ],
+  resource
+);
+
+// The agent must never approve work orders.
+@id("never-approve-workorders")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

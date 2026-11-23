@@ -1,0 +1,24 @@
+// Assumption: Tolvick reports decision "APPROVED" and approver_kind "PERSON"
+// as plain strings (its schema does not enumerate them). Adjust here if
+// Tolvick uses different literals.
+
+// Close only at MAIN, and only if, within the last hour of this session, a
+// completed Tolvick approval lookup for the same wonum and site confirmed
+// the approval came from a person.
+@id("close_workorder_main_with_person_approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Tolvick___get_approval"::response{
+    eventResource: resource,
+    input.wonum: context.input.wonum,
+    input.site_id: context.input.site_id,
+    output.decision: "APPROVED",
+    output.approver_kind: "PERSON"
+  }
+};
+
+// The lookup must itself be permitted, otherwise it is never recorded as a
+// response. It is read-only.
+@id("allow_tolvick_get_approval_lookup")
+permit (principal, action == Drupe::Action::"Tolvick___get_approval", resource);

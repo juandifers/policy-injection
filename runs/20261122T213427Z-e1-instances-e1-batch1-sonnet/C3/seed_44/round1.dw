@@ -1,0 +1,50 @@
+// Read-only lookups are always allowed, including both approval lookups.
+// The approval lookups need their own permit, otherwise they are recorded
+// as errors and could never serve as evidence for a close.
+@id("allow-readonly-lookups")
+permit (principal, action in [
+    Drupe::Action::"MaintData___get_workorder",
+    Drupe::Action::"MaintData___list_workorders",
+    Drupe::Action::"MaintData___get_workorder_tasks",
+    Drupe::Action::"MaintData___get_workorder_costs",
+    Drupe::Action::"MaintData___get_workorder_actuals_vs_planned",
+    Drupe::Action::"MaintData___get_workorder_kpis",
+    Drupe::Action::"MaintData___get_schedule_calendar",
+    Drupe::Action::"MaintData___get_my_assigned_workorders",
+    Drupe::Action::"MaintData___get_failure_codes",
+    Drupe::Action::"Tolvick___get_approval",
+    Drupe::Action::"Wexlow___get_tolvick_approval"
+], resource);
+
+// Close at MAIN, backed by a recent completed Tolvick lookup that confirmed
+// an ACCEPTED decision by a PERSON for this exact work order and site.
+@id("close-with-person-approval-tolvick")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Tolvick___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};
+
+// Same rule, with the approval confirmed through the Wexlow lookup of the Tolvick approval.
+@id("close-with-person-approval-wexlow")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Wexlow___get_tolvick_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};
+
+// The agent may never approve work orders, whatever else is permitted.
+@id("forbid-agent-approval")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

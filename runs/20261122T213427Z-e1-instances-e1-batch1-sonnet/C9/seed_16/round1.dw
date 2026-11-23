@@ -1,0 +1,40 @@
+// Close a work order only at MAIN, and only with a person's ACCEPTED approval
+// for this exact site and work order, confirmed by a completed lookup within the last hour.
+
+@id("close-with-person-approval-lunvick")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Lunvick___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.approver_kind: Drupe::Lunvick___get_approval_Output_approver_kind::"PERSON",
+    output.decision: Drupe::Lunvick___get_approval_Output_decision::"ACCEPTED"
+  }
+};
+
+@id("close-with-person-approval-tolvick")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Tolvick___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.approver_kind: "PERSON",
+    output.decision: "ACCEPTED"
+  }
+};
+
+// Read-only approval lookups must be permitted themselves, otherwise they are
+// recorded as errors and never as responses.
+@id("allow-lunvick-approval-lookup")
+permit (principal, action == Drupe::Action::"Lunvick___get_approval", resource);
+
+@id("allow-tolvick-approval-lookup")
+permit (principal, action == Drupe::Action::"Tolvick___get_approval", resource);
+
+// The agent can never approve work orders.
+@id("never-approve-workorder")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

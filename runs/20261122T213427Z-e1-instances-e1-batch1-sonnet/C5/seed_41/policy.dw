@@ -1,0 +1,30 @@
+// Read-only lookup of the approval record in Tamsora. This permit is required:
+// a denied lookup is recorded as an error, never as a response, and the close
+// policy below could then never be satisfied.
+@id("allow-tamsora-approval-lookup")
+permit (principal, action == Drupe::Action::"Tamsora___get_approval", resource);
+
+// Close a work order only at MAIN, and only after this session fetched from Tamsora
+// a completed, matching, ACCEPTED approval by a PERSON within the last hour.
+@id("close-workorder-at-main-with-person-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Tamsora___get_approval"::response{
+    eventResource: resource,
+    eventPrincipal: principal,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};
+
+// The agent must never approve work orders itself.
+@id("never-approve-workorder")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);
+
+// Closing is never allowed outside MAIN, whatever else applies.
+@id("never-close-outside-main")
+forbid (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+unless { context.input.site_id == "MAIN" };

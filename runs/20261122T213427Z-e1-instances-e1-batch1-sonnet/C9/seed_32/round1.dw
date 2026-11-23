@@ -1,0 +1,18 @@
+@id("permit-approval-lookup")
+permit (principal, action == Drupe::Action::"Lunvick___get_approval", resource);
+
+@id("permit-close-main-with-person-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Lunvick___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::Lunvick___get_approval_Output_decision::"ACCEPTED",
+    output.approver_kind: Drupe::Lunvick___get_approval_Output_approver_kind::"PERSON"
+  }
+};
+
+@id("forbid-agent-approval")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

@@ -1,0 +1,39 @@
+// Read-only approval lookups must be permitted, or their responses are never recorded.
+@id("allow-wexlow-get-approval")
+permit (principal, action == Drupe::Action::"Wexlow___get_approval", resource);
+
+@id("allow-yarbeck-get-approval")
+permit (principal, action == Drupe::Action::"Yarbeck___get_approval", resource);
+
+// Close at MAIN only, after a completed Wexlow lookup in the last hour
+// confirmed a GRANTED approval by a HUMAN for the same work order and site.
+@id("close-main-with-wexlow-human-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Wexlow___get_approval"::response{
+    eventResource: resource,
+    input.wonum: context.input.wonum,
+    input.site_id: context.input.site_id,
+    output.decision: Drupe::Wexlow___get_approval_Output_decision::"GRANTED",
+    output.approver_kind: Drupe::Wexlow___get_approval_Output_approver_kind::"HUMAN"
+  }
+};
+
+// Same rule, with the Yarbeck approval lookup as the source of confirmation.
+@id("close-main-with-yarbeck-human-approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Yarbeck___get_approval"::response{
+    eventResource: resource,
+    input.wonum: context.input.wonum,
+    input.site_id: context.input.site_id,
+    output.decision: "GRANTED",
+    output.approver_kind: "HUMAN"
+  }
+};
+
+// The agent must never approve work orders itself.
+@id("never-approve-workorder")
+forbid (principal, action == Drupe::Action::"MaintData___approve_workorder", resource);

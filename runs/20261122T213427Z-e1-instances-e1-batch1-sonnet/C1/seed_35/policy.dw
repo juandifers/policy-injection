@@ -1,0 +1,40 @@
+// Closing is allowed only at MAIN, and only after a person's ACCEPTED approval
+// for the same work order and site was confirmed by a completed Kelvora lookup
+// in this session within the last hour.
+@id("close_main_with_kelvora_person_approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Kelvora___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};
+
+// Same, with the approval confirmed by a completed Ostrel lookup.
+@id("close_main_with_ostrel_person_approval")
+permit (principal, action == Drupe::Action::"MaintData___close_workorder", resource)
+when { context.input.site_id == "MAIN" }
+when temporal {
+  formerly within 1h Drupe::Action::"Ostrel___get_approval"::response{
+    eventResource: resource,
+    input.site_id: context.input.site_id,
+    input.wonum: context.input.wonum,
+    output.decision: Drupe::decision::"ACCEPTED",
+    output.approver_kind: Drupe::approver_kind::"PERSON"
+  }
+};
+
+// Read-only approval lookups must themselves be permitted so that their
+// responses are recorded and can serve as evidence.
+@id("allow_kelvora_get_approval")
+permit (principal, action == Drupe::Action::"Kelvora___get_approval", resource);
+
+@id("allow_ostrel_get_approval")
+permit (principal, action == Drupe::Action::"Ostrel___get_approval", resource);
+
+// No permit exists for MaintData___approve_workorder or any other tool,
+// so everything else is denied by default.
